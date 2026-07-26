@@ -389,8 +389,15 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   # soon as one copy is edited. Each pattern below matches a *statement* of the
   # rule, not a mention of it — a file may name the Marker while documenting
   # how to read it, or forbid a specific command without re-arguing why.
+  # The Marker pattern matches the *decision procedure* — the equality plus what
+  # it entitles you to skip. A skill stating the bare postcondition it leaves
+  # behind ("the Marker equals HEAD after this") is not a second home for the
+  # rule, and /commit has to be able to state exactly that. `equals` is in the
+  # alternation because word choice is not a licence: without it, a verbatim
+  # restatement slips through by spelling `==` differently.
   $singleHome = [ordered]@{
-    'the Marker cache-validity rule'  = '(?i)marker.{0,80}(==|matches).{0,40}HEAD'
+    'the Marker cache-validity rule'  = '(?is)marker.{0,80}(==|equals|matches).{0,40}HEAD.{0,200}(trusted|no reading|no verification)'
+    'the commit scope vocabulary'     = '(?i)`misc`.{0,40}`stuff`'
     'the compression test'            = '(?i)will this improve (a )?future engineering decision'
     'the never-invent-a-pointer rule' = '(?i)(never|not|rather than) invent(ing)?( a)? (replacement|path)'
     'the knowledge-layer table'       = '(?im)^\|\s*Codebase\s*\|'
@@ -1049,6 +1056,313 @@ Describe-Ticket '05' 'review axes for Tenure' {
   }
 }
 
+# --- ticket 06 — /commit, the transaction boundary ---------------------------
+
+Describe-Ticket '06' 'the transaction boundary' {
+
+  Assert "/commit ships as a skill" {
+    Test-Path (Join-Path $skills 'commit/SKILL.md')
+  }
+
+  # Spec, Scope: "/commit is model-invoked because /implement closes out
+  # through it. Typed directly, it handles work with no ticket."
+  Assert "/commit is model-invoked — /implement closes out through it" {
+    $fm = Get-Frontmatter (Get-SkillFile 'commit/SKILL.md')
+    if (-not $fm) { throw 'commit/SKILL.md has no frontmatter' }
+    if ($fm -notmatch '(?m)^name:\s*commit\s*$') { throw 'the skill is not named commit' }
+    $fm -notmatch 'disable-model-invocation:\s*true'
+  }
+
+  Assert "work with no ticket is /commit's — the direct-invocation path is stated" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $c -match '(?i)(no ticket|without a ticket|hand-written)'
+  }
+
+  # It reads Context to ask the diff-vs-knowledge question, so the always-on
+  # rule applies: every skill relying on Context opens with a report.
+  Assert "step 0 is a verification report" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)verification report') { throw 'no verification report named' }
+    $c -match '(?ms)^```\s*$.*?Verification.*?^```\s*$'
+  }
+
+  # --- confirm, don't repeat -------------------------------------------------
+
+  # The headline acceptance criterion. Re-running the suite here is the
+  # rediscovery ADR 0010 removed from sync — /implement already ran it.
+  Assert "/commit never runs tests, never reviews, never researches" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)never runs?( the)? (tests|suite)') { throw 'running tests is not forbidden' }
+    if ($c -notmatch '(?i)never reviews?') { throw 'reviewing is not forbidden' }
+    if ($c -notmatch '(?i)never research') { throw 'researching is not forbidden' }
+    # An imperative at the start of a line is an instruction to do it, whatever
+    # the prose elsewhere says. A question about state is not.
+    $imperatives = ((Get-SkillFile 'commit/SKILL.md') -split '\r?\n') |
+      Where-Object { $_ -match '(?i)^\s*[-*]?\s*(run|re-?run) the (full )?(test )?suite' }
+    if ($imperatives) { throw "the suite is run here — $($imperatives -join '; ')" }
+    $true
+  }
+
+  Assert "all three confirmations are asked — tests, review findings, and finished against the ticket" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $m = [regex]::Match($c, '(?ims)^#{2,}\s.*confirm.*?(?=^#{2}\s|\z)')
+    if (-not $m.Success) { throw 'confirming the prior stages is not its own step' }
+    $step = $m.Value
+    if ($step -notmatch '(?i)(tests|suite)') { throw 'the test question is missing' }
+    if ($step -notmatch '(?i)/code-review') { throw 'the review question is missing' }
+    $step -match '(?i)(finished|complete|done).{0,80}(ticket|spec)'
+  }
+
+  # Decision 33: fixed, ticketed, or accepted-and-recorded. A finding with no
+  # outcome walking into a commit is the silent pass this check exists to stop.
+  Assert "an unresolved review finding blocks the commit — never a silent pass" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*confirm.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'confirming the prior stages is not its own step' }
+    if ($step -notmatch '(?i)finding') { throw 'review findings are never mentioned' }
+    # Grouped. `(never|not) a silent pass|silent pass` binds as
+    # `((never|not) a silent pass)` OR `(silent pass)`, so the bare branch
+    # passes on "a silent pass is fine" — the one sentence this has to reject.
+    if ($step -notmatch '(?i)\b(never|not)\b[^.]{0,40}silent pass') {
+      throw 'a silent pass is not forbidden'
+    }
+    # And the finding has to go somewhere, per decision 33.
+    $step -match '(?i)blocker|ticket'
+  }
+
+  # Acceptance: "A validation failure names the incomplete stage rather than
+  # reporting a generic refusal." A refusal the user cannot act on is a wall.
+  Assert "a refusal names the incomplete stage rather than refusing generically" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)name[sd]? (the|which) (incomplete )?stage|says which stage') {
+      throw 'the refusal does not name the stage'
+    }
+    $c -match '(?i)(reported|refus).{0,120}(not fixed|never fixed|does not fix)|(not fixed|never fixed|does not fix).{0,120}(report|refus)'
+  }
+
+  # --- the diff against knowledge --------------------------------------------
+
+  # Not rediscovery: /implement sees one ticket, /commit sees the change entire.
+  # That is what makes this /commit's and nobody else's.
+  # Scoped to the step, not the file — the frontmatter description says "the
+  # whole diff" too, so a file-wide check stays green with the entire rationale
+  # for why this belongs to /commit deleted from the body.
+  Assert "the knowledge check is a whole-diff question no earlier stage could ask" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '\.claude/context\.md') { throw 'context.md is never read' }
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*knowledge.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'the knowledge check is not its own step' }
+    $step -match '(?i)whole[- ]diff|the change entire|one ticket at a time'
+  }
+
+  Assert "a diff that contradicts Context blocks the commit until Context is corrected" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $c -match '(?i)(contradict|disagree)[a-z]*.{0,200}(block|stop|not commit|before commit)|(block|stop)[a-z]*.{0,200}contradict'
+  }
+
+  # ADR 0005 leaves authorship with /implement and /design. What /commit does
+  # here is healing — correcting what the diff falsified — not writing new
+  # knowledge, and the boundary has to be stated or it erodes into authorship.
+  Assert "/commit heals what the diff falsified and authors nothing new" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)compression test') { throw 'the compression test does not gate what is written' }
+    $c -match '(?i)(does not|never) (author|write) (new )?(concepts|vocabulary)|authors? nothing new'
+  }
+
+  # --- the message -----------------------------------------------------------
+
+  # ADR 0008: every Tenure convention is a default that applies when the
+  # repository is silent, and detection reads three sources, not two.
+  Assert "the convention is detected before it is applied, from all three sources" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*message.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'the message is not its own step' }
+    if ($step -notmatch '(?i)default') { throw 'the convention is stated as a mandate, not a default' }
+    foreach ($src in @('CONTRIBUTING\.md', 'PULL_REQUEST_TEMPLATE', 'git log')) {
+      if ($step -notmatch $src) { throw "detection does not read $src" }
+    }
+    # Ordering, and actually compared. The first draft computed both indices
+    # under a comment about ordering and then returned an unrelated regex.
+    $detect = [regex]::Match($step, 'CONTRIBUTING\.md')
+    $wins = [regex]::Match($step, '(?i)(where|when) the repo[a-z]*[^.]{0,140}(wins|follow)')
+    if (-not $detect.Success) { throw 'CONTRIBUTING.md is not read' }
+    if (-not $wins.Success) { throw "the repository's own convention does not win" }
+    $detect.Index -lt $wins.Index
+  }
+
+  # ADR 0007. CLAUDE.template.md:114 is the always-on home for this — it covers
+  # PR and issue titles too, which /commit never writes. The first draft
+  # restated the scope vocabulary here, and the assertion that came with it
+  # required the breach to be present in order to pass.
+  Assert "the scope vocabulary is not restated here — CLAUDE.md owns it" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    foreach ($bad in @('misc', 'stuff')) {
+      if ($c -match "(?i)``$bad``") { throw "the scope vocabulary is restated: $bad" }
+    }
+    $c -match 'CLAUDE\.md'
+  }
+
+  Assert "the message says what capability changed, never a file-by-file account" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*message.*?(?=^#{2}\s|\z)').Value
+    if ($step -notmatch '(?i)capabilit') { throw 'the message does not say what capability changed' }
+    # Unnegated and file-wide, this passes on "give a file-by-file account".
+    $step -match '(?i)\b(never|not|no)\b[^.]{0,30}file-by-file'
+  }
+
+  # --- the spec status -------------------------------------------------------
+
+  # Decision 23: a document's reasoning is frozen; only its status moves.
+  Assert "a completed spec is marked implemented, and only the status line moves" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)implemented') { throw 'the spec is never marked implemented' }
+    $c -match '(?i)only the status line|content is never rewritten|reasoning is frozen'
+  }
+
+  # Cross-file: /commit writes a status SPEC-FORMAT has to recognise, and the
+  # freeze rule has one home — the format file, not the actor. Before this,
+  # SPEC-FORMAT listed draft/accepted/superseded and knew nothing of the status
+  # /commit writes.
+  Assert "the status /commit writes is one SPEC-FORMAT defines, and the freeze rule stays there" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $fmt = Get-SkillFile 'design/SPEC-FORMAT.md'
+    # Against the enumeration line, not the section. SPEC-FORMAT names
+    # `implemented` again further down when saying who writes it, so a
+    # section-wide check survives the term being cut from the vocabulary itself.
+    $vocab = (($fmt -split '\r?\n') | Where-Object { $_ -match '`draft`' }) -join ' '
+    if (-not $vocab) { throw 'SPEC-FORMAT has no status vocabulary line' }
+    # Only the spec step. `Status: resolved` elsewhere in the file is a
+    # *ticket* status and answers to the build lifecycle, not to this format.
+    $specStep = [regex]::Match($c, '(?ims)^#{2,}[^\n]*mark the spec.*?(?=^#{2}\s|\z)').Value
+    if (-not $specStep) { throw 'marking the spec is not its own step' }
+    foreach ($written in [regex]::Matches($specStep, '(?i)Status:\s*([a-z-]+)')) {
+      $s = $written.Groups[1].Value
+      if ($vocab -notmatch "``$s``") { throw "/commit writes Status: $s, which SPEC-FORMAT does not define" }
+    }
+    if ($fmt -notmatch '(?i)only the status line') { throw 'the freeze rule is not in SPEC-FORMAT' }
+    if ($c -notmatch 'SPEC-FORMAT\.md') { throw '/commit does not point at the format' }
+    # The rationale belongs to the format file. /commit carries the imperative.
+    $c -notmatch '(?i)stops being evidence'
+  }
+
+  # Ordering, not presence. The spec file is tracked, so marking it after the
+  # commit leaves the tree dirty — and a dirty tree defeats the Marker's clean
+  # path on the very next turn, which is the whole reason the Marker exists.
+  Assert "the spec status is staged into the commit, not left dirty behind it" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $spec = [regex]::Match($c, '(?im)^#{2,}\s.*mark the spec')
+    $make = [regex]::Match($c, '(?im)^#{2,}\s.*make the commit')
+    if (-not $spec.Success) { throw 'marking the spec is not its own step' }
+    if (-not $make.Success) { throw 'making the commit is not its own step' }
+    $spec.Index -lt $make.Index
+  }
+
+  # --- the Marker ------------------------------------------------------------
+
+  # ADR 0005: a commit cannot contain its own SHA. This ordering is the reason
+  # the Marker is machine-local at all, so getting it backwards undoes the ADR.
+  Assert "the Marker is written after the commit exists, and the reason is given" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $make = [regex]::Match($c, '(?im)^#{2,}\s.*make the commit')
+    $mark = [regex]::Match($c, '(?im)^#{2,}\s.*advance the marker')
+    # Both guarded: .Index is 0 on a failed match, so an unguarded $make turns
+    # a renamed heading into a passing ordering check.
+    if (-not $make.Success) { throw 'making the commit is not its own step' }
+    if (-not $mark.Success) { throw 'advancing the Marker is not its own step' }
+    if ($mark.Index -lt $make.Index) { throw 'the Marker is written before the commit exists' }
+    $c -match '(?i)cannot contain its own SHA'
+  }
+
+  # /commit is the Marker's only writer, so the file's shape is /commit's to
+  # define. Nowhere else in Tenure says what is in it.
+  Assert "the Marker's shape is defined, since /commit is its only writer" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '\.claude/marker\.json') { throw 'the Marker path is never named' }
+    $c -match '(?ms)^```\s*json\s*$.*?commit.*?^```\s*$'
+  }
+
+  # A Marker that is not ignored gets committed, and then it points at the
+  # parent of the commit it describes — the phantom-verification loop ADR 0005
+  # made the file machine-local to avoid.
+  Assert "the Marker is confirmed gitignored before it is written" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $c -match '(?i)(ignored|gitignore).{0,200}(before|check|confirm)|(before|check|confirm)[a-z]*.{0,200}(ignored|gitignore)'
+  }
+
+  # Acceptance: "The Marker equals HEAD after a successful commit, so the next
+  # verification is a single git check and nothing more."
+  Assert "the Marker equals HEAD after a successful commit" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $c -match '(?i)marker.{0,120}(==|equals|matches).{0,40}HEAD|HEAD.{0,40}(==|equals|matches).{0,120}marker'
+  }
+
+  # Ticket 04: "the Marker re-advances on every amend — through /commit,
+  # exactly as the first commit did." /commit is the shared implementation, so
+  # the amend path has to exist here or /implement's rule has no home.
+  Assert "an amend re-advances the Marker, because the SHA changed" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)amend') { throw 'the amend path is missing' }
+    $c -match '(?i)amend.{0,200}(new SHA|marker)|(new SHA|marker).{0,200}amend'
+  }
+
+  # --- boundaries ------------------------------------------------------------
+
+  Assert "/commit never pushes, and no fenced git push reads as an instruction" {
+    $lines = (Get-SkillFile 'commit/SKILL.md') -split '\r?\n'
+    if (($lines -join "`n") -notmatch '(?i)never (runs |run )?`?git push|never pushes') {
+      throw 'no explicit never-push rule'
+    }
+    $inFence = $false
+    $offenders = @()
+    foreach ($line in $lines) {
+      if ($line -match '^\s*```') { $inFence = -not $inFence; continue }
+      if ($inFence -and $line -match '^\s*git\s+push' -and $line -notmatch '(?i)\b(never|do not|don.t|forbidden)\b') {
+        $offenders += $line.Trim()
+      }
+    }
+    if ($offenders) { throw ($offenders -join '; ') }
+    $true
+  }
+
+  # /implement sets Status: resolved after /commit returns (ticket 04). Two
+  # writers for one field is how a ticket ends up resolved for a commit that
+  # was refused.
+  Assert "/commit does not resolve tickets — that stays /implement's" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    $c -match '(?i)(does not|never) (resolve|set).{0,80}(ticket|status: resolved)|resolv[a-z]*.{0,80}(stays|remains|is) /implement'
+  }
+
+  # This repository is the case: no .claude/ at all until ticket 12 runs.
+  # A skill that assumes the layout exists refuses every commit in a repo that
+  # has not been configured, which is every repo before /configure.
+  Assert "a repository with no .claude/ still commits, and says what it skipped" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?i)(no|without|absent) `?\.claude') { throw 'the unconfigured repository is never considered' }
+    # Both steps that read .claude/ have to say what they do without it. A
+    # file-wide check passes when one of them drops its branch, because the
+    # other still names the case.
+    foreach ($h in @('knowledge', 'advance the marker')) {
+      $step = [regex]::Match($c, "(?ims)^#{2,}[^\n]*$h.*?(?=^#{2}\s|\z)").Value
+      if (-not $step) { throw "no step matching '$h'" }
+      if ($step -notmatch '(?i)(no|without|unconfigured)[^.]{0,60}(\.claude|Context to contradict|Marker to advance)') {
+        throw "the '$h' step does not say what it does in an unconfigured repository"
+      }
+    }
+    # Naming the case is not handling it — the commit still has to happen.
+    $c -match '(?i)carry on'
+  }
+
+  # Ticket 15 owns the invocations. A third copy of the staging and amend
+  # commands is the duplication ADR 0007 exists to stop.
+  Assert "the git invocations are pointed at, not restated" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch 'tools/git\.md') { throw 'tools/git.md is never referenced' }
+    if ($c -match '(?m)^git status --porcelain') { throw 'the uncommitted drift read is restated' }
+    if ($c -match '(?m)^git diff --name-only') { throw 'the Marker diff read is restated' }
+    $c -notmatch '(?im)^\s*never\s+`?git commit -a'
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -1056,7 +1370,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

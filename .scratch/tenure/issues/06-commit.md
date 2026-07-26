@@ -1,6 +1,6 @@
 # feat(commit): the transaction boundary
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 02, 04, 05
 
 ## Problem
@@ -41,3 +41,62 @@ A failure here is **reported**, not fixed. `/commit` does not implement, review,
 - The Marker equals `HEAD` after a successful commit, so the next verification is a single `git` check and nothing more.
 - A commit whose diff contradicts `.claude/context.md` is blocked until context is corrected.
 - A validation failure names the incomplete stage rather than reporting a generic refusal.
+
+## Comments
+
+**The scope vocabulary is not restated here, against this ticket's own wording.**
+Outcome item 2 says *"Scope names the engineering domain; reject `misc`, `stuff`,
+`update`"*, and `skills/configure/CLAUDE.template.md:114` already carries that
+sentence — for commit subjects, PR titles, and issue titles alike. ADR 0007 binds
+harder than the ticket: a rule with two homes drifts as soon as one copy is
+edited. `/commit` keeps only what is its own, which is the **detection**
+procedure ADR 0008 requires, and points at `CLAUDE.md` for the convention itself.
+The first draft restated it and shipped an assertion that *required* the breach
+in order to pass; `verify.ps1` now guards the vocabulary in the single-home table
+instead.
+
+**ADR 0008 names three detection inputs; this ticket names two.** It says
+*"Detect first: `CONTRIBUTING.md`, then recent `git log`"*; ADR 0008's
+consequences read *"after reading `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`,
+and recent `git log`"*. The ADR wins and all three are read.
+
+**The steps are ordered so the commit is the last write except the Marker.**
+This ticket numbers the message before the spec status. Both must precede the
+commit, and the spec is a *tracked file* — marking it afterwards leaves the tree
+dirty the instant the commit lands, which defeats the Marker's clean path on the
+very next turn and undoes the point of advancing it. Order is: knowledge → spec
+status → message → commit → Marker. Only the Marker comes after, because a
+commit cannot contain its own SHA (ADR 0005).
+
+**`/commit` heals Context; it does not author it.** ADR 0010 line 23 enumerates
+the knowledge writers as `/design`, `/implement`, and `/configure` — `/commit` is
+not among them, yet outcome item 1 gives it a corrective write. The enumeration's
+point is *never CI*, and 0010's actual principle is *healing where the break is
+found*. `/commit` is where the whole-diff break is found, so it repairs what the
+diff falsified and authors nothing new. The boundary is stated in the skill and
+asserted, because an unstated one erodes into authorship.
+
+**`skills/design/SPEC-FORMAT.md` was edited — ticket 03's artifact.** It
+enumerated `draft` / `accepted` / `superseded` and knew nothing of the status
+this ticket makes `/commit` write. Decision 23 supplies the full set, so
+`implemented`, `superseded by <path>`, and `abandoned` were added there and the
+*only the status line moves* rule now lives in the format file rather than in the
+actor. `verify.ps1` asserts the two agree, so the pair cannot drift apart again.
+
+**Never-push and the amend are pointers, not restatements.** `tools/git.md` owns
+both invocations and the never-push reasoning; `/implement` owns *one ticket
+stays one commit*. What is left here is the prohibition itself — stated, not just
+linked, because this is the file a reader opens to ask whether the commit skill
+publishes — and the Marker's re-advance on amend, which ticket 04 line 123
+delegates here explicitly.
+
+**Review found four assertions that could not fail**, and both axes found the
+same first two independently: an ungrouped alternation (`(never|not) a silent
+pass|silent pass`) whose bare branch passed on *"a silent pass is fine"*; a
+detection-ordering check that computed both indices and then never compared them;
+an unnegated file-wide `file-by-file`; and an ordering guard that checked only one
+of its two `.Success` flags, where a failed match yields index 0. All rewritten
+and re-mutated. The single-home Marker pattern was also broadened from `==|matches`
+to include `equals` — word choice was letting a restatement through — while
+scoping it to the *decision procedure*, so a skill may still state the bare
+postcondition it leaves behind.

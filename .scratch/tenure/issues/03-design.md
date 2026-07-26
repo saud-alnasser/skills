@@ -92,3 +92,11 @@ the sediment this framework is supposed to prevent.
 **Decision 37 was missing and is now in `TICKETS.md`** — every ticket after the
 first declares `Part of:` or `Blocked by:`, with `Blocked by: —` as a positive
 statement rather than an omitted line. Found by the spec review.
+
+**`SPEC-FORMAT.md`'s status vocabulary was completed during ticket 06.** It
+listed `draft` / `accepted` / `superseded`; decision 23 also gives specs
+`implemented`, `superseded by <path>`, and `abandoned`, and `/commit` writes
+`implemented` — a status the format did not define. All three were added, and
+the *reasoning is frozen, only the status line moves* rule now lives here rather
+than being restated by the skill that writes the status. `verify.ps1` asserts
+that every status `/commit` writes is one this file enumerates.
