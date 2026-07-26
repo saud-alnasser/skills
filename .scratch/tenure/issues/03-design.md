@@ -1,6 +1,6 @@
 # feat(design): the whole planning surface
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01, 02
 
 ## Problem
@@ -80,3 +80,15 @@ It stops at its deliverable and hands back. It does not invoke `/implement`. Tha
 - Options are presented whenever more than one reasonable approach exists, not only on request.
 - Every run leaves at least one ticket on disk. Nothing important lives only in the conversation.
 - `SKILL.md` carries no deliverable-format detail; each lives behind its pointer.
+
+## Comments
+
+**Ticket status vocabulary aligned with `docs/agents/issue-tracker.md`.** `TICKETS.md`
+and `MAP.md` use `ready-for-agent` / `claimed` / `blocked` / `resolved` /
+`obsolete`. The first draft invented `in-progress` / `done`; the repo already
+documents `claimed` / `resolved`, and a second vocabulary for the same states is
+the sediment this framework is supposed to prevent.
+
+**Decision 37 was missing and is now in `TICKETS.md`** — every ticket after the
+first declares `Part of:` or `Blocked by:`, with `Blocked by: —` as a positive
+statement rather than an omitted line. Found by the spec review.

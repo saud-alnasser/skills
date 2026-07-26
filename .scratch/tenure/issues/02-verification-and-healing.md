@@ -1,6 +1,6 @@
 # feat(knowledge): verification at use, healing where the break is found
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -58,3 +58,19 @@ Belongs to `/configure` re-run (ticket 08), because point-of-use verification st
 - A broken Source Pointer is never replaced by an invented one.
 - **Every `/implement` emits a verification report, including when there was nothing to verify.**
 - Every rule here has exactly one home; `CLAUDE.md` carries only what must hold on turns where no skill runs.
+
+## Comments
+
+**The always-on half ships as `skills/configure/CLAUDE.template.md`.** The
+ticket names four homes; only `/design` exists in Phase 1. ADR 0007 forbids
+factoring an always-on rule behind a pointer — a rule inside a skill fires only
+when that skill runs — so the rules could not simply wait for `/configure`.
+`/configure` (ticket 08) is `Blocked by: 02`, which makes 02 producing the
+template that 08 installs the right dependency direction.
+
+`/implement` (04) and `/configure` (08) carry their stage-scoped share when
+built. Their acceptance — notably "every `/implement` emits a verification
+report" — is therefore **not yet verified** and belongs to those tickets.
+
+`/design` was written to point at the discipline rather than restate it;
+`verify.ps1` asserts the Marker rule has exactly one statement under `./skills`.

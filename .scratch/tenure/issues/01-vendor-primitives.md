@@ -1,6 +1,6 @@
 # chore(skills): vendor the primitives and rewrite their paths
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -51,3 +51,17 @@ Path rewrite: `docs/adr/` → `.claude/docs/decisions/`. On migration, preserve 
 - No file under `./skills` references `CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, or `.scratch/`.
 - `domain-modeling` writes the Tenure `context.md` shape, including the routing table.
 - Attribution to mattpocock/skills present (ADR 0001 records the obligation).
+
+## Comments
+
+**Pruning went further than a path rewrite, after the code review found the
+vendored files restating rules that now have a home elsewhere.** `domain-modeling`
+had inherited a copy of the knowledge-layer table, the compression test, the
+Source Pointer rule, and the full ADR 3-of-3 test — each of which already lives
+in `CLAUDE.template.md` or `ADR-FORMAT.md`. It now points instead. Same for
+`codebase-design/DEEPENING.md`, which restated three principles from its own
+`SKILL.md`.
+
+This is alteration-checklist item 5 ("prune what Tenure supersedes") applied to
+*rules*, not just to features. `verify.ps1` now asserts single-home for the four
+rules most likely to be helpfully restated.

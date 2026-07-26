@@ -1,6 +1,6 @@
 # feat(tools): tool reference — how to drive every tool the workflow touches
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -50,3 +50,28 @@ Written by `/configure` from what it discovers: package manager, test runner, ty
 - Every file names its docs URL **and** the condition for fetching it. A URL with no trigger is decoration.
 - Entries are task-to-command, not flag catalogues — the question is always "how do I do X here", never "what does `-n` mean".
 - `/configure` writes `.claude/tools/` for the repo's own tooling and re-checks it on audit.
+
+## Comments
+
+**Files are named for the platform, not the binary.** Shipped as `git.md`,
+`github.md`, `gitlab.md`, `graphite.md` rather than `gh.md` / `glab.md`. The
+ticket named the binaries; the user asked for platform names while this was
+being built, and a consistent axis reads better in the routing table. Each
+file's heading still names its binary (`# gh — GitHub CLI`).
+
+**`graphite.md` added.** Not in the ticket. Graphite is the stacking tool the
+user drives instead of raw git, so a reference that omits it leaves the most
+guessable surface uncovered — `gt`'s verbs read like git's and do something
+else. Its command list and flags were read from the installed `gt` 1.8.6, and
+it carries the never-publish rule for `gt submit` and `gt sync`.
+
+**`gitlab.md` is unverified.** No `glab` on this machine, so its entries are
+the shape of the tool, not confirmed invocations. The file says so at the top
+and points every entry at `glab <command> --help`. `verify.ps1` asserts that
+disclaimer is present — a reference that exists to stop guessing must not
+quietly guess. Re-verify on a machine with `glab` installed.
+
+**Entries are guides, not restatements.** Per the user: these files cover what
+is *not* already known — Tenure-specific operations, parsing gotchas, verbs
+that lie about what they do — plus the docs URL and its fetch trigger.
+Everyday `git add` / `git log` deliberately have no entry.

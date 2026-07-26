@@ -13,7 +13,7 @@ The absolute source of truth. Where conflicts with Context or Decisions are alwa
 _Avoid_: source, implementation, reality
 
 **Context**:
-How this repository thinks — concepts, vocabulary, boundaries, stable constraints. Excludes implementation. Lives in `CONTEXT.md` and `contexts/*.md`.
+How this repository thinks — concepts, vocabulary, boundaries, stable constraints. Excludes implementation. A Tenure-configured repo holds it at `.claude/context.md` and `.claude/contexts/`; this repo has not been migrated yet (ADR 0006) and still holds it at the root.
 _Avoid_: documentation, architecture doc, glossary
 
 **Domain Context**:
@@ -25,7 +25,7 @@ A directory under `contexts/` grouping the Domain Contexts belonging to one proj
 _Avoid_: namespace, scope, module
 
 **Routing Table**:
-The section at the end of `CONTEXT.md` naming each Domain Context with the condition for loading it and its Source Pointer. The mechanism that makes context loading demand-driven.
+The section at the end of the root Context file naming each Domain Context with the condition for loading it and its Source Pointer. The mechanism that makes context loading demand-driven.
 _Avoid_: index, manifest, TOC
 
 **Source Pointer**:
@@ -33,7 +33,7 @@ A navigation coordinate — "start investigating here." Never a claim about what
 _Avoid_: reference, path, link
 
 **Decision**:
-Why an approach was selected, preserved as an ADR in `docs/adr/`. A draft until committed; after that its reasoning is frozen and only its status moves. A changed mind is a new file that supersedes it.
+Why an approach was selected, preserved as an ADR. A draft until committed; after that its reasoning is frozen and only its status moves. A changed mind is a new file that supersedes it. A Tenure-configured repo holds these at `.claude/docs/decisions/`; this repo still uses `docs/adr/` pending migration (ADR 0006).
 _Avoid_: rationale doc, design doc
 
 **Evidence**:
