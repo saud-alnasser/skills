@@ -53,7 +53,7 @@ Same file and format as any other ticket (see [TICKETS.md](TICKETS.md)), with tw
 ```markdown
 # <NN> — <the question, as a title>
 
-Status: ready-for-agent
+Status: open
 Part of: map
 Type: grilling
 Blocked by: 03

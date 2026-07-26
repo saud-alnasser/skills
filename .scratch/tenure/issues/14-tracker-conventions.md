@@ -71,3 +71,24 @@ PR descriptions cover problem, solution, architectural impact, testing performed
 - Conventional Commits is applied only after confirming the repo documents nothing else.
 - Both trackers express `part of` and `blocks`.
 - Nothing in this ticket contradicts `triage`'s existing role vocabulary — reconcile, don't fork.
+
+## Comments
+
+**Part of this landed early, in ticket 03.** `/design`'s `TICKETS.md` shipped
+with `ready-for-agent` as a build-ticket status, conflating the triage roles
+with the build lifecycle this ticket defines. Corrected to `open` / `claimed` /
+`blocked` / `resolved` / `obsolete`, with the distinction stated in the file.
+`verify.ps1` now asserts both halves — the lifecycle is defined, and no triage
+role appears on a `Status:` line — and both assertions were mutation-tested.
+
+**`blocked` is an addition to this ticket's list.** Ticket 03 requires
+`/implement` to hand a ticket back as blocked, with the reason under
+`## Blocked`, and the four states here have nowhere to put that. Fold it in
+rather than treating it as a fork.
+
+**Still open for this ticket:** `/design`'s `TICKETS.md` and `MAP.md` are
+written local-markdown-only — they hardcode `.claude/tickets/` and file-based
+`Status:` lines, with no branch on tracker choice. Decision 35 makes GitHub and
+local markdown both first-class, so the representation table above has to reach
+those two files. Ticket 09 places `.claude/tracker.md`; this ticket has to make
+`/design` read it.

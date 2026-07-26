@@ -9,7 +9,7 @@ One ticket per file. Never a single combined file: tickets are claimed one at a 
 ```markdown
 # <NN> — type(scope): summary
 
-Status: ready-for-agent
+Status: open
 Blocked by: —
 
 ## Problem
@@ -30,7 +30,20 @@ implementation list — the ticket says what "done" looks like, and
 
 The title is a Conventional Commit subject, so the ticket's commit writes itself.
 
-`Status:` is one of `ready-for-agent`, `claimed`, `blocked`, `resolved`, `obsolete`. Claiming is the first write of any session that touches a ticket — set it and save before doing any work, so a concurrent session skips it.
+### Lifecycle
+
+```
+open       created by /design, nothing else set
+claimed    /implement claims it BEFORE any work, and saves —
+           this is what stops two sessions taking the same ticket
+blocked    handed back to /design, with the reason under `## Blocked`
+resolved   /implement sets it after the commit lands
+obsolete   no longer needed. Requires a one-line reason. Never deleted
+```
+
+**This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
+
+Claiming is the first write of any session that touches a ticket: set it and save before doing any work.
 
 ## Acceptance criteria state observable outcomes
 

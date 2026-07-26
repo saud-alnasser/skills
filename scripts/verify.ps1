@@ -494,6 +494,30 @@ Describe-Ticket '03' 'the whole planning surface' {
     $true
   }
 
+  # Ticket 14 defines the build lifecycle and is explicit that it is NOT the
+  # triage vocabulary: a ticket /design created is agent-ready by construction
+  # and is never triaged. Conflating the two sets makes a status answer two
+  # questions at once, so both halves are asserted.
+  Assert "tickets carry the build lifecycle, not triage roles" {
+    $tickets = Get-SkillFile 'design/TICKETS.md'
+    $lifecycle = @('open', 'claimed', 'blocked', 'resolved', 'obsolete')
+    $absent = $lifecycle | Where-Object { $tickets -notmatch "(?m)^$_\s" }
+    if ($absent) { throw "lifecycle states undefined: $($absent -join ', ')" }
+    $true
+  }
+
+  Assert "no triage role leaks into a build ticket's Status:" {
+    $roles = 'needs-triage|needs-info|ready-for-agent|ready-for-human|wontfix'
+    $leaked = @()
+    foreach ($f in @('design/TICKETS.md', 'design/MAP.md')) {
+      foreach ($m in [regex]::Matches((Get-SkillFile $f), "(?m)^Status:\s*($roles)")) {
+        $leaked += "${f}: $($m.Groups[1].Value)"
+      }
+    }
+    if ($leaked) { throw ($leaked -join ', ') }
+    $true
+  }
+
   Assert "a re-plan marks superseded tickets obsolete — never deletes, never leaves them open" {
     $c = Get-SkillFile 'design/SKILL.md'
     ($c -match '(?i)obsolete') -and ($c -match '(?i)never deleted|not deleted')
