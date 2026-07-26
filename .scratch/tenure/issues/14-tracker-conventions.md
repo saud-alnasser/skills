@@ -86,6 +86,11 @@ role appears on a `Status:` line — and both assertions were mutation-tested.
 `## Blocked`, and the four states here have nowhere to put that. Fold it in
 rather than treating it as a fork.
 
+**The `obsolete`-on-claim branch also landed early, in ticket 04.**
+`/implement` claiming a ticket and finding the work already done or no longer
+required sets the state, gives the reason, and stops rather than inventing
+work — asserted in `verify.ps1` under ticket 04.
+
 **Still open for this ticket:** `/design`'s `TICKETS.md` and `MAP.md` are
 written local-markdown-only — they hardcode `.claude/tickets/` and file-based
 `Status:` lines, with no branch on tracker choice. Decision 35 makes GitHub and

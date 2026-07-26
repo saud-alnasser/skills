@@ -1,6 +1,6 @@
 # feat(implement): build, and record what moved
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Problem
@@ -111,3 +111,35 @@ Adds:
 - Implementation detail never lands in context; concepts and boundaries do.
 - A change that moves no concept updates no knowledge — silence is the correct output.
 - Tests pass and the full suite has been run once before hand-off.
+
+## Comments
+
+**Three of this ticket's own instructions were overridden by things that bind
+harder.** Each is a real conflict, not a preference:
+
+1. **Hand-back leaves the ticket `blocked`, not `open`.** This ticket says
+   `Status: open`; ticket 03 shipped `blocked` for exactly this case, and the
+   reason is decisive — an open ticket with no blocker is back on the frontier,
+   so the next `/implement` claims it and walks into the same wall. Ticket 14
+   still has to fold `blocked` into its four-state list.
+2. **The close-out routes through `/commit`.** This ticket's flow diagram reads
+   `commit → resolve → advance Marker`. Ticket 06 line 14 says `/commit` is
+   model-invoked *"because `/implement` closes out through it"*, and the
+   always-on rule is *"Only `/commit` advances the Marker. Nothing else moves
+   it."* `/implement` asks, then hands to `/commit`, then sets `resolved`.
+   The acceptance criterion still holds — the Marker equals `HEAD` after every
+   commit and every amend — it is just not `/implement` that writes it.
+3. **Model-invoked is right; the stated reason is not.** This ticket justifies
+   it as *"so `/design` can reach it"*, which ticket 03 explicitly forbids.
+   The spec's Scope section is the actual authority, and the caller it is for
+   is the router (ticket 10).
+
+**The never-push enumeration and the amend invocations point at
+`tools/git.md`** rather than being restated — `git.md` already owns both, and a
+third copy is the duplication ADR 0007 exists to stop. What stays here is the
+part that is `/implement`'s alone: one ticket stays one commit, and why the
+amend rule depends on the push guard.
+
+**The `obsolete` branch landed early, from ticket 14** — `/implement` claiming
+a ticket whose work is already done sets the state, gives the reason, and
+stops. It is asserted here, so ticket 14 inherits it verified.

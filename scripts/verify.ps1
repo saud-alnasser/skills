@@ -556,6 +556,219 @@ Describe-Ticket '03' 'the whole planning surface' {
   }
 }
 
+# --- ticket 04 — /implement, build and record what moved ---------------------
+
+Describe-Ticket '04' 'build, and record what moved' {
+
+  Assert "/implement ships as a skill" {
+    Test-Path (Join-Path $skills 'implement/SKILL.md')
+  }
+
+  # Spec, Scope: the spine is model-invoked. Not, as ticket 04 claims, so
+  # /design can reach it — ticket 03 forbids exactly that. The router (10) is
+  # the caller this is actually for.
+  Assert "/implement is model-invoked — the spine is reachable" {
+    $fm = Get-Frontmatter (Get-SkillFile 'implement/SKILL.md')
+    if (-not $fm) { throw 'implement/SKILL.md has no frontmatter' }
+    $fm -notmatch 'disable-model-invocation:\s*true'
+  }
+
+  # Ticket 02 deferred this criterion to here: the discipline is only real if
+  # something emits proof of it. The report is the enforcement.
+  Assert "step 0 is a verification report, emitted on every invocation without exception" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)verification report') { throw 'no verification report named' }
+    if ($c -notmatch '(?i)every invocation|no exceptions') { throw 'the report is left conditional' }
+    $c -match '(?ms)^```\s*$.*?Verification.*?^```\s*$'
+  }
+
+  # A pointer says where to start looking, never what is there. Reading source
+  # through an unchecked one is how a stale belief becomes a wrong edit.
+  Assert "no source is read through a Source Pointer that has not been verified this session" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    ($c -match '(?i)source pointer') -and ($c -match '(?i)before (it is |it.s )?relied on|verified this session')
+  }
+
+  # A filename is not a contract. This is the half of the pointer rule that
+  # bites during a build, and it is /implement's — CLAUDE.md owns recovery.
+  Assert "an API is never inferred from a filename" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)never infer an API from a filename'
+  }
+
+  # The whole point of a deterministic frontier is that two sessions on the same
+  # effort make the same choice. "Pick a sensible ticket" is not that.
+  Assert "the frontier is defined and the choice is deterministic — lowest number wins" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)frontier') { throw 'the frontier is never named' }
+    if ($c -notmatch '(?i)unblocked') { throw 'the frontier does not exclude blocked tickets' }
+    if ($c -notmatch '(?i)unclaimed') { throw 'the frontier does not exclude claimed tickets' }
+    $c -match '(?i)lowest number wins'
+  }
+
+  Assert "claiming is the first write, before any work — that is what stops a double claim" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)(claim[a-z]*).{0,60}before any work|before any work.{0,60}claim'
+  }
+
+  Assert "one ticket per invocation — never a second, never a blocked one" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    ($c -match '(?i)one ticket per invocation') -and
+    ($c -match '(?i)never (take |start )')
+  }
+
+  # The headline acceptance criterion. A prohibition a reader can only find by
+  # already knowing it is there is not a prohibition.
+  Assert "/implement never runs git push, and says so where a reader looking for it lands" {
+    $lines = (Get-SkillFile 'implement/SKILL.md') -split '\r?\n'
+    if (($lines -join "`n") -notmatch '(?i)never (runs |run )?`?git push') { throw 'no explicit never-push rule' }
+    $inFence = $false
+    $lineNo = 0
+    $invocations = @()
+    foreach ($line in $lines) {
+      $lineNo++
+      if ($line -match '^\s*```') { $inFence = -not $inFence; continue }
+      # A fenced `git push` with no marker of prohibition reads as an instruction.
+      # A `#` alone does not make a line a prohibition — `git push  # when the
+      # ticket is done` is a comment and an instruction. The comment has to say
+      # not to run it.
+      if ($inFence -and $line -match '^\s*git\s+push' -and $line -notmatch '(?i)\b(never|do not|don.t|forbidden)\b') {
+        $invocations += "line ${lineNo}: $($line.Trim())"
+      }
+    }
+    if ($invocations) { throw ($invocations -join '; ') }
+    $true
+  }
+
+  # The two rules hold each other up: amending rewrites history, which is only
+  # safe because nothing was pushed. Either one alone is a defect.
+  Assert "post-commit changes amend, and the amend is justified by the push guard" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)amend') { throw 'amending is never mentioned' }
+    if ($c -notmatch '(?i)one ticket.{0,40}one commit') { throw 'no one-ticket-one-commit rule' }
+    $c -match '(?i)(amend|rewrit).{0,200}(push|publish)|(push|publish).{0,200}(amend|rewrit)'
+  }
+
+  Assert "the Marker re-advances on every amend, not only on the first commit" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)marker.{0,120}(every |each )amend|(every |each )amend.{0,120}marker'
+  }
+
+  # Ticket 06: "/commit is the shared implementation both paths use", and the
+  # always-on rule is "Only /commit advances the Marker. Nothing else moves it."
+  # A close-out that commits directly breaks that on the ticketed path.
+  Assert "the close-out routes through /commit, which owns the Marker" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)(close out|closes out) through `?/commit') { throw 'the close-out does not route through /commit' }
+    $c -match '(?i)/implement`?\*{0,2} never writes the Marker directly'
+  }
+
+  Assert "a ticket resolves only when the user says so" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)resolve') { throw 'resolution is never described' }
+    $c -match '(?i)(ask|asks|the user.s call|user says).{0,200}(resolve|commit)|(resolve|commit).{0,200}(ask|asks|the user.s call)'
+  }
+
+  Assert "a not-yet keeps the ticket claimed and the loop open" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)not yet.{0,160}claimed'
+  }
+
+  # Improvising past a wrong plan silently discards the grill, the options the
+  # user chose, and the tier that was assessed.
+  Assert "/implement never redesigns — a wrong plan is handed back, not worked around" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)never redesign') { throw 'no never-redesign rule' }
+    # `blocked`, not `open`. An open ticket with no blocker is back on the
+    # frontier, and the next /implement claims it into the same wall.
+    if ($c -notmatch '(?i)unclaim.{0,60}Status:\s*blocked') { throw 'the ticket is not left blocked on hand-back' }
+    if ($c -match '(?i)unclaim.{0,60}Status:\s*open') { throw 'hand-back returns the ticket to the frontier' }
+    if ($c -notmatch '## Blocked') { throw 'no ## Blocked note' }
+    $c -match '(?i)(leave|leaving) the (working )?tree'
+  }
+
+  Assert "harder than expected is not a wrong plan" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)harder than expected\*{0,2} is not a wrong plan'
+  }
+
+  Assert "a deviation that changes architecture goes back to /design, not into the diff" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)changes architecture.{0,60}/design'
+  }
+
+  # Ticket 14: /implement marks a ticket obsolete when it claims one and finds
+  # the work already done — "it sets the state, gives the reason, and stops
+  # rather than inventing work."
+  Assert "a ticket whose work is already done is marked obsolete, not filled with invented work" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)obsolete') { throw 'the obsolete branch is missing' }
+    $c -match '(?i)(reason|one-line).{0,200}(do not|never|stop)|stop there'
+  }
+
+  Assert "a ticket left claimed is resumed, not skipped" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    ($c -match '(?i)resum') -and ($c -match '(?i)claimed')
+  }
+
+  Assert "work with no ticket is /commit's, not /implement's" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)(no ticket|without a ticket).{0,140}/commit'
+  }
+
+  # matt's core, retained: the loop is the point, and the full suite runs once.
+  Assert "tdd drives the build at pre-agreed seams, with the full suite once at the end" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)\btdd\b') { throw 'tdd is never invoked' }
+    if ($c -notmatch '(?i)seam') { throw 'no pre-agreed seams' }
+    if ($c -notmatch '(?i)typecheck') { throw 'typechecking is never run' }
+    $c -match '(?i)(full|whole) suite'
+  }
+
+  # Ordering, not presence. Approval given for reviewed work is not approval
+  # for work that is about to be reviewed.
+  Assert "/code-review closes the work out before the commit question" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $review = $c.IndexOf('/code-review')
+    $ask = $c.IndexOf('commit and resolve this ticket')
+    if ($review -lt 0) { throw '/code-review is never invoked' }
+    if ($ask -lt 0) { throw 'the close-out question is never asked' }
+    if ($review -gt $ask) { throw 'review comes after the commit question' }
+    $c -match '(?i)/code-review.{0,40}before\*{0,2} the commit question'
+  }
+
+  # Context stores concepts. An implementation walkthrough in context is
+  # sediment: it goes stale on the next commit and nothing points at it.
+  Assert "knowledge writing is scoped to concepts and boundaries, never implementation detail" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '\.claude/context\.md') { throw 'context.md is never written' }
+    if ($c -notmatch '(?i)concept') { throw 'concepts are not named as what belongs' }
+    $c -match '(?i)(never|not).{0,60}implementation|implementation.{0,60}(never|does not)'
+  }
+
+  Assert "a change that moves no concept writes nothing — silence is the correct output" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $c -match '(?i)silence is the correct output'
+  }
+
+  # ADR 0005: vocabulary and decisions crystallise in conversation, and that
+  # conversation is /design's.
+  Assert "/implement writes no vocabulary and no ADRs — those belong to /design" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)(does\s+\*{0,2}not\*{0,2}|never)\s+writes?\s+vocabulary') {
+      throw 'the prohibition is not stated'
+    }
+    $c -match '(?i)(vocabulary|adrs?).{0,140}/design'
+  }
+
+  # Ticket 02's placement rule, checked where the third file could restate it.
+  Assert "/implement points at the verification discipline rather than restating the Marker rule" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -match '(?i)marker.{0,80}(==|matches).{0,40}HEAD') { throw 'the Marker rule is restated' }
+    $c -match '(?i)marker'
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -563,7 +776,7 @@ Describe-Ticket '03' 'the whole planning surface' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

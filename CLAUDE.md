@@ -10,14 +10,17 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 - `tools/` — the tool reference: `git.md`, `github.md`, `gitlab.md`, `graphite.md` (ticket 15)
 - `configure/CLAUDE.template.md` — the always-on verification and healing rules (ticket 02)
 - `design/` — `/design`, with `SPEC-FORMAT.md`, `TICKETS.md`, `MAP.md` behind pointers (ticket 03)
+- `implement/` — `/implement`, the build stage (ticket 04)
 
-Tickets 04–14 are not built. `/implement`, `/code-review`, `/commit`, `/configure`, `/research`, and `/prototype` do not exist yet, so anything depending on them is unverified.
+**Phase 2 — the dogfood checkpoint — has not been run.** It is a human-in-the-loop step: run `/design` on ticket 07 in this repo and watch what breaks before building more.
+
+Tickets 05–14 are not built. `/code-review`, `/commit`, `/configure`, `/research`, and `/prototype` do not exist yet, so anything depending on them is unverified — `/implement` closes out through `/commit` and hands off to `/code-review`, and neither hand-off has ever run.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
 ```
 pwsh -NoProfile -File scripts/verify.ps1            # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket 03 # one, two digits
+pwsh -NoProfile -File scripts/verify.ps1 -Ticket 04 # one, two digits
 ```
 
 Extend it in the same pass as any change to `./skills` — it is the only thing that catches a broken build here.
