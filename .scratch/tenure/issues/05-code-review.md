@@ -1,6 +1,6 @@
 # feat(code-review): review axes for Tenure
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Problem
@@ -43,3 +43,43 @@ Acceptance is the user's call, never the reviewer's.
 - Axes run in parallel subagents so they don't pollute each other's context.
 - A diff contradicting an existing ADR is surfaced explicitly, not silently accepted.
 - Findings are reported against the repo's own documented standards, not generic ones.
+
+## Comments
+
+**The review subject is the working tree, not a commit range.** Not in this
+ticket, and it is the defect that would have made the skill useless to its
+stated primary caller. `/implement` runs `/code-review` *before* the commit
+question (`implement/SKILL.md` §4), so on that path the entire change is
+uncommitted and `git diff <fixed>...HEAD` is empty — and the skill as first
+written treated an empty diff as a stop. Every `/implement`-driven review would
+have halted at step 1. Step 1 now pins the range and the tree together, and
+`tools/git.md` gained the staged, unstaged, and untracked reads.
+
+**The comment and public-API rules landed here, from ticket 13.** ADR 0007
+places them by name — *"comment and public-API rules in `/implement` and
+`/code-review`"* — so they are this skill's to carry, not ticket 13's to
+distribute later. They apply even where the repository documents neither.
+`/implement` carried neither and now writes to them in §2; this skill's
+Standards axis catches a breach. The pair is what ADR 0007 asks for — a
+producer and its checker, worded for their own actions — not one rule in two
+homes. **Ticket 13 must not place either again.**
+
+**`SMELLS.md` is a judgement call, and the one worth reversing if you disagree.**
+This ticket's third acceptance criterion reads *"Findings are reported against
+the repo's own documented standards, not generic ones"*, which is a fair reading
+of *drop matt's Fowler baseline entirely*. It was kept, subordinated: the
+repository's own standards are ranked first and always override, a baseline
+finding is always labelled a judgement call, and the list is a separate file the
+Standards subagent opens rather than context every caller pays for. The reason
+for keeping it is that a repository documenting nothing otherwise gets a
+Standards axis with nothing to say — which is the repository that most needs
+one. Nothing else in Tenure carries this vocabulary; `codebase-design` is deep
+modules and seams, not smells. Cutting `SMELLS.md` and its three assertions is a
+clean reversal if the strict reading was intended.
+
+**`tools/git.md` owns the review invocations**, including the three-dot/two-dot
+pairing, which is the opposite of the Marker read in the same file and silently
+wrong rather than broken when confused. The skill points at it. Two assertions
+under ticket 15 pin the dot counts, because `..HEAD` still produces a plausible
+diff — just one that blames this work for whatever landed on the base branch
+after it started.

@@ -46,3 +46,16 @@ ADR 0007 settles ownership: Tenure owns these rules, the global file is trimmed,
 - No rule appears in two homes.
 - The `CLAUDE.md` template is under 200 lines with routing included.
 - A rule that must hold unconditionally is in `CLAUDE.md`, not in a skill — a rule inside a skill only fires when that skill runs.
+
+## Comments
+
+**One row landed early, in ticket 05.** The *"self-explanatory code · comments
+explain why · document public APIs"* row places its rules in `/implement` and
+`/code-review`, and both halves are now placed: `/implement` §2 writes to them,
+`/code-review`'s Standards axis catches a breach. ADR 0007 authorises the pair —
+they are a producer and its checker, not one rule stated twice, and each is
+worded for its own action. Both are asserted in `verify.ps1`. **Do not place
+either again**; no rule in two homes is this ticket's own acceptance criterion.
+
+Still this ticket's: *self-explanatory code* itself, which is the part of that
+row neither skill carries.

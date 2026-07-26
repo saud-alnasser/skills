@@ -76,6 +76,11 @@ Typecheck often, and run the single test file often. Run the **full suite once**
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
+Two rules about what gets written, applied even where the repository documents neither (ADR 0007). `/code-review` checks both; this is where they are obeyed:
+
+- **Comments explain *why*, not *what*.** A comment that restates the line below it goes stale on its own schedule and is worth less than the naming it is compensating for. If a comment is needed to say what the code does, fix the code.
+- **A public interface is documented; private implementation is not.** Anything callers depend on states its contract — what it does, what it requires, how it fails. Documenting the inside as well doubles what has to be kept true.
+
 ## 3 — When the plan turns out wrong
 
 A plan is wrong when the ticket cannot be built as written: the architecture it assumes is not there, an approach it depends on does not work, or the change crosses a boundary nobody costed.

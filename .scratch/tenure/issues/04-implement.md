@@ -140,6 +140,12 @@ third copy is the duplication ADR 0007 exists to stop. What stays here is the
 part that is `/implement`'s alone: one ticket stays one commit, and why the
 amend rule depends on the push guard.
 
+**The comment and public-API rules were added later, during ticket 05.**
+ADR 0007 places them in `/implement` and `/code-review` both, and ticket 05's
+review found `/implement` carrying neither. They sit in §2, where code is
+written; `/code-review` catches breaches. Noted on ticket 13 so its
+distribution pass does not place them a second time.
+
 **The `obsolete` branch landed early, from ticket 14** — `/implement` claiming
 a ticket whose work is already done sets the state, gives the reason, and
 stops. It is asserted here, so ticket 14 inherits it verified.

@@ -43,6 +43,22 @@ git status --porcelain --untracked-files=all
 
 The parsing is the part that goes wrong. Each line is `XY<space><path>`: status in columns 1–2, path from column 4. **Split on the first space and you mis-read ` M` (modified, unstaged) as a one-character status.** `X` is the index, `Y` the working tree — so `MM` is staged-then-modified-again, ` D` is deleted but unstaged, `??` is untracked. A rename's path field is `old -> new`, and paths with spaces or non-ASCII come back quoted; `-z` gives NUL-separated raw paths when that matters.
 
+## Read a review diff
+
+`/code-review` has the rules. These are the reads it depends on, against a fixed point the human supplied.
+
+```
+git rev-parse --verify "<fixed-point>^{commit}"   # exit 1 → bad ref
+git diff <fixed-point>...HEAD                     # committed, vs the merge-base
+git log <fixed-point>..HEAD --oneline             # the commits in it
+git diff HEAD                                     # uncommitted, staged and not
+git ls-files --others --exclude-standard          # untracked, not in any diff
+```
+
+**Three dots for the diff, two for the log** — the opposite pairing to the Marker read above, so it is worth being deliberate. `A...HEAD` diffs against the *merge-base*, leaving out what landed on `A` after the work started. `A..HEAD` is a commit range and already means "what HEAD has that A doesn't"; three dots there would fold A's own commits back in.
+
+`git diff HEAD` covers staged and unstaged together; `git diff` alone silently omits anything already staged. Neither shows an untracked file, which is why the last line is not optional — a review that reads only the diffs cannot see a newly added file at all.
+
 ## Recover a broken Source Pointer
 
 `CLAUDE.md` has the rule. These are the two commands that find where the concept went:

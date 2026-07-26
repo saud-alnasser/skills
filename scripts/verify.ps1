@@ -292,6 +292,24 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
     if ($unlisted) { throw (($unlisted | Select-Object -Unique) -join ', ') }
     $true
   }
+
+  # The dot count is the whole content of this entry and it is invisible when
+  # wrong: `..HEAD` still produces a plausible diff, just one that blames the
+  # work for commits that landed on the base branch after it started.
+  Assert "the review-diff entry pairs three dots with the diff and two with the log" {
+    $c = Get-SkillFile 'tools/git.md'
+    if ($c -notmatch '(?m)^git diff <fixed-point>\.\.\.HEAD') { throw 'the review diff is not three-dot' }
+    if ($c -notmatch '(?m)^git log <fixed-point>\.\.HEAD') { throw 'the commit list is not a two-dot range' }
+    $c -match '(?i)merge-?base'
+  }
+
+  # A review that reads only the diffs cannot see a newly added file, and a
+  # `git diff` without `HEAD` silently drops whatever is already staged.
+  Assert "the review reads staged, unstaged, and untracked — not just the commit range" {
+    $c = Get-SkillFile 'tools/git.md'
+    if ($c -notmatch '(?m)^git diff HEAD\b') { throw 'staged changes are not read' }
+    $c -match '(?m)^git ls-files --others --exclude-standard'
+  }
 }
 
 # --- ticket 02 — verification at use, healing where the break is found --------
@@ -697,6 +715,16 @@ Describe-Ticket '04' 'build, and record what moved' {
     $c -match '(?i)changes architecture.{0,60}/design'
   }
 
+  # ADR 0007 places these in /implement and /code-review both — the skill that
+  # writes them and the skill that catches a breach. Ticket 13 distributes the
+  # rest of that row; these two are already home and must not be placed twice.
+  Assert "the comment and public-API rules ADR 0007 places here are carried" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
+    if ($c -notmatch '(?i)public (interface|api) is documented') { throw 'the public-API rule is missing' }
+    $c -match '(?i)ADR 0007|0007'
+  }
+
   # Ticket 14: /implement marks a ticket obsolete when it claims one and finds
   # the work already done — "it sets the state, gives the reason, and stops
   # rather than inventing work."
@@ -769,6 +797,258 @@ Describe-Ticket '04' 'build, and record what moved' {
   }
 }
 
+# --- ticket 05 — /code-review, two axes --------------------------------------
+
+Describe-Ticket '05' 'review axes for Tenure' {
+
+  Assert "/code-review ships as a skill" {
+    Test-Path (Join-Path $skills 'code-review/SKILL.md')
+  }
+
+  # Decision 13: the name is load-bearing. Shipping as `review` shadows the
+  # built-in GitHub PR reviewer, which is a capability lost silently.
+  Assert "it ships as /code-review, not /review — the built-in PR reviewer is preserved" {
+    if (Test-Path (Join-Path $skills 'review')) { throw 'skills/review/ exists and shadows the built-in' }
+    $fm = Get-Frontmatter (Get-SkillFile 'code-review/SKILL.md')
+    if (-not $fm) { throw 'code-review/SKILL.md has no frontmatter' }
+    $fm -match '(?m)^name:\s*code-review\s*$'
+  }
+
+  # Spec, Scope: model-invoked, because /implement closes out through it and
+  # /commit confirms it ran.
+  Assert "/code-review is model-invoked — /implement and /commit can reach it" {
+    $fm = Get-Frontmatter (Get-SkillFile 'code-review/SKILL.md')
+    $fm -notmatch 'disable-model-invocation:\s*true'
+  }
+
+  Assert "two axes — Spec and Standards" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?im)^##+\s.*\bSpec\b') { throw 'no Spec axis' }
+    $c -match '(?im)^##+\s.*\bStandards\b'
+  }
+
+  # The acceptance criterion, and the reason: an axis that reads the other's
+  # findings starts agreeing with them.
+  # Scoped to the step that launches them, not the whole file — "parallel" and
+  # "subagent" both appear in the rationale that follows, so a file-wide
+  # presence check stays green even when the instruction says to run them one
+  # after the other in this context.
+  Assert "the axes run in parallel subagents, and the reason is stated" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $m = [regex]::Match($c, '(?ims)^#{2,}\s.*\baxes\b.*?(?=^#{2}\s|\z)')
+    if (-not $m.Success) { throw 'running the axes is not its own step' }
+    $step = $m.Value
+    if ($step -match '(?i)(one after the other|sequentially|in turn|one at a time)') {
+      throw 'the axes are run sequentially'
+    }
+    if ($step -notmatch '(?i)in parallel.{0,60}sub-?agents|sub-?agents.{0,60}in parallel') {
+      throw 'the launch instruction does not bind parallel to subagents'
+    }
+    # The reason belongs to the step too. Stated anywhere else in the file it
+    # is a fact about reviews; stated here it is why this launch is shaped
+    # this way, which is the thing a reader about to "simplify" it needs.
+    $step -match "(?i)(pollut|contaminat|each other's context|one another's context)"
+  }
+
+  # Ticket 05: architecture "folds into Standards rather than earning its own
+  # subagent". A third axis is the failure this decision exists to prevent.
+  Assert "architecture folds into Standards — there is no third axis" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)architecture') { throw 'architecture is never reviewed' }
+    if ($c -match '(?i)three (axes|sub-?agents)') { throw 'a third axis was introduced' }
+    # "two axes" alone does not carry this — it is in the description and the
+    # opening either way. The absence of a third has to be stated, because
+    # architecture is the thing that would otherwise become one.
+    if ($c -notmatch '(?i)(no third|not a third|no separate)') { throw 'the absence of a third axis is never stated' }
+    $c -match '(?i)architecture.{0,200}(folds? into|part of|belongs to|within) (the )?Standards|Standards.{0,120}architecture'
+  }
+
+  # The three architecture questions the ticket names. Each is checkable
+  # separately, so each gets asserted separately — a block that reaches two of
+  # three is a partial implementation, not a pass.
+  # Scoped to the question itself. `.claude/context.md` and "boundaries" both
+  # appear elsewhere in the file, so a presence check stays green with the whole
+  # architecture block deleted — which is the one thing this must catch.
+  Assert "architecture reaches ownership boundaries, read from this repo's Context" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/context\.md'
+  }
+
+  Assert "architecture reaches abstraction the change did not require" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match '(?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction'
+  }
+
+  # Headline acceptance criterion: "A diff contradicting an existing ADR is
+  # surfaced explicitly, not silently accepted."
+  Assert "a diff contradicting an ADR is surfaced explicitly, never silently accepted" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '\.claude/docs/decisions') { throw 'the decisions are never read' }
+    $c -match '(?i)(contradict|conflict).{0,160}(surfac|report|explicit|say|flag)|(surfac|report|explicit|flag).{0,160}(contradict|conflict)'
+  }
+
+  # Decision 33. Without the third outcome the same finding is re-raised on
+  # every future review, and the reader learns to skim.
+  Assert "every finding is fixed, ticketed, or accepted-and-recorded" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    foreach ($outcome in @('fixed', 'ticketed', 'accepted')) {
+      if ($c -notmatch "(?i)\b$outcome\b") { throw "the '$outcome' outcome is missing" }
+    }
+    $c -match '(?i)(re-?raise|raised again|every future review|again on every)'
+  }
+
+  # An acceptance goes to an ADR only when it passes the 3-of-3 test — and that
+  # test has one home, in domain-modeling. Restating it here is the duplication
+  # ADR 0007 exists to stop.
+  Assert "an acceptance is recorded, and the ADR bar points at its one home" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)3-of-3') { throw 'the ADR bar is never named' }
+    if ($c -match '(?i)hard to reverse') { throw 'the 3-of-3 test is restated instead of referenced' }
+    $c -match '(?i)(ADR-FORMAT|domain-modeling)'
+  }
+
+  Assert "acceptance is the user's call, never the reviewer's" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match "(?i)accept.{0,80}(user's call|user decides|never the reviewer)|the user.{0,60}accept"
+  }
+
+  # Decision 21. A review is about a diff; once merged its subject is gone.
+  Assert "reviews are never persisted, and no skill writes a reviews directory" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)never persist') { throw 'the no-persistence rule is not stated' }
+    # Stating that the directory does not exist is the rule, not a breach of it.
+    # Flag only a mention that reads as somewhere to write.
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      foreach ($line in ((Get-Content $f.FullName -Raw) -split '\r?\n')) {
+        if ($line -match 'docs/reviews' -and $line -notmatch '(?i)\b(no|never|not|dropped|without)\b') {
+          $offenders += "$($f.Name): $($line.Trim())"
+        }
+      }
+    }
+    if ($offenders) { throw "a reviews directory is written by — $($offenders -join '; ')" }
+    $true
+  }
+
+  # Acceptance criterion: "Findings are reported against the repo's own
+  # documented standards, not generic ones." The baseline is a fallback the
+  # repo overrides — inverting that ordering is the defect.
+  Assert "the repo's own documented standards come first, and override the baseline" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)\.claude/rules') { throw "this repo's own discovered standards are never read" }
+    if ($c -notmatch '(?i)(cite|quote|name).{0,120}(standard|rule)') { throw 'a finding need not cite the standard it breaches' }
+    $c -match '(?i)the repo(sitory)? (always )?(overrides|wins)|repo(sitory)?.{0,40}outrank'
+  }
+
+  # Progressive disclosure: the baseline is a dozen entries only the Standards
+  # subagent needs, so it is a file that subagent opens — not context every
+  # caller of /code-review pays for.
+  Assert "the smell baseline is disclosed progressively, not inlined in SKILL.md" {
+    $baseline = Get-SkillFile 'code-review/SMELLS.md'
+    foreach ($smell in @('Feature Envy', 'Data Clumps', 'Primitive Obsession', 'Shotgun Surgery', 'Speculative Generality')) {
+      if ($baseline -notmatch [regex]::Escape($smell)) { throw "the baseline is missing '$smell'" }
+    }
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -match '(?i)feature envy') { throw 'the baseline is inlined in SKILL.md as well' }
+    $c -match 'SMELLS\.md'
+  }
+
+  Assert "a baseline smell is a judgement call, never a hard violation" {
+    $baseline = Get-SkillFile 'code-review/SMELLS.md'
+    if ($baseline -notmatch '(?i)judgement call') { throw 'the baseline does not label itself a judgement call' }
+    # The distinction has to reach the finding, not just the baseline file —
+    # an unmarked finding reads as a standard to whoever receives it.
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match '(?i)hard violation.{0,40}judgement call|judgement call.{0,40}hard violation'
+  }
+
+  # ADR 0007 places these two here by name: "comment and public-API rules in
+  # /implement and /code-review". They are Tenure's own, applied even where the
+  # repository documents neither — so they are not covered by the repo-first
+  # ordering above, and nothing else in ./skills carries them.
+  Assert "the comment and public-API rules ADR 0007 places here are carried" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
+    if ($c -notmatch '(?i)public (interface|api)') { throw 'the public-API rule is missing' }
+    $c -match '(?i)ADR 0007|0007'
+  }
+
+  # The primary caller reviews before committing (implement/SKILL.md §4), so
+  # the whole change is uncommitted. A review that diffs only a commit range
+  # sees nothing and reports a clean pass on it.
+  Assert "the subject includes uncommitted work — /implement reviews before the commit" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)uncommitted') { throw 'uncommitted work is never reviewed' }
+    if ($c -notmatch '(?i)untracked') { throw 'untracked files are never reviewed' }
+    $c -match '(?i)(before|prior to) the commit|working tree, not just'
+  }
+
+  # A bad ref or an empty diff must fail before two subagents are spawned on
+  # nothing — the failure is invisible once it is inside them.
+  Assert "the fixed point is pinned and proven before any subagent is spawned" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    # Structural, not textual: pinning has to be an earlier *step* than running
+    # the axes. Naming subagents in the description is not spawning them.
+    if (-not [regex]::IsMatch($c, '(?im)^#{2,}\s.*fixed point')) { throw 'pinning the fixed point is not its own step' }
+    if (-not [regex]::IsMatch($c, '(?im)^#{2,}\s.*\baxes\b')) { throw 'running the axes is not its own step' }
+    $pin = [regex]::Match($c, '(?im)^#{2,}\s.*fixed point').Index
+    $run = [regex]::Match($c, '(?im)^#{2,}\s.*\baxes\b').Index
+    if ($run -lt $pin) { throw 'the axes run before the fixed point is pinned' }
+    # `(?s)` — the emptiness check and the stop it triggers are on separate
+    # lines, and `.` does not cross a newline in .NET.
+    $c -match '(?si)(empty|non-empty).{0,200}(before|stop|fail)'
+  }
+
+  # Three-dot, so the comparison is against the merge-base. Two-dot silently
+  # reviews whatever landed on the base branch since the work started.
+  Assert "the diff is taken against the merge-base, and the invocation is not guessed" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)merge-?base') { throw 'the merge-base is never named' }
+    $c -match 'tools/git\.md'
+  }
+
+  Assert "the two axes are reported separately, never merged or reranked" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match '(?i)(never|not|do not|don.t) (merge|rerank|re-rank)|(merge|rerank|re-rank).{0,60}(defeats|masks|is the)'
+  }
+
+  Assert "the Spec axis reaches missing requirements, scope creep, and wrong implementations" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)(missing|partial)') { throw 'missing requirements are not reached' }
+    if ($c -notmatch '(?i)scope creep|was ?n.t asked for|not asked for') { throw 'scope creep is not reached' }
+    $c -match '(?i)(implemented but|looks? implemented|wrong).{0,120}(wrong|incorrect|does not)|(wrong|incorrectly).{0,60}implement'
+  }
+
+  Assert "a missing spec is reported, never invented" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)no spec') { throw 'the missing-spec case is not handled' }
+    $c -match '(?i)(never|do not|don.t) (invent|guess|reconstruct|infer)'
+  }
+
+  # Ticket 02 / CLAUDE.template.md: /code-review reads Context for boundaries
+  # and Decisions for ADRs, so it is a skill that relies on Context and owes a
+  # report. Silence is indistinguishable from the check never having run.
+  Assert "/code-review opens with a verification report, because it relies on Context" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    if ($c -notmatch '(?i)verification report') { throw 'no verification report' }
+    $c -match '(?ms)^```\s*$.*?Verification.*?^```\s*$'
+  }
+
+  # Ticket 02's placement rule, checked where a fourth file could restate it.
+  # A paraphrase is duplication too — "when the Marker equals HEAD and the tree
+  # is clean" restates CLAUDE.template.md's rule without repeating its symbols.
+  Assert "/code-review does not restate the Marker rule" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -notmatch '(?i)marker.{0,80}(==|matches|equals|is the same as).{0,40}HEAD'
+  }
+
+  # ADR 0001. Every skill derived from matt's says so.
+  Assert "attribution to mattpocock survives" {
+    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c -match '(?i)mattpocock/skills'
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -776,7 +1056,7 @@ Describe-Ticket '04' 'build, and record what moved' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 
