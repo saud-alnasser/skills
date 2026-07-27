@@ -1,6 +1,6 @@
 # chore(skills): vendor /research and /prototype
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -39,3 +39,56 @@ Prototype lifecycle per ADR 0009:
 
 - `/research` writes to `.claude/docs/research/`, `/prototype` to `.claude/prototypes/` and `.claude/docs/prototypes/`.
 - Neither is user-invoked — `/design` must be able to reach both.
+
+## Comments
+
+**Neither skill restates gating or graduation, against this ticket's own
+wording.** The ticket spells out *"Gated research blocks / Ungated research runs
+in the background"* and *"durable findings graduate to `context.md` or an ADR"*.
+`skills/design/SKILL.md` §4 already carries both, and ADR 0007 binds harder than
+the ticket. Both are `/design`'s by ownership too: `/design` decides at the gate
+and `/design` waits, and `/design` read the findings in order to decide while
+nothing downstream will. What stays here is each skill's own boundary — *never
+write Context directly* — and a pointer. The first draft restated both, and one
+assertion *required* the duplication in order to pass; both rules are now in
+`verify.ps1`'s single-home table so it cannot come back.
+
+**`.claude/prototypes/` cannot hold a UI variant, and this ticket does not say
+so.** Acceptance reads *"`/prototype` [writes] to `.claude/prototypes/`"*, but
+`UI.md`'s sub-shape A mounts variants **on the real route** — which is the entire
+reason it works, since a layout is only judgeable against real header, real data,
+real density. Such code lives where it renders and is therefore *not* gitignored,
+making it the prototype code most likely to be committed by accident. It is named
+as the one exception, and deletion applies **harder** there, not softer: the
+variants and the switcher come out in the same change that records the answer.
+Reverse this by forcing every UI prototype into sub-shape B, at the cost of
+judging layouts in a vacuum.
+
+**The exemption is on the conclusion, not the write-up.** This ticket says
+*"Conclusion … optional only when promoted"*; ADR 0009 says *"[the write-up] is
+optional only when a prototype was promoted"*. The ticket's wording is kept
+because it is the more precise of the two — the conclusion lives inside the
+write-up, so a skippable write-up would make *"a prototype is not finished until
+its conclusion is recorded"* unenforceable.
+
+**matt's capture step is cut, not adapted.** Both originals end by committing the
+prototype to a throwaway branch and leaving a pointer to it as a primary source.
+ADR 0009 says the opposite and wins. A scanner over `skills/prototype/*.md`
+rejects any line that puts prototype code on a branch, because that sentence is
+exactly what a future re-vendor would reintroduce.
+
+**`LOGIC.md` and `UI.md` carry only what is branch-specific.** The first draft
+repeated `SKILL.md`'s shared rules — one command to run, no tests, no
+persistence, the promotion rule, even the same illustrative quote — which is
+duplication wearing progressive disclosure as a costume. What is left is the TUI
+frame and the pure-module shape on one side, the sub-shapes and `?variant=`
+switcher on the other.
+
+**Review found five assertions that could not fail**, all the same shape: a
+file-wide presence check that unrelated prose in the same file satisfied. The
+write-up fields and the four conclusion values were greppable from the
+surrounding text with the template gutted; the paths were named in four places
+so moving them out of `.claude/` in the table stayed green; *optional only when
+promoted* returned a bare `promot`; and *promotion is a fresh implementation
+effort* only ever checked the second half of its own name. All rewritten against
+the template, the table, or the step that owns them, and re-mutated.

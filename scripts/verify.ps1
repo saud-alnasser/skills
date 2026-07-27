@@ -398,6 +398,8 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   $singleHome = [ordered]@{
     'the Marker cache-validity rule'  = '(?is)marker.{0,80}(==|equals|matches).{0,40}HEAD.{0,200}(trusted|no reading|no verification)'
     'the commit scope vocabulary'     = '(?i)`misc`.{0,40}`stuff`'
+    'the evidence graduation rule'    = '(?i)owns that graduation'
+    'the evidence gating rule'        = '(?i)ungated[^\r\n]{0,120}background'
     'the compression test'            = '(?i)will this improve (a )?future engineering decision'
     'the never-invent-a-pointer rule' = '(?i)(never|not|rather than) invent(ing)?( a)? (replacement|path)'
     'the knowledge-layer table'       = '(?im)^\|\s*Codebase\s*\|'
@@ -1363,6 +1365,281 @@ Describe-Ticket '06' 'the transaction boundary' {
   }
 }
 
+# --- ticket 07 — /research and /prototype, the evidence commands -------------
+
+Describe-Ticket '07' 'vendor /research and /prototype' {
+
+  foreach ($s in @('research', 'prototype')) {
+    Assert "/$s ships as a skill" {
+      Test-Path (Join-Path $skills "$s/SKILL.md")
+    }
+
+    # Acceptance: "Neither is user-invoked — /design must be able to reach both."
+    Assert "/$s is model-invoked — /design reaches it at the Heavyweight gate" {
+      $fm = Get-Frontmatter (Get-SkillFile "$s/SKILL.md")
+      if (-not $fm) { throw "$s/SKILL.md has no frontmatter" }
+      if ($fm -notmatch "(?m)^name:\s*$s\s*$") { throw "the skill is not named $s" }
+      $fm -notmatch 'disable-model-invocation:\s*true'
+    }
+  }
+
+  # --- /research -------------------------------------------------------------
+
+  # Scoped to the step that writes it. "one small cited file" appears up in the
+  # dispatch rationale, so a file-wide check stays green with the one-file rule
+  # deleted from the place it governs.
+  Assert "findings are written to .claude/docs/research/, as one cited file" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*write one cited file.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'writing the findings is not its own step' }
+    if ($step -notmatch '\.claude/docs/research/') { throw 'the findings location is wrong or missing' }
+    $step -match '(?i)one question, one[^\n]{0,40}file'
+  }
+
+  # "Follow every claim back to the source that owns it" — a claim with no
+  # source is the thing research exists to replace. The citation has to sit on
+  # the claim: a sources section at the bottom loses the mapping, and the
+  # mapping is what makes the finding checkable.
+  Assert "every claim is traced to its source, on the line that makes the claim" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -notmatch '(?i)(every|each) claim[^\n]{0,120}source') { throw 'claims are not traced to a source' }
+    $c -match '(?i)carries its citation'
+  }
+
+  Assert "primary sources only — a secondary write-up is rejected, not just named" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -notmatch '(?i)primary source') { throw 'primary sources are never required' }
+    # Naming secondary sources is not rejecting them — the skill says elsewhere
+    # what to do when one is unavoidable, which satisfies a bare presence check.
+    $c -match '(?i)secondary write-?up[^\n]{0,140}(stale|half-remembered)'
+  }
+
+  # The distinction the ticket draws explicitly: isolation is why a subagent is
+  # used; whether /design waits is a separate axis. Conflating them turns every
+  # gated question into a background one.
+  Assert "the subagent is for context isolation, not for skipping the wait" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -notmatch '(?i)sub-?agent') { throw 'no subagent' }
+    $c -match '(?i)context isolation|isolat[a-z]+[^.]{0,80}context'
+  }
+
+  # ADR 0007. design/SKILL.md §4 owns gating — it is /design that decides at the
+  # gate and /design that waits. /research states only which of the two this
+  # dispatch is, because a subagent cannot tell from the inside.
+  Assert "whether the caller blocks is /design's rule, not restated here" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -match '(?i)ungated[^\n]{0,120}background') { throw 'the gating rule is restated here' }
+    $c -match '(?i)(caller blocks|blocks on the answer)[^\n]{0,120}/design'
+  }
+
+  # A fact about an external API is true at a version, not forever. Checked in
+  # the template, because that is the thing that gets filled in — the words
+  # "version" and "date" appear in the surrounding prose either way.
+  Assert "findings record what they were verified against — version and date" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    $tpl = [regex]::Match($c, '(?ms)^```markdown\s*$.*?^```\s*$').Value
+    if (-not $tpl) { throw 'there is no findings template' }
+    if ($tpl -notmatch '(?i)verified against') { throw 'the template has no verified-against line' }
+    if ($tpl -notmatch '(?i)version') { throw 'the template records no version' }
+    if ($tpl -notmatch '(?i)date') { throw 'the template records no date' }
+    # And the reason, outside it. A template field with no rule behind it gets
+    # filled with whatever is to hand.
+    $c -match '(?i)true at a version, not forever'
+  }
+
+  # ADR 0005 and the layering: a versioned external fact copied into Context
+  # lands in a layer that has no version and nothing to re-verify it against.
+  # The prohibition itself is asserted for both skills below. What is specific
+  # to research is the reason: Context has no version, so a fact that was only
+  # ever true of one lands there stripped of the thing that made it checkable.
+  Assert "the reason /research never writes Context is given, not just the rule" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    $c -match '(?i)version[^\n]{0,120}(layer|context)[^\n]{0,80}no version|no version[^\n]{0,120}re-verify'
+  }
+
+  # `[^\n]` rather than `[^.]` — the directory this has to name is full of dots,
+  # so a sentence-scoped pattern can never span it.
+  Assert "existing research is read before new research is started" {
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -notmatch '\.claude/docs/research/') { throw 'the findings directory is never read back' }
+    $c -match '(?i)before (starting|beginning)[^\n]{0,40}research|(existing|recorded)[^\n]{0,60}before[^\n]{0,40}research'
+  }
+
+  # --- /prototype ------------------------------------------------------------
+
+  foreach ($branch in @('LOGIC.md', 'UI.md')) {
+    Assert "the $branch branch is disclosed behind a pointer, not inlined" {
+      $skill = Get-SkillFile 'prototype/SKILL.md'
+      if (-not (Test-Path (Join-Path $skills "prototype/$branch"))) { throw "prototype/$branch is missing" }
+      $skill -match [regex]::Escape($branch)
+    }
+  }
+
+  # The distinction the ticket calls out: throwaway *code* and its *write-up*
+  # live apart, and the write-up outlives the code.
+  # Against the table that declares them, not the file. Both paths are named
+  # several times over, so a file-wide check survives either one being moved
+  # out of .claude/ where it is actually specified.
+  Assert "code lives in .claude/prototypes/, the write-up in .claude/docs/prototypes/" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    $table = [regex]::Match($c, '(?ms)^\|\s*What\s*\|.*?(?=\r?\n\r?\n)').Value
+    if (-not $table) { throw 'the two locations are not declared in one table' }
+    if ($table -notmatch '`\.claude/prototypes/') { throw 'the code location is wrong or missing' }
+    if ($table -notmatch '`\.claude/docs/prototypes/') { throw 'the write-up location is wrong or missing' }
+    $c -match '(?i)deliberately \*{0,2}apart'
+  }
+
+  # A UI variant has to render against the real application to be judged, so it
+  # cannot live in a gitignored scratch directory. That exception is real and
+  # the skill has to name it — unnamed, the two files simply disagree about
+  # where prototype code lives, and the un-ignored one gets committed.
+  Assert "the in-application UI variant is named as the exception, and still deleted" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    # Bound to the case. "no reusable-harness exception" two sections down
+    # satisfies a bare `exception` match with this whole paragraph deleted.
+    if ($c -notmatch '(?i)(exception|the one case)[^\n]{0,200}(mounted|renders|running application)') {
+      throw 'the in-application variant is not named as the exception'
+    }
+    if ($c -notmatch '(?i)not\*{0,2} gitignored|\*{0,2}not\*{0,2} gitignored') { throw 'it is not said to be un-ignored' }
+    $c -match '(?i)(harder|not softer|same change that records)'
+  }
+
+  # ADR 0009. The carve-out would be claimed for almost every prototype at the
+  # moment of finishing it, which is when reusability is most overestimated.
+  Assert "prototype code is always deleted — there is no reusable-harness exception" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    if ($c -notmatch '(?i)always deleted') { throw 'deletion is not unconditional' }
+    # Ungrouped, `no ... exception|reusable harness` passes on "a reusable
+    # harness may be kept" — the one sentence this exists to reject.
+    $c -match '(?i)no reusable[- ]harness exception'
+  }
+
+  Assert ".claude/prototypes/ is gitignored scratch" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    # Bound to the directory. `.claude/.gitignore` is named in the same
+    # paragraph, so a bare `gitignor` match survives the rule being cut.
+    $c -match '(?i)`\.claude/prototypes/`[^\n]{0,40}\*{0,2}gitignored'
+  }
+
+  # The ordering is the whole mechanism: deleting code that took real effort is
+  # resisted in the moment, and the discipline holds only because the write-up
+  # comes first.
+  Assert "the write-up is written before the code is deleted" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    $c -match '(?i)(written|write it|record[a-z]*)[^.]{0,80}before[^.]{0,60}delet|not finished until'
+  }
+
+  # Against the template, not the file. Every one of these words also occurs in
+  # the surrounding prose, so a file-wide loop passes with the template gutted.
+  Assert "the write-up template carries every field the ticket names" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    $tpl = [regex]::Match($c, '(?ms)^```markdown\s*$.*?^```\s*$').Value
+    if (-not $tpl) { throw 'there is no write-up template' }
+    $missing = @()
+    foreach ($field in @('question', 'hypothesis', 'method', 'limitation', 'result', 'conclusion')) {
+      if ($tpl -notmatch "(?i)$field") { $missing += $field }
+    }
+    if ($missing) { throw "missing from the template: $($missing -join ', ')" }
+    # Same rule as a research finding: a result is true of a version, on a date.
+    if ($tpl -notmatch '(?i)verified against') { throw 'the template has no verified-against line' }
+    if ($tpl -notmatch '(?i)version') { throw 'the template records no version' }
+    $tpl -match '(?i)date'
+  }
+
+  # Against the template's own Conclusion line. Three of the four verdicts are
+  # named again in the prose below, so a file-wide check stays green with one
+  # of them dropped from the field a writer actually fills in.
+  Assert "the conclusion is one of the four, with reasoning" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    $line = (($c -split '\r?\n') | Where-Object { $_ -match '(?i)^Conclusion:' }) -join ' '
+    if (-not $line) { throw 'the write-up template has no Conclusion field' }
+    foreach ($v in @('Successful', 'Partially Successful', 'Failed', 'Inconclusive')) {
+      if ($line -notmatch [regex]::Escape($v)) { throw "conclusion missing from the template: $v" }
+    }
+    $c -match '(?i)with the reasoning'
+  }
+
+  # Required for Failed and Inconclusive — the highest-value case, because a
+  # recorded failure stops the experiment being run again — and for an
+  # unpromoted Successful one. Named for what it checks: the ticket scopes the
+  # exemption to the *conclusion*, and the write-up itself is never skippable.
+  Assert "the conclusion is exempt only when the prototype was promoted" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    if ($c -notmatch '(?i)optional only when') { throw 'the exemption is not stated as the only one' }
+    foreach ($required in @('Failed', 'Inconclusive')) {
+      if ($c -notmatch "(?i)required[^\n]{0,120}$required") { throw "$required does not require a conclusion" }
+    }
+    # `-match '(?i)promot'` cannot fail here — the whole of step 5 is about
+    # promotion. The exemption has to be bound to it.
+    $c -match '(?i)optional only when[^\n]{0,60}promot'
+  }
+
+  # A prototype answering a feel question is worthless until the user looks at
+  # it, and prose describing a UI is not looking at it.
+  Assert "a feel question hands back a way to see it, never prose alone" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    if ($c -notmatch '(?i)(command that runs|run skill|`run`)') { throw 'no way to run it is handed back' }
+    $c -match '(?i)(describe|prose)[^.]{0,100}(not|never)|(not|never)[^.]{0,100}(describe .{0,20}in prose|prose)'
+  }
+
+  Assert "reuse operates on the write-up, not on code that no longer exists" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    $c -match '(?i)reuse[^.]{0,120}write-?up'
+  }
+
+  Assert "promotion is a fresh implementation effort, not a file move" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    # Both halves. The name claimed the first and only ever checked the second.
+    if ($c -notmatch '(?i)fresh implementation effort') { throw 'promotion is not a fresh effort' }
+    $c -match '(?i)(not|never)[^\n]{0,60}(a file move|moving files)'
+  }
+
+  # --- both: evidence, and how it graduates ----------------------------------
+
+  # Decision 18 / ADR 0009. Evidence records what was verified and when;
+  # nothing validates it afterwards, which is exactly why it is not knowledge.
+  foreach ($s in @('research', 'prototype')) {
+    # ADR 0007 again. design/SKILL.md §4 states the graduation rule and both its
+    # destinations. What belongs in an evidence-producing skill is the boundary
+    # it must not cross — it writes evidence, and never writes knowledge.
+    Assert "/$s writes Evidence and never writes knowledge itself" {
+      $c = Get-SkillFile "$s/SKILL.md"
+      # Bound to the claim, not the word. "Evidence" also appears in the
+      # section heading and in the graduation pointer, so a bare \bEvidence\b
+      # survives the skill calling its own output knowledge.
+      if ($c -notmatch '(?i)is \*{0,2}Evidence\*{0,2}:') { throw 'what it produces is never called Evidence' }
+      if ($c -match '(?i)owns that graduation') { throw 'the graduation rule is restated here' }
+      if ($c -notmatch '(?i)never write Context directly') { throw 'the boundary is not stated' }
+      $c -match '(?i)graduat[a-z]*[^\n]{0,120}/design'
+    }
+  }
+
+  # matt's originals end by committing the prototype to a throwaway branch and
+  # leaving a pointer to it — a primary source to come back to. ADR 0009 says
+  # the opposite and wins: the code is deleted, and the write-up is the artifact.
+  # Vendoring this unaltered is the failure the alteration checklist exists for.
+  Assert "no prototype file keeps the code on a branch — ADR 0009 supersedes that" {
+    $offenders = @()
+    foreach ($f in (Get-ChildItem (Join-Path $skills 'prototype') -File -Filter *.md)) {
+      foreach ($line in ((Get-Content $f.FullName -Raw) -split '\r?\n')) {
+        if ($line -match '(?i)(throwaway|prototype) branch|branch.{0,40}primary source') {
+          $offenders += "$($f.Name): $($line.Trim())"
+        }
+      }
+    }
+    if ($offenders) { throw ($offenders -join '; ') }
+    $true
+  }
+
+  # ADR 0001, checked across every file both skills ship.
+  Assert "attribution to mattpocock survives in both skills" {
+    foreach ($f in @('research/SKILL.md', 'prototype/SKILL.md', 'prototype/LOGIC.md', 'prototype/UI.md')) {
+      if ((Get-SkillFile $f) -notmatch '(?i)mattpocock/skills') { throw "no attribution in $f" }
+    }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -1370,7 +1647,7 @@ Describe-Ticket '06' 'the transaction boundary' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

@@ -13,16 +13,17 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 - `implement/` — `/implement`, the build stage (ticket 04)
 - `code-review/` — `/code-review`, two axes plus the smell baseline behind a pointer (ticket 05)
 - `commit/` — `/commit`, the transaction boundary and the Marker's only writer (ticket 06)
+- `research/` and `prototype/` — the two evidence commands, with `LOGIC.md` and `UI.md` behind pointers (ticket 07)
 
-**Phase 2 — the dogfood checkpoint — has not been run.** It is a human-in-the-loop step: run `/design` on ticket 07 in this repo and watch what breaks before building more.
+**Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-Tickets 07–14 are not built. `/configure`, `/research`, and `/prototype` do not exist yet, so anything depending on them is unverified. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+Tickets 08–14 are not built. `/configure` does not exist yet, so anything depending on it is unverified. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
 ```
 pwsh -NoProfile -File scripts/verify.ps1            # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket 06 # one, two digits
+pwsh -NoProfile -File scripts/verify.ps1 -Ticket 07 # one, two digits
 ```
 
 Extend it in the same pass as any change to `./skills` — it is the only thing that catches a broken build here.
