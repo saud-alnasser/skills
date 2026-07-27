@@ -1,6 +1,6 @@
 # feat(implement): on a stack, blocked means stacked
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 18
 
 ## Problem
@@ -30,3 +30,38 @@ Whether the submit path prefills a pull request description from the commit mess
 - The amend path used mid-stack leaves no descendant pointing at a replaced commit.
 - The stack-belongs-to-one-instance constraint and the rejected-review cost are both stated where the user sees them before the stack exists.
 - Nothing relies on the submit path's prefill behaviour until it has been verified against the documentation.
+
+## Comments
+
+**The open question is now answered, and the answer is "nowhere says".**
+Checked against the installed CLI (`gt submit --help`, gt 1.8.6) and against
+Graphite's command reference: `gt submit` has **no `--title`, `--body`,
+`--body-file`, or stdin** — its metadata flags are prompts (`--edit`,
+`--edit-title`, `--edit-description`) and their negations, plus `--ai`. Whether
+it prefills the description from the commit message is **documented in neither
+place**, so nothing may rely on it, and `tools/graphite.md` records the absence
+rather than staying silent — silence would read to a later editor as a check
+nobody needed.
+
+That strengthens ADR 0016 rather than merely confirming it. The closing keyword
+moves into the commit body not only because the cherry-pick hazard vanishes,
+but because the commit body is the only text Tenure controls that reaches the
+pull request at all.
+
+**The keyword rule has one home, in `/commit`**, as a two-row table: which form
+a commit carries depends on how it will reach the default branch. `/implement`
+selects the case and points; restating it in the stacking section would have
+been a second home for a rule that already drifted once.
+
+**`gt create --onto` is how a ticket stacks on its blocker**, with the name
+passed explicitly — `gt` generates one from the commit message otherwise, which
+would break ticket 17's convention and leave two names for one ticket.
+
+**Both misdetection directions are stated**, because only one of them is loud.
+Assuming plain git on a stacking repository empties the frontier silently and
+makes the tool a net slowdown; assuming stacking on a plain repository builds
+on unmerged work that was supposed to wait.
+
+**Five mutations run against the new assertions**, all caught: dropping the
+unverified marker, dropping the one-instance rule, un-closing the stacked case,
+gating the frontier on merge, and renaming `gt modify` throughout the reference.

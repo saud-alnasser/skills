@@ -3465,7 +3465,9 @@ Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
     # leaving either out is how the split gets "simplified" back together.
     if ($s -notmatch '(?i)default branch') { throw 'the default-branch constraint is missing' }
     if ($s -notmatch '(?i)cherry-pick') { throw 'the hazard behind the split is not recorded' }
-    (Get-SkillFile 'commit/SKILL.md') -match '(?i)without closing it'
+    # /commit is where the form is chosen, so the non-closing one has to be
+    # reachable there and not only in the CLI reference.
+    (Get-SkillFile 'commit/SKILL.md') -match '(?i)a reference that closes nothing'
   }
 
   # Criteria 5 and 6. Parent/child is a different edge from blocking, and it
@@ -3502,6 +3504,116 @@ Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
   }
 }
 
+# --- ticket 19 — on a stack, blocked means stacked ---------------------------
+
+Describe-Ticket '19' 'on a stack, blocked means stacked' {
+
+  $imp = 'implement/SKILL.md'
+  $gt  = 'tools/graphite.md'
+
+  # The stacking branch of step 1, scoped like the Claim's — step 1 is long and
+  # says "branch", "blocked" and "commit" throughout for other reasons.
+  $stackSection = {
+    $m = [regex]::Match((Get-SkillFile $imp), '(?ims)^###\s[^\r\n]*stacking repository.*?(?=^#{2,3}\s|\z)')
+    if (-not $m.Success) { throw 'the stacking branch has no section of its own' }
+    $m.Value
+  }
+
+  # Criterion 1. `committed`, not merged and not resolved — the distinction is
+  # the whole ticket, because Tenure never merges, so a merge-gated frontier
+  # on a stacking repository empties and stays empty.
+  Assert "a ticket whose blockers are committed but unmerged is buildable" {
+    $s = & $stackSection
+    if ($s -notmatch '(?i)COMMITTED') { throw 'the new gate is not stated' }
+    if ($s -notmatch '(?i)not merged') { throw 'the old gate is not excluded' }
+    $s -match '(?i)frontier empties|frontier[^\r\n]{0,40}empt'
+  }
+
+  # And the branch goes on the blocker, not on trunk — which is the half that
+  # makes the earlier frontier safe rather than just faster.
+  Assert "the branch is created on the blocker rather than on trunk" {
+    $s = & $stackSection
+    if ($s -notmatch "(?i)check out the blocker'?s branch") { throw 'the base is never changed' }
+    if ($s -notmatch '(?i)on top of it') { throw 'the new branch is not stacked on it' }
+    # Ticket 17's convention has to survive: gt generates a name from the
+    # commit message if it is not given one, and two naming schemes for one
+    # ticket means neither tool sees the other's claim.
+    $s -match "(?i)name is still Tenure'?s"
+  }
+
+  # Criterion 2. Both readings exist, and which applies is read rather than
+  # assumed — a guess is wrong in a way that looks like nothing happening.
+  Assert "which meaning applies is read off the repository, never guessed" {
+    $s = & $stackSection
+    if ($s -notmatch '(?i)never guess it|read[^\r\n]{0,40}off the repository') { throw 'the detection is not required' }
+    # Both failure directions, because only one of them is loud.
+    if ($s -notmatch '(?i)assume plain git on a stacking') { throw 'the stalling direction is unstated' }
+    $s -match '(?i)assume stacking on a plain'
+  }
+
+  # Criterion 3. A bare `git commit --amend` mid-stack leaves every descendant
+  # on a commit that no longer exists — silent, and only visible later as a
+  # conflict nobody caused.
+  Assert "the mid-stack amend leaves no descendant on a replaced commit" {
+    $s = & $stackSection
+    if ($s -notmatch '(?i)never with a bare `?git commit --amend`?') { throw 'the plain amend is not ruled out' }
+    if ($s -notmatch '(?i)descendant') { throw 'the consequence is not named' }
+    # The invocation itself stays in the reference, with what it restacks.
+    $g = Get-SkillFile $gt
+    ($g -match '(?m)^gt modify') -and ($g -match '(?i)restacks every descendant')
+  }
+
+  # Criterion 4. Both are costs accepted on the user's behalf, so both are said
+  # before the stack exists rather than when one of them bites.
+  Assert "the one-instance-per-stack rule and the rejected-review cost are both stated up front" {
+    $s = & $stackSection
+    if ($s -notmatch '(?i)a stack belongs to one instance') { throw 'the constraint is missing' }
+    if ($s -notmatch '(?i)separate stacks off trunk') { throw 'parallel instances have nowhere to go' }
+    if ($s -notmatch '(?i)invalidates every branch above it') { throw 'the cost is missing' }
+    $s -match '(?i)when the stack is created|before the stack exists|in the same breath'
+  }
+
+  # Criterion 5, and the point of the whole verification discipline. The
+  # question the ticket left open was whether submit prefills the description;
+  # the answer the fetch produced is that nothing documents it — so the
+  # reference has to record the absence, not stay silent and let a later reader
+  # assume the check was never needed.
+  Assert "nothing relies on the submit path's prefill, and the reference says why" {
+    $g = Get-SkillFile $gt
+    if ($g -notmatch '(?i)not documented') { throw 'the unverified behaviour is not marked unverified' }
+    if ($g -notmatch '(?i)nothing may depend on it') { throw 'reliance is not forbidden' }
+    # The half that IS verified, and the reason the keyword had to move.
+    if ($g -notmatch '(?i)no `?--title`?, `?--body`?, `?--body-file`?, or stdin') {
+      throw 'the absence of a non-interactive body is not recorded'
+    }
+    $g -match '(?i)verified against `?gt submit --help'
+  }
+
+  # The reversal, and the reason it is safe here — stated where the form is
+  # chosen. Both rows, because a table with one row is a rule with no contrast.
+  Assert "the closing keyword moves into the commit body on a stack, and only there" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch '(?m)\|[^|\r\n]*stack[^|\r\n]*\|\s*the closing keyword\s*\|') { throw 'the stacked case does not close' }
+    if ($c -notmatch '(?i)only by merging that branch'){ throw 'the reason the hazard vanishes is missing' }
+    # /implement selects the case; it does not restate the rule.
+    $s = & $stackSection
+    if ($s -notmatch '(?i)/commit` has the rule|`/commit` has the rule') { throw '/implement does not route to the rule' }
+    $true
+  }
+
+  # ADR 0016 ties the Claim's unit to the stack because restacking rewrites
+  # other tickets' branches. ADR 0013 is where the Claim is defined, so the
+  # widening has to be visible from the Claim's own section, not only here.
+  Assert "the Claim's unit widens to the stack, reachable from the Claim itself" {
+    $c = Get-SkillFile $imp
+    $claim = [regex]::Match($c, '(?ims)^###\s[^\r\n]*\bClaim\b.*?(?=^#{2,3}\s|\z)')
+    $stack = [regex]::Match($c, '(?ims)^###\s[^\r\n]*stacking repository.*?(?=^#{2,3}\s|\z)')
+    if (-not ($claim.Success -and $stack.Success)) { throw 'one of the two sections is gone' }
+    if ($stack.Index -lt $claim.Index) { throw 'the stack case is stated before the Claim it widens' }
+    $stack.Value -match "(?i)Claim'?s unit becomes the whole stack"
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3509,7 +3621,7 @@ Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18, 19 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

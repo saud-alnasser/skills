@@ -30,6 +30,8 @@ gt create <name> -m "type(scope): summary"
 
 Stacking is implicit: the new branch sits on top of whatever is checked out. To stack on something else, check that out first or pass `-o, --onto <branch>`.
 
+`--onto` is how a ticket is built on its blocker rather than on trunk. The branch name is still Tenure's — `gt create <name>` takes it explicitly, so do not let `gt` generate one from the commit message.
+
 ## Amend the current branch
 
 ```
@@ -71,3 +73,12 @@ gt sync                 # pulls trunk, rebases, and prompts to delete merged bra
 `gt submit` publishes. It is a push plus PR creation, so it falls under the same standing rule as `git push`: **Tenure does not publish** — that is the human's call.
 
 `gt sync` is out for a second reason: it rewrites local history against the remote and interactively offers to delete branches. Both are destructive and both need a human at the keyboard.
+
+### What submit cannot be handed
+
+Verified against `gt submit --help` on gt 1.8.6, and against the command reference:
+
+- **There is no `--title`, `--body`, `--body-file`, or stdin.** The metadata flags are prompts (`--edit`, `--edit-title`, `--edit-description`) and their negations, plus `--ai`. A pull request body cannot be pre-written and passed in.
+- **Whether it prefills the description from the commit message is not documented** — not in `--help`, not in the command reference. So nothing may depend on it. Treat the body as unknown until a human is looking at the prompt.
+
+That is why the closing keyword goes in the commit body on a stacking repository: it is the only text Tenure controls that reaches the pull request at all.

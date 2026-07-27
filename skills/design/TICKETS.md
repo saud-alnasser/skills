@@ -50,7 +50,7 @@ resolved   the work is delivered. Who sets it depends on the tracker —
 obsolete   no longer needed. Requires a one-line reason. Never deleted
 ```
 
-**On a shared tracker the merge resolves the ticket, not Tenure.** Tenure commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. The commit carries a non-closing reference and the drafted pull request body carries the closing keyword; `tools/github.md` has both forms and the constraints on them. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
+**On a shared tracker the merge resolves the ticket, not Tenure.** Tenure commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. Which text carries the closing keyword, and which carries a reference that closes nothing, depends on how the work reaches the default branch — `/commit` decides it and `tools/github.md` has the forms. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
 
 **This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
 
@@ -93,13 +93,13 @@ Each slice is **demoable or verifiable on its own**, and sized to fit in a singl
 **Every ticket after the first declares at least one of these.** A ticket with neither is unreachable — nothing explains where it came from or what has to happen before it.
 
 ```
-Blocked by: 02, 05        # must be resolved before this can start
+Blocked by: 02, 05        # this cannot start until those are delivered
 Part of: <spec name>      # the spec this ticket implements
 ```
 
 `Blocked by: —` is a positive statement that this one can start immediately, and it is not the same as omitting the line. Before writing the edges, read the tickets that already exist — an edge invented without checking is how a cycle or a dangling number gets in.
 
-`/implement` picks from the **frontier**, and defines it.
+`/implement` picks from the **frontier**, and defines it — including what "delivered" has to mean before a blocked ticket becomes buildable, which is not the same answer on every repository. Cut the edges by what actually gates what, and leave that reading to the skill that acts on it.
 
 Only real gates. A ticket listed as a blocker because it is *tidier* to do first serializes work that could have run in parallel.
 

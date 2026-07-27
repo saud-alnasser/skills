@@ -64,7 +64,14 @@ Where the repository documents or demonstrates another convention, follow it **s
 
 Say what capability changed, and why it changed. **Never a file-by-file account**: the diff already lists the files, and a message that re-lists them spends the reader's attention on the one thing they could have got for free.
 
-Reference the ticket, and on a shared tracker **reference it without closing it**. A closing keyword in a commit message stays live: a cherry-pick or a rebase onto the default branch later closes an issue nobody merged. The closing keyword belongs in the pull request body the human submits, and `tools/github.md` has both forms — read it rather than picking a word that looks equivalent, because several of them are not.
+Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch, and there are exactly two cases:
+
+| How the work lands | The commit carries | Because |
+| --- | --- | --- |
+| a branch merged by a pull request the human writes | a reference that closes nothing | a closing keyword in a commit stays live — a cherry-pick or a rebase onto the default branch later closes an issue nobody merged. The keyword goes in the pull request body instead |
+| a branch in a stack, submitted by the stacking tool | the closing keyword | the commit reaches the default branch only by merging that branch's own pull request, so the hazard above cannot happen — and the submit path prompts for pull request metadata interactively and accepts no body from a file or stdin, so there is nowhere else to put it |
+
+`tools/github.md` has both forms and their constraints; `tools/graphite.md` records what was and was not verified about the submit path. Read them rather than picking a word that looks equivalent, because several of them are not.
 
 ## 5 — Make the commit
 

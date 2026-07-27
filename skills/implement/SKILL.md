@@ -95,6 +95,31 @@ free              neither
 
 A claim **this clone's own branch identifies** is not someone else's: resume it, or release it by deleting the branch, freely.
 
+### On a stacking repository, blocked means stacked
+
+`Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
+
+**Read which one applies off the repository; never guess it.** `tools/graphite.md` has the check, and it is one command. Getting it wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+
+So, on a stacking repository only:
+
+```
+a ticket joins the frontier once its blockers are COMMITTED
+                                        not merged, not resolved
+
+  → check out the blocker's branch
+  → create this ticket's branch on top of it
+     the name is still Tenure's, not the one the tool would generate
+```
+
+**The Claim's unit becomes the whole stack, not one branch.** Restacking rewrites every descendant, so an instance working a branch low in the stack rewrites the branches above it — which are other tickets' Claims. **A stack belongs to one instance.** Claiming any branch in it claims everything upstack, and parallel instances need separate stacks off trunk. Say this when the stack is created, not when it breaks.
+
+Say the cost too, in the same breath, because it is being accepted on the user's behalf: **a rejected review low in the stack invalidates every branch above it.** That is the trade for not waiting.
+
+Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. `tools/graphite.md` has the invocation and what it restacks.
+
+The closing keyword also moves, into the commit body, reversing the split that applies to plain git. `/commit` has the rule and the reason — `/implement` only has to know that stacking is what selects it.
+
 ### Resuming after losing context
 
 An instance that has lost its context reads the branch it is standing on. That is the whole recovery: the current branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got.
