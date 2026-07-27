@@ -74,7 +74,7 @@ Work with no ticket at all — hand-written edits, a change made outside this fl
 
 Drive `tdd` at the seams agreed during design. The ticket states an observable outcome; the loop is what proves it. One vertical slice at a time.
 
-Typecheck often, and run the single test file often. Run the **full suite once**, at the end, before handing back — the command for each is in `.claude/tools/`, and guessing it is how the inner loop turns into a full-suite run per cycle.
+Typecheck often, and run the single test file often. Run the **full suite once**, at the end, before handing back. The command for each is in `.claude/tools/` — read it rather than guessing, for the reason `tdd` gives.
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 

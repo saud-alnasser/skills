@@ -83,6 +83,40 @@ function Get-Frontmatter {
   return $null
 }
 
+# One `## ` section: from its heading to the next heading at the same level or
+# higher. A rule is checked where it is supposed to be stated, not anywhere in
+# the file — a file-wide search passes on unrelated prose that happens to use
+# the same words, which is how a deleted step keeps its assertion green.
+#
+# Fenced code is stripped first: a `## ` inside a fence is sample content, not
+# a heading, and letting it terminate a section silently truncates the search.
+# `##(?!#)` so a `### ` subsection cannot be mistaken for the section itself,
+# and `^#{1,2}\s` in the lookahead so a `# ` heading ends the section too —
+# without it a section runs to end-of-file and the scoping is decorative.
+function Get-Section {
+  param([string]$Content, [string]$HeadingPattern)
+  # Fenced regions are masked, not removed: same length, no `#`, so offsets
+  # into the mask are offsets into the original. Removing them would also
+  # remove the content a section is being searched for — /configure's whole
+  # detection list is a fenced block.
+  $mask = [regex]::Replace($Content, '(?ms)^```.*?^```', {
+    param($f) ($f.Value -replace '[^\r\n]', '.')
+  })
+  $m = [regex]::Match($mask, "(?ims)^##(?!#)[^\r\n]*$HeadingPattern.*?(?=^#{1,2}\s|\z)")
+  if (-not $m.Success) { throw "no section matching '$HeadingPattern'" }
+  $Content.Substring($m.Index, $m.Length)
+}
+
+# `disable-model-invocation: true` on its own frontmatter line. Unanchored,
+# a commented-out or quoted mention passes — and for the primitives the
+# assertion runs in the negative direction, where a false positive is silent.
+function Test-UserInvoked {
+  param([string]$RelativePath)
+  $fm = Get-Frontmatter (Get-SkillFile $RelativePath)
+  if (-not $fm) { throw "$RelativePath has no frontmatter" }
+  [bool]($fm -match '(?m)^disable-model-invocation:\s*true\s*$')
+}
+
 # --- ticket 01 — vendor the primitives ---------------------------------------
 
 Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
@@ -98,6 +132,19 @@ Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
   # The headline criterion: no legacy path survives anywhere under ./skills.
   # `CONTEXT.md` is matched case-sensitively so Tenure's lowercase
   # `.claude/context.md` does not trip it.
+  #
+  # Two files are exempt, and they have to be: /configure is the skill that
+  # *detects and converts* these paths, so it cannot do its job without naming
+  # them. Named individually rather than by prefix — `configure/` also holds
+  # CLAUDE.template.md and tracker.template.md, which are installed into the
+  # user's repository and must stay guarded like any other shipped file.
+  # Ticket 08 asserts every legacy reference inside the two exempt files is a
+  # detection entry or a migration row, so the exemption is not a hole.
+  # Separator-normalised: `FullName` uses `\` on Windows and `/` elsewhere, and
+  # a hardcoded `\` here silently un-exempts both files everywhere else — which
+  # fails every assertion in this loop rather than passing one, but on someone
+  # else's machine.
+  $legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
   $legacy = @{
     'CONTEXT\.md'     = 'CONTEXT.md (use .claude/context.md)'
     'CONTEXT-MAP\.md' = 'CONTEXT-MAP.md (use the routing table)'
@@ -108,6 +155,7 @@ Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
     $label = $legacy[$pattern]
     Assert "no file under ./skills references $label" {
       $hits = Get-SkillFiles |
+        Where-Object { ($_.FullName.Substring($skills.Length + 1) -replace '\\', '/') -notin $legacyExempt } |
         Select-String -Pattern $pattern -CaseSensitive |
         ForEach-Object { "$(Split-Path -Leaf $_.Path):$($_.LineNumber)" }
       if ($hits) { throw ($hits -join ', ') }
@@ -152,10 +200,7 @@ Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
   }
 
   Assert "the four primitives are model-invoked — the spine composes them" {
-    $userInvoked = $primitives | Where-Object {
-      $fm = Get-Frontmatter (Get-SkillFile "$_/SKILL.md")
-      $fm -match 'disable-model-invocation:\s*true'
-    }
+    $userInvoked = $primitives | Where-Object { Test-UserInvoked "$_/SKILL.md" }
     if ($userInvoked) { throw "user-invoked but must be reachable: $($userInvoked -join ', ')" }
     $true
   }
@@ -179,9 +224,7 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
   }
 
   Assert "tools is model-invoked — any skill can reach it" {
-    $fm = Get-Frontmatter (Get-SkillFile 'tools/SKILL.md')
-    if (-not $fm) { throw 'tools/SKILL.md has no frontmatter' }
-    $fm -notmatch 'disable-model-invocation:\s*true'
+    -not (Test-UserInvoked 'tools/SKILL.md')
   }
 
   foreach ($f in $tools.Keys) {
@@ -349,6 +392,11 @@ $rulePattern = [ordered]@{
   'self-explanatory code'              = '(?i)self-explanatory'
   'the compression test'               = '(?i)will this improve (a )?future engineering decision'
   'the knowledge-layer table'          = '(?im)^\|\s*Codebase\s*\|'
+  # `tdd` owns the loop, so it owns why a guessed test command wrecks it. This
+  # reasoning had reached four files before the guard existed.
+  'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
+  'the stale-command rule'             = '(?i)stale command is worse than no command'
+  'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
 }
 
 Describe-Ticket '02' 'verification at use, healing where the break is found' {
@@ -479,9 +527,7 @@ Describe-Ticket '03' 'the whole planning surface' {
   }
 
   Assert "/design is user-invoked — planning starts because the user asked for it" {
-    $fm = Get-Frontmatter (Get-SkillFile 'design/SKILL.md')
-    if (-not $fm) { throw 'design/SKILL.md has no frontmatter' }
-    $fm -match 'disable-model-invocation:\s*true'
+    Test-UserInvoked 'design/SKILL.md'
   }
 
   foreach ($f in @('SPEC-FORMAT.md', 'TICKETS.md', 'MAP.md')) {
@@ -633,9 +679,7 @@ Describe-Ticket '04' 'build, and record what moved' {
   # /design can reach it — ticket 03 forbids exactly that. The router (10) is
   # the caller this is actually for.
   Assert "/implement is model-invoked — the spine is reachable" {
-    $fm = Get-Frontmatter (Get-SkillFile 'implement/SKILL.md')
-    if (-not $fm) { throw 'implement/SKILL.md has no frontmatter' }
-    $fm -notmatch 'disable-model-invocation:\s*true'
+    -not (Test-UserInvoked 'implement/SKILL.md')
   }
 
   # Ticket 02 deferred this criterion to here: the discipline is only real if
@@ -864,8 +908,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # Spec, Scope: model-invoked, because /implement closes out through it and
   # /commit confirms it ran.
   Assert "/code-review is model-invoked — /implement and /commit can reach it" {
-    $fm = Get-Frontmatter (Get-SkillFile 'code-review/SKILL.md')
-    $fm -notmatch 'disable-model-invocation:\s*true'
+    -not (Test-UserInvoked 'code-review/SKILL.md')
   }
 
   Assert "two axes — Spec and Standards" {
@@ -1108,9 +1151,8 @@ Describe-Ticket '06' 'the transaction boundary' {
   # through it. Typed directly, it handles work with no ticket."
   Assert "/commit is model-invoked — /implement closes out through it" {
     $fm = Get-Frontmatter (Get-SkillFile 'commit/SKILL.md')
-    if (-not $fm) { throw 'commit/SKILL.md has no frontmatter' }
     if ($fm -notmatch '(?m)^name:\s*commit\s*$') { throw 'the skill is not named commit' }
-    $fm -notmatch 'disable-model-invocation:\s*true'
+    -not (Test-UserInvoked 'commit/SKILL.md')
   }
 
   Assert "work with no ticket is /commit's — the direct-invocation path is stated" {
@@ -1415,9 +1457,8 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
     # Acceptance: "Neither is user-invoked — /design must be able to reach both."
     Assert "/$s is model-invoked — /design reaches it at the Heavyweight gate" {
       $fm = Get-Frontmatter (Get-SkillFile "$s/SKILL.md")
-      if (-not $fm) { throw "$s/SKILL.md has no frontmatter" }
       if ($fm -notmatch "(?m)^name:\s*$s\s*$") { throw "the skill is not named $s" }
-      $fm -notmatch 'disable-model-invocation:\s*true'
+      -not (Test-UserInvoked "$s/SKILL.md")
     }
   }
 
@@ -1704,9 +1745,7 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   foreach ($s in $axis.Keys) {
     $userInvoked = $axis[$s]
     Assert "$s is $(if ($userInvoked) { 'user' } else { 'model' })-invoked" {
-      $fm = Get-Frontmatter (Get-SkillFile "$s/SKILL.md")
-      if (-not $fm) { throw "$s/SKILL.md has no frontmatter" }
-      $disabled = $fm -match 'disable-model-invocation:\s*true'
+      $disabled = Test-UserInvoked "$s/SKILL.md"
       if ($userInvoked -ne $disabled) {
         throw "$s is $(if ($disabled) { 'user' } else { 'model' })-invoked, which is the wrong axis"
       }
@@ -1981,6 +2020,390 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   }
 }
 
+# --- ticket 08 — /configure, initialize or migrate a repository --------------
+
+Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
+
+  $cfg = 'configure/SKILL.md'
+
+  Assert "/configure ships as a skill" {
+    Test-Path (Join-Path $skills $cfg)
+  }
+
+  Assert "/configure is user-invoked — a repository joins Tenure because the user asked" {
+    Test-UserInvoked $cfg
+  }
+
+  # Both halves of the name. Existence plus a mention is not disclosure — the
+  # failure it guards against is the branch being written out in the skill
+  # *and* in the file, which costs the greenfield run the context the pointer
+  # exists to save.
+  Assert "the migration branch is disclosed behind a pointer, not inlined" {
+    if (-not (Test-Path (Join-Path $skills 'configure/MIGRATION.md'))) { throw 'configure/MIGRATION.md is missing' }
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch 'MIGRATION\.md') { throw 'the branch is unreachable' }
+    foreach ($inlined in @('(?im)^\|\s*From\s*\|', '(?im)^\|\s*Converts', '(?i)\bsorted\b[^.]{0,40}not duplicated')) {
+      if ($c -match $inlined) { throw 'the migration is written out here as well' }
+    }
+    # And skipped where it does not apply, or the disclosure buys nothing.
+    $c -match '(?i)(skip[^\r\n]{0,80}greenfield|greenfield[^\r\n]{0,40}skip)'
+  }
+
+  foreach ($t in @('CLAUDE.template.md', 'tracker.template.md')) {
+    Assert "$t is reached from the skill that installs it" {
+      if (-not (Test-Path (Join-Path $skills "configure/$t"))) { throw "configure/$t is missing" }
+      (Get-SkillFile $cfg) -match [regex]::Escape($t)
+    }
+  }
+
+  # --- decision 30: one job, three starting states --------------------------
+
+  # "Onboarding and auditing are not two responsibilities bolted together —
+  # they are the same job against different starting states." The behaviour is
+  # chosen by what it finds, and a flag is the specific thing ruled out: a flag
+  # lets the caller assert a starting state instead of detecting one.
+  # Both halves, and both stated where the branch is chosen. "One job" without
+  # "same job against different starting states" is a slogan; the second
+  # sentence is the one that makes onboarding and audit the same code path.
+  Assert "onboarding and audit are one job, chosen by what it finds and never by a flag" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch '(?i)one job') { throw 'the two are treated as separate responsibilities' }
+    if ($c -notmatch '(?i)same job[^\r\n]{0,80}different starting state') { throw 'they are one job in name only' }
+    $c -match '(?i)never by a flag|not by a flag|no flag'
+  }
+
+  # Read out of the branch table itself. Every one of these phrases also occurs
+  # in the prose that follows — "another AI workflow" in step 3, "Tenure is
+  # already here" as a heading — so a file-wide search passes with the row
+  # deleted, which is exactly the branch going missing.
+  Assert "all three starting states are rows in the branch table, each with what it does" {
+    $c = Get-SkillFile $cfg
+    $table = [regex]::Match($c, '(?ms)^\|[^\r\n]*\|[\r\n]+\|[\s\-|]+\|[\r\n]+((?:\|[^\r\n]*\|[\r\n]+)+)')
+    if (-not $table.Success) { throw 'there is no branch table' }
+    $rows = $table.Groups[1].Value -split '\r?\n' | Where-Object { $_ -match '\S' }
+    $branches = @{
+      'greenfield'          = '(?i)no Tenure[^|]*no (AI )?workflow'
+      'another AI workflow' = '(?i)no Tenure[^|]*another'
+      'Tenure already here' = '(?i)Tenure already'
+    }
+    foreach ($b in $branches.Keys) {
+      $row = @($rows | Where-Object { $_ -match $branches[$b] })
+      if ($row.Count -eq 0) { throw "no branch for: $b" }
+      # The action cell has to name an action. A one-word cell satisfies any
+      # non-empty check while saying nothing a reader could follow.
+      $cells = @($row[0] -split '\|' | Where-Object { $_ -match '\S' })
+      if ($cells.Count -lt 2) { throw "$b is named but the row says nothing it does" }
+      if ($cells[1] -notmatch '(?i)(analys|generat|migrat|audit)\w*\b.*\w') {
+        throw "$b routes to no described action"
+      }
+    }
+    $true
+  }
+
+  # The audit branch is the one that looks redundant next to verification at
+  # use, so its reason has to be in the branch itself: verification fires on
+  # loading, and nothing loads knowledge nobody references.
+  Assert "the audit branch states why it exists — verification at use cannot reach what nothing loads" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Audit'
+    if ($s -notmatch '(?i)verification at use') { throw 'the gap it fills is not named' }
+    $s -match '(?is)(never|cannot|nobody|nothing)[^\r\n]{0,120}(relied on|checked|reach)'
+  }
+
+  # --- detect ---------------------------------------------------------------
+
+  # Scoped to the detect step. MIGRATION.md names most of these too, as things
+  # it converts — so a marker dropped from the search list is still findable in
+  # the file while nothing ever looks for it.
+  Assert "detection covers every workflow marker the ticket names" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Detect'
+    $markers = @('\.claude/', 'CLAUDE\.md', 'AGENTS\.md', 'docs/agents/', 'CONTEXT\.md',
+                 'CONTEXT-MAP\.md', 'docs/adr/', '\.scratch/', '\.cursor', 'copilot-instructions',
+                 '\.windsurf', '\.clinerules', '\.ai/')
+    $missing = $markers | Where-Object { $s -notmatch $_ }
+    if ($missing) { throw "never looked for: $($missing -join ', ')" }
+    $true
+  }
+
+  Assert "the analysis covers everything the ticket lists, architectural style included" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Detect'
+    $facets = @('languages', 'build', 'test', 'deploy', 'architectural style', 'module boundaries', 'domains')
+    $missing = $facets | Where-Object { $s -notmatch "(?i)$_" }
+    if ($missing) { throw "never analysed: $($missing -join ', ')" }
+    $true
+  }
+
+  # The input the classification step consumes. Ordinary documentation is not
+  # an AI workflow and none of the markers above finds it — so without this,
+  # MIGRATION.md sorts a pile that was never gathered, and a repository whose
+  # architecture was already written down gets it invented from scratch.
+  Assert "documentation already written down is found before anything is generated" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Detect'
+    $find = [regex]::Match($s, '(?s)\*\*Find the knowledge that is already written down\*\*.*?(?=?
+?
+)')
+    if (-not $find.Success) { throw 'nothing goes looking for it' }
+    $kinds = @('architecture', 'guide', 'decision record', 'standard', 'convention')
+    $missing = $kinds | Where-Object { $find.Value -notmatch "(?i)$_" }
+    if ($missing) { throw "existing knowledge never discovered: $($missing -join ', ')" }
+    $true
+  }
+
+  # --- plan, confirm, apply -------------------------------------------------
+
+  Assert "the full move list is confirmed before anything is touched" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Plan'
+    $s -match '(?i)before (touching|changing|writing|moving) anything|nothing is (touched|moved|written) (until|before)'
+  }
+
+  # "No documentation is deleted without appearing in the confirmed plan."
+  # Negated and in the plan step: MIGRATION.md's classification table says
+  # temporary notes are "discarded, and named in the plan first", which satisfies
+  # any loose deleted-near-plan pattern while the rule itself is gone.
+  Assert "nothing is deleted that did not appear in the confirmed plan" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Plan'
+    $s -match '(?is)\b(nothing|never|no)\b[^.]{0,60}delet[^.]{0,80}(confirmed|approved) plan'
+  }
+
+  # --- migration ------------------------------------------------------------
+
+  # Each legacy path names the target it converts to.
+  $conversions = [ordered]@{
+    'CONTEXT\.md'     = '\.claude/context\.md'
+    'CONTEXT-MAP\.md' = '(\.claude/contexts/|deleted)'
+    'docs/adr/'       = '\.claude/docs/decisions/'
+    'docs/agents/'    = '(CLAUDE\.md|\.claude/)'
+    '\.scratch/'      = '\.claude/tickets/'
+  }
+  foreach ($from in $conversions.Keys) {
+    $to = $conversions[$from]
+    Assert "the migration converts $($from -replace '\\','') and names where it goes" {
+      $c = Get-SkillFile 'configure/MIGRATION.md'
+      if ($c -notmatch "(?m)^.*$from.*$to.*$") { throw 'the source is named without its target' }
+      $true
+    }
+  }
+
+  # This is what makes ticket 01's exemption safe, and it has to be a sweep
+  # rather than a checklist: checking that four conversions exist somewhere
+  # says nothing about a fifth reference that is simply stale. Every legacy
+  # path in the two exempt files must be a detection entry or a table row —
+  # those are the only two shapes that mean "a path this repository might
+  # have" rather than "a path Tenure uses".
+  Assert "every legacy path the exempt files name is one the migration converts" {
+    # Case-sensitive throughout, exactly as ticket 01's guard is: `-match` is
+    # case-insensitive in PowerShell, and Tenure's own lowercase `context.md`
+    # would otherwise read as a reference to matt's `CONTEXT.md`.
+    # Derived from $conversions rather than restated — a third copy of this
+    # list is one more place for the two to disagree.
+    $candidates = @($conversions.Keys)
+    $mig = Get-SkillFile 'configure/MIGRATION.md'
+    $both = (Get-SkillFile 'configure/SKILL.md') + $mig
+
+    $named = $candidates | Where-Object { $both -cmatch $_ }
+    if ($named.Count -eq 0) { throw 'the exempt files name no legacy path at all' }
+
+    # A path may be named freely in prose — explaining a conversion needs to
+    # say what is being converted. What makes it a stale reference rather than
+    # a migration source is the absence of a row saying where it goes.
+    $stale = $named | Where-Object {
+      -not ($mig -cmatch "(?m)^\|[^\r\n]*$_[^\r\n]*\|[^\r\n]*(\.claude/|deleted)")
+    }
+    if ($stale) { throw "named but never converted: $($stale -join ', ')" }
+    $true
+  }
+
+  # Read out of the classification table, not the file. Every one of these
+  # words recurs in the surrounding prose — the ADR 0008 table names decision
+  # records, the closing section talks about what could not be classified — so
+  # a deleted row leaves a file-wide pattern matching happily.
+  Assert "existing documentation is classified, never copied" {
+    $c = Get-SkillFile 'configure/MIGRATION.md'
+    # The rule in the body, not the heading above it. `## Classify, never copy`
+    # matches any classify-near-copy pattern while the sentence that actually
+    # forbids duplication is gone.
+    if ($c -notmatch '(?im)^[^#\r\n].*\bsorted\b[^.]{0,40}not duplicated') {
+      throw 'documentation is copied rather than sorted'
+    }
+    $rows = ($c -split '\r?\n') | Where-Object { $_ -match '^\|' }
+    $destinations = @{
+      'implementation stays in source'   = '(?i)implementation[^|]*\|[^|]*source'
+      'principles become context'        = '(?i)principle[^|]*\|[^|]*context'
+      'reasoning becomes a decision'     = '(?i)(reasoning|historical)[^|]*\|[^|]*decision'
+      'instructions become CLAUDE.md'    = '(?i)instruction[^|]*\|[^|]*CLAUDE\.md'
+      'temporary notes are discarded'    = '(?i)temporary note[^|]*\|[^|]*discard'
+    }
+    $missing = $destinations.Keys | Where-Object { -not ($rows -match $destinations[$_]) }
+    if ($missing) { throw "unsorted: $($missing -join ', ')" }
+    $true
+  }
+
+  # ADR 0008's boundary. Both halves, because either alone is a failure mode:
+  # convert everything and Tenure tramples the repository; adopt everything and
+  # the repository ends up running two workflows.
+  Assert "the AI workflow layer converts wholesale while the repository's own engineering is adopted" {
+    $c = Get-SkillFile 'configure/MIGRATION.md'
+    if ($c -notmatch '(?i)ADR 0008') { throw 'the decision is not cited' }
+    if ($c -notmatch '(?i)two (competing )?workflows|both workflows') { throw 'the convert-wholesale reason is missing' }
+    # The principle itself lives in CLAUDE.md (ADR 0007). This file applies it
+    # to a migration, so it reaches it rather than arguing it a second time.
+    if ($c -notmatch '(?i)`CLAUDE\.md` carries') { throw 'the principle is argued here instead of reached' }
+    # The split itself, read out of the two-column table. "a table row exists
+    # and the word adopt appears somewhere" passes on almost any file.
+    $rows = ($c -split '\r?\n') | Where-Object { $_ -match '^\|' }
+    $header = $rows | Where-Object { $_ -match '(?i)converts?[^|]*\|[^|]*adopted' }
+    if (-not $header) { throw 'the two columns are not converts-vs-adopted' }
+    $converts = $rows | Where-Object { $_ -match '(?i)agent (instruction|workflow|ticket)|repository knowledge' }
+    if ($converts.Count -lt 3) { throw 'the AI workflow layer is only partly converted' }
+    $true
+  }
+
+  # The instruction, not the heading that introduces it, and the alternative it
+  # replaces — a broken link is the failure, so the rule has to name it.
+  Assert "a converted file still referenced elsewhere leaves a pointer at the old path" {
+    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'pointer'
+    $s -match '(?is)leave[^.]{0,60}pointer[^.]{0,60}old path[^.]{0,60}broken link'
+  }
+
+  # --- generate -------------------------------------------------------------
+
+  # /configure writes context.md; domain-modeling owns its shape. Restating the
+  # format here is the duplication this framework exists to prevent, and the
+  # copy that drifts would be the one a fresh repository is generated from.
+  Assert "the context format is reached by pointer to domain-modeling, never restated" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch 'CONTEXT-FORMAT\.md') { throw 'the format is not pointed at' }
+    if ($c -match '(?i)_Avoid_') { throw 'the context format is restated here' }
+    $true
+  }
+
+  # ADR 0007 moved the compression test to CLAUDE.md in ticket 13. /configure
+  # is the biggest single writer of Context, so a pointer at the old owner
+  # sends the highest-volume caller to a file that forwards on.
+  Assert "the compression test is cited where it lives, not where it used to" {
+    $c = Get-SkillFile $cfg
+    $c -match '(?is)compression test[^.]{0,60}`CLAUDE\.md`'
+  }
+
+  Assert "CLAUDE.md is written from the template, and the user's existing sections survive" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch 'CLAUDE\.template\.md') { throw 'the template is not used' }
+    $c -match '(?i)(preserve|keep|leave)[^\r\n]{0,100}(existing|user''s own) section'
+  }
+
+  Assert "repo-discovered standards are emitted as path-scoped .claude/rules/*.md" {
+    $c = Get-SkillFile $cfg
+    ($c -match '\.claude/rules/') -and ($c -match '(?i)path-scoped|scoped to')
+  }
+
+  # The mapping, not the word "remote". And the ambiguous case explicitly: a
+  # repository with several remotes is the one where guessing looks reasonable.
+  Assert "the tracker is chosen from the remote, and asked for when that is ambiguous" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch '\.claude/tracker\.md') { throw 'the tracker config is never written' }
+    $choice = [regex]::Match($c, '(?is)Choose from the \*\*remote\*\*.*?(?=\r?\n\r?\n)')
+    if (-not $choice.Success) { throw 'the remote does not select the tracker' }
+    # All three, in the one sentence that does the choosing. A repository with
+    # no remote is the case that otherwise falls through to a guess.
+    # Ticket 08: "GitHub when a remote points there, local markdown otherwise."
+    # `otherwise` is load-bearing — a remote on a host Tenure drives no tracker
+    # for must land somewhere, and enumerating only "no remote" leaves it in no
+    # branch at all.
+    foreach ($t in @('GitHub', 'GitLab', 'local markdown', 'otherwise')) {
+      if ($choice.Value -notmatch [regex]::Escape($t)) { throw "the remote never maps to: $t" }
+    }
+    $c -match '(?i)ask[^\r\n]{0,60}ambiguous'
+  }
+
+  # Decision 34. The format is ticket 15's, and this is the writer — so it
+  # points at the format rather than carrying a second copy of it.
+  Assert "the repo's own tooling is written into .claude/tools/ in the format tools/ owns" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch '\.claude/tools/') { throw 'repo tooling is never written' }
+    # The path, not the word. "the `tools` skill" survives the link being cut,
+    # and a named skill with no route to it is not progressive disclosure.
+    if ($c -notmatch '\.\./tools/SKILL\.md') { throw 'the format is not pointed at' }
+    # The six the ticket names, read off the `.claude/tools/` bullet itself.
+    # Step 1's analysis list already contains most of these words, so a
+    # file-wide check passes with the tooling bullet gutted.
+    $bullet = [regex]::Match($c, '(?s)\*\*`\.claude/tools/\*\.md`\*\*.*?(?=\r?\n\r?\n)')
+    if (-not $bullet.Success) { throw 'no tooling bullet to read' }
+    $kinds = @('package manager', 'test runner', 'typecheck', 'lint', 'build', 'deploy')
+    $missing = $kinds | Where-Object { $bullet.Value -notmatch "(?i)$_" }
+    if ($missing) { throw "never discovered: $($missing -join ', ')" }
+    $true
+  }
+
+  # --- validate -------------------------------------------------------------
+
+  # In the validate step. Both also appear in the audit branch, which runs on
+  # exactly one of the three starting states — so a greenfield run would ship
+  # unvalidated while a file-wide pattern stayed green.
+  Assert "validation resolves every Source Pointer and every context's routing row" {
+    $s = Get-Section (Get-SkillFile $cfg) 'Validate'
+    if ($s -notmatch '(?i)Source Pointer') { throw 'pointers are never checked' }
+    $s -match '(?is)contexts/[^\r\n]{0,120}routing table|routing table[^\r\n]{0,120}contexts/'
+  }
+
+  # ADR 0006: `.claude/.gitignore` is what makes "one directory" literal, so
+  # both entries and the hands-off rule for the repo's own ignore file are the
+  # criterion — writing to the root ignore file is the failure it prevents.
+  Assert ".claude/.gitignore covers marker.json and prototypes/, and the root ignore file is left alone" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch '\.claude/\.gitignore') { throw 'the workflow leaks into the repo root' }
+    foreach ($entry in @('marker\.json', 'prototypes/')) {
+      if ($c -notmatch $entry) { throw "not ignored: $entry" }
+    }
+    $c -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root'
+  }
+
+  # ADR 0006's tree, minus the directories nothing has content for yet.
+  # domain-modeling creates files lazily; pre-creating `docs/research/` would
+  # assert that research happened. So the rest of the layout is named, with
+  # who fills it — not created empty.
+  Assert "the rest of the .claude tree is created lazily, not pre-created empty" {
+    $gen = Get-Section (Get-SkillFile $cfg) 'Generate'
+    $lazy = [regex]::Match($gen, '(?s)The rest of the tree.*?(?=\r?\n\r?\n)')
+    if (-not $lazy.Success) { throw 'the rest of the tree is never accounted for' }
+    if ($lazy.Value -notmatch '(?i)lazil|when[^\r\n]{0,40}something to put') { throw 'directories are pre-created' }
+    # Read off that sentence, not the section: `.claude/prototypes/` is named
+    # again by the .gitignore bullet a few lines down, so a file-wide check
+    # passes with the path dropped from the layout it is supposed to describe.
+    $missing = @('docs/', 'tickets/', 'prototypes/') | Where-Object { $lazy.Value -notmatch [regex]::Escape($_) }
+    if ($missing) { throw "the layout never names: $($missing -join ', ')" }
+    $true
+  }
+
+  # --- idempotence ----------------------------------------------------------
+
+  # The claim and the mechanism. Asserting only the claim is what let the audit
+  # branch skip generation entirely while this stayed green: a run that decides
+  # "already configured" and stops is idempotent and also wrong.
+  Assert "a second run reports what already exists rather than duplicating it" {
+    $s = Get-Section (Get-SkillFile $cfg) 'again'
+    if ($s -notmatch '(?i)(no|never|without|rather than|instead of) duplicat') { throw 'the claim is not made' }
+    $s -match '(?i)by content, not by presence|content rather than presence'
+  }
+
+  # The mechanism the criterion actually needs. Every step runs on every
+  # branch; detection changes what is *found*, not which steps execute. A
+  # half-finished first run detects as "Tenure already present", so a branch
+  # that audits instead of generating can never complete it.
+  Assert "generation is not skipped on the branch that finds Tenure already here" {
+    $c = Get-SkillFile $cfg
+    if ($c -notmatch '(?is)audit[^.|\r\n]{0,60}(and|plus)[^.|\r\n]{0,60}(generat|missing)') {
+      throw 'the audit branch never generates what is missing'
+    }
+    # The row says the branch generates; this says no branch can skip a step.
+    # Without it, a later edit that reads the table as three separate pipelines
+    # is not contradicted anywhere.
+    if ($c -notmatch '(?is)branch changes what is[^.]{0,40}found[^.]{0,40}never which steps run') {
+      throw 'the branches are three pipelines, not one'
+    }
+    $gen = Get-Section $c 'Generate'
+    $gen -match '(?is)write what is missing[^.]{0,80}check what is'
+  }
+}
+
 # --- ticket 13 — the engineering rules, distributed --------------------------
 
 Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
@@ -2198,7 +2621,7 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 09, 13, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 13, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

@@ -1,0 +1,114 @@
+---
+name: configure
+description: Make this repository's knowledge correct and complete — detect what is already here, generate what is missing, migrate another AI workflow onto Tenure, and prune what nothing loads. Use when onboarding a repository, or to audit one already running Tenure.
+disable-model-invocation: true
+---
+
+# Configure
+
+`/configure` has **one job: make repository knowledge correct and complete.** Onboarding and auditing are not two responsibilities bolted together — they are the same job against different starting states, and a repository with no knowledge is the degenerate case of one whose knowledge is incomplete.
+
+Which branch runs is decided by **what it finds, never by a flag.** A flag lets the caller assert a starting state; detection discovers one, and the caller is usually wrong about which repository they are standing in.
+
+| What is already here | What this run does |
+| --- | --- |
+| no Tenure, no AI workflow | analyse, then generate |
+| no Tenure, another AI workflow present | the above, plus the migration in [MIGRATION.md](MIGRATION.md) |
+| Tenure already present | audit, and generate whatever is still missing |
+
+**Every run generates.** The third row audits *as well*, it does not audit *instead* — a first run interrupted halfway leaves a repository with `context.md` and no `tracker.md`, which detects as "Tenure already present" and would otherwise never be finished. The branch changes what is *found*, never which steps run.
+
+## 0 — Verification
+
+Open with the one-line verification report, exactly as every other skill does — including on a fresh repository, where it reads *"no Tenure here — nothing to verify"*. The rule is in `CLAUDE.md`.
+
+An audit run has Context to check and is the one case where this is real work. It still reports in one line; what it *finds* belongs to step 5.
+
+## 1 — Detect
+
+Nothing is generated before the repository has been looked at. Search for an existing AI workflow:
+
+```
+.claude/            CLAUDE.md            AGENTS.md
+CONTEXT.md          CONTEXT-MAP.md       docs/agents/
+docs/adr/           .scratch/            .ai/
+.cursor/ .cursorrules                    .windsurfrules
+.clinerules         .github/copilot-instructions.md
+```
+
+Then read the repository itself: languages, package manager, build, test, deploy, CI, source layout, **architectural style**, module boundaries, domains, and the conventions it already follows. **Read `CONTRIBUTING.md` and the recent `git log`** — those are how the repository documents and demonstrates its own conventions, and `CLAUDE.md`'s detect-before-asserting rule is what makes that a step rather than a courtesy.
+
+**Find the knowledge that is already written down**, wherever it lives: architecture documents, onboarding and developer guides, design documents, decision records, engineering standards, coding conventions. These are not an AI workflow and are not detected by the list above — they are ordinary documentation, usually under `docs/`, and they are the input the classification step works on. A migration that never found them classifies nothing and silently generates a repository's knowledge from scratch when it was already written.
+
+Classify what kind of repository this is — library, CLI, service, monorepo, application — because it changes what domains exist and what tooling matters.
+
+Read what you find. A `docs/adr/` directory is not proof that ADRs are in it, and detection is the step where that failure is easiest to make, because everything it looks at is a path.
+
+## 2 — Plan, confirm, apply
+
+Present the **full move list before touching anything**: every file to be created, converted, moved, or deleted, with its destination. Apply only on approval.
+
+**Nothing is deleted that did not appear in the confirmed plan.** This is the rule the whole step exists for — `/configure` runs against repositories with years of documentation in them, and a wrong classification that deletes is not recoverable from the tree.
+
+The user may strike any line. A struck line is not worked around: leave it as it is and say what that means for the rest.
+
+## 3 — Migrate, where there is something to migrate
+
+[MIGRATION.md](MIGRATION.md) has this branch, and step 1 decides whether to open it: another AI workflow found, read it; greenfield, skip it entirely. Reading it on a repository with nothing to migrate costs context and answers nothing.
+
+## 4 — Generate
+
+**Write what is missing; check what is already there.** Both, on every run — a file that exists is checked against the repository it claims to describe, and one that does not is written. Neither is conditional on which branch step 1 selected.
+
+The rest of the tree — `.claude/docs/{decisions,designs,research,prototypes}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `docs/research/` is a claim that research happened.
+
+**`.claude/context.md` and `.claude/contexts/**`.** The format, the routing table, and the test a domain has to pass before it earns a file are `domain-modeling`'s — see its [`CONTEXT-FORMAT.md`](../domain-modeling/CONTEXT-FORMAT.md); the compression test that gates every line of it is in `CLAUDE.md`. What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file.
+
+**`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
+
+**`.claude/rules/*.md`** for standards discovered in *this* repository — not Tenure's. Each is **path-scoped** where it applies to part of the tree. A standard that applies everywhere is one file; a standard about `packages/api/` says so, and is not paid for while working in `docs/`.
+
+**`.claude/tracker.md`**, from [tracker.template.md](tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
+
+**`.claude/tools/*.md`** for this repository's own tooling — package manager, test runner, typechecker, linter, build, deploy. The format belongs to the `tools` skill; read [tools/SKILL.md](../tools/SKILL.md) and follow it. Take every command from the repository's own manifest, scripts, or CI configuration, never from what the ecosystem usually does.
+
+The **single-file test command** is the one entry that must not be missing. It is the most-run command in the whole framework and the least guessable, and `tdd` says what happens without it.
+
+**`.claude/.gitignore`**, carrying `marker.json` and `prototypes/`. It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets Tenure be added or removed as one directory instead of leaking entries into a file the repository owns.
+
+## 5 — Audit, where Tenure is already here
+
+The audit branch exists because **verification at use structurally cannot reach knowledge nothing loads.** Verification fires when a statement is about to be relied on; a context file nobody references is never relied on, so nobody ever checks it. It does not decay loudly — it just sits there being wrong.
+
+So this pass reaches what the routing table does not:
+
+- **Prune what nothing references.** A Domain Context absent from the routing table, or one whose domain no longer exists, is removed. Say what was removed and why.
+- **Validate the routing table** — every file under `contexts/` has exactly one row, and every row points at a file that exists.
+- **Re-check Source Pointers**, including the ones no recent work touched.
+- **Re-check `.claude/tools/`.** A repository's tooling changes, and a stale command is worse than no command: no command asks, a wrong one runs.
+- **Mark specs reality already satisfies.** `/commit` marks a spec `implemented` when it lands the last criterion; a spec finished outside that path stays `accepted` forever. This pass catches those.
+
+Pruning deletes, so it goes through step 2's plan like everything else.
+
+## 6 — Validate
+
+Before reporting complete:
+
+- Every **Source Pointer** resolves, and a broken one is handled the way `CLAUDE.md` requires.
+- Every file under `contexts/` appears in the **routing table**, exactly once.
+- No **implementation** was written into Context — no API shapes, no function names, no file inventories.
+- `.claude/.gitignore` exists and covers both entries.
+
+Report what was written, what was moved, and what was left alone.
+
+## Running it again
+
+`/configure` is **idempotent**: a second run reports what already exists rather than duplicating it. That is not a nicety — the audit branch means re-running is the *intended* way to use it, so a run that appended instead of recognising would make the repository worse every time it was maintained.
+
+Recognition is by content, not by presence. A `context.md` that exists but describes a structure the repository no longer has is not "already done" — it is the audit's first finding.
+
+## What stays with the caller
+
+`/configure` **does not plan work and does not write code.** It finds a repository that needs designing and hands back; `/design` is the entry point for that, and taking it here would skip the grill (ADR 0011).
+
+It never commits. What it wrote is left in the working tree for the user to read, and `/commit` handles it from there.

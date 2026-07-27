@@ -1,6 +1,6 @@
 # feat(configure): initialize or migrate a repository onto Tenure
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 02, 03, 13
 
 ## Problem
@@ -53,3 +53,76 @@ The AI workflow layer is the exception and converts wholesale: agent instruction
 - Running it twice produces no duplication and reports what already exists.
 - No documentation is deleted without appearing in the confirmed plan.
 - Fresh repo and mattpocock-repo paths both work.
+
+## Comments
+
+**The branch table was wrong on the first pass, and the acceptance criterion
+depended on it.** `Tenure already present → audit` reads as three pipelines,
+so a first run interrupted halfway — `context.md` written, `tracker.md` not —
+detects as *already present*, audits, and never finishes. The audit row now
+reads *"audit, and generate whatever is still missing"*, and step 4 writes what
+is absent and checks what is present on **every** branch. What detection
+selects is what is *found*, never which steps run. This is a deviation from the
+ticket's table wording (`Audit —` only) and the operative half of *"running it
+twice ... reports what already exists"*: idempotence that stops early is
+idempotent and also wrong.
+
+**`.claude/`'s remaining directories are created lazily, which the ticket does
+not say.** ADR 0006's layout includes `docs/{designs,research,prototypes}/`,
+`tickets/`, and `prototypes/`, and `/configure` creates none of them.
+`domain-modeling` already requires files to be created only when there is
+something to write, and an empty `docs/research/` is a claim that research
+happened. The layout is named with who fills it instead.
+
+**Ticket 01's legacy-path guard needed an exemption, and the first one was a
+hole.** `/configure` cannot detect or convert `CONTEXT.md`, `docs/adr/`, or
+`.scratch/` without naming them. The exemption was first written as the prefix
+`configure*`, which also exempted `CLAUDE.template.md` and
+`tracker.template.md` — files installed into the *user's* repository, and
+previously guarded like any other. Now two named files, and the assertion that
+makes it safe is a **sweep**, not a checklist: every legacy path either file
+names must have a conversion row saying where it goes. The first version
+checked four known conversions exist somewhere, which says nothing about a
+fifth reference that is simply stale.
+
+**Three rules had a second home here and lost it.** The compression test was
+attributed to `domain-modeling`, which ticket 13 moved to `CLAUDE.md`. ADR
+0008's *"say so once, with reasoning"* escape clause was restated in
+`MIGRATION.md`. And *"a stale command is worse than no command"* appeared
+verbatim in both `configure/SKILL.md` and `tools/SKILL.md`. All three now have
+`$singleHome` entries.
+
+**A fourth was already in four places before this ticket touched it.** The
+reason a guessed test command wrecks the loop — *"turns into a full-suite run
+per cycle"* — was in `tdd`, `/implement`, `tools/SKILL.md`, and the first draft
+of `/configure`. `tdd` owns the loop, so it keeps the reason; the other three
+point. Guarded now, so it cannot spread again.
+
+**Two additions the ticket does not ask for.** `MIGRATION.md`'s *"when the
+migration is only partly possible"* — a wrong classification is invisible
+afterwards, because nothing in the target layout records that a file arrived
+there by assumption. And `/configure`'s closing note that it neither plans work
+nor commits: ADR 0011 makes `/design` the planning surface, and without the
+line the skill that has just read a whole repository is the obvious place to
+start planning against it.
+
+**Spec decision numbers were cited and then removed.** `(decision 23)` and
+`(decision 36)` point at `.scratch/tenure/spec.md`, which does not ship with
+the skill — and is the ticket store `/configure` migrates away. ADR citations
+have precedent in shipped skills; spec decision numbers do not resolve in a
+host repository.
+
+**`verify.ps1` gained two helpers and lost a portability bug.** `Get-Section`
+scopes an assertion to the step that owns the rule — nine of the first
+seventeen mutations survived because a file-wide pattern matched unrelated
+prose. It masks fenced code by index rather than stripping it, because
+`/configure`'s detection list *is* a fenced block. `Test-UserInvoked` replaces
+nine unanchored frontmatter regexes: unanchored, a commented-out line passes,
+and for the primitives the check runs in the negative direction where a false
+positive is silent. The exemption list also hardcoded `\`, which fails every
+ticket-01 assertion on a non-Windows machine.
+
+294 assertions, 57 mutations. Two earlier harnesses had stale find-strings
+against `/commit` and `/implement` and were repaired; a mutation harness killed
+by a timeout leaves the tree mutated, which is worth knowing before running one
+under a deadline.

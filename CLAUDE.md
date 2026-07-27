@@ -16,10 +16,11 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 - `research/` and `prototype/` — the two evidence commands, with `LOGIC.md` and `UI.md` behind pointers (ticket 07)
 - the on-ramps — `triage/`, `diagnosing-bugs/`, `handoff/`, `resolving-merge-conflicts/`, `improve-codebase-architecture/` — plus `configure/tracker.template.md`, the one home for tracker config (ticket 09)
 - the nineteen engineering rules, each placed where it fires (ticket 13) — the always-on set in `configure/CLAUDE.template.md`, the conditional ones in `codebase-design`, `tdd`, `design/`, and `implement/`
+- `configure/` — `/configure`, the way a repository joins Tenure, with `MIGRATION.md` behind a pointer (ticket 08)
 
 **Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-Tickets 08, 10–12, and 14 are not built. `/configure` does not exist yet, so anything depending on it is unverified — including `.claude/tracker.md` itself, which only exists as a template. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+Tickets 10–12 and 14 are not built. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
