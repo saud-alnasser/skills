@@ -397,6 +397,9 @@ $rulePattern = [ordered]@{
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
   'the stale-command rule'             = '(?i)stale command is worse than no command'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
+  # The router tells the human the tier is theirs; /design enforces it. Both
+  # are legitimate, but the enforcement clause is one sentence and drifts.
+  'the tier-override enforcement'      = '(?i)(their|your) override stands'
 }
 
 Describe-Ticket '02' 'verification at use, healing where the break is found' {
@@ -2138,9 +2141,7 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   # architecture was already written down gets it invented from scratch.
   Assert "documentation already written down is found before anything is generated" {
     $s = Get-Section (Get-SkillFile $cfg) 'Detect'
-    $find = [regex]::Match($s, '(?s)\*\*Find the knowledge that is already written down\*\*.*?(?=?
-?
-)')
+    $find = [regex]::Match($s, '(?s)\*\*Find the knowledge that is already written down\*\*.*?(?=\r?\n\r?\n)')
     if (-not $find.Success) { throw 'nothing goes looking for it' }
     $kinds = @('architecture', 'guide', 'decision record', 'standard', 'convention')
     $missing = $kinds | Where-Object { $find.Value -notmatch "(?i)$_" }
@@ -2404,6 +2405,243 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   }
 }
 
+# --- ticket 10 — /tenure, the router over the skill set ----------------------
+
+Describe-Ticket '10' 'router over the Tenure skill set' {
+
+  $router = 'tenure/SKILL.md'
+  # Read once. Eight assertions want the same file, and re-reading it in each
+  # is the Duplicated Code this repo flags in prose.
+  $rt = Get-SkillFile $router
+  # An entry is a bullet whose bolded lead is a skill name. Extracted once,
+  # because the marker is the shape every coverage assertion depends on and a
+  # change to it should touch one line.
+  $entries = @(($rt -split '\r?\n') | Where-Object { $_ -match '^- \*\*' })
+  # Backtick is PowerShell's escape character inside a double-quoted string, so
+  # a literal one has to arrive as a char rather than be typed.
+  $tick = [char]0x60
+
+  Assert "the router ships as /tenure — 'ask the tenured engineer'" {
+    if (-not (Test-Path (Join-Path $skills $router))) { throw 'skills/tenure/SKILL.md is missing' }
+    $fm = Get-Frontmatter $rt
+    if (-not $fm) { throw 'tenure/SKILL.md has no frontmatter' }
+    $fm -match '(?m)^name:\s*tenure\s*$'
+  }
+
+  Assert "/tenure is user-invoked — it is the human's index, and nothing else should load it" {
+    Test-UserInvoked $router
+  }
+
+  # "Every skill in ./skills appears exactly once." Counted as *entries* — the
+  # bullet that indexes a skill — not as mentions. A router cross-references
+  # constantly and has to; what must not happen twice is a skill being filed
+  # under two groups, because then the answer to "where does this belong"
+  # depends on which one you read.
+  #
+  # The router itself is the one exemption and cannot be otherwise: a router
+  # that indexes itself is circular, and it is the one skill reachable
+  # without an index.
+  Assert "every other skill has exactly one entry in the router" {
+    if ($entries.Count -lt 5) { throw 'the router is not a list of entries' }
+    $all = Get-ChildItem $skills -Directory |
+      Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') } |
+      ForEach-Object { $_.Name } |
+      Where-Object { $_ -ne 'tenure' }
+    $missing = @(); $repeated = @()
+    foreach ($s in $all) {
+      $pattern = '^- \*\*' + $tick + '?/?' + [regex]::Escape($s) + $tick + '?\*\*'
+      $n = @($entries | Where-Object { $_ -match $pattern }).Count
+      if ($n -eq 0) { $missing += $s }
+      elseif ($n -gt 1) { $repeated += "$s x$n" }
+    }
+    if ($missing) { throw "no entry for: $($missing -join ', ')" }
+    if ($repeated) { throw "filed under two groups: $($repeated -join ', ')" }
+    $true
+  }
+
+  # "The router explains *when* to reach for each, not what each contains."
+  # The negative half: a router that names another skill's disclosed file is
+  # describing contents. Cheap, and it holds the line against the crudest form.
+  Assert "the router never reaches into a skill's disclosed files" {
+    $disclosed = Get-SkillFiles |
+      Where-Object { $_.Name -ne 'SKILL.md' } |
+      ForEach-Object { $_.Name } |
+      Sort-Object -Unique
+    $leaked = $disclosed | Where-Object { $rt -match [regex]::Escape($_) }
+    if ($leaked) { throw "describes contents, not timing: $($leaked -join ', ')" }
+    $true
+  }
+
+  # The positive half, which is the criterion itself. An entry earns its place
+  # by naming the *situation* you are in — that is what you know at the moment
+  # you consult a router — and it has to do so in its opening clause, before
+  # the em-dash, or the reader has already had to parse a description.
+  Assert "every entry opens by naming a situation, not by describing the skill" {
+    $trigger = '(?i)^\s*(when(ever)?\b|once\b|before\b|not feature work\b|issues you|start here|run it\b|two situations)'
+    $triggerless = @($entries | Where-Object {
+      $tail = ($_ -split [char]0x2014, 2)[1]
+      -not ($tail -and $tail -match $trigger)
+    })
+    if ($triggerless) {
+      throw "no situation on: $(($triggerless | ForEach-Object { ($_ -split [char]0x2014)[0].Trim() }) -join '; ')"
+    }
+    $true
+  }
+
+  # --- the Spine -------------------------------------------------------------
+
+  # Both the diagram and the entries under it. Matching first occurrences only
+  # finds the diagram — every one of these names appears there first — so the
+  # entries could be listed in any order and this would still pass.
+  Assert "the Spine runs design, implement, code-review, commit, in that order" {
+    $spine = @('design', 'implement', 'code-review', 'commit')
+    foreach ($where in @('diagram', 'entries')) {
+      $last = -1
+      foreach ($step in $spine) {
+        $pattern = if ($where -eq 'diagram') { '/' + [regex]::Escape($step) + '\b' }
+                   else { '(?m)^- \*\*' + $tick + '/' + [regex]::Escape($step) + $tick + '\*\*' }
+        $m = [regex]::Match($rt, $pattern)
+        if (-not $m.Success) { throw "/$step is not in the $where" }
+        if ($m.Index -lt $last) { throw "/$step comes out of order in the $where" }
+        $last = $m.Index
+      }
+    }
+    $true
+  }
+
+  # "Spine commands stay bare (/design, /implement, /commit), so the name
+  # appears only here and in prose." A `tenure-` prefixed skill would put the
+  # router's name in front of every command the user types.
+  Assert "the router's name prefixes nothing — the Spine stays bare" {
+    $prefixed = Get-ChildItem $skills -Directory |
+      Where-Object { $_.Name -ne 'tenure' -and $_.Name -like 'tenure*' } |
+      ForEach-Object { $_.Name }
+    if ($prefixed) { throw "namespaced onto the router: $($prefixed -join ', ')" }
+    $announced = Get-SkillFiles |
+      Where-Object { $_.Directory.Name -ne 'tenure' } |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '(?m)^name:\s*tenure' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
+    if ($announced) { throw "claims the router's name: $($announced -join ', ')" }
+    $true
+  }
+
+  # Ticket 07 and ADR 0011: evidence is a detour off the Spine, and whether it
+  # blocks is a gate. A router that lists them as ordinary steps sends the user
+  # to research every change.
+  Assert "research and prototype are gated detours, not steps in the Spine" {
+    # The rule, not the heading above it. `### The two detours` sits directly
+    # over these entries and satisfies any detour-near-name pattern while the
+    # sentence that keeps them off the Spine is gone.
+    if ($rt -notmatch '(?i)detours,? not steps') { throw 'evidence reads as a step in the Spine' }
+    $rt -match '(?is)gate[^.]{0,160}(load-bearing|stop for)'
+  }
+
+  # ADR 0011. The failure this prevents is the user going looking for a
+  # to-spec or a wayfinder that no longer exists.
+  Assert "/design is the whole planning surface — spec, tickets, and the foggy map" {
+    # Read off /design's own entry. File-wide, `ticket` is satisfied by
+    # /implement's entry and `spec` by any prose, so the coverage sentence
+    # could be deleted outright and this would still pass.
+    $entry = @($entries | Where-Object { $_ -match '^- \*\*' + $tick + '/design' + $tick })
+    if ($entry.Count -ne 1) { throw '/design has no single entry' }
+    $covers = @('spec', 'ticket', '(map|fog)')
+    $missing = $covers | Where-Object { $entry[0] -notmatch "(?i)$_" }
+    if ($missing) { throw "/design's coverage is not stated: $($missing -join ', ')" }
+    $entry[0] -match '(?i)nothing else[^\r\n]{0,60}plan|no other[^\r\n]{0,60}plan'
+  }
+
+  # --- the other groups ------------------------------------------------------
+
+  Assert "the on-ramps say what arrived, not what they do" {
+    $triage = @($entries | Where-Object { $_ -match '/triage' })
+    if ($triage.Count -ne 1) { throw '/triage has no single entry' }
+    if ($triage[0] -notmatch '(?i)(incoming|arrive|did \*\*not\*\* create|raw)') { throw '/triage has no trigger' }
+    $bugs = @($entries | Where-Object { $_ -match '/diagnosing-bugs' })
+    if ($bugs.Count -ne 1) { throw '/diagnosing-bugs has no single entry' }
+    # The situation, not the examples. `regression` and `flake` are examples of
+    # what it handles; the trigger is that something is broken — and on their
+    # own the examples kept this green with the trigger deleted.
+    $bugs[0] -match '(?i)(broken|failing|does ?n.t work)'
+  }
+
+  # Decision 30 and ADR 0010 together: /configure is the only knowledge command
+  # and there is no second one. A router that leaves a hole where a sync stage
+  # would have been is where a user invents one.
+  Assert "the knowledge group states the audit re-run and that verification has no command" {
+    $s = Get-Section $rt 'Knowledge'
+    if ($s -notmatch '(?i)once per repo') { throw 'the first run is not scoped to once' }
+    if ($s -notmatch '(?i)\bagain\b|re-run') { throw 'the audit re-run is not stated' }
+    $s -match '(?is)(verif\w+|repairing)[^.]{0,140}(no command|not a command|never a command)'
+  }
+
+  # /configure writes what everything else reads, so a router that files it
+  # fourth without saying so sends a first-time user into /design against an
+  # unconfigured repository.
+  Assert "/configure is stated as the precondition, before the Spine" {
+    $pre = [regex]::Match($rt, '(?i)(first|before anything|to begin)[^\r\n]{0,40}/configure')
+    if (-not $pre.Success) { throw '/configure is not stated as a precondition' }
+    $spine = [regex]::Match($rt, '(?im)^##\s.*Spine')
+    if (-not $spine.Success) { throw 'there is no Spine section' }
+    if ($pre.Index -gt $spine.Index) { throw 'the precondition comes after the Spine it precedes' }
+    $true
+  }
+
+  Assert "the primitives are grouped as what runs underneath" {
+    $s = Get-Section $rt 'What runs underneath'
+    $primitives = @('grilling', 'tdd', 'codebase-design', 'domain-modeling', 'tools')
+    # `(?m)` or `^` anchors to the start of the whole section rather than to
+    # each line, and only the first primitive could ever match.
+    $missing = $primitives | Where-Object { $s -notmatch ('(?m)^- \*\*' + $tick + [regex]::Escape($_) + $tick) }
+    if ($missing) { throw "not placed underneath: $($missing -join ', ')" }
+    $true
+  }
+
+  # Scoped, and as a contrast rather than two independent mentions: the whole
+  # point is that they are alternatives, and either one alone is not a choice.
+  Assert "crossing sessions contrasts /handoff with /compact, and says what forces the choice" {
+    $s = Get-Section $rt 'Crossing sessions'
+    foreach ($opt in @('/handoff', '/compact')) {
+      if (-not (@($entries | Where-Object { $_ -match [regex]::Escape($opt) }).Count)) {
+        throw "$opt is not one of the two options"
+      }
+      if ($s -notmatch [regex]::Escape($opt)) { throw "$opt is not in this section" }
+    }
+    if ($s -notmatch '(?i)forks') { throw 'the fork/continue contrast is missing' }
+    if ($s -notmatch '(?i)continues') { throw 'the fork/continue contrast is missing' }
+    $s -match '(?i)smart zone'
+  }
+
+  # --- the tier model --------------------------------------------------------
+
+  Assert "the tier model is stated: max(Floor, Gates), after the grill, the user overrides either way" {
+    if ($rt -notmatch '(?i)max\(\s*Floor\s*,\s*Gates\s*\)') { throw 'the tier is not computed' }
+    if ($rt -notmatch '(?is)(after|follows)[^.]{0,80}grill') { throw 'the tier could be chosen before the grill' }
+    $rt -match '(?is)overrid\w+[^.]{0,80}(either direction|up or down)'
+  }
+
+  # ADR 0007. The router carries the *shape* of the decision, because a human
+  # deciding whether to type /design needs it. The tables are /design's, and
+  # they are what would drift — a floor row copied here and changed there is
+  # two different answers to the same question.
+  Assert "the Floor and Gate tables stay in /design alone" {
+    $tables = [ordered]@{
+      'the floor table' = '(?im)^\|[^|\r\n]*\|\s*(Express|Standard|Heavyweight)\s*\|'
+      'the gate table'  = '(?im)^\|[^|\r\n]*\|\s*(evidence first|spec|many tickets|a map)\s*\|'
+    }
+    foreach ($t in $tables.Keys) {
+      $homes = @(Get-SkillFiles |
+        Where-Object { (Get-Content $_.FullName -Raw) -match $tables[$t] } |
+        ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' })
+      if ($homes.Count -eq 0) { throw "$t is stated nowhere" }
+      # `-ne` on an array filters rather than compares, so the obvious spelling
+      # of this check is a silent no-op that also reports the legitimate home.
+      $strays = @($homes | Where-Object { $_ -ne 'design/SKILL.md' })
+      if ($strays) { throw "$t is also in: $($strays -join ', ')" }
+    }
+    $true
+  }
+}
+
 # --- ticket 13 — the engineering rules, distributed --------------------------
 
 Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
@@ -2621,7 +2859,7 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 13, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 
