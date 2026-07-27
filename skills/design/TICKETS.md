@@ -45,9 +45,12 @@ The title is a Conventional Commit subject, so the ticket's commit writes itself
 ```
 open       created by /design, nothing else set
 blocked    handed back to /design, with the reason under `## Blocked`
-resolved   /implement sets it after the commit lands
+resolved   the work is delivered. Who sets it depends on the tracker —
+           /implement on a local one, the merge on a shared one
 obsolete   no longer needed. Requires a one-line reason. Never deleted
 ```
+
+**On a shared tracker the merge resolves the ticket, not Tenure.** Tenure commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. The commit carries a non-closing reference and the drafted pull request body carries the closing keyword; `tools/github.md` has both forms and the constraints on them. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
 
 **This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
 
@@ -64,6 +67,8 @@ It is not the Claim and does not overlap it. Assignment separates humans, so the
 The checkable rule against a tracker filling with hundreds of AI-generated micro-tickets nobody reads: **a ticket must have an outcome someone can observe when it closes.** If closing it produces nothing visible, it is a step inside another ticket, not a ticket.
 
 **Deepen, don't widen.** A small set of parent tickets, each with sub-tickets where the work actually divides — never a flat spray of siblings. Structure is carried by relationships, not by ticket count.
+
+**One design run, one root.** Every ticket the run produces hangs beneath a single top-level ticket; a run that yields exactly one ticket makes that one the root rather than inventing a parent for it. The top level grows by one per design, whatever the count underneath — which is what makes booming visible without anyone counting. `/design` has the procedure for creating them in that order.
 
 Never create a ticket to rename a variable, move a file, or update a comment. Those happen inside a ticket that has an outcome.
 

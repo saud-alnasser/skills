@@ -3372,6 +3372,136 @@ Describe-Ticket '17' 'assignment, claim, and the branch as the lock' {
   }
 }
 
+# --- ticket 18 — what tenure may write to a shared tracker -------------------
+
+Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
+
+  $gh  = 'tools/github.md'
+  $tix = 'design/TICKETS.md'
+
+  # Criterion 1. The gate has to be on the invocation, not only in the skill
+  # that usually issues it — the reference is what a reader opens when they are
+  # about to run the command, and it already gates `gh pr create` this way.
+  Assert "creating an issue is gated as publishing, where the invocation lives" {
+    $s = Get-Section (Get-SkillFile $gh) 'Create an issue'
+    if ($s -notmatch '(?i)publish') { throw 'issue creation is not named as publishing' }
+    $s -match "(?i)human'?s call"
+  }
+
+  # And the procedure the gate needs to be actionable. A gate with no route
+  # through it becomes a thing to apologise for and then do anyway.
+  Assert "the ticket set is proposed and approved before anything is created" {
+    $c = Get-SkillFile 'design/SKILL.md'
+    $s = [regex]::Match($c, '(?ims)^###\s[^\r\n]*approved before it is created.*?(?=^#{2,3}\s|\z)')
+    if (-not $s.Success) { throw 'there is no approval step' }
+    $v = $s.Value
+    # Criterion 1's second half: the set survives a context reset, which is the
+    # only reason it is safe for approval to take as long as it takes.
+    if ($v -notmatch '(?i)design document') { throw 'the proposal lives only in the conversation' }
+    if ($v -notmatch '(?i)context reset') { throw 'survival across a reset is not claimed' }
+    # Ordering, not presence — approval after creation is not approval.
+    $approve = $v.IndexOf('approved')
+    $create  = $v.LastIndexOf('only then create')
+    if ($create -lt 0) { throw 'creation is never sequenced' }
+    if ($approve -gt $create) { throw 'the set is created before it is approved' }
+    $true
+  }
+
+  # Criterion 2. One root per run whatever the count, and the degenerate case
+  # stated — wrapping a single ticket in a parent is the reading that makes the
+  # top level grow by two.
+  Assert "a design run adds exactly one top-level ticket, whatever the ticket count" {
+    $c = Get-SkillFile $tix
+    if ($c -notmatch '(?i)one design run, one root') { throw 'the rule is not stated' }
+    if ($c -notmatch '(?i)single ticket makes that one the root|yields exactly one ticket makes that one the root') {
+      throw 'the one-ticket case is unhandled'
+    }
+    $c -match '(?i)(top level|tracker).{0,80}(grows|grow) by one'
+  }
+
+  # Criterion 3. On a shared tracker the triage queue and the frontier are one
+  # list, so this is not a rare case — and the failure it prevents is worse
+  # than stopping: filling in someone else's issue is designing without a grill.
+  Assert "an incoming issue is refused by /implement with the reason, and routed" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)frontier is build tickets only') { throw 'the frontier still admits raw issues' }
+    if ($c -notmatch '(?i)no acceptance criteria|acceptance criteria') { throw 'the reason is not given' }
+    if ($c -notmatch '(?i)/design') { throw 'it is refused without being routed' }
+    $c -match '(?i)do not fill the gaps in yourself|never fill the gaps'
+  }
+
+  # And the far end of that route: /design has to accept the entry point, or
+  # the refusal points at a door nobody opens.
+  Assert "/design accepts an incoming issue and makes it the root" {
+    $c = Get-SkillFile 'design/SKILL.md'
+    $s = [regex]::Match($c, '(?ims)^##\s[^\r\n]*incoming issue.*?(?=^#{2}\s|\z)')
+    if (-not $s.Success) { throw 'the entry point does not exist' }
+    $s.Value -match '(?i)becomes\*{0,2} the root'
+  }
+
+  # Criterion 4. Tenure never pushes, opens a PR, or merges, so resolving a
+  # shared ticket asserts an outcome it does not control.
+  Assert "the merge resolves a shared ticket, and /implement never closes one" {
+    $c = Get-SkillFile $tix
+    if ($c -notmatch '(?i)merge resolves the ticket, not Tenure') { throw 'the rule is not stated' }
+    # The reason, not just the rule: a closed issue whose PR is rejected is a
+    # lie the tracker tells everyone, and that is what stops it being reversed.
+    if ($c -notmatch '(?i)later rejected|is a lie') { throw 'the reason is missing' }
+    # The criterion: no new tracker state is needed in between, because the
+    # branch is still the Claim.
+    if ($c -notmatch '(?i)branch still exists') { throw 'the gap between commit and merge is unaccounted for' }
+    (Get-SkillFile 'implement/SKILL.md') -match '(?i)never closes an issue other people read'
+  }
+
+  # The split, and the hazard that forces it. `Closes` in a commit is live
+  # forever — a cherry-pick onto the default branch closes an issue nobody
+  # merged — which is why the commit gets the non-closing form.
+  Assert "the commit references without closing, and the PR body carries the keyword" {
+    $c = Get-SkillFile $gh
+    $s = Get-Section $c 'Close an issue by merging'
+    if ($s -notmatch '(?m)\|[^|\r\n]*commit message[^|\r\n]*\|\s*`Refs #') { throw 'the commit form is not the non-closing one' }
+    if ($s -notmatch '(?m)\|[^|\r\n]*pull request body[^|\r\n]*\|\s*`Closes #') { throw 'the PR form does not close' }
+    # Verified against the docs, and both are counter-intuitive enough that
+    # leaving either out is how the split gets "simplified" back together.
+    if ($s -notmatch '(?i)default branch') { throw 'the default-branch constraint is missing' }
+    if ($s -notmatch '(?i)cherry-pick') { throw 'the hazard behind the split is not recorded' }
+    (Get-SkillFile 'commit/SKILL.md') -match '(?i)without closing it'
+  }
+
+  # Criteria 5 and 6. Parent/child is a different edge from blocking, and it
+  # was previously reachable only through a section titled for blocking.
+  Assert "parent/child is findable as parent/child, not only under blocking" {
+    $c = Get-SkillFile $gh
+    if ($c -notmatch '(?im)^##[^\r\n]*(parent|sub-issue)') { throw 'no section a reader looking for parent/child would open' }
+    if ($c -notmatch '(?im)^##[^\r\n]*block') { throw 'blocking lost its own entry' }
+    # The trap the docs fetch actually turned up: the API wants the issue's
+    # id, and passing its number succeeds against a different issue.
+    if ($c -notmatch '(?i)`?sub_issue_id`? is the issue') { throw 'the id/number distinction is not recorded' }
+    $c -match '(?i)not its number'
+  }
+
+  # Nothing in the ticket format may promise an invocation gh does not have.
+  # Read the table's GitHub row and require each mechanism it names to be in
+  # the reference — the format is where a promise gets made, and the reference
+  # is the only thing that can honour it.
+  Assert "every relationship the ticket format promises is documented in the reference" {
+    $row = [regex]::Match((Get-SkillFile $tix), '(?m)^\|\s*GitHub\s*\|(.+)$')
+    if (-not $row.Success) { throw 'the edge table has no GitHub row' }
+    $r = $row.Groups[1].Value
+    $c = Get-SkillFile $gh
+    $promises = @{
+      'the sub-issues API'   = @{ inRow = '(?i)sub-issues API'; inRef = '(?i)sub_issues' }
+      'the task-list fallback' = @{ inRow = '(?i)task list';    inRef = '(?i)task list in the parent' }
+      'a body-text blocker'  = @{ inRow = '(?i)Blocked by';     inRef = '(?i)state the edge in the issue body' }
+    }
+    $broken = $promises.Keys | Where-Object {
+      ($r -match $promises[$_].inRow) -and ($c -notmatch $promises[$_].inRef)
+    }
+    if ($broken) { throw "promised but undocumented: $($broken -join ', ')" }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3379,7 +3509,7 @@ Describe-Ticket '17' 'assignment, claim, and the branch as the lock' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

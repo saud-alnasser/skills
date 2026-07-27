@@ -1,6 +1,6 @@
 # feat(tracker): what tenure may write to a tracker other people read
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 17
 
 ## Problem
@@ -29,3 +29,33 @@ Parent/child uses only what the tool reference documents. Nothing in the ticket 
 - A committed-but-unmerged ticket is off the frontier without any tracker write having marked it so.
 - Every relationship the ticket format promises is one the tool reference documents.
 - The tool reference's parent/child guidance is findable by someone looking for parent/child, not only by someone looking for blocking.
+
+## Comments
+
+**The docs fetch ADR 0014 demanded turned up two facts worth the call.**
+`POST /repos/{owner}/{repo}/issues/{issue_number}/sub_issues` takes
+`sub_issue_id` — the issue's **id**, not its number — so passing `#42`'s number
+succeeds against some other issue entirely, silently. And the removal path is
+singular (`DELETE .../sub_issue`). Both are in `tools/github.md`, with the
+`gh api ... --jq .id` read that gets the right value.
+
+**The closing-keyword split gained a constraint neither ADR had.** A closing
+keyword only fires against the repository's **default branch** — in a pull
+request body targeting anything else it is ignored entirely, no link and no
+closure. Recorded alongside the cherry-pick hazard that put `Refs` in the
+commit and `Closes` in the pull request body.
+
+**`Close an issue by merging` is a table, not a fenced block.** Ticket 15
+asserts every fenced block in a tool file carries an invocation of that tool,
+and this entry documents message text — there is no `gh` command that does it.
+The assertion was right and the entry was wrong; the entry changed.
+
+**`gh`'s parent/child guidance was reachable only under a heading about
+blocking.** Split into two entries, because they are two different edges and
+someone looking for one should not have to know the other exists.
+
+**The ticket-format promise is checked as an implication**, not a presence:
+where the edge table's GitHub row names a mechanism, the reference must
+document it. Mutation-tested in both directions — dropping the mechanism from
+the reference fails, and dropping it from the row correctly does not, since a
+format that stops promising something has nothing to honour.

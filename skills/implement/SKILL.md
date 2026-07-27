@@ -62,6 +62,8 @@ frontier = tickets open, unblocked, unclaimed
 
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
+**The frontier is build tickets only.** On a shared tracker the triage queue and the frontier are the same list, so an issue somebody filed and triaged to `ready-for-agent` sits right beside a ticket `/design` cut. It is not one: it has no outcome, no acceptance criteria, and no edges, and there is nothing to build from. Say which is missing and route it to `/design`, which is what turns an incoming issue into a root ticket. **Do not fill the gaps in yourself** — inventing an outcome for someone else's issue is designing without the grill, on a surface a team reads.
+
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.
 
 Work with no ticket at all — hand-written edits, a change made outside this flow — is `/commit`'s.
@@ -155,7 +157,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 Then **ask**: *commit and resolve this ticket?* `/implement` does not decide that the work is done.
 
-- **yes** — close out through `/commit`, then set `Status: resolved` and stop.
+- **yes** — close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `TICKETS.md` has why; `.claude/tracker.md` says which kind this repository has.
 - **not yet** — the branch stays, so the ticket stays claimed, and the loop stays open. Request changes, refine, ask again, in the same context and on the same ticket, for as long as it takes.
 
 `/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against.

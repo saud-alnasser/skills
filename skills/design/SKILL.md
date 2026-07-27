@@ -110,11 +110,31 @@ Formats:
 
 Read a format file when the tier selects it, not before. Knowing what the deliverable looks like while you are still grilling is an invitation to rush toward it.
 
+### On a shared tracker, the set is approved before it is created
+
+**Creating an issue publishes.** It lands in other people's workspace, so it is gated exactly as opening a pull request is — and this is the worst place to boom, because the mess is in a queue a team reads.
+
+```
+1. write the set into the design document — every ticket, with its edges
+2. show it, iterate on it, get it approved
+3. only then create — root first, then each child, then the links
+```
+
+The set lives in the design document until step 3, which is what makes it survivable: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal.
+
+**One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. [TICKETS.md](TICKETS.md) has the hierarchy and the edges; `tools/github.md` has the invocations, including which id the sub-issues API actually wants.
+
 ## 6 — Capture
 
 Vocabulary and ADRs are written **as they resolve**, not batched at the end. The refine step is where most durable understanding is produced, and batching loses the half of it that felt obvious at the time.
 
 Use `domain-modeling`. ADRs use its 3-of-3 test — a convention is not a decision.
+
+## An incoming issue is an input, not a plan
+
+An issue somebody filed and triaged to `ready-for-agent` says a change is wanted. It does not say what "done" looks like, what the acceptance criteria are, or how the work divides — so it is a request, and it enters here rather than at `/implement`.
+
+Treat it exactly as a request typed into the conversation: discover, state an understanding, grill, size it. It **becomes the root** of the ticket set this run produces, so the issue the human already opened is the top-level one and nothing is created above it.
 
 ## Re-planning
 
