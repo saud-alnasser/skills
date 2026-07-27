@@ -6,17 +6,17 @@ A Claude Code skill framework that makes Claude a partner whose understanding of
 
 Tenure ships as a plugin published from this repository, and installs at **`local` scope** — recorded in that project's `.claude/settings.local.json`, which is gitignored. It is therefore personal but not global: enabled in the projects you choose, absent everywhere else, and copied into neither.
 
-From inside the project you want it in, pointing at wherever this repository is
-checked out:
+From inside the project you want it in:
 
 ```
-/plugin marketplace add <path-to-this-repository>
+/plugin marketplace add saud-alnasser/skills
 /plugin install tenure@tenure-marketplace
 /reload-plugins
 ```
 
-`marketplace add` also takes an `owner/repo` shorthand or a git URL. This
-repository has no remote yet, so the local path is the form that works today.
+`marketplace add` also takes a git URL or a path to a local checkout — use the
+path when you want the project to track your working copy rather than what is
+pushed.
 
 Choose **local** when the install prompt asks for a scope. The other scopes do not express what Tenure wants: `user` enables it in every project, and `project` commits the choice for the whole team.
 
