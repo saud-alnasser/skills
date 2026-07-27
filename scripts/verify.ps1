@@ -415,6 +415,13 @@ $rulePattern = [ordered]@{
   # The router tells the human the tier is theirs; /design enforces it. Both
   # are legitimate, but the enforcement clause is one sentence and drifts.
   'the tier-override enforcement'      = '(?i)(their|your) override stands'
+  # Ticket 17. /implement makes the Claim, so it owns how. TICKETS.md has to
+  # say a `claimed` status does not exist, which is a pointer; restating the
+  # naming or the never-take rule there is a second home, and the naming is
+  # the half that breaks silently — two tools disagreeing on a name means
+  # neither sees the other's claim.
+  'the branch-name convention'         = '(?i)ticket.?id[^\r\n]{0,24}slug'
+  'a claim held elsewhere is not taken' = '(?i)claim held elsewhere is \*{0,2}never\*{0,2} taken'
 }
 
 Describe-Ticket '02' 'verification at use, healing where the break is found' {
@@ -629,7 +636,7 @@ Describe-Ticket '03' 'the whole planning surface' {
   # questions at once, so both halves are asserted.
   Assert "tickets carry the build lifecycle, not triage roles" {
     $tickets = Get-SkillFile 'design/TICKETS.md'
-    $lifecycle = @('open', 'claimed', 'blocked', 'resolved', 'obsolete')
+    $lifecycle = @('open', 'blocked', 'resolved', 'obsolete')
     $absent = $lifecycle | Where-Object { $tickets -notmatch "(?m)^$_\s" }
     if ($absent) { throw "lifecycle states undefined: $($absent -join ', ')" }
     $true
@@ -807,9 +814,13 @@ Describe-Ticket '04' 'build, and record what moved' {
     $c = Get-SkillFile 'implement/SKILL.md'
     if ($c -notmatch '(?i)never redesign') { throw 'no never-redesign rule' }
     # `blocked`, not `open`. An open ticket with no blocker is back on the
-    # frontier, and the next /implement claims it into the same wall.
-    if ($c -notmatch '(?i)unclaim.{0,60}Status:\s*blocked') { throw 'the ticket is not left blocked on hand-back' }
-    if ($c -match '(?i)unclaim.{0,60}Status:\s*open') { throw 'hand-back returns the ticket to the frontier' }
+    # frontier, and the next /implement claims it into the same wall. Ticket 17
+    # split the two halves of a hand-back — the status keeps it off the
+    # frontier, releasing the branch stops this clone holding a dead Claim — so
+    # both are required, and neither alone counts.
+    if ($c -notmatch '(?i)Status:\s*blocked') { throw 'the ticket is not left blocked on hand-back' }
+    if ($c -match '(?i)hand.?back[^\r\n]{0,80}Status:\s*open') { throw 'hand-back returns the ticket to the frontier' }
+    if ($c -notmatch '(?i)release the claim') { throw 'the claim survives a plan that cannot be built' }
     if ($c -notmatch '## Blocked') { throw 'no ## Blocked note' }
     $c -match '(?i)(leave|leaving) the (working )?tree'
   }
@@ -2776,7 +2787,7 @@ Describe-Ticket '14' 'hierarchy, relationships, labels, and title conventions' {
 ?
 (open\s.*?)^```')
     if (-not $fence.Success) { throw 'there is no lifecycle block' }
-    $states = @('open', 'claimed', 'blocked', 'resolved', 'obsolete')
+    $states = @('open', 'blocked', 'resolved', 'obsolete')
     $missing = $states | Where-Object { $fence.Groups[1].Value -notmatch "(?m)^$_\s+\S" }
     if ($missing) { throw "not in the lifecycle: $($missing -join ', ')" }
     $true
@@ -3229,6 +3240,138 @@ Describe-Ticket '16' 'position, and the line between shared and local' {
   }
 }
 
+# --- ticket 17 — assignment, and the branch as the lock ----------------------
+
+Describe-Ticket '17' 'assignment, claim, and the branch as the lock' {
+
+  $imp = 'implement/SKILL.md'
+  $tix = 'design/TICKETS.md'
+
+  # The Claim lives in a `### ` subsection of step 1, and Get-Section only
+  # scopes `## `. Scoping matters more than usual here: step 1 also carries the
+  # frontier and the obsolete branch, both of which use the word "claim", so a
+  # whole-section search passes on prose that has nothing to do with the rule.
+  $claimSection = {
+    $m = [regex]::Match((Get-SkillFile $imp), '(?ims)^###\s[^\r\n]*\bClaim\b.*?(?=^#{2,3}\s|\z)')
+    if (-not $m.Success) { throw 'the Claim has no section of its own' }
+    $m.Value
+  }
+
+  # Criterion 3, and the whole point of the mechanism. Scoped to the claim
+  # section rather than the file: "before any work" also appears in the step
+  # diagram, so a file-wide check stays green with the discipline deleted.
+  Assert "the Claim is the branch, created before the first read and the first edit" {
+    $s = & $claimSection
+    if ($s -notmatch '(?i)first act of the run') { throw 'claiming is not stated as the first act' }
+    if ($s -notmatch '(?i)first edit') { throw 'editing first is not named as the failure' }
+    $s -match '(?i)not a claim|is not a claim'
+  }
+
+  # Criterion 5. A tracker carries human-level facts; a `claimed` status is
+  # agent bookkeeping on that surface, and a file write cannot exclude anyone
+  # anyway — two instances write it in the same moment and both proceed.
+  Assert "no tracker state records which instance is working" {
+    $c = Get-SkillFile $tix
+    if ($c -notmatch '(?i)no `?claimed`? state') { throw 'the removed state is not accounted for' }
+    if ($c -match '(?m)^claimed\s+\S') { throw '`claimed` is still a lifecycle state' }
+    if ($c -match '(?i)Status:\s*claimed') { throw 'the claim is still written to the ticket' }
+    $true
+  }
+
+  # Criterion 4. `never taken` is the whole rule — a claim that can be taken
+  # under some condition is a request, and the conditions are what get argued.
+  Assert "a claim held elsewhere is reported and never taken" {
+    $s = & $claimSection
+    if ($s -notmatch $rulePattern['a claim held elsewhere is not taken']) { throw 'the rule is not stated' }
+    # The escape hatches, named individually, because each is a plausible
+    # workaround someone reaches for while believing they kept the rule.
+    foreach ($out in @('renamed around', 'branched from', 'force-created')) {
+      if ($s -notmatch [regex]::Escape($out)) { throw "the workaround is not closed off: $out" }
+    }
+    # Git's refusal is the backstop, not the check. Arriving at it means the
+    # read was skipped, and a run that treats it as a normal outcome has no
+    # reason to do the read at all.
+    $s -match '(?i)(fatal|refuses)[^\r\n]{0,120}(bug in the run|not a result)|(bug in the run|not a result)'
+  }
+
+  # Criterion 2, both halves: no file the repository does not carry, and no
+  # question asked. The branch is already there, and it is git's, not Tenure's.
+  Assert "an instance that lost its context recovers the ticket from the branch alone" {
+    $c = Get-SkillFile $imp
+    $s = [regex]::Match($c, '(?ims)^###\s.*resum.*?(?=^#{2,3}\s|\z)')
+    if (-not $s.Success) { throw 'recovery is not its own step' }
+    if ($s.Value -notmatch '(?i)current branch|branch it is standing on') { throw 'the branch is not the read' }
+    # Detached HEAD is the case that has no answer, and inventing one there is
+    # exactly the guess the mechanism exists to remove.
+    if ($s.Value -notmatch '(?i)detached HEAD') { throw 'the no-branch case is unhandled' }
+    $s.Value -match '(?i)(do not guess|never guess)'
+  }
+
+  # Criterion 1 rests on this. Two tools that name the same ticket differently
+  # produce two branches, neither of which sees the other's claim — so the
+  # convention is Tenure's own, and it has to be reproducible from the ticket.
+  Assert "branch naming is Tenure's own convention and encodes the ticket" {
+    $s = & $claimSection
+    if ($s -notmatch $rulePattern['the branch-name convention']) { throw 'the shape is not given' }
+    if ($s -notmatch "(?i)not the default of whichever tool|Tenure'?s own convention") {
+      throw 'the convention is left to the tool that creates the branch'
+    }
+    # ADR 0008 still applies: a repository that already has a convention wins.
+    $s -match '(?i)repository already has a branch convention|already has a branch convention'
+  }
+
+  # ADR 0013's separation. Assignment is what makes a light claim safe, so the
+  # reason has to travel with it — otherwise the branch looks like an
+  # under-engineered lock rather than a correctly sized one.
+  Assert "Assignment is human-level, read but never written unasked" {
+    foreach ($f in @($imp, $tix)) {
+      $c = Get-SkillFile $f
+      if ($c -notmatch '(?i)never writes? it unasked|never written unasked') {
+        throw "$f does not protect Assignment"
+      }
+    }
+    # The invariant, stated where the mechanism is chosen.
+    (Get-SkillFile $imp) -match '(?i)Assignment already separates humans'
+  }
+
+  # Criterion 6. Ticket 15's global check catches an invocation with no entry
+  # at all; this one names the reads the Claim actually depends on, so dropping
+  # one from the reference is caught here rather than by nothing.
+  Assert "every read the Claim depends on is an entry in the tool reference" {
+    $g = Get-SkillFile 'tools/git.md'
+    $required = @{
+      'the current branch'   = '(?m)^git branch --show-current'
+      'creating the branch'  = '(?m)^git switch -c <branch>'
+      'the local claim read' = '(?m)^git show-ref --verify --quiet refs/heads/'
+      'the remote claim read' = '(?m)^git ls-remote --heads'
+      'the stale-ref refresh' = '(?m)^git fetch --prune'
+    }
+    $missing = $required.Keys | Where-Object { $g -notmatch $required[$_] }
+    if ($missing) { throw "guessed rather than referenced: $($missing -join ', ')" }
+    # Detached HEAD returns empty, and empty reads as a failed command unless
+    # the reference says otherwise. That misreading is a silent wrong claim.
+    $g -match '(?i)empty output is a real answer'
+  }
+
+  # `gh issue develop` is the invocation someone reaches for on a GitHub repo,
+  # and it is wrong twice over — it publishes, and it names the branch GitHub's
+  # way. Both have to be in the reference, or it gets used.
+  Assert "gh issue develop is documented as publishing, and as not the claim" {
+    $c = Get-SkillFile 'tools/github.md'
+    if ($c -notmatch 'gh issue develop') { throw 'the trap is undocumented' }
+    if ($c -notmatch '(?i)ON THE REMOTE|creates the branch in the repository') { throw 'it is not marked as publishing' }
+    $c -match '(?i)not the read that answers whether a ticket is claimed|is not the claim'
+  }
+
+  # A hand-back releases the branch; a hand-back with work on it does not.
+  # Deleting a branch carrying a commit destroys the evidence the hand-back
+  # exists to preserve.
+  Assert "releasing a claim keeps the branch when there is a commit on it" {
+    $c = Get-SkillFile $imp
+    $c -match '(?i)partial commit exists[^\r\n]{0,80}keep the branch'
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3236,7 +3379,7 @@ Describe-Ticket '16' 'position, and the line between shared and local' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

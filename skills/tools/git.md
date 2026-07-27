@@ -80,6 +80,44 @@ failure at an old commit, a missing dependency — marks that commit bad and
 sends the search down the wrong half. Use `git bisect skip` for a commit that
 cannot be tested rather than letting it fail.
 
+## Read the current branch — which ticket this tree is building
+
+The branch is the Claim (`/implement` has the rule), so this is the read that tells an instance which ticket it was on.
+
+```
+git branch --show-current                         # empty output → detached HEAD
+```
+
+**Empty output is a real answer, not a failure.** On a detached HEAD there is no branch, so there is no Claim — treat the tree as building nothing, whatever else it contains.
+
+## Claim a ticket, or find the claim already held
+
+Creating the branch *is* the claim, so it is one command and it comes before any work.
+
+```
+git switch -c <branch>                            # claim: create it and move onto it
+git switch -c <branch> <start-point>              # ... based on something other than HEAD
+git switch <branch>                               # resume a claim this clone already holds
+```
+
+`git switch -c` fails on a name that already exists rather than moving onto it, which is what makes the claim an exclusion rather than a request. Check first, and check both sides:
+
+```
+git show-ref --verify --quiet refs/heads/<branch> # exit 0 → claimed in this clone
+git fetch --prune <remote>                        # refresh before believing the remote read
+git ls-remote --heads <remote> <branch>           # any output → claimed in another clone
+```
+
+`git ls-remote` goes to the network every time and does not need a prior fetch; `git fetch --prune` is for the local remote-tracking refs, which go stale silently and will otherwise report a claim that was released days ago.
+
+**Git enforces the rest.** A branch checked out in one worktree cannot be checked out in another:
+
+```
+fatal: '<branch>' is already used by worktree at '<path>'
+```
+
+That is exit 128 and it is the mechanism, not an error to work around. Report the path and stop — `/implement` has what to do next.
+
 ## Recover a broken Source Pointer
 
 `CLAUDE.md` has the rule. These are the two commands that find where the concept went:

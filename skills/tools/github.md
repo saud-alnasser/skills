@@ -46,6 +46,27 @@ gh label create "<name>" --color <hex> --description "<text>"
 
 `gh label list` is the read that comes before `gh label create`, always — `/triage` has the reuse rule. `create` fails on a name that already exists rather than editing it, so the list is what tells you whether you are adding or colliding. `--color` takes a bare hex with no leading `#`.
 
+## Read and set Assignment
+
+Assignment is which human owns delivering the issue. Tenure reads it; it writes it only when asked (`/implement` has the rule).
+
+```
+gh issue view <number> --json assignees,state,labels
+gh issue edit <number> --add-assignee "@me"       # only when the user asks for it
+gh issue edit <number> --remove-assignee <login>
+```
+
+`@me` resolves to the authenticated user. `--add-assignee` and `--remove-assignee` adjust the set; neither replaces it.
+
+**`gh issue develop` is not the claim.**
+
+```
+gh issue develop <number> --name <branch>         # creates the branch ON THE REMOTE — do not run
+gh issue develop <number> --list                  # read-only: branches linked this way
+```
+
+`develop` creates the branch in the repository rather than locally, so it publishes — the same standing rule as pushing. It also names the branch by GitHub's convention rather than Tenure's, and `--list` sees only branches created through it, so it is not the read that answers whether a ticket is claimed. That read is `git ls-remote` (see [git.md](git.md)).
+
 ## Link a blocking relationship
 
 `gh` has no native blocking or sub-issue subcommand. Two options, in order of preference:

@@ -1,6 +1,6 @@
 # feat(coordination): assignment, claim, and the branch as the lock
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -29,3 +29,45 @@ Nothing agent-level is written to the tracker.
 - A claim held elsewhere is reported, never taken.
 - The tracker carries no fact about which instance is working.
 - Every tracker invocation this ticket introduces exists in the tool reference, verified against the CLI rather than recalled.
+
+## Comments
+
+**`claimed` left the lifecycle entirely.** It was a tracker state, and ADR 0013
+puts nothing agent-level on the tracker — so `TICKETS.md` now runs `open`,
+`blocked`, `resolved`, `obsolete`, and says explicitly that no `claimed` state
+exists rather than quietly dropping it. Three assertions moved with it (tickets
+03, 04, 14), which is what caught the change being incomplete.
+
+**The branch name is `<ticket-id>-<slug>`.** The id leads so the ticket is
+recoverable by reading to the first `-`, which is what makes recovery-from-
+branch a read rather than a search. It is a Tenure default, so ADR 0008 applies
+and a repository's existing convention wins — `.claude/tracker.md` gained a
+`## Branch naming` slot for it, next to a new `## Assignment` slot for how this
+repository records who owns delivery.
+
+**A hand-back splits into two acts.** `Status: blocked` keeps the ticket off the
+frontier; deleting the branch stops the clone holding a Claim on work nobody is
+doing. Neither alone is enough. The branch is kept where a partial commit exists
+— deleting it would destroy the evidence the hand-back exists to preserve, which
+is the same reason the working tree is left alone.
+
+**Every invocation was run, not recalled.** Verified against git 2.55.0 and gh
+2.75.0: `git branch --show-current` (empty on a detached HEAD — a real answer,
+and the reference says so, because empty otherwise reads as a failed command),
+`git switch -c`, `git show-ref --verify --quiet`, `git ls-remote --heads`,
+`git fetch --prune`, and the worktree refusal, reproduced in a scratch
+repository: `fatal: '<branch>' is already used by worktree at '<path>'`, exit
+128. On the `gh` side, `--add-assignee`/`--remove-assignee` and the `assignees`
+JSON field.
+
+**`gh issue develop` is documented as a trap rather than left out.** It is what
+a reader reaches for on a GitHub repository, and it is wrong twice: it creates
+the branch on the remote, which publishes, and it names it GitHub's way rather
+than Tenure's. `--list` sees only branches it created, so it is not the claim
+read either.
+
+**Three assertions failed first on scoping, not content** — `Get-Section` only
+scopes `## ` headings and the Claim is a `### ` subsection. Scoping was worth
+keeping rather than widening: step 1 also carries the frontier and the obsolete
+branch, both of which use the word "claim", so a whole-section search would have
+passed on unrelated prose.

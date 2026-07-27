@@ -31,6 +31,22 @@ On GitLab, the same shape holds with `glab`; see `tools/gitlab.md`.
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a
 docs fetch, not an assumption.
 
+## Branch naming
+
+{This repository's branch convention, if it has one — read it off the recent
+branches and off `CONTRIBUTING.md` rather than asserting one. Delete this
+section if there is none, and `/implement`'s default applies.}
+
+The branch is how `/implement` claims a ticket, so whatever goes here has to
+encode the ticket id and has to be reproducible from the ticket alone.
+
+## Assignment
+
+{How this repository records which human owns delivering a ticket — GitHub
+assignees, a name in the ticket body, a project board column. Say it once.}
+
+Tenure reads Assignment and never writes it unasked.
+
 ## Roles
 
 The five canonical **state** roles, and the label strings this repository

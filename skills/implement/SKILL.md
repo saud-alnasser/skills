@@ -48,27 +48,62 @@ The report **is** the enforcement. A rule that produces visible output is one wh
 frontier = tickets open, unblocked, unclaimed
            lowest number wins — /implement does not choose
 
-  → claim it        Status: claimed, saved BEFORE any work
+  → claim it        create the branch, BEFORE any work
   → build it        tdd at the pre-agreed seams
   → /code-review    Spec + Standards
   → apply fixes
   → ASK             "commit and resolve this ticket?"
 
        yes      commit → resolve → advance the Marker → stop
-       not yet  stays claimed. keep refining in place.
+       not yet  the branch stays. keep refining in place.
 ```
 
-Setting `Status: claimed` and saving it **before any work** is the whole mechanism that stops two sessions taking the same ticket. Claiming after the first edit is the same as not claiming.
-
-**Where the tickets are, and how claiming is expressed, come from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. The `Status:` lines above are one tracker's form of the same states; `/design`'s [`TICKETS.md`](../design/TICKETS.md) says which form goes with which tracker, and `tools/github.md` has the invocations. Read the config rather than assuming.
+**Where the tickets are comes from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. `/design`'s [`TICKETS.md`](../design/TICKETS.md) has the ticket format and the lifecycle, and `tools/github.md` has the invocations. Read the config rather than assuming.
 
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.
 
-**Resuming.** A claimed ticket with work in progress is picked up ahead of the frontier, as is a ticket the user names. A ticket left claimed by an abandoned session blocks its own frontier slot; say that plainly rather than silently working around it.
-
 Work with no ticket at all — hand-written edits, a change made outside this flow — is `/commit`'s.
+
+### The branch is the Claim
+
+**Claiming is creating the ticket's branch, and it is the first act of the run** — before the first read of source, and long before the first edit. A claim made after the first edit is not a claim; it is a report of a race already lost.
+
+Nothing about the Claim is written to the tracker. A tracker carries human-level facts, and which instance is building something right now is not one — see [`TICKETS.md`](../design/TICKETS.md) for what the tracker does hold.
+
+The branch name is **Tenure's own convention**, not the default of whichever tool created the branch, because two tools must produce the same name for the same ticket or the claim stops being a claim:
+
+```
+<ticket-id>-<slug-of-the-summary>       17-assignment-and-claim
+                                        142-retry-a-failed-payment
+```
+
+The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/tracker.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
+
+**Check before creating, on both sides.** `tools/git.md` has the reads:
+
+```
+claimed here      a local branch of that name exists
+claimed elsewhere the remote has one — fetch first, or the answer is stale
+free              neither
+```
+
+**A claim held elsewhere is never taken.** Not renamed around, not branched from, not force-created over. Report which ticket, which branch, and where the claim was seen, then move to the next ticket on the frontier. Git enforces this at the last line of defence — it refuses to check one branch out in two worktrees — but arriving there means the check was skipped, so treat that `fatal:` as a bug in the run, not a result.
+
+A claim **this clone's own branch identifies** is not someone else's: resume it, or release it by deleting the branch, freely.
+
+### Resuming after losing context
+
+An instance that has lost its context reads the branch it is standing on. That is the whole recovery: the current branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got.
+
+A detached HEAD names no branch and therefore holds no Claim. Do not guess from the diff what was being built — claim a ticket properly or hand back.
+
+### Assignment is not this
+
+**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `tools/github.md` has the invocation.
+
+It matters here for one reason: Assignment already separates humans, so the Claim only ever has to arbitrate between one person's own instances. That is why a branch is enough, and why nothing heavier is needed.
 
 ## 2 — Build
 
@@ -96,15 +131,19 @@ A plan is wrong when the ticket cannot be built as written: the architecture it 
 
 ```
 → stop. do not build past the discovery.
-→ unclaim it            Status: blocked
+→ mark it               Status: blocked
 → append ## Blocked     what was found, and why the plan
                         cannot proceed as written
+→ release the claim     delete the branch, so the tree is
+                        not left holding a ticket it cannot build
 → leave the working tree alone
      no half-commit, no revert of the user's files
 → hand back: this needs /design
 ```
 
 `blocked`, not `open` — an open ticket with no blocker is back on the frontier, and the next `/implement` claims it and walks into the same wall.
+
+Release the claim *and* set `blocked`. The status is what keeps the ticket off the frontier; deleting the branch is what stops this clone reporting a Claim on work nobody is doing. Neither alone is enough, and the branch goes only because there is nothing on it — where a partial commit exists, keep the branch and say so.
 
 Leave the tree untouched because the partial work is usually the sharper evidence of *why* the plan was wrong — it shows where the plan met reality — and it is the user's to keep or discard.
 
@@ -117,7 +156,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 Then **ask**: *commit and resolve this ticket?* `/implement` does not decide that the work is done.
 
 - **yes** — close out through `/commit`, then set `Status: resolved` and stop.
-- **not yet** — the ticket stays `claimed` and the loop stays open. Request changes, refine, ask again, in the same context and on the same ticket, for as long as it takes.
+- **not yet** — the branch stays, so the ticket stays claimed, and the loop stays open. Request changes, refine, ask again, in the same context and on the same ticket, for as long as it takes.
 
 `/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against.
 

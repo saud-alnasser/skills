@@ -36,7 +36,7 @@ implementation list — the ticket says what "done" looks like, and
 - Another one.
 ```
 
-The title is a Conventional Commit subject, so the ticket's commit writes itself.
+The title is a Conventional Commit subject, so the ticket's commit writes itself. The id and the summary are also what `/implement` builds the branch name from, so write a summary that reads as one.
 
 `Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/tracker.md` says which applies, and `tools/github.md` has the invocations.
 
@@ -44,8 +44,6 @@ The title is a Conventional Commit subject, so the ticket's commit writes itself
 
 ```
 open       created by /design, nothing else set
-claimed    /implement claims it BEFORE any work, and saves —
-           this is what stops two sessions taking the same ticket
 blocked    handed back to /design, with the reason under `## Blocked`
 resolved   /implement sets it after the commit lands
 obsolete   no longer needed. Requires a one-line reason. Never deleted
@@ -53,7 +51,13 @@ obsolete   no longer needed. Requires a one-line reason. Never deleted
 
 **This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
 
-Claiming is the first write of any session that touches a ticket: set it and save before doing any work.
+**There is no `claimed` state, and a tracker never records one.** Which instance is building a ticket right now is agent-level bookkeeping on a surface reserved for human-level facts, and a status written into a file cannot stop two instances writing it at the same moment. The Claim is the ticket's branch; `/implement` owns it and states the naming.
+
+## Assignment
+
+**Assignment — which human owns delivering a ticket — is a tracker fact, and it is theirs.** It is set by people, in the tracker's own way: an assignee on GitHub, a name in the ticket on a local tracker. Tenure reads it and never writes it unasked.
+
+It is not the Claim and does not overlap it. Assignment separates humans, so the Claim never has to arbitrate between two of them — only between one person's own instances, which is the small problem a branch is enough to solve.
 
 ## One ticket, one observable outcome
 
