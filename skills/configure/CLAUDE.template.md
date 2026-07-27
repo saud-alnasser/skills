@@ -24,9 +24,11 @@ When instructions conflict, the later source loses:
 3. `.claude/context.md` and the Domain Contexts
 4. `.claude/docs/decisions/` — an accepted ADR
 5. `.claude/rules/` and `CONTRIBUTING.md`
-6. `README.md` and the rest of the repository's documentation
+6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is
 
 A user instruction overrides everything here. Say so when it does, and follow it.
+
+`.claude/rules/` holds standards discovered in **this repository** — they belong to it, not to Tenure. A rule that applies to only part of the tree is **path-scoped** to that part; check the scope before applying one.
 
 ## Knowledge layers
 
@@ -71,6 +73,12 @@ If the Marker is not an ancestor of `HEAD` — a branch switch, a rebase, a rese
 
 See `tools/git.md` for the exact invocations and for how `--porcelain` output is parsed.
 
+## Verify before claiming
+
+**Inspect source before any repository-specific claim** — before implementing, designing, reviewing, or answering a question about this repository. Not sometimes: a claim about what is here is either checked or it is a guess wearing the same words.
+
+**Names are not proof.** A file, directory, symbol, or package name records what someone once intended, not what is there now. Neither is memory, and neither is a plausible-sounding API.
+
 ## Verification at use
 
 **Never a scan. Never a phase.** There is no synchronization stage to run and nothing to reconcile up front — a startup scan would be Claude rediscovering what it already knows, and paying for it on every session.
@@ -107,12 +115,18 @@ The point of stating it is that the user can disagree. A classification held sil
 
 CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/**`, and `.claude/docs/decisions/**` change through the workflow's own commands and nothing else.
 
+**The compression test, before anything is written into knowledge:** *will this improve a future engineering decision?* If not, don't write it. This applies on every turn, including the ones where a concept moves and no command was typed — capture is not a licence to accumulate.
+
 What belongs in Context and what never does is the `domain-modeling` skill's business — it is the skill that writes it.
 
 ## Conventions
 
+**Tenure's conventions are defaults for when the repository is silent** (ADR 0008), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
+
+The defaults, applied when nothing else is found:
+
 Conventional Commits — `type(scope): summary` — for commit subjects, PR titles, and issue titles. The scope names an engineering domain; `misc`, `stuff`, and `update` are not domains.
 
-Never guess an API, and a CLI is an API. Read the reference or fetch the docs — there is no third option where you try a flag and see. `tools/` covers the workflow's own tools; `.claude/tools/` covers this repository's.
+**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `tools/` covers the workflow's own tools; `.claude/tools/` covers this repository's.
 
 Tenure never pushes and never publishes. Committing is asked for; pushing, opening a PR, and submitting a stack are the human's call.

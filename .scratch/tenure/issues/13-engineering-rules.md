@@ -1,6 +1,6 @@
 # feat(rules): distribute the engineering rules across the workflow
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -58,4 +58,64 @@ worded for its own action. Both are asserted in `verify.ps1`. **Do not place
 either again**; no rule in two homes is this ticket's own acceptance criterion.
 
 Still this ticket's: *self-explanatory code* itself, which is the part of that
-row neither skill carries.
+row neither skill carries. **Placed in `/implement` only.** `/code-review`'s
+Standards axis already flags the naming behind a *what*-comment, which is the
+check; a second bullet there would be the row stated three times.
+
+**Two placements deviate from the outcome-2 table, both under ADR 0007's own
+consequence paragraph** — *"any rule that must hold unconditionally therefore
+has to be in `CLAUDE.md`"* — which the acceptance criteria repeat and the table
+does not override:
+
+- ***Never guess APIs*** stays in `CLAUDE.md`, where ticket 02 put it, rather
+  than moving into `/research` and `/implement`. It fires on a bare question
+  turn — answering "how do I call X?" from memory is the failure, and no skill
+  is running then. Both named skills reach it by pointer, and each adds the act
+  its own stage needs: `/research` that a fact established by trying flags is a
+  fact about this build, `/implement` that version, signature, and limits are
+  confirmed before the call.
+- ***One concept per file · directories over verbose filenames · clear naming***
+  went to `codebase-design` alone, as its new **Files and names** section, with
+  `/implement` pointing at it. These are conditional — they bite only where code
+  is being shaped — so a skill is the right home, and one skill is enough:
+  `codebase-design` is a reference, not a checker, so the producer/checker pair
+  ADR 0007 authorises for the comment row does not apply here.
+
+**Three rules had to be *cut* from a second home before they could be placed,
+and each cut left a pointer at the site.** `/design` §1 restated
+verify-before-claiming; `/research` §2 restated the `tools/` routing sentence
+verbatim; `/commit` §4 restated ADR 0008. The compression test was in
+`domain-modeling`'s `CONTEXT-FORMAT.md` and moved to `CLAUDE.md`, because
+cold-path capture writes knowledge on turns where no skill runs.
+
+**`tools/SKILL.md` was the fourth, and the guard for it was chosen so it could
+not fire.** Ticket 15's skill opened with *"Tenure's first principle is never
+guess an API, and a CLI is an API … there is no third one where you try a flag
+and see"* — the same rule as `CLAUDE.md`, near-verbatim. The `$singleHome` entry
+written for it matched only the `tools/`-routing sentence that happens to travel
+with the rule, which `tools/SKILL.md` does not carry, so it passed. Found by
+review; the entry now matches the rule itself, and this is an edit to a resolved
+ticket's artifact for the same reason ticket 09's bisect entry was.
+
+**`/commit`'s message step also gained, then lost, a tiebreak.** The first
+rewrite said the `git log` settles a disagreement with `CONTRIBUTING.md`.
+Neither ADR 0008 nor the precedence chain says that — the chain ranks
+`CONTRIBUTING.md` and does not rank `git log` at all — so it was invented
+policy in a ticket-06 file. Cut; the read order alone was already there.
+
+**Principles 02 and 03 were the ones nearly dropped silently.** The first
+accounting covered seventeen of nineteen: the ticket calls them *definitions*
+that live in the glossary, which is a disposition and not an exemption from
+being checked. They are now asserted as the knowledge-layer table's two lower
+rows, plus a guard that neither is restated as a rule inside a skill.
+
+**`verify.ps1` carried the same duplication it exists to police.** Seven regexes
+were byte-identical across ticket 02's `$singleHome` and ticket 13's `$placed`
+and `$pointers`, so rewording one rule needed three coordinated edits and the
+one that got missed would still pass. Hoisted to a single `$rulePattern` table;
+the two rules whose placement check is deliberately stronger than their
+duplication probe stay separate, with the reason recorded there.
+
+258 assertions, 53 mutations. Two of the mutations are **over-fitting probes** —
+they reword the worked example and cut the reason CONTRIBUTING outranks README
+without touching either rule, and the suite must stay green under them.

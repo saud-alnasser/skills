@@ -19,7 +19,7 @@ Then, in this order:
 1. Load `.claude/context.md`.
 2. **Route** — its routing table says which Domain Contexts this request touches. Load those, and only those.
 3. **Verify** what you are about to rely on. Verification is scoped to what routing selected, which is why it comes after routing and not before: verifying everything is the startup scan the Marker exists to avoid.
-4. Read the code. Inspect source before any repository-specific claim — a Source Pointer says where to start looking, never what is there.
+4. **Read the code.** `CLAUDE.md` has the rule; discovery is where it bites hardest, because a plan built on a guessed model of the repository is wrong before the first ticket is cut.
 
 Open with the one-line verification report, including when there was nothing to verify.
 
@@ -38,6 +38,12 @@ Grill the idea. Ask only where the answer changes **architecture, behaviour, com
 Proportionate to the work: one or two sharp questions on a config change, relentless on an architecture change. One question at a time. Use `grilling`.
 
 **Grill the idea, never the user.**
+
+### Root cause, not workaround
+
+When the plan runs into a limitation, the grill's job is to find out **why the limitation exists** before designing around it. Prefer redesign: identify the root cause, understand what put it there, weigh the alternatives, and change the shape rather than accreting a bypass. A workaround costs nothing today and compounds; this is the last stage that can still see the choice.
+
+Where a workaround genuinely is the answer, the spec records three things — **why it exists, what alternatives were considered, and the removal conditions**. The removal condition is the one that matters: without it, "temporary" is a description of intent rather than a state anything can leave, and nobody later can tell whether the reason still holds.
 
 ### Options
 

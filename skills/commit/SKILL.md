@@ -58,9 +58,9 @@ Do this **before staging**, not after committing. The spec is a tracked file, so
 
 ## 4 — The message
 
-**Detect before asserting.** The convention Tenure carries — Conventional Commits, and what a scope may name — is in `CLAUDE.md`, and it is a **default for when the repository is silent** (ADR 0008), never a mandate.
+`CLAUDE.md` carries the convention Tenure defaults to, and the standing rule that a convention is detected before it is asserted. This is where that detection actually happens, so make it a step: read `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`, then the recent `git log`.
 
-So read the repository first: `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`, then the recent `git log`. Where the repository documents or demonstrates another convention, that convention wins and Tenure follows it — silently, without a note explaining what Tenure would have written instead.
+Where the repository documents or demonstrates another convention, follow it **silently** — without a note explaining what Tenure would have written instead.
 
 Say what capability changed, and why it changed. **Never a file-by-file account**: the diff already lists the files, and a message that re-lists them spends the reader's attention on the one thing they could have got for free.
 

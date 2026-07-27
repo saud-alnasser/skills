@@ -66,7 +66,7 @@ _Avoid_: view, cache, denorm
 
 Context is **orientation, not documentation**: concepts, vocabulary, boundaries, stable constraints, Source Pointers.
 
-Before writing anything into it, apply the **compression test** — *will this improve a future engineering decision?* If not, don't write it. Context is not a spec, a scratch pad, or a home for implementation decisions.
+Apply the **compression test** in `CLAUDE.md` before writing anything into it. Context is not a spec, a scratch pad, or a home for implementation decisions.
 
 **Never write in**: code, API shapes, function names, file inventories, or an implementation walkthrough. Those rot the moment the Codebase moves, and the Codebase already answers them.
 

@@ -15,10 +15,11 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 - `commit/` — `/commit`, the transaction boundary and the Marker's only writer (ticket 06)
 - `research/` and `prototype/` — the two evidence commands, with `LOGIC.md` and `UI.md` behind pointers (ticket 07)
 - the on-ramps — `triage/`, `diagnosing-bugs/`, `handoff/`, `resolving-merge-conflicts/`, `improve-codebase-architecture/` — plus `configure/tracker.template.md`, the one home for tracker config (ticket 09)
+- the nineteen engineering rules, each placed where it fires (ticket 13) — the always-on set in `configure/CLAUDE.template.md`, the conditional ones in `codebase-design`, `tdd`, `design/`, and `implement/`
 
 **Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-Tickets 08, 10–14 are not built. `/configure` does not exist yet, so anything depending on it is unverified — including `.claude/tracker.md` itself, which only exists as a template. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+Tickets 08, 10–12, and 14 are not built. `/configure` does not exist yet, so anything depending on it is unverified — including `.claude/tracker.md` itself, which only exists as a template. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
@@ -106,7 +107,7 @@ The authoring standard is `writing-great-skills` (in the user's skill set, not t
 
 Two rules bite hardest in this repo:
 
-- **A rule has exactly one home.** ADR 0007 places it: root `CLAUDE.md` for what must hold on every turn, the enforcing skill for a stage rule, `.claude/rules/` for a standard discovered in the repo. A rule that must hold unconditionally *has* to be in `CLAUDE.md` — putting it in a skill means it fires only when that skill runs, which is a silent failure. `scripts/verify.ps1` asserts single-home for the rules most likely to be restated.
+- **A rule has exactly one home.** ADR 0007 places it: root `CLAUDE.md` for what must hold on every turn, the enforcing skill for a stage rule, `.claude/rules/` for a standard discovered in the repo. A rule that must hold unconditionally *has* to be in `CLAUDE.md` — putting it in a skill means it fires only when that skill runs, which is a silent failure. `scripts/verify.ps1` asserts single-home through the `$rulePattern` table; add an entry there when you place a rule. Every restatement found so far was caught by an assertion, and two were missed first time because the assertion matched a phrase that travelled *with* the rule rather than the rule — check that a new guard would actually fire.
 - **Vendored skills keep their attribution.** Every skill derived from mattpocock/skills says so (ADR 0001).
 
 ## Agent skills

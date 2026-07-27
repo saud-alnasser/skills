@@ -31,7 +31,7 @@ Follow **every claim back to the source that owns it.** A claim that cannot be t
 
 Where a secondary source is the only thing available, say so explicitly in the finding. That is a limitation of the research, not a detail to smooth over.
 
-Reading a CLI or an API means reading its reference, not trying flags to see what happens. `tools/` covers the workflow's own tools; `.claude/tools/` covers this repository's.
+The rule against guessing an API — and a CLI counts — is in `CLAUDE.md`. It applies with full force here: research that establishes a fact by trying flags until something works has established what that build does today, not what the tool guarantees.
 
 ## 3 — Write one cited file
 

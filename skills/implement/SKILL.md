@@ -78,10 +78,15 @@ Typecheck often, and run the single test file often. Run the **full suite once**
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
-Two rules about what gets written, applied even where the repository documents neither (ADR 0007). `/code-review` checks both; this is where they are obeyed:
+Three rules about what gets written, applied even where the repository documents none of them (ADR 0007). `/code-review` checks them; this is where they are obeyed:
 
-- **Comments explain *why*, not *what*.** A comment that restates the line below it goes stale on its own schedule and is worth less than the naming it is compensating for. If a comment is needed to say what the code does, fix the code.
+- **Prefer self-explanatory code.** The code itself is what the next reader has to understand, and prose beside it is a second thing to keep true. Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
+- **Comments explain *why*, not *what*.** Constraints, tradeoffs, and the reasoning behind a shape are worth writing down — they are not recoverable from the code. A comment that restates the line below it goes stale on its own schedule and is worth less than the naming it is compensating for.
 - **A public interface is documented; private implementation is not.** Anything callers depend on states its contract — what it does, what it requires, how it fails. Documenting the inside as well doubles what has to be kept true.
+
+Where the new code lands and what it is called is `codebase-design`'s. Read its **Files and names** section and apply it here, while the file is being created — a layout decision is cheap now and a rename touching every caller later.
+
+The rule against guessing an API is in `CLAUDE.md`, and building is where it costs the most: confirm the **version, signature, and limits** of anything you call before calling it. Code compiles against what is installed, not against what you remember being true.
 
 ## 3 — When the plan turns out wrong
 

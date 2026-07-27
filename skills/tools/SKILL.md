@@ -5,9 +5,7 @@ description: How to drive the command-line tools the workflow touches — git, G
 
 # Tools
 
-Tenure's first principle is **never guess an API**, and a CLI is an API. A guessed flag fails loudly at best and does the wrong thing quietly at worst.
-
-This skill is entirely reference. Read the file for the tool you are about to use; if the operation you need is not in it, fetch the tool's docs. Those are the only two options — there is no third one where you try a flag and see.
+`CLAUDE.md` carries the rule this skill exists to serve. This skill is entirely reference, and satisfying that rule here is two steps and no others: **read the file for the tool you are about to use**, and where the operation you need is not in it, **fetch that tool's docs**. A guessed flag fails loudly at best and does the wrong thing quietly at worst.
 
 ## What is here
 

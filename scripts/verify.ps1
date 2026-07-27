@@ -330,6 +330,27 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
 # fires when that skill runs. /configure (ticket 08) installs this template.
 $claudeTemplate = 'configure/CLAUDE.template.md'
 
+# A rule's *pattern* gets one home too, for the reason the rule does. Ticket 02
+# asserts each rule is stated once; ticket 13 asserts where, and which skills
+# reach it by pointer. Those are three uses of the same regex, and a second copy
+# means rewording a rule needs coordinated edits — with the copy that gets
+# missed still passing.
+#
+# Deliberately loose. These are "is this rule stated here at all" probes, which
+# is what duplication detection needs; an assertion that the rule is stated
+# *properly* is a different, stronger pattern and belongs at its own site.
+$rulePattern = [ordered]@{
+  'verify before claiming'             = '(?i)before any repository-specific claim'
+  'the tools routing rule'             = "(?i)covers the workflow'?s own tools"
+  'never guess an API'                 = '(?i)a CLI is an API'
+  'conventions are defaults'           = '(?i)defaults? for when the repository is silent'
+  'one concept per file'               = '(?i)one concept per file'
+  'the test-layout rule'               = '(?i)unnecessary test structure'
+  'self-explanatory code'              = '(?i)self-explanatory'
+  'the compression test'               = '(?i)will this improve (a )?future engineering decision'
+  'the knowledge-layer table'          = '(?im)^\|\s*Codebase\s*\|'
+}
+
 Describe-Ticket '02' 'verification at use, healing where the break is found' {
 
   Assert "the always-on rules ship as the CLAUDE.md template /configure installs" {
@@ -411,10 +432,16 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
     'the commit scope vocabulary'     = '(?i)`misc`.{0,40}`stuff`'
     'the evidence graduation rule'    = '(?i)owns that graduation'
     'the evidence gating rule'        = '(?i)ungated[^\r\n]{0,120}background'
-    'the compression test'            = '(?i)will this improve (a )?future engineering decision'
     'the never-invent-a-pointer rule' = '(?i)(never|not|rather than) invent(ing)?( a)? (replacement|path)'
-    'the knowledge-layer table'       = '(?im)^\|\s*Codebase\s*\|'
+    # Ticket 13's two rules whose single-home probe is looser than the pattern
+    # that asserts they are stated *properly*, so they are not in $rulePattern:
+    # the placement checks demand all three recorded items and the worked
+    # example respectively, and neither shape is what duplication detection
+    # wants — a partial restatement elsewhere is still a second home.
+    'root-cause over workaround'      = '(?i)removal condition'
+    'directories over verbose filenames' = '(?i)verbose filename'
   }
+  foreach ($rule in $rulePattern.Keys) { $singleHome[$rule] = $rulePattern[$rule] }
   foreach ($rule in $singleHome.Keys) {
     $pattern = $singleHome[$rule]
     Assert "$rule has exactly one home under ./skills" {
@@ -1954,6 +1981,216 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   }
 }
 
+# --- ticket 13 — the engineering rules, distributed --------------------------
+
+Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
+
+  # "Every one of the nineteen principles is accounted for — placed, cut, or
+  # identified as embodied elsewhere. None silently dropped." The three tables
+  # below are that accounting, and they are the reason it is checkable at all:
+  # a principle that falls out of the build fails here rather than going quiet.
+
+  # 1 — placed, each in the one file ADR 0007 assigns it.
+  $placed = [ordered]@{
+    # The hierarchy plus its direction. "never the reverse" alone is an
+    # incidental phrase that unrelated prose could carry.
+    '01 the codebase is the source of truth' = @{ file = $claudeTemplate
+                                                  pattern = '(?is)codebase is right.{0,200}never the reverse' }
+    # Both halves. The obligation without "names are not proof" leaves the
+    # commonest way of satisfying it dishonestly — reading a filename and
+    # calling that inspection.
+    '04 verify before claiming'              = @{ file = $claudeTemplate
+                                                  pattern = '(?is)before any repository-specific claim.{0,400}names are not proof' }
+    '05 never guess an API'                  = @{ file = $claudeTemplate; pattern = '(?i)never guess an API' }
+    # All three, or the rule is decorative: "why it exists" alone is what every
+    # workaround already carries, and the removal condition is the only one that
+    # makes "temporary" a state something can leave.
+    '06 root-cause over workaround'          = @{ file = 'design/SKILL.md'
+                                                  pattern = '(?is)why it exists.{0,80}alternatives.{0,80}removal condition' }
+    '08 one concept per file'                = @{ file = 'codebase-design/SKILL.md'
+                                                  pattern = $rulePattern['one concept per file'] }
+    # The rule plus a worked pair. Stated bare it reads as a preference; the
+    # example is what shows the path carrying the qualifier the name would
+    # otherwise repeat. Matched by shape — a path and a long hyphenated name —
+    # so rewording the example does not break the build.
+    '09 directories over verbose filenames'  = @{ file = 'codebase-design/SKILL.md'
+                                                  pattern = '(?is)verbose filename.{0,400}`[^`\r\n]*/[^`\r\n]*`.{0,300}`[^`\r\n]*(-[^`\r\n]*){3,}`' }
+    '10 clear naming'                        = @{ file = 'codebase-design/SKILL.md'; pattern = '(?i)unnecessary abbreviation' }
+    '11 self-explanatory code'               = @{ file = 'implement/SKILL.md'
+                                                  pattern = $rulePattern['self-explanatory code'] }
+    '12 document public APIs'                = @{ file = 'implement/SKILL.md'; pattern = '(?i)private implementation is not' }
+    '13 test layout matches the repository'  = @{ file = 'tdd/SKILL.md'
+                                                  pattern = $rulePattern['the test-layout rule'] }
+    '14 knowledge is compressed'             = @{ file = $claudeTemplate
+                                                  pattern = $rulePattern['the compression test'] }
+    '15 knowledge has layers'                = @{ file = $claudeTemplate
+                                                  pattern = $rulePattern['the knowledge-layer table'] }
+    '18 the user owns decisions'             = @{ file = $claudeTemplate; pattern = '(?i)never silently decid' }
+  }
+  foreach ($principle in $placed.Keys) {
+    $where = $placed[$principle]
+    Assert "principle $principle is placed in $($where.file)" {
+      (Get-SkillFile $where.file) -match $where.pattern
+    }
+  }
+
+  # /implement points at a *section* of codebase-design. A pointer at a heading
+  # that does not exist is a broken Source Pointer, which is the failure this
+  # framework spends most of its always-on budget preventing.
+  Assert "the section /implement points at exists in codebase-design" {
+    (Get-SkillFile 'codebase-design/SKILL.md') -match '(?m)^## Files and names\s*$'
+  }
+
+  # 2 — cut. Neither is checkable, and both are no-ops against the model's own
+  # default. An assertion that passes today is still worth having: it is what
+  # stops a later pass reinstating them because they sound like principles.
+  $cut = [ordered]@{
+    '07 architecture over convenience' = '(?i)architecture over convenience'
+    '19 leave the repository better'   = '(?i)leave (the |this )?(repository|repo|codebase) better|reduce engineering entropy'
+  }
+  foreach ($principle in $cut.Keys) {
+    $pattern = $cut[$principle]
+    Assert "principle $principle stays cut — reinstate only if made checkable" {
+      $homes = Get-SkillFiles |
+        Where-Object { (Get-Content $_.FullName -Raw) -match $pattern } |
+        ForEach-Object { $_.FullName.Substring($skills.Length + 1) }
+      if ($homes.Count -gt 0) { throw "reinstated in: $($homes -join ', ')" }
+      $true
+    }
+  }
+
+  # 3 — embodied elsewhere, so stating them again is the duplication ADR 0007
+  # exists to stop. Each is asserted through the thing that embodies it.
+  Assert "principle 16 synchronize understanding is embodied by verification at use — /sync stays dissolved" {
+    $c = Get-SkillFile $claudeTemplate
+    if ($c -notmatch '(?i)never a scan|no startup scan|never scan') { throw 'nothing embodies it' }
+    $resurrected = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '(?i)/sync\b|`sync`' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) }
+    if ($resurrected.Count -gt 0) { throw "a sync stage reappeared in: $($resurrected -join ', ')" }
+    $true
+  }
+
+  # Principles 02 and 03 are definitions, not rules: what Context is for and
+  # what Decisions are for. They are the knowledge-layer table's two lower rows
+  # and `context.md`'s glossary, so restating them as principles inside a skill
+  # is sediment — the definition would then exist twice and drift once.
+  $definitions = [ordered]@{
+    '02 context provides orientation' = @{ table = '(?im)^\|\s*Context\s*\|[^\r\n]*contexts'
+                                           asRule = '(?i)context provides orientation' }
+    '03 decisions preserve reasoning' = @{ table = '(?im)^\|\s*Decisions\s*\|[^\r\n]*decisions/'
+                                           asRule = '(?i)decisions preserve reasoning' }
+  }
+  foreach ($principle in $definitions.Keys) {
+    $d = $definitions[$principle]
+    Assert "principle $principle stays a definition — carried by the layer table, never restated as a rule" {
+      if ((Get-SkillFile $claudeTemplate) -notmatch $d.table) { throw 'the layer table does not define it' }
+      $restated = Get-SkillFiles |
+        Where-Object { (Get-Content $_.FullName -Raw) -match $d.asRule } |
+        ForEach-Object { $_.FullName.Substring($skills.Length + 1) }
+      if ($restated.Count -gt 0) { throw "restated as a rule in: $($restated -join ', ')" }
+      $true
+    }
+  }
+
+  Assert "principle 17 scale process with risk is embodied by the tier gates" {
+    $c = Get-SkillFile 'design/SKILL.md'
+    # Anchored to the tier table's own rows — a bare `Express` would match any
+    # prose that happens to name a tier. And `only raise` alone would subsume
+    # any alternation put beside it, so the pattern carries the half that makes
+    # the gate one-way.
+    ($c -match '(?im)^\|[^|\r\n]*\|\s*Express\s*\|') -and
+    ($c -match '(?im)^\|[^|\r\n]*\|\s*Heavyweight\s*\|') -and
+    ($c -match '(?i)only raise[^\r\n]{0,20}never lower')
+  }
+
+  # A rule reached by pointer is not a second home. These two skills lost a
+  # restatement in this ticket, and the pointer is what has to be left behind —
+  # cutting the rule without leaving the route is how it stops firing at all.
+  # Two-sided on purpose, and the positive half is anchored to the site the
+  # restatement was cut from. A file-wide search for `CLAUDE.md` proves nothing:
+  # every one of these already names it, for unrelated rules, so the pointer
+  # could be deleted outright and the check would still pass.
+  $pointers = @(
+    @{ f = 'design/SKILL.md';    rule = 'verify before claiming'
+       restatement = $rulePattern['verify before claiming']
+       route       = '(?i)\*\*Read the code\.\*\*[^\r\n]{0,80}`CLAUDE\.md`' }
+    @{ f = 'research/SKILL.md';  rule = 'never guess an API'
+       restatement = $rulePattern['the tools routing rule']
+       route       = '(?i)a CLI counts[^\r\n]{0,80}`CLAUDE\.md`' }
+    @{ f = 'implement/SKILL.md'; rule = 'never guess an API'
+       restatement = $rulePattern['the tools routing rule']
+       route       = '(?is)guessing an API is in `CLAUDE\.md`.{0,200}version.{0,40}signature.{0,40}limits' }
+    @{ f = 'implement/SKILL.md'; rule = 'files and names'
+       restatement = $rulePattern['one concept per file']
+       route       = '(?i)`codebase-design`[^\r\n]{0,120}Files and names' }
+    @{ f = 'tools/SKILL.md';     rule = 'never guess an API'
+       restatement = $rulePattern['never guess an API']
+       route       = '(?i)`CLAUDE\.md` carries the rule' }
+    @{ f = 'commit/SKILL.md';    rule = 'conventions are defaults'
+       restatement = $rulePattern['conventions are defaults']
+       route       = '(?i)`CLAUDE\.md` carries the convention' }
+  )
+  foreach ($p in $pointers) {
+    Assert "$($p.f) reaches '$($p.rule)' by pointer, at the site it was cut from" {
+      $c = Get-SkillFile $p.f
+      if ($c -match $p.restatement) { throw 'still restated here' }
+      if ($c -notmatch $p.route) { throw 'cut without leaving the route' }
+      $true
+    }
+  }
+
+  # Outcome 3. A standard discovered in the repository belongs to the
+  # repository, not to Tenure, and it is path-scoped where it applies to only
+  # part of the tree — otherwise a rule about one directory is paid for on
+  # every turn against every other.
+  Assert "a standard discovered in this repository is placed in .claude/rules/, path-scoped" {
+    $c = Get-SkillFile $claudeTemplate
+    # Naming the path in the precedence list is not placing the rule — the
+    # placement is the sentence that says what goes there and why it is the
+    # repository's rather than Tenure's.
+    if ($c -notmatch '(?is)`\.claude/rules/`[^\r\n]{0,120}(discovered|standards)') {
+      throw 'the path is listed but nothing is placed in it'
+    }
+    if ($c -notmatch '(?i)path-scoped|scoped to that (path|part)') { throw 'not path-scoped' }
+    $true
+  }
+
+  # ADR 0007 settles this one explicitly, and it is the one ordering in the
+  # chain that is not obvious: CONTRIBUTING says how the repository is worked
+  # on, README says what it is. Checked as an ordering, not as prose — a
+  # sentence claiming the ranking while the list encodes the opposite is worse
+  # than neither.
+  Assert "CONTRIBUTING.md outranks README.md in the precedence chain" {
+    $lines = (Get-SkillFile $claudeTemplate) -split '\r?\n'
+    $contributing = ($lines | Select-String -Pattern '^\d+\.\s.*CONTRIBUTING\.md' | Select-Object -First 1).LineNumber
+    $readme       = ($lines | Select-String -Pattern '^\d+\.\s.*README\.md' | Select-Object -First 1).LineNumber
+    if (-not $contributing) { throw 'CONTRIBUTING.md is not in the numbered chain' }
+    if (-not $readme) { throw 'README.md is not in the numbered chain' }
+    if ($contributing -ge $readme) { throw "README ranks at or above CONTRIBUTING" }
+    $true
+  }
+
+  # ADR 0008's general form. /commit carries the commit-message procedure; the
+  # principle it is an instance of has to hold on turns where no skill runs —
+  # naming a branch, picking a label, following a layout.
+  Assert "repository conventions outrank Tenure's defaults — detect before asserting" {
+    $c = Get-SkillFile $claudeTemplate
+    if ($c -notmatch $rulePattern['conventions are defaults']) { throw 'the defaults are stated as mandates' }
+    if ($c -notmatch 'ADR 0008') { throw 'the decision is not cited' }
+    # The instruction, not just the principle. Knowing the repository wins does
+    # nothing unless something says to go and look before writing.
+    if ($c -notmatch '(?i)detect (it |them )?before asserting') { throw 'nothing says to look first' }
+    $true
+  }
+
+  Assert "the CLAUDE.md template is still under 200 lines with every rule placed" {
+    $n = ((Get-SkillFile $claudeTemplate) -split '\r?\n').Count
+    if ($n -ge 200) { throw "$n lines" }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -1961,7 +2198,7 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 09, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 09, 13, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

@@ -94,6 +94,16 @@ Good interfaces make testing natural:
 
 3. **Small surface area.** Fewer methods = fewer tests needed. Fewer params = simpler test setup.
 
+## Files and names
+
+Where a module lands and what it is called is part of designing it, not clean-up afterwards. These are Tenure's defaults; a layout or naming style the repository already has wins over all of them, and the precedence rule is in `CLAUDE.md`.
+
+- **One concept per file.** A file has one primary responsibility. Two unrelated concepts sharing a file means neither can be found by name, and every change to one puts the other in the diff.
+- **Directories over verbose filenames.** Structure carries the qualifiers a name would otherwise have to. `users/service.ts` and `users/repository.ts`, not `user-authentication-permission-management-service.ts` — the path already says `users`, so the filename does not have to.
+- **Clear naming.** A name states intent: concise, descriptive, explicit. Avoid unnecessary abbreviations and vague nouns. Before reusing a word that already means something here, check what it means — `.claude/context.md` is what settles it.
+
+A file that resists being named honestly is usually a shape problem, not a naming problem. Split it before renaming it.
+
 ## Relationships
 
 - A **Module** has exactly one **Interface** (the surface it presents to callers and tests).

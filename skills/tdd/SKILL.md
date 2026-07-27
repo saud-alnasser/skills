@@ -25,6 +25,22 @@ A **seam** is the public boundary you test at: the interface where you observe b
 
 Ask: "What's the public interface, and which seams should we test?"
 
+## Test layout — read it off the repository
+
+Where test files go is the repository's decision, not Tenure's. Look at what is already there and match it; the precedence rule is in `CLAUDE.md`. Two layouts are common, and both are fine:
+
+```text
+adjacent                separated
+
+feature.ts              feature/
+feature.test.ts             src/feature.ts
+                            tests/feature.test.ts
+```
+
+Adjacent is the default for a repository with no established pattern. Move to a separated directory when the reasons are real: integration tests grow, setup becomes complex, fixtures and utilities are shared across files, or the module gets large enough that its tests crowd out its source.
+
+**Introduce no unnecessary test structure.** A directory tree, a helpers module, or a base fixture built before anything needs it is scaffolding for tests that do not exist yet — and it is the horizontal slicing below wearing a different shape.
+
 ## Anti-patterns
 
 - **Implementation-coupled** — mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
