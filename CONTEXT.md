@@ -81,7 +81,7 @@ The depth of engineering process selected for a piece of work — Express, Stand
 _Avoid_: mode, level, track
 
 **Spine**:
-The seven commands that own the workflow's stages — `/configure`, `/design`, `/implement`, `/code-review`, `/research`, `/prototype`, `/commit`. Distinguished from Primitives, which the Spine composes.
+The seven commands that own the workflow's stages — `/configure`, `/design`, `/implement`, `/review`, `/research`, `/prototype`, `/commit`. Distinguished from Primitives, which the Spine composes.
 _Avoid_: core, pipeline, main flow
 
 **Primitive**:

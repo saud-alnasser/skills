@@ -87,6 +87,7 @@ The **single-file test command** is the one entry that must not be missing. It i
 
 marker.json
 prototypes/
+settings.local.json
 ```
 
 It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets Tenure be added or removed as one directory instead of leaking entries into a file the repository owns.

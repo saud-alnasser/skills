@@ -835,7 +835,7 @@ Describe-Ticket '04' 'build, and record what moved' {
     $c -match '(?i)changes architecture.{0,60}/design'
   }
 
-  # ADR 0007 places these in /implement and /code-review both — the skill that
+  # ADR 0007 places these in /implement and /review both — the skill that
   # writes them and the skill that catches a breach. Ticket 13 distributes the
   # rest of that row; these two are already home and must not be placed twice.
   Assert "the comment and public-API rules ADR 0007 places here are carried" {
@@ -875,14 +875,14 @@ Describe-Ticket '04' 'build, and record what moved' {
 
   # Ordering, not presence. Approval given for reviewed work is not approval
   # for work that is about to be reviewed.
-  Assert "/code-review closes the work out before the commit question" {
+  Assert "/review closes the work out before the commit question" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $review = $c.IndexOf('/code-review')
+    $review = $c.IndexOf('/review')
     $ask = $c.IndexOf('commit and resolve this ticket')
-    if ($review -lt 0) { throw '/code-review is never invoked' }
+    if ($review -lt 0) { throw '/review is never invoked' }
     if ($ask -lt 0) { throw 'the close-out question is never asked' }
     if ($review -gt $ask) { throw 'review comes after the commit question' }
-    $c -match '(?i)/code-review.{0,40}before\*{0,2} the commit question'
+    $c -match '(?i)/review.{0,40}before\*{0,2} the commit question'
   }
 
   # Context stores concepts. An implementation walkthrough in context is
@@ -917,31 +917,33 @@ Describe-Ticket '04' 'build, and record what moved' {
   }
 }
 
-# --- ticket 05 — /code-review, two axes --------------------------------------
+# --- ticket 05 — /review, two axes --------------------------------------
 
 Describe-Ticket '05' 'review axes for Tenure' {
 
-  Assert "/code-review ships as a skill" {
-    Test-Path (Join-Path $skills 'code-review/SKILL.md')
+  Assert "/review ships as a skill" {
+    Test-Path (Join-Path $skills 'review/SKILL.md')
   }
 
-  # Decision 13: the name is load-bearing. Shipping as `review` shadows the
-  # built-in GitHub PR reviewer, which is a capability lost silently.
-  Assert "it ships as /code-review, not /review — the built-in PR reviewer is preserved" {
-    if (Test-Path (Join-Path $skills 'review')) { throw 'skills/review/ exists and shadows the built-in' }
-    $fm = Get-Frontmatter (Get-SkillFile 'code-review/SKILL.md')
-    if (-not $fm) { throw 'code-review/SKILL.md has no frontmatter' }
-    $fm -match '(?m)^name:\s*code-review\s*$'
+  # Decision 13 chose `code-review` so the skill would not shadow the built-in
+  # `/review`. ADR 0015 supersedes it: inside a plugin namespace the command is
+  # `/tenure:review`, which cannot shadow anything, so the prefix bought nothing
+  # and cost a word. The name is still load-bearing, so it is still asserted.
+  Assert "it ships as /review, and the old name survives nowhere under ./skills" {
+    if (Test-Path (Join-Path $skills 'code-review')) { throw 'skills/code-review/ still exists' }
+    $fm = Get-Frontmatter (Get-SkillFile 'review/SKILL.md')
+    if (-not $fm) { throw 'review/SKILL.md has no frontmatter' }
+    $fm -match '(?m)^name:\s*review\s*$'
   }
 
   # Spec, Scope: model-invoked, because /implement closes out through it and
   # /commit confirms it ran.
-  Assert "/code-review is model-invoked — /implement and /commit can reach it" {
-    -not (Test-UserInvoked 'code-review/SKILL.md')
+  Assert "/review is model-invoked — /implement and /commit can reach it" {
+    -not (Test-UserInvoked 'review/SKILL.md')
   }
 
   Assert "two axes — Spec and Standards" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?im)^##+\s.*\bSpec\b') { throw 'no Spec axis' }
     $c -match '(?im)^##+\s.*\bStandards\b'
   }
@@ -953,7 +955,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # presence check stays green even when the instruction says to run them one
   # after the other in this context.
   Assert "the axes run in parallel subagents, and the reason is stated" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $m = [regex]::Match($c, '(?ims)^#{2,}\s.*\baxes\b.*?(?=^#{2}\s|\z)')
     if (-not $m.Success) { throw 'running the axes is not its own step' }
     $step = $m.Value
@@ -972,7 +974,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # Ticket 05: architecture "folds into Standards rather than earning its own
   # subagent". A third axis is the failure this decision exists to prevent.
   Assert "architecture folds into Standards — there is no third axis" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)architecture') { throw 'architecture is never reviewed' }
     if ($c -match '(?i)three (axes|sub-?agents)') { throw 'a third axis was introduced' }
     # "two axes" alone does not carry this — it is in the description and the
@@ -989,19 +991,19 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # appear elsewhere in the file, so a presence check stays green with the whole
   # architecture block deleted — which is the one thing this must catch.
   Assert "architecture reaches ownership boundaries, read from this repo's Context" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/context\.md'
   }
 
   Assert "architecture reaches abstraction the change did not require" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match '(?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction'
   }
 
   # Headline acceptance criterion: "A diff contradicting an existing ADR is
   # surfaced explicitly, not silently accepted."
   Assert "a diff contradicting an ADR is surfaced explicitly, never silently accepted" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '\.claude/docs/decisions') { throw 'the decisions are never read' }
     $c -match '(?i)(contradict|conflict).{0,160}(surfac|report|explicit|say|flag)|(surfac|report|explicit|flag).{0,160}(contradict|conflict)'
   }
@@ -1009,7 +1011,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # Decision 33. Without the third outcome the same finding is re-raised on
   # every future review, and the reader learns to skim.
   Assert "every finding is fixed, ticketed, or accepted-and-recorded" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     foreach ($outcome in @('fixed', 'ticketed', 'accepted')) {
       if ($c -notmatch "(?i)\b$outcome\b") { throw "the '$outcome' outcome is missing" }
     }
@@ -1020,20 +1022,20 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # test has one home, in domain-modeling. Restating it here is the duplication
   # ADR 0007 exists to stop.
   Assert "an acceptance is recorded, and the ADR bar points at its one home" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)3-of-3') { throw 'the ADR bar is never named' }
     if ($c -match '(?i)hard to reverse') { throw 'the 3-of-3 test is restated instead of referenced' }
     $c -match '(?i)(ADR-FORMAT|domain-modeling)'
   }
 
   Assert "acceptance is the user's call, never the reviewer's" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match "(?i)accept.{0,80}(user's call|user decides|never the reviewer)|the user.{0,60}accept"
   }
 
   # Decision 21. A review is about a diff; once merged its subject is gone.
   Assert "reviews are never persisted, and no skill writes a reviews directory" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)never persist') { throw 'the no-persistence rule is not stated' }
     # Stating that the directory does not exist is the rule, not a breach of it.
     # Flag only a mention that reads as somewhere to write.
@@ -1053,7 +1055,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # documented standards, not generic ones." The baseline is a fallback the
   # repo overrides — inverting that ordering is the defect.
   Assert "the repo's own documented standards come first, and override the baseline" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)\.claude/rules') { throw "this repo's own discovered standards are never read" }
     if ($c -notmatch '(?i)(cite|quote|name).{0,120}(standard|rule)') { throw 'a finding need not cite the standard it breaches' }
     $c -match '(?i)the repo(sitory)? (always )?(overrides|wins)|repo(sitory)?.{0,40}outrank'
@@ -1061,32 +1063,32 @@ Describe-Ticket '05' 'review axes for Tenure' {
 
   # Progressive disclosure: the baseline is a dozen entries only the Standards
   # subagent needs, so it is a file that subagent opens — not context every
-  # caller of /code-review pays for.
+  # caller of /review pays for.
   Assert "the smell baseline is disclosed progressively, not inlined in SKILL.md" {
-    $baseline = Get-SkillFile 'code-review/SMELLS.md'
+    $baseline = Get-SkillFile 'review/SMELLS.md'
     foreach ($smell in @('Feature Envy', 'Data Clumps', 'Primitive Obsession', 'Shotgun Surgery', 'Speculative Generality')) {
       if ($baseline -notmatch [regex]::Escape($smell)) { throw "the baseline is missing '$smell'" }
     }
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -match '(?i)feature envy') { throw 'the baseline is inlined in SKILL.md as well' }
     $c -match 'SMELLS\.md'
   }
 
   Assert "a baseline smell is a judgement call, never a hard violation" {
-    $baseline = Get-SkillFile 'code-review/SMELLS.md'
+    $baseline = Get-SkillFile 'review/SMELLS.md'
     if ($baseline -notmatch '(?i)judgement call') { throw 'the baseline does not label itself a judgement call' }
     # The distinction has to reach the finding, not just the baseline file —
     # an unmarked finding reads as a standard to whoever receives it.
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match '(?i)hard violation.{0,40}judgement call|judgement call.{0,40}hard violation'
   }
 
   # ADR 0007 places these two here by name: "comment and public-API rules in
-  # /implement and /code-review". They are Tenure's own, applied even where the
+  # /implement and /review". They are Tenure's own, applied even where the
   # repository documents neither — so they are not covered by the repo-first
   # ordering above, and nothing else in ./skills carries them.
   Assert "the comment and public-API rules ADR 0007 places here are carried" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
     if ($c -notmatch '(?i)public (interface|api)') { throw 'the public-API rule is missing' }
     $c -match '(?i)ADR 0007|0007'
@@ -1096,7 +1098,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # the whole change is uncommitted. A review that diffs only a commit range
   # sees nothing and reports a clean pass on it.
   Assert "the subject includes uncommitted work — /implement reviews before the commit" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)uncommitted') { throw 'uncommitted work is never reviewed' }
     if ($c -notmatch '(?i)untracked') { throw 'untracked files are never reviewed' }
     $c -match '(?i)(before|prior to) the commit|working tree, not just'
@@ -1105,7 +1107,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # A bad ref or an empty diff must fail before two subagents are spawned on
   # nothing — the failure is invisible once it is inside them.
   Assert "the fixed point is pinned and proven before any subagent is spawned" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     # Structural, not textual: pinning has to be an earlier *step* than running
     # the axes. Naming subagents in the description is not spawning them.
     if (-not [regex]::IsMatch($c, '(?im)^#{2,}\s.*fixed point')) { throw 'pinning the fixed point is not its own step' }
@@ -1121,34 +1123,34 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # Three-dot, so the comparison is against the merge-base. Two-dot silently
   # reviews whatever landed on the base branch since the work started.
   Assert "the diff is taken against the merge-base, and the invocation is not guessed" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)merge-?base') { throw 'the merge-base is never named' }
     $c -match 'tools/git\.md'
   }
 
   Assert "the two axes are reported separately, never merged or reranked" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match '(?i)(never|not|do not|don.t) (merge|rerank|re-rank)|(merge|rerank|re-rank).{0,60}(defeats|masks|is the)'
   }
 
   Assert "the Spec axis reaches missing requirements, scope creep, and wrong implementations" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)(missing|partial)') { throw 'missing requirements are not reached' }
     if ($c -notmatch '(?i)scope creep|was ?n.t asked for|not asked for') { throw 'scope creep is not reached' }
     $c -match '(?i)(implemented but|looks? implemented|wrong).{0,120}(wrong|incorrect|does not)|(wrong|incorrectly).{0,60}implement'
   }
 
   Assert "a missing spec is reported, never invented" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)no spec') { throw 'the missing-spec case is not handled' }
     $c -match '(?i)(never|do not|don.t) (invent|guess|reconstruct|infer)'
   }
 
-  # Ticket 02 / CLAUDE.template.md: /code-review reads Context for boundaries
+  # Ticket 02 / CLAUDE.template.md: /review reads Context for boundaries
   # and Decisions for ADRs, so it is a skill that relies on Context and owes a
   # report. Silence is indistinguishable from the check never having run.
-  Assert "/code-review opens with a verification report, because it relies on Context" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+  Assert "/review opens with a verification report, because it relies on Context" {
+    $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)verification report') { throw 'no verification report' }
     $c -match '(?ms)^```\s*$.*?Verification.*?^```\s*$'
   }
@@ -1156,14 +1158,14 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # Ticket 02's placement rule, checked where a fourth file could restate it.
   # A paraphrase is duplication too — "when the Marker equals HEAD and the tree
   # is clean" restates CLAUDE.template.md's rule without repeating its symbols.
-  Assert "/code-review does not restate the Marker rule" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+  Assert "/review does not restate the Marker rule" {
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -notmatch '(?i)marker.{0,80}(==|matches|equals|is the same as).{0,40}HEAD'
   }
 
   # ADR 0001. Every skill derived from matt's says so.
   Assert "attribution to mattpocock survives" {
-    $c = Get-SkillFile 'code-review/SKILL.md'
+    $c = Get-SkillFile 'review/SKILL.md'
     $c -match '(?i)mattpocock/skills'
   }
 }
@@ -1220,7 +1222,7 @@ Describe-Ticket '06' 'the transaction boundary' {
     if (-not $m.Success) { throw 'confirming the prior stages is not its own step' }
     $step = $m.Value
     if ($step -notmatch '(?i)(tests|suite)') { throw 'the test question is missing' }
-    if ($step -notmatch '(?i)/code-review') { throw 'the review question is missing' }
+    if ($step -notmatch '(?i)/review') { throw 'the review question is missing' }
     $step -match '(?i)(finished|complete|done).{0,80}(ticket|spec)'
   }
 
@@ -1753,7 +1755,7 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
 Describe-Ticket '09' 'vendor the gap-fillers' {
 
   $onramps = @('triage', 'diagnosing-bugs', 'handoff', 'resolving-merge-conflicts',
-               'improve-codebase-architecture')
+               'survey')
 
   foreach ($s in $onramps) {
     Assert "$s is vendored into ./skills" {
@@ -1767,7 +1769,7 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   $axis = @{
     'triage'                        = $true
     'handoff'                       = $true
-    'improve-codebase-architecture' = $true
+    'survey' = $true
     'diagnosing-bugs'               = $false
     'resolving-merge-conflicts'     = $false
   }
@@ -1999,13 +2001,13 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
     $c -match '(?i)redact'
   }
 
-  # --- improve-codebase-architecture -----------------------------------------
+  # --- survey ----------------------------------------------------------------
 
   # ADR 0011: /design is the whole planning surface. matt's runs its own
   # grilling and domain-modeling loop, which is exactly that surface rebuilt
   # inside a survey command.
   Assert "the chosen candidate goes to /design — the survey does not plan" {
-    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
+    $c = Get-SkillFile 'survey/SKILL.md'
     # A step, not a mention. /design is named in the rationale either way, so a
     # presence check survives the hand-off step turning into a grill.
     if (-not [regex]::IsMatch($c, '(?im)^#{2,}[^\n]*(hand|pass)[a-z]* it to `?/design')) {
@@ -2016,7 +2018,7 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   }
 
   Assert "the architecture vocabulary comes from codebase-design, used exactly" {
-    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
+    $c = Get-SkillFile 'survey/SKILL.md'
     if ($c -notmatch '(?i)codebase-design') { throw 'the vocabulary skill is not invoked' }
     # In the step that explores, where it is applied. Naming it in the
     # vocabulary list is not using it.
@@ -2026,8 +2028,8 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   }
 
   Assert "the report is written outside the repository" {
-    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
-    if (-not (Test-Path (Join-Path $skills 'improve-codebase-architecture/HTML-REPORT.md'))) {
+    $c = Get-SkillFile 'survey/SKILL.md'
+    if (-not (Test-Path (Join-Path $skills 'survey/HTML-REPORT.md'))) {
       throw 'HTML-REPORT.md is missing'
     }
     $c -match '(?i)temp[^\n]{0,60}(dir|director)|nothing lands in the repo'
@@ -2440,7 +2442,7 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
 
 Describe-Ticket '10' 'router over the Tenure skill set' {
 
-  $router = 'tenure/SKILL.md'
+  $router = 'help/SKILL.md'
   # Read once. Eight assertions want the same file, and re-reading it in each
   # is the Duplicated Code this repo flags in prose.
   $rt = Get-SkillFile $router
@@ -2452,14 +2454,18 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
   # a literal one has to arrive as a char rather than be typed.
   $tick = [char]0x60
 
-  Assert "the router ships as /tenure — 'ask the tenured engineer'" {
-    if (-not (Test-Path (Join-Path $skills $router))) { throw 'skills/tenure/SKILL.md is missing' }
+  # ADR 0015: `/tenure:tenure` is unusable, so the router is `help` and the
+  # plugin supplies the name. It is the one skill whose name cannot be the
+  # framework's, which is why it gets its own assertion rather than riding on
+  # the naming rule below.
+  Assert "the router ships as /help — 'ask the tenured engineer'" {
+    if (-not (Test-Path (Join-Path $skills $router))) { throw 'skills/help/SKILL.md is missing' }
     $fm = Get-Frontmatter $rt
-    if (-not $fm) { throw 'tenure/SKILL.md has no frontmatter' }
-    $fm -match '(?m)^name:\s*tenure\s*$'
+    if (-not $fm) { throw 'help/SKILL.md has no frontmatter' }
+    $fm -match '(?m)^name:\s*help\s*$'
   }
 
-  Assert "/tenure is user-invoked — it is the human's index, and nothing else should load it" {
+  Assert "/help is user-invoked — it is the human's index, and nothing else should load it" {
     Test-UserInvoked $router
   }
 
@@ -2477,7 +2483,7 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
     $all = Get-ChildItem $skills -Directory |
       Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') } |
       ForEach-Object { $_.Name } |
-      Where-Object { $_ -ne 'tenure' }
+      Where-Object { $_ -ne 'help' }
     $missing = @(); $repeated = @()
     foreach ($s in $all) {
       $pattern = '^- \*\*' + $tick + '?/?' + [regex]::Escape($s) + $tick + '?\*\*'
@@ -2524,8 +2530,8 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
   # Both the diagram and the entries under it. Matching first occurrences only
   # finds the diagram — every one of these names appears there first — so the
   # entries could be listed in any order and this would still pass.
-  Assert "the Spine runs design, implement, code-review, commit, in that order" {
-    $spine = @('design', 'implement', 'code-review', 'commit')
+  Assert "the Spine runs design, implement, review, commit, in that order" {
+    $spine = @('design', 'implement', 'review', 'commit')
     foreach ($where in @('diagram', 'entries')) {
       $last = -1
       foreach ($step in $spine) {
@@ -2545,11 +2551,11 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
   # router's name in front of every command the user types.
   Assert "the router's name prefixes nothing — the Spine stays bare" {
     $prefixed = Get-ChildItem $skills -Directory |
-      Where-Object { $_.Name -ne 'tenure' -and $_.Name -like 'tenure*' } |
+      Where-Object { $_.Name -ne 'help' -and $_.Name -like 'tenure*' } |
       ForEach-Object { $_.Name }
     if ($prefixed) { throw "namespaced onto the router: $($prefixed -join ', ')" }
     $announced = Get-SkillFiles |
-      Where-Object { $_.Directory.Name -ne 'tenure' } |
+      Where-Object { $_.Directory.Name -ne 'help' } |
       Where-Object { (Get-Content $_.FullName -Raw) -match '(?m)^name:\s*tenure' } |
       ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
     if ($announced) { throw "claims the router's name: $($announced -join ', ')" }
@@ -3227,7 +3233,7 @@ Describe-Ticket '16' 'position, and the line between shared and local' {
   $moved = @(
     @{ f = 'design/SKILL.md';      what = 'the drift reads' }
     @{ f = 'implement/SKILL.md';   what = 'the drift reads' }
-    @{ f = 'code-review/SKILL.md'; what = 'the verification report' }
+    @{ f = 'review/SKILL.md'; what = 'the verification report' }
     @{ f = 'commit/SKILL.md';      what = 'the verification report' }
     @{ f = 'configure/SKILL.md';   what = 'the verification report' }
   )
@@ -3614,6 +3620,199 @@ Describe-Ticket '19' 'on a stack, blocked means stacked' {
   }
 }
 
+# --- ticket 20 — ship tenure as a plugin -------------------------------------
+
+Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type' {
+
+  # Both manifests are read as JSON rather than grepped: a file that does not
+  # parse is not a manifest, and every field below is only meaningful if it
+  # does. `-Raw` because ConvertFrom-Json on an array of lines is a different
+  # object on Windows PowerShell than on pwsh.
+  $readJson = {
+    param([string]$Relative)
+    $p = Join-Path $repo $Relative
+    if (-not (Test-Path $p)) { throw "$Relative is missing" }
+    try { (Get-Content $p -Raw) | ConvertFrom-Json }
+    catch { throw "$Relative is not valid JSON — $($_.Exception.Message)" }
+  }
+
+  # Criterion 1. The marketplace is what makes `local` scope reachable at all:
+  # it is the only scope that is per-project and per-person, and it installs
+  # from a marketplace, so without this file the scope cannot be chosen.
+  Assert "this repository publishes itself as a plugin marketplace" {
+    $m = & $readJson '.claude-plugin/marketplace.json'
+    foreach ($f in @('name', 'owner', 'plugins')) {
+      if (-not $m.$f) { throw "marketplace.json has no $f" }
+    }
+    if (-not $m.owner.name) { throw 'owner.name is required and absent' }
+    $entry = @($m.plugins | Where-Object { $_.name -eq 'tenure' })
+    if ($entry.Count -ne 1) { throw 'the marketplace does not publish exactly one tenure plugin' }
+    if (-not $entry[0].source) { throw 'the plugin entry has no source' }
+    $true
+  }
+
+  # The plugin's own manifest, and the `name` that becomes the command
+  # namespace — every command in the framework is typed through it, so it is
+  # the one string here that cannot drift.
+  Assert "the plugin manifest names the namespace every command is typed through" {
+    $p = & $readJson '.claude-plugin/plugin.json'
+    # Case-sensitive: `-ne` is not, and the namespace is a literal string that
+    # ends up in every command the user types. `Tenure` is a different plugin.
+    if ($p.name -cne 'tenure') { throw "the namespace is '$($p.name)', not 'tenure'" }
+    if (-not $p.description) { throw 'plugin.json has no description' }
+    # The marketplace entry keys `enabledPlugins`, so the two names must agree
+    # or an install enables nothing.
+    $m = & $readJson '.claude-plugin/marketplace.json'
+    if (-not (@($m.plugins.name) -ccontains $p.name)) { throw 'the marketplace does not list this plugin' }
+    $true
+  }
+
+  # The plugin's skills have to be where a plugin's skills are loaded from,
+  # or the manifest describes a plugin with nothing in it.
+  Assert "the plugin's source resolves to the directory the skills are actually in" {
+    $m = & $readJson '.claude-plugin/marketplace.json'
+    $src = @($m.plugins | Where-Object { $_.name -eq 'tenure' })[0].source
+    if ($src -isnot [string]) { throw 'the source is not a repository-relative path' }
+    $root = Join-Path $repo ($src -replace '^\./', '')
+    if (-not (Test-Path (Join-Path $root 'skills'))) { throw "no skills/ under the plugin source '$src'" }
+    Test-Path (Join-Path $root '.claude-plugin/plugin.json')
+  }
+
+  # Criterion 2. Enabling Tenure in a project is Position (ADR 0012), so the
+  # record of it is ignored like every other per-clone file — and it goes
+  # through the category rather than being argued for as a fourth exception,
+  # which is the whole point of naming the category.
+  Assert "the record of enabling Tenure is not committed" {
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n.*?^```')
+    if (-not $block.Success) { throw 'there is no ignore block' }
+    $block.Value -match '(?m)^settings\.local\.json'
+  }
+
+  # Criterion 3, checked against each skill's own frontmatter rather than a
+  # hand-kept list — a skill added later is held to the rule without anyone
+  # remembering to add it here.
+  Assert "every user-invoked skill is one word" {
+    $long = @()
+    foreach ($f in (Get-ChildItem $skills -Directory)) {
+      $skill = Join-Path $f.FullName 'SKILL.md'
+      if (-not (Test-Path $skill)) { continue }
+      $rel = "$($f.Name)/SKILL.md"
+      if ((Test-UserInvoked $rel) -and $f.Name -match '-') { $long += $f.Name }
+    }
+    if ($long) { throw "typed, but not one word: $($long -join ', ')" }
+    $true
+  }
+
+  # The other half of criterion 3 — "every model-invoked skill keeps a name
+  # that describes when to use it" — is a judgement call and is not machine
+  # checkable. What *is* checkable is the thing the rule protects: a
+  # model-invoked skill is chosen by its description, so a description with no
+  # selection condition in it cannot be chosen correctly whatever the name is.
+  Assert "every model-invoked skill states when to use it, which is how it is selected" {
+    $silent = @()
+    foreach ($f in (Get-ChildItem $skills -Directory)) {
+      $skill = Join-Path $f.FullName 'SKILL.md'
+      if (-not (Test-Path $skill)) { continue }
+      $rel = "$($f.Name)/SKILL.md"
+      if (Test-UserInvoked $rel) { continue }
+      $fm = Get-Frontmatter (Get-SkillFile $rel)
+      # `Use when`, `Use before`, `Use for` — the clause, not the word, so a
+      # description that merely contains "use" somewhere does not pass.
+      if ($fm -notmatch '(?im)^description:.*\bUse (when|before|after|for|while)\b') { $silent += $f.Name }
+    }
+    if ($silent) { throw "model-invoked with no selection condition: $($silent -join ', ')" }
+    $true
+  }
+
+  # The other half, and the one that decays quietly: a model-invoked skill is
+  # selected *by its description*, so shortening its name for consistency
+  # costs selection accuracy and buys brevity nobody types. Asserted as the
+  # rule being written down, because the rule is what stops the next skill
+  # being shortened to match.
+  Assert "the naming rule is written down, not just applied" {
+    $c = Get-Content (Join-Path $repo 'CLAUDE.md') -Raw
+    if ($c -notmatch '(?i)short names are for the keyboard') { throw 'the rule is stated nowhere' }
+    if ($c -notmatch '(?i)descriptive names are for the model') { throw 'only half the rule is stated' }
+    # And why a model-invoked `review` is not a breach of it.
+    $c -match '(?i)shortening \*{0,2}for brevity\*{0,2}|bans shortening \*{0,2}for brevity'
+  }
+
+  # Criterion 4. Checked over everything shipped plus the repository's own
+  # docs — prose and pointers included, which is where a rename usually
+  # survives, because nothing breaks when it does.
+  Assert "no renamed skill's old name survives anywhere" {
+    $old = @('code-review', 'improve-codebase-architecture')
+    $files = @(Get-SkillFiles) +
+             @('CLAUDE.md', 'CONTEXT.md', 'README.md' | ForEach-Object { Get-Item (Join-Path $repo $_) })
+    $hits = @()
+    foreach ($file in $files) {
+      $lines = (Get-Content $file.FullName -Raw) -split '\r?\n'
+      for ($i = 0; $i -lt $lines.Count; $i++) {
+        foreach ($o in $old) {
+          if ($lines[$i] -match [regex]::Escape($o)) {
+            $hits += "$($file.Name):$($i + 1): $o"
+          }
+        }
+      }
+    }
+    if ($hits) { throw ($hits -join ', ') }
+    $true
+  }
+
+  # And the directories themselves, so a rename that copied instead of moving
+  # is caught rather than passing because the old file is no longer referenced.
+  Assert "the renamed skills exist under their new names and nowhere else" {
+    $renames = [ordered]@{
+      'tenure'                        = 'help'
+      'code-review'                   = 'review'
+      'improve-codebase-architecture' = 'survey'
+    }
+    $wrong = @()
+    foreach ($before in $renames.Keys) {
+      $after = $renames[$before]
+      if (Test-Path (Join-Path $skills $before)) { $wrong += "skills/$before still exists" }
+      if (-not (Test-Path (Join-Path $skills "$after/SKILL.md"))) { $wrong += "skills/$after is missing" }
+    }
+    if ($wrong) { throw ($wrong -join ', ') }
+    $true
+  }
+
+  # Criterion 5. A teammate without the plugin still gets a useful repository,
+  # which means nothing in the always-on file may assume a Tenure command
+  # exists. Ticket 16 kept Position out of it; this keeps the commands out.
+  Assert "nothing committed assumes a Tenure command exists" {
+    $c = Get-SkillFile $claudeTemplate
+    # The comment header names /configure as the thing that installed the
+    # file, which is a fact about provenance rather than an instruction. Body
+    # only.
+    $body = ($c -replace '(?s)<!--.*?-->', '')
+    $commands = @()
+    foreach ($d in (Get-ChildItem $skills -Directory)) {
+      foreach ($m in [regex]::Matches($body, "(?<![\w:])/$([regex]::Escape($d.Name))(?![\w-])")) {
+        $commands += $d.Name
+      }
+    }
+    if ($commands) { throw "the always-on file instructs a command: $(($commands | Select-Object -Unique) -join ', ')" }
+    $true
+  }
+
+  # Criterion 6. A superseded decision keeps what it said and gains a pointer
+  # to what replaced it — editing it to read as though it never said otherwise
+  # destroys the reasoning the record exists for.
+  Assert "decision 13 records what superseded it rather than being rewritten" {
+    $spec = Get-Content (Join-Path $repo '.scratch/tenure/spec.md') -Raw
+    $row = [regex]::Match($spec, '(?m)^\|\s*13\s*\|(.+)$')
+    if (-not $row.Success) { throw 'decision 13 is gone from the spec' }
+    $r = $row.Groups[1].Value
+    if ($r -notmatch '(?i)supersede') { throw 'the supersession is not recorded' }
+    # What it originally said has to still be readable, or the row is a
+    # rewrite wearing a supersession note.
+    if ($r -notmatch 'code-review') { throw 'the original decision was edited away' }
+    # And the ADR that replaced it, reachable from the row.
+    $r -match '0015'
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3621,7 +3820,7 @@ Describe-Ticket '19' 'on a stack, blocked means stacked' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18, 19 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18, 19, 20 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

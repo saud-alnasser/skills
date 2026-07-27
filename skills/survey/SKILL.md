@@ -1,10 +1,10 @@
 ---
-name: improve-codebase-architecture
+name: survey
 description: Survey a codebase for deepening opportunities and present them as a visual report, then hand the chosen one to /design. Use when the user wants to know where the architecture is costing them.
 disable-model-invocation: true
 ---
 
-# Improve Codebase Architecture
+# Survey
 
 Surface architectural friction and propose **deepening opportunities** — changes that turn shallow modules into deep ones. The aim is testability and navigability.
 

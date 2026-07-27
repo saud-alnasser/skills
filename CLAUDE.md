@@ -11,19 +11,25 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 - `configure/CLAUDE.template.md` — the always-on verification and healing rules (ticket 02)
 - `design/` — `/design`, with `SPEC-FORMAT.md`, `TICKETS.md`, `MAP.md` behind pointers (ticket 03)
 - `implement/` — `/implement`, the build stage (ticket 04)
-- `code-review/` — `/code-review`, two axes plus the smell baseline behind a pointer (ticket 05)
+- `review/` — `/review`, two axes plus the smell baseline behind a pointer (ticket 05)
 - `commit/` — `/commit`, the transaction boundary and the Marker's only writer (ticket 06)
 - `research/` and `prototype/` — the two evidence commands, with `LOGIC.md` and `UI.md` behind pointers (ticket 07)
-- the on-ramps — `triage/`, `diagnosing-bugs/`, `handoff/`, `resolving-merge-conflicts/`, `improve-codebase-architecture/` — plus `configure/tracker.template.md`, the one home for tracker config (ticket 09)
+- the on-ramps — `triage/`, `diagnosing-bugs/`, `handoff/`, `resolving-merge-conflicts/`, `survey/` — plus `configure/tracker.template.md`, the one home for tracker config (ticket 09)
 - the nineteen engineering rules, each placed where it fires (ticket 13) — the always-on set in `configure/CLAUDE.template.md`, the conditional ones in `codebase-design`, `tdd`, `design/`, and `implement/`
 - `configure/` — `/configure`, the way a repository joins Tenure, with `MIGRATION.md` behind a pointer (ticket 08)
-- `tenure/` — `/tenure`, the router over the whole set, replacing `ask-matt` (ticket 10)
+- `help/` — `/help`, the router over the whole set, replacing `ask-matt` (ticket 10)
+
+**Tickets 16–20 are resolved** — the multi-instance and distribution work decided by ADRs 0012–0016:
+
+- **16** — Position named as a category. `CLAUDE.template.md` split: the always-on file keeps only rules that hold with or without the plugin, and Tenure's protocol moved to `configure/tenure.template.md`, installed at `.claude/tenure.md`.
+- **17** — the Claim is the ticket's branch, created before any work. `claimed` left the ticket lifecycle entirely; Assignment stays on the tracker and is never written unasked.
+- **18** — creating an issue is publishing and is gated; one root issue per `/design` run; the frontier is build tickets only; the merge resolves a shared ticket.
+- **19** — on a stacking repository `Blocked by` means *stacked on*, and a ticket is buildable once its blockers are committed. The Claim's unit widens to the stack.
+- **20** — Tenure ships as a plugin from `.claude-plugin/`, installed at `local` scope. Three skills were renamed to suit the namespace — `help`, `review`, `survey`; ADR 0015 has the table and the reason for each.
 
 **Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-**Tickets 16–20 are `ready-for-agent`** — the multi-instance and distribution work decided by ADRs 0012–0016: Position and the shared/local line (16), Assignment and the Claim (17), the shared tracker's contract (18), stacked changes (19), and shipping as a plugin (20). Twenty goes last: the renames it carries touch every file the other four edit. They reopen shipped work — `TICKETS.md`, `/implement`'s frontier, `CLAUDE.template.md`, and `tools/github.md` all move, and `verify.ps1`'s assertions move with them.
-
-Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure over the mattpocock skills, then running `/configure` here for real. Ticket 11's install method is superseded by ADR 0015 and now depends on 20. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure and removing the mattpocock skills it replaces, then running `/configure` here for real. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tenure.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/review` → `/commit` chain exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
@@ -41,7 +47,7 @@ Extend it in the same pass as any change to `./skills` — it is the only thing 
 ### Sources of truth, in order
 
 1. `.scratch/tenure/spec.md` — the authoritative spec: 43 numbered decisions, the alteration checklist, the build order, the target layout.
-2. `.scratch/tenure/issues/NN-*.md` — the tickets. `Status:` is `ready-for-agent` / `claimed` / `blocked` / `resolved` / `obsolete`; a `## Comments` section records deviations from the ticket.
+2. `.scratch/tenure/issues/NN-*.md` — the tickets. `Status:` is `ready-for-agent` / `blocked` / `resolved` / `obsolete`; a `## Comments` section records deviations from the ticket.
 3. `docs/adr/` — 16 ADRs. These bind: read the ones covering the area before changing it.
 4. `CONTEXT.md` — the glossary. Use these terms exactly, and avoid each entry's `_Avoid_` list.
 
@@ -63,7 +69,7 @@ Extend it in the same pass as any change to `./skills` — it is the only thing 
 
 **Context loading is demand-driven.** Load `context.md` at startup; load domain contexts (`contexts/database.md`, etc.) only when the request touches that domain.
 
-**The Spine — seven commands**, each owning one stage: `/configure`, `/design`, `/implement`, `/code-review`, `/research`, `/prototype`, `/commit`. There is no `/sync` (ADR 0010). Review ships as `/code-review`, not `/review` (decision 13).
+**The Spine — seven commands**, each owning one stage: `/configure`, `/design`, `/implement`, `/review`, `/research`, `/prototype`, `/commit`. There is no `/sync` (ADR 0010). Review ships as `/review`: decision 13 named it otherwise to avoid shadowing the built-in reviewer, and ADR 0015 supersedes that, because a namespaced command shadows nothing.
 
 **Primitives** are the model-invoked skills the Spine composes and that own no stage: `grilling`, `tdd`, `codebase-design`, `domain-modeling`, `tools`.
 
@@ -89,13 +95,16 @@ CLAUDE.md            the sole always-on entrypoint, at the root, under 200 lines
 ├── prototypes/      disposable experiment code
 ├── tickets/
 ├── skills/
-├── marker.json      machine-local, gitignored
-└── .gitignore
+├── tenure.md        Tenure's own protocol, read only by Tenure's skills
+├── marker.json      Position: machine-local, gitignored
+└── .gitignore       Position's definition, not a list of exceptions
 ```
 
 Note `docs/prototypes/` (prototype write-ups) is distinct from `prototypes/` (throwaway experiment code).
 
 **This repo is deliberately not in that state yet** (ADR 0006), so `/configure` has a genuine migration to perform when ticket 12 runs.
+
+**Distribution** (ADR 0015). Tenure ships as a Claude Code plugin published from this repository's own `.claude-plugin/marketplace.json`, and installs at `local` scope — recorded in a project's gitignored `.claude/settings.local.json`, which makes enabling Tenure an instance of Position. Commands are namespaced `/tenure:<name>`; the short forms are used throughout the skills for readability. `README.md` has the install steps.
 
 ## Conventions the spec mandates
 
@@ -109,10 +118,11 @@ Note `docs/prototypes/` (prototype write-ups) is distinct from `prototypes/` (th
 
 The authoring standard is `writing-great-skills` (in the user's skill set, not this repo): model-invoked vs user-invoked, context load vs cognitive load, the information hierarchy, progressive disclosure, and the named failure modes — premature completion, duplication, sediment, sprawl, no-op, negation.
 
-Two rules bite hardest in this repo:
+Three rules bite hardest in this repo:
 
 - **A rule has exactly one home.** ADR 0007 places it: root `CLAUDE.md` for what must hold on every turn, the enforcing skill for a stage rule, `.claude/rules/` for a standard discovered in the repo. A rule that must hold unconditionally *has* to be in `CLAUDE.md` — putting it in a skill means it fires only when that skill runs, which is a silent failure. `scripts/verify.ps1` asserts single-home through the `$rulePattern` table; add an entry there when you place a rule. Every restatement found so far was caught by an assertion, and two were missed first time because the assertion matched a phrase that travelled *with* the rule rather than the rule — check that a new guard would actually fire.
 - **Vendored skills keep their attribution.** Every skill derived from mattpocock/skills says so (ADR 0001).
+- **Short names are for the keyboard; descriptive names are for the model** (ADR 0015). A skill the user types wants one word, because `/tenure:` is already in front of it. A skill only Claude invokes keeps an expressive name — the name is part of how it gets selected, and shortening it trades accuracy for brevity nobody ever types. The rule bans shortening *for brevity*, not every short name — `review` is model-invoked and one word because the namespace removed the collision its old prefix existed to avoid, and it still says when to use it. `scripts/verify.ps1` asserts the split against each skill's `disable-model-invocation`.
 
 ## Agent skills
 

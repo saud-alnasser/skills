@@ -45,7 +45,7 @@ The parsing is the part that goes wrong. Each line is `XY<space><path>`: status 
 
 ## Read a review diff
 
-`/code-review` has the rules. These are the reads it depends on, against a fixed point the human supplied.
+`/review` has the rules. These are the reads it depends on, against a fixed point the human supplied.
 
 ```
 git rev-parse --verify "<fixed-point>^{commit}"   # exit 1 → bad ref

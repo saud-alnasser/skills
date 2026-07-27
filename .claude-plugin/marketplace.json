@@ -1,0 +1,14 @@
+{
+  "name": "tenure-marketplace",
+  "description": "Publishes Tenure from the repository that builds it.",
+  "owner": {
+    "name": "SAUD ALNASSER"
+  },
+  "plugins": [
+    {
+      "name": "tenure",
+      "source": "./",
+      "description": "A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
+    }
+  ]
+}

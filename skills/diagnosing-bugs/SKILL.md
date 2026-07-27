@@ -117,7 +117,7 @@ Before declaring it done:
 - Any throwaway harness is deleted. `prototype` has the rule if one grew into a real experiment.
 - **The hypothesis that turned out to be right is in the commit message**, so the next person to debug this area learns something.
 
-**Then ask what would have prevented this bug.** If the answer is architectural — no good seam, tangled callers, hidden coupling — hand it to `improve-codebase-architecture` with the specifics. Make that recommendation **after** the fix lands, not before: you know more now than you did at the start, and a recommendation made early is a recommendation made from the theory you began with.
+**Then ask what would have prevented this bug.** If the answer is architectural — no good seam, tangled callers, hidden coupling — hand it to `survey` with the specifics. Make that recommendation **after** the fix lands, not before: you know more now than you did at the start, and a recommendation made early is a recommendation made from the theory you began with.
 
 ---
 

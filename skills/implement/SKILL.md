@@ -50,7 +50,7 @@ frontier = tickets open, unblocked, unclaimed
 
   → claim it        create the branch, BEFORE any work
   → build it        tdd at the pre-agreed seams
-  → /code-review    Spec + Standards
+  → /review    Spec + Standards
   → apply fixes
   → ASK             "commit and resolve this ticket?"
 
@@ -140,7 +140,7 @@ Typecheck often, and run the single test file often. Run the **full suite once**
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
-Three rules about what gets written, applied even where the repository documents none of them (ADR 0007). `/code-review` checks them; this is where they are obeyed:
+Three rules about what gets written, applied even where the repository documents none of them (ADR 0007). `/review` checks them; this is where they are obeyed:
 
 - **Prefer self-explanatory code.** The code itself is what the next reader has to understand, and prose beside it is a second thing to keep true. Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
 - **Comments explain *why*, not *what*.** Constraints, tradeoffs, and the reasoning behind a shape are worth writing down — they are not recoverable from the code. A comment that restates the line below it goes stale on its own schedule and is worth less than the naming it is compensating for.
@@ -178,7 +178,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 ## 4 — Close out
 
-`/code-review` runs **before** the commit question, both axes, and its fixes are applied before the question is asked. Reviewing after the user has approved the commit inverts the order the approval was given in — they approved reviewed work, not work about to be reviewed.
+`/review` runs **before** the commit question, both axes, and its fixes are applied before the question is asked. Reviewing after the user has approved the commit inverts the order the approval was given in — they approved reviewed work, not work about to be reviewed.
 
 Then **ask**: *commit and resolve this ticket?* `/implement` does not decide that the work is done.
 

@@ -31,7 +31,7 @@ Nothing to report is still reported. The rule and both drift reads are in `.clau
 Three questions. Each is about state, and none of them re-executes anything.
 
 - **Were the tests run, and did they pass?** A change with no test surface answers this honestly — but that is an answer, stated in one line, not a step skipped.
-- **Did `/code-review` run, and does every finding have an outcome?** Fixed, ticketed, or accepted-and-recorded. A finding still open is a blocker or a ticket, **never a silent pass**.
+- **Did `/review` run, and does every finding have an outcome?** Fixed, ticketed, or accepted-and-recorded. A finding still open is a blocker or a ticket, **never a silent pass**.
 - **Is the work finished against its ticket or spec?** Work that arrived without a ticket answers against what the caller asked for instead.
 
 A failure here is **reported, not fixed**. Say which stage is incomplete — *the suite was never run; that is `/implement`'s* — because a refusal the caller cannot act on is a wall rather than a check. `/commit` does not implement, review, or research its way past one of these; it names the incomplete stage and stops.
@@ -69,7 +69,7 @@ Reference the ticket. On a shared tracker, **which form** depends on how this co
 | How the work lands | The commit carries | Because |
 | --- | --- | --- |
 | a branch merged by a pull request the human writes | a reference that closes nothing | a closing keyword in a commit stays live — a cherry-pick or a rebase onto the default branch later closes an issue nobody merged. The keyword goes in the pull request body instead |
-| a branch in a stack, submitted by the stacking tool | the closing keyword | the commit reaches the default branch only by merging that branch's own pull request, so the hazard above cannot happen — and the submit path prompts for pull request metadata interactively and accepts no body from a file or stdin, so there is nowhere else to put it |
+| a branch in a stack, submitted by the stacking tool | the closing keyword | the commit reaches the default branch only by merging that branch's own pull request, so the hazard above cannot happen — and the commit body is the only text Tenure can pre-write that reaches the pull request at all |
 
 `tools/github.md` has both forms and their constraints; `tools/graphite.md` records what was and was not verified about the submit path. Read them rather than picking a word that looks equivalent, because several of them are not.
 

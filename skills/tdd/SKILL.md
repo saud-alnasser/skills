@@ -51,7 +51,7 @@ Adjacent is the default for a repository with no established pattern. Move to a 
 
 - **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
-- **Refactoring is not part of the loop.** It belongs to `/code-review`, not the red → green implementation cycle.
+- **Refactoring is not part of the loop.** It belongs to `/review`, not the red → green implementation cycle.
 
 ---
 

@@ -1,7 +1,7 @@
 # chore(release): install Tenure and remove the mattpocock skills
 
 Status: ready-for-human
-Blocked by: 20
+Blocked by: —
 
 ## Problem
 
@@ -61,3 +61,8 @@ still never been measured.
 collision decision 13 avoided by naming the skill `code-review`; under a
 namespace `/tenure:review` cannot shadow it, so the criterion holds by
 construction instead of by naming discipline.
+
+**Ticket 20 has landed**, so the distribution form now exists: add this
+repository as a marketplace and install `tenure@tenure-marketplace` at `local`
+scope, per `README.md`. This ticket is unblocked and its remit is the list
+above.

@@ -25,7 +25,7 @@
 
 `.claude/.gitignore` is Position's **definition**, not a list of exceptions: it states the category and the test for membership in it, so a new per-clone file is covered by the rule rather than needing a new entry argued for. Read it there.
 
-The invariant that keeps Position from becoming a fourth knowledge layer: **nothing shared may depend on it.** Delete every ignored file under `.claude/` and no other person and no other clone loses information they needed. This clone loses a cache and re-earns it.
+The invariant that keeps Position from becoming a fourth knowledge layer: **nothing shared may depend on it.** Delete every ignored file under `.claude/` and no other person and no other clone loses information they needed. This clone loses a shortcut and re-earns it.
 
 ## Trusting Context — the Marker
 

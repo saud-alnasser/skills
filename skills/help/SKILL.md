@@ -1,12 +1,14 @@
 ---
-name: tenure
+name: help
 description: Ask which command fits the situation you are in. A router over Tenure's skills, organised by how work arrives.
 disable-model-invocation: true
 ---
 
-# Tenure
+# Help
 
 Ask the tenured engineer. Say what you are trying to do; this says where to start. Everything is grouped by **how the work arrived**, because that is what you know at the moment you need to choose.
+
+Tenure ships as a plugin, so every command below is namespaced to it — `/tenure:design`, `/tenure:implement`, and this one as `/tenure:help`. The short forms are used throughout for readability.
 
 **First, once: `/configure`.** Nothing below works properly until it has run — it writes the tracker configuration, this repository's own tool commands, and the knowledge everything else reads. See **Knowledge** for what a later run does.
 
@@ -15,15 +17,15 @@ Ask the tenured engineer. Say what you are trying to do; this says where to star
 Most work travels this route.
 
 ```
-/design ──▶ /implement ──▶ /code-review ──▶ /commit
+/design ──▶ /implement ──▶ /review ──▶ /commit
 ```
 
 - **`/design`** — start here whenever the work is not already planned. It is the **whole planning surface**: discovery, the grill, the spec, the tickets, and the map for a foggy multi-session effort. There is nothing else to reach for while planning.
 - **`/implement`** — when a ticket exists and is ready to build. One per invocation, and it reads the ticket rather than the conversation, so you can clear context between any two.
-- **`/code-review`** — when you want a diff reviewed against a fixed point you name. The Spine runs it for you before it asks to commit; reach for it directly for a branch or a PR.
+- **`/review`** — when you want a diff reviewed against a fixed point you name. The Spine runs it for you before it asks to commit; reach for it directly for a branch or a PR.
 - **`/commit`** — when work is finished and ready to land. Reach for it directly when the work arrived without a ticket.
 
-Only `/design` and this router are typed by habit. The rest are reachable, and the Spine pulls them in on its own.
+Only `/design` and `/help` are typed by habit. The rest are reachable, and the Spine pulls them in on its own.
 
 ### The two detours
 
@@ -48,7 +50,7 @@ It is chosen **after the grill**, never before: sizing a change before you under
 
 ## Keeping the repository worth working in
 
-- **`/improve-codebase-architecture`** — not feature work. Two situations: when you have a spare moment and want to know where the codebase is costing you, and when a diagnosis has just concluded that the real problem was **no seam to lock the bug down**. It finds candidates; picking one gives you something to take into `/design`.
+- **`/survey`** — not feature work. Two situations: when you have a spare moment and want to know where the codebase is costing you, and when a diagnosis has just concluded that the real problem was **no seam to lock the bug down**. It finds candidates; picking one gives you something to take into `/design`.
 
 ## Knowledge
 

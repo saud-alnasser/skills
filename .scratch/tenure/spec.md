@@ -49,7 +49,7 @@ Resolved by grill; each ADR in `docs/adr/` carries the reasoning.
 | 26 | **`/design` always leaves at least one ticket.** Nothing important lives only in the conversation, so context can be cleared between any two steps and `/implement` always has something to read | — |
 | 27 | `/design` **states its understanding** before assessing scope — a stated position, not a question, so a wrong model is corrected while that is still free | — |
 | 28 | Cold requests that would **change code** get a lightweight always-on path in `CLAUDE.md`: marker check, routing, verification, stated classification. Questions get context loading only. The compounding claim does not survive being opt-in | — |
-| 21 | `/code-review` keeps two axes — Spec and Standards. Reviews are never persisted | — |
+| 21 | `/review` keeps two axes — Spec and Standards. Reviews are never persisted | — |
 | 22 | Compression has one standard: high density, structure-first. "Caveman Compression" is dropped | — |
 | 23 | **A document's reasoning is frozen; only its status moves.** Applies to ADRs (`superseded by NNNN`) and specs (`implemented`, `superseded by <path>`, `abandoned`). No status means current. `/commit` marks a spec implemented; `/configure`'s audit catches the ones it never saw | — |
 | 24 | Released under Apache 2.0, Copyright 2026 Saud Alnasser. Upstream is MIT, so relicensing is permitted with matt's notice preserved in `NOTICE` | 0001 |
@@ -66,14 +66,14 @@ Resolved by grill; each ADR in `docs/adr/` carries the reasoning.
 `/configure` `/design`
 
 **Spine — model-invoked** (reachable by other skills; still typeable, since model-invocation includes user reach):
-`/research` `/prototype` `/implement` `/code-review` `/commit`
+`/research` `/prototype` `/implement` `/review` `/commit`
 
 `/commit` is model-invoked because `/implement` closes out through it. Typed directly, it handles work with no ticket.
 
 Seven, not eight — `/sync` dissolved into a discipline (0010), and `/design` absorbed `to-spec`, `to-tickets`, and `wayfinder` (0011).
 
 **On-ramps** — situations that generate work, vendored with paths rewritten:
-`/triage` `/diagnosing-bugs` `/handoff` `/resolving-merge-conflicts` `/improve-codebase-architecture`
+`/triage` `/diagnosing-bugs` `/handoff` `/resolving-merge-conflicts` `/survey`
 
 **Primitives** — model-invoked, composed by the spine:
 `grilling` `tdd` `codebase-design` `domain-modeling` `tools`
@@ -94,10 +94,10 @@ Which of matt's to read for each:
 | --- | --- |
 | `/design` | `grill-with-docs`, `grilling`, `to-spec`, `to-tickets`, `wayfinder` |
 | `/implement` | `implement`, `tdd` |
-| `/code-review` | `code-review` |
+| `/review` | `code-review` |
 | `/configure` | `setup-matt-pocock-skills`, `domain-modeling` |
 | `/research`, `/prototype` | `research`, `prototype` |
-| `/tenure` router | `ask-matt` |
+| `/help` router | `ask-matt` |
 | primitives | the same-named originals |
 | on-ramps | the same-named originals |
 
@@ -139,7 +139,7 @@ PHASE 2  dogfood checkpoint  ← the point of the ordering
   fix what breaks before writing anything else.
 
 PHASE 3  build the rest through /design + /implement
-  04 /implement   05 /code-review   06 /commit
+  04 /implement   05 /review       06 /commit
   07 research + prototype           08 /configure
   09 on-ramps     13 rules          14 tracker
   10 router
