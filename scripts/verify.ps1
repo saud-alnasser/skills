@@ -305,6 +305,17 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
 
   # A review that reads only the diffs cannot see a newly added file, and a
   # `git diff` without `HEAD` silently drops whatever is already staged.
+  # `diagnosing-bugs` builds a bisection harness, so the invocation has to be
+  # here rather than guessed there. The reset is the load-bearing half: without
+  # it the session continues against a detached HEAD, and the next status read
+  # looks like catastrophic drift that is not real.
+  Assert "the bisect entry pairs run with the reset that has to follow it" {
+    $c = Get-SkillFile 'tools/git.md'
+    if ($c -notmatch '(?m)^git bisect run') { throw 'bisect cannot be driven unattended' }
+    if ($c -notmatch '(?m)^git bisect reset') { throw 'the reset is missing' }
+    $c -match '(?i)detached HEAD|bisect state'
+  }
+
   Assert "the review reads staged, unstaged, and untracked — not just the commit range" {
     $c = Get-SkillFile 'tools/git.md'
     if ($c -notmatch '(?m)^git diff HEAD\b') { throw 'staged changes are not read' }
@@ -1640,6 +1651,309 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
   }
 }
 
+# --- ticket 09 — the gap-fillers, and the tracker's one home -----------------
+
+Describe-Ticket '09' 'vendor the gap-fillers' {
+
+  $onramps = @('triage', 'diagnosing-bugs', 'handoff', 'resolving-merge-conflicts',
+               'improve-codebase-architecture')
+
+  foreach ($s in $onramps) {
+    Assert "$s is vendored into ./skills" {
+      Test-Path (Join-Path $skills "$s/SKILL.md")
+    }
+  }
+
+  # Alteration checklist item 3. Kept from matt's, because his axes already
+  # satisfy the rule: the two that must fire from a description of the problem
+  # are model-invoked, and the three a human types are not.
+  $axis = @{
+    'triage'                        = $true
+    'handoff'                       = $true
+    'improve-codebase-architecture' = $true
+    'diagnosing-bugs'               = $false
+    'resolving-merge-conflicts'     = $false
+  }
+  foreach ($s in $axis.Keys) {
+    $userInvoked = $axis[$s]
+    Assert "$s is $(if ($userInvoked) { 'user' } else { 'model' })-invoked" {
+      $fm = Get-Frontmatter (Get-SkillFile "$s/SKILL.md")
+      if (-not $fm) { throw "$s/SKILL.md has no frontmatter" }
+      $disabled = $fm -match 'disable-model-invocation:\s*true'
+      if ($userInvoked -ne $disabled) {
+        throw "$s is $(if ($disabled) { 'user' } else { 'model' })-invoked, which is the wrong axis"
+      }
+      $true
+    }
+  }
+
+  # Acceptance: "No vendored skill references a mattpocock path." The
+  # attribution URL is not a path — a setup command that does not exist in
+  # Tenure is, and it is how a vendored skill silently stops working.
+  Assert "no skill points at matt's installer or his skill directory" {
+    $offenders = Get-SkillFiles |
+      Select-String -Pattern 'setup-matt-pocock-skills|ask-matt|\.claude[\\/]skills[\\/](triage|prototype|research)' |
+      ForEach-Object { "$(Split-Path -Leaf $_.Path):$($_.LineNumber)" }
+    if ($offenders) { throw ($offenders -join ', ') }
+    $true
+  }
+
+  Assert "every vendored gap-filler keeps its attribution" {
+    $missing = @()
+    foreach ($s in $onramps) {
+      foreach ($f in (Get-ChildItem (Join-Path $skills $s) -File -Filter *.md -ErrorAction SilentlyContinue)) {
+        if ((Get-Content $f.FullName -Raw) -notmatch '(?i)mattpocock/skills') { $missing += "$s/$($f.Name)" }
+      }
+    }
+    if ($missing) { throw ($missing -join ', ') }
+    $true
+  }
+
+  # --- the tracker's one home ------------------------------------------------
+
+  # Acceptance: "The issue-tracker configuration has exactly one home, and every
+  # skill reading it agrees." /configure writes the file; ticket 09 places the
+  # template, exactly as ticket 02 placed CLAUDE.template.md before ticket 08.
+  Assert "the tracker template ships, and names .claude/tracker.md as its home" {
+    $t = Get-SkillFile 'configure/tracker.template.md'
+    $t -match '\.claude/tracker\.md'
+  }
+
+  # Decision 35: GitHub and local markdown are both first-class. A template
+  # that documents one and mentions the other is not two first-class trackers.
+  Assert "both trackers are first-class — GitHub and local markdown" {
+    $t = Get-SkillFile 'configure/tracker.template.md'
+    if ($t -notmatch '(?i)github') { throw 'GitHub is not covered' }
+    if ($t -notmatch '(?i)local markdown') { throw 'local markdown is not covered' }
+    if ($t -notmatch '\.claude/tickets/') { throw 'the local ticket location is not given' }
+    $t -match '(?i)both[^\n]{0,80}first-class|first-class[^\n]{0,80}both'
+  }
+
+  # Decision 34 / alteration checklist item 4: the commands are in tools/, and
+  # a guessed `gh` flag here is the duplication ticket 15 exists to stop.
+  Assert "tracker operations point at tools/github.md rather than inlining gh" {
+    $t = Get-SkillFile 'configure/tracker.template.md'
+    if ($t -notmatch 'tools/github\.md') { throw 'the gh reference is missing or guessed' }
+    # Ticket 09 says `tools/gh.md`; the file ticket 15 shipped is github.md.
+    if ($t -match 'tools/gh\.md') { throw 'points at tools/gh.md, which does not exist' }
+    $true
+  }
+
+  # Ticket 09: "Triage label vocabulary folds into the same file rather than
+  # getting one of its own."
+  Assert "the triage label vocabulary lives in the tracker file, not its own" {
+    $t = Get-SkillFile 'configure/tracker.template.md'
+    $roles = @('needs-triage', 'needs-info', 'ready-for-agent', 'ready-for-human', 'wontfix')
+    $absent = $roles | Where-Object { $t -notmatch [regex]::Escape($_) }
+    if ($absent) { throw "roles missing from the tracker file: $($absent -join ', ')" }
+    # And nowhere else under ./skills may define a competing mapping.
+    $rivals = Get-SkillFiles |
+      Where-Object { $_.Name -match '(?i)label' } |
+      ForEach-Object { $_.Name }
+    if ($rivals) { throw "a second home for labels: $($rivals -join ', ')" }
+    $true
+  }
+
+  Assert "every skill that reads tracker config reads .claude/tracker.md" {
+    # Ticket 09 names three readers. Listing only the one that happens to
+    # comply makes the assertion pass *because* of the gap it should catch.
+    # /design's half is ticket 14's (its Comments say so); /implement is 09's.
+    $readers = @('triage/SKILL.md', 'implement/SKILL.md')
+    foreach ($r in $readers) {
+      $c = Get-SkillFile $r
+      if ($c -notmatch '\.claude/tracker\.md') { throw "$r does not read the tracker config" }
+      # Naming the file once in passing is not reading it as the source. It has
+      # to be the only place, or a skill infers the half it did not look up.
+      if ($c -notmatch '(?i)\.claude/tracker\.md[^\n]{0,200}(only place|one home|read it first)') {
+        throw "$r does not treat the tracker file as the single source"
+      }
+    }
+    $true
+  }
+
+  # --- triage ----------------------------------------------------------------
+
+  # Against the Roles section. Every one of these words appears again in the
+  # outcome step, so a file-wide loop passes with the vocabulary itself gutted.
+  Assert "triage carries both category roles and all five state roles" {
+    $c = Get-SkillFile 'triage/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*\bRoles\b.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'the roles are not defined in their own section' }
+    # Each role must be *defined*, not merely named. The transitions paragraph
+    # lists all five, so a presence check passes with a role's meaning deleted
+    # — and a role nobody can define is one that gets applied by guesswork.
+    foreach ($r in @('bug', 'enhancement', 'needs-triage', 'needs-info',
+                     'ready-for-agent', 'ready-for-human', 'wontfix')) {
+      if ($step -notmatch "(?m)``$r``\s+—\s+\S") { throw "role has no definition: $r" }
+    }
+    $true
+  }
+
+  # An AI-written comment on someone else's issue that does not say so is the
+  # one thing here a maintainer cannot undo after the fact.
+  Assert "every comment triage posts carries the AI disclaimer" {
+    $c = Get-SkillFile 'triage/SKILL.md'
+    if ($c -notmatch '(?i)generated by AI') { throw 'no disclaimer text' }
+    # `(must|every) ... start with` passes on "Every comment ... may start with
+    # a note" — the sentence that makes it optional. The obligation is the word
+    # that has to survive.
+    if ($c -notmatch '(?i)\*{0,2}must\*{0,2} start with') { throw 'the disclaimer is not mandatory' }
+    $c -match '(?i)not optional'
+  }
+
+  foreach ($ref in @('AGENT-BRIEF.md', 'OUT-OF-SCOPE.md')) {
+    Assert "triage discloses $ref behind a pointer, not inlined" {
+      if (-not (Test-Path (Join-Path $skills "triage/$ref"))) { throw "triage/$ref is missing" }
+      (Get-SkillFile 'triage/SKILL.md') -match [regex]::Escape($ref)
+    }
+  }
+
+  # ADR 0003/0006: everything the workflow owns lives under .claude/.
+  Assert "the out-of-scope knowledge base moved under .claude/" {
+    $c = Get-SkillFile 'triage/OUT-OF-SCOPE.md'
+    if ($c -notmatch '\.claude/docs/out-of-scope/') { throw 'the location is not under .claude/docs/' }
+    $stray = Get-SkillFiles |
+      Select-String -Pattern '(?<![\w/.])\.out-of-scope/' |
+      ForEach-Object { "$(Split-Path -Leaf $_.Path):$($_.LineNumber)" }
+    if ($stray) { throw "root-level .out-of-scope/ survives in: $($stray -join ', ')" }
+    $true
+  }
+
+  # Recording an already-built feature as a rejection poisons the dedup check
+  # that the whole knowledge base exists for.
+  Assert "only a rejected enhancement is recorded — never one already built" {
+    $c = Get-SkillFile 'triage/OUT-OF-SCOPE.md'
+    if ($c -notmatch '(?i)already implemented') { throw 'the already-built case is not distinguished' }
+    $c -match '(?i)(do\s+\*{0,2}not\*{0,2}|never) write'
+  }
+
+  # A brief may sit unclaimed for weeks; paths and line numbers do not survive
+  # that, and a brief that has gone stale is worse than none.
+  # Against the durability section. The bad-brief example at the bottom names
+  # both failures too, so a file-wide check stays green with the rules deleted.
+  Assert "an agent brief describes behaviour, never file paths or line numbers" {
+    $c = Get-SkillFile 'triage/AGENT-BRIEF.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*durab.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'durability is not its own section' }
+    if ($step -notmatch '(?i)(don.t|never|not)[^\n]{0,60}reference file paths') { throw 'file paths are not ruled out' }
+    $step -match '(?i)(don.t|never|not)[^\n]{0,60}reference line numbers'
+  }
+
+  # --- diagnosing-bugs -------------------------------------------------------
+
+  # The whole discipline: no red loop, no theory. This is the rule /implement
+  # cites when it refuses to redesign, so it has to survive vendoring intact.
+  Assert "no hypothesis is allowed before a loop that goes red" {
+    $c = Get-SkillFile 'diagnosing-bugs/SKILL.md'
+    # Both statements. Each survives the other being deleted, and the gate is
+    # the one that fires while there is still time to obey it.
+    if ($c -notmatch '(?i)(do not|don.t) proceed to hypothesise without a loop') {
+      throw 'hypothesising without a loop is not forbidden'
+    }
+    $c -match '(?i)no red-capable command, no phase 2'
+  }
+
+  Assert "the completion criterion is a command already run, asserting the symptom" {
+    $c = Get-SkillFile 'diagnosing-bugs/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*completion criterion.*?(?=^#{2}\s|\z)').Value
+    if (-not $step) { throw 'the completion criterion is not its own section' }
+    if ($step -notmatch '(?i)already run') { throw 'the command need not have been run' }
+    # Red-capable has to be defined here, not merely named — "it runs" is
+    # exactly what the definition exists to reject.
+    $step -match "(?i)red-capable[^\n]{0,240}(exact symptom|catch this specific bug)"
+  }
+
+  # matt's criterion allows a human in the loop, but only through a script that
+  # drives them. Dropping the escape entirely makes every bug needing a click
+  # unloopable, which sends the skill straight to the hypothesising it forbids.
+  Assert "a human in the loop is allowed, but only a driven one" {
+    $c = Get-SkillFile 'diagnosing-bugs/SKILL.md'
+    $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*completion criterion.*?(?=^#{2}\s|\z)').Value
+    if ($step -notmatch '(?i)human') { throw 'the human-in-the-loop case is dropped from the criterion' }
+    $step -match '(?i)unstructured one is not|script that tells them'
+  }
+
+  # Context loading is demand-driven (ADR 0002): context.md, then the Domain
+  # Contexts the routing table points at — never everything.
+  Assert "diagnosing-bugs loads Context through the routing table" {
+    $c = Get-SkillFile 'diagnosing-bugs/SKILL.md'
+    if ($c -notmatch '\.claude/context\.md') { throw 'Context is never read' }
+    $c -match '(?i)routing table|\.claude/contexts/'
+  }
+
+  # --- handoff ---------------------------------------------------------------
+
+  Assert "a handoff is written outside the workspace" {
+    $c = Get-SkillFile 'handoff/SKILL.md'
+    $c -match '(?i)(temp|temporary)[^\n]{0,60}director|not[^\n]{0,40}(workspace|repository)'
+  }
+
+  # In Tenure most of the state a next session needs is already on disk. A
+  # handoff that copies it creates a second, immediately-stale copy.
+  Assert "a handoff points at artifacts rather than copying them" {
+    $c = Get-SkillFile 'handoff/SKILL.md'
+    if ($c -notmatch '(?i)(do not|don.t|never) duplicat') { throw 'duplication is not ruled out' }
+    $c -match '(?i)(reference|point)[^\n]{0,60}(path|url|instead)'
+  }
+
+  Assert "a handoff redacts secrets before it is written" {
+    $c = Get-SkillFile 'handoff/SKILL.md'
+    $c -match '(?i)redact'
+  }
+
+  # --- improve-codebase-architecture -----------------------------------------
+
+  # ADR 0011: /design is the whole planning surface. matt's runs its own
+  # grilling and domain-modeling loop, which is exactly that surface rebuilt
+  # inside a survey command.
+  Assert "the chosen candidate goes to /design — the survey does not plan" {
+    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
+    # A step, not a mention. /design is named in the rationale either way, so a
+    # presence check survives the hand-off step turning into a grill.
+    if (-not [regex]::IsMatch($c, '(?im)^#{2,}[^\n]*(hand|pass)[a-z]* it to `?/design')) {
+      throw 'handing the candidate to /design is not a step'
+    }
+    if ([regex]::IsMatch($c, '(?im)^#{2,}[^\n]*grill')) { throw 'the survey runs its own grill' }
+    $c -match '(?i)(do not|don.t) grill here'
+  }
+
+  Assert "the architecture vocabulary comes from codebase-design, used exactly" {
+    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
+    if ($c -notmatch '(?i)codebase-design') { throw 'the vocabulary skill is not invoked' }
+    # In the step that explores, where it is applied. Naming it in the
+    # vocabulary list is not using it.
+    $explore = [regex]::Match($c, '(?ims)^#{2,}[^\n]*explore.*?(?=^#{2}\s|\z)').Value
+    if ($explore -notmatch '(?i)deletion test') { throw 'the deletion test is never applied' }
+    $c -match '(?i)(exactly|don.t drift|do not drift)'
+  }
+
+  Assert "the report is written outside the repository" {
+    $c = Get-SkillFile 'improve-codebase-architecture/SKILL.md'
+    if (-not (Test-Path (Join-Path $skills 'improve-codebase-architecture/HTML-REPORT.md'))) {
+      throw 'HTML-REPORT.md is missing'
+    }
+    $c -match '(?i)temp[^\n]{0,60}(dir|director)|nothing lands in the repo'
+  }
+
+  # --- resolving-merge-conflicts ---------------------------------------------
+
+  Assert "a conflict is always resolved, never aborted" {
+    $c = Get-SkillFile 'resolving-merge-conflicts/SKILL.md'
+    if ($c -notmatch '(?i)never[^\n]{0,20}`?--abort') { throw 'aborting is not ruled out' }
+    $c -match '(?i)primary source|original intent'
+  }
+
+  Assert "its git invocations point at tools/git.md rather than being guessed" {
+    $c = Get-SkillFile 'resolving-merge-conflicts/SKILL.md'
+    # Both ends — reading the conflict state, and finishing the operation. One
+    # reference standing in for the other step is how a guessed flag gets in.
+    if (([regex]::Matches($c, 'tools/git\.md')).Count -lt 2) {
+      throw 'only one step defers to the tool reference'
+    }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -1647,7 +1961,7 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 09, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

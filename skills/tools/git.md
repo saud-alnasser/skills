@@ -59,6 +59,27 @@ git ls-files --others --exclude-standard          # untracked, not in any diff
 
 `git diff HEAD` covers staged and unstaged together; `git diff` alone silently omits anything already staged. Neither shows an untracked file, which is why the last line is not optional — a review that reads only the diffs cannot see a newly added file at all.
 
+## Bisect to the first bad commit
+
+`diagnosing-bugs` builds the harness; this runs it. The harness must exit `0`
+for good and non-zero for bad, and must be non-interactive.
+
+```
+git bisect start <bad> <good>                     # bad first, then a known-good
+git bisect run <script>                           # drives it to the first bad commit
+git bisect reset                                  # ALWAYS — restores the original HEAD
+```
+
+`git bisect run` leaves the tree checked out at the culprit and the repository
+**in a bisect state**. Without `reset`, every later command in the session runs
+against a detached HEAD somewhere in history, and the next `git status` reads as
+catastrophic drift that is not real.
+
+A harness that exits non-zero for a reason unrelated to the bug — a build
+failure at an old commit, a missing dependency — marks that commit bad and
+sends the search down the wrong half. Use `git bisect skip` for a commit that
+cannot be tested rather than letting it fail.
+
 ## Recover a broken Source Pointer
 
 `CLAUDE.md` has the rule. These are the two commands that find where the concept went:

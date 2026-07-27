@@ -60,6 +60,8 @@ frontier = tickets open, unblocked, unclaimed
 
 Setting `Status: claimed` and saving it **before any work** is the whole mechanism that stops two sessions taking the same ticket. Claiming after the first edit is the same as not claiming.
 
+**Where the tickets are, and how claiming is expressed, come from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. The `Status:` lines above are the local-markdown form; on a GitHub tracker the same states are labels, and the invocations are in `tools/github.md`. Read the config rather than assuming the form.
+
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.

@@ -97,3 +97,15 @@ written local-markdown-only — they hardcode `.claude/tickets/` and file-based
 local markdown both first-class, so the representation table above has to reach
 those two files. Ticket 09 places `.claude/tracker.md`; this ticket has to make
 `/design` read it.
+
+**Ticket 09 has now shipped `configure/tracker.template.md`**, so the file this
+ticket needs exists. `/implement` reads it as of ticket 09 — its §1 names the
+config as the source for where tickets live and how claiming is expressed.
+`/design` is the remaining reader, and `verify.ps1`'s reader list under ticket
+09 is where to add it so the criterion cannot pass on an empty list again.
+
+**The label *vocabulary* is placed; the label *procedure* is still this
+ticket's.** Ticket 09 folded the five state roles and two category roles into
+`tracker.template.md` as a canonical-name-to-label-string mapping. The reuse
+procedure above — list what exists, map onto it, create only when nothing fits,
+match the repository's prefix and casing — is not written anywhere yet.
