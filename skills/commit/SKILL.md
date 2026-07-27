@@ -16,7 +16,7 @@ Two callers, one implementation:
 
 ## 0 — Verification
 
-This reads Context to check it against the diff, so it opens with the verification report `CLAUDE.md` requires:
+This reads Context to check it against the diff, so it opens with the verification report `.claude/tenure.md` requires:
 
 ```
 Verification
@@ -24,7 +24,7 @@ Verification
   → contexts loaded: database
 ```
 
-Nothing to report is still reported. The rule and both drift reads are in `CLAUDE.md`.
+Nothing to report is still reported. The rule and both drift reads are in `.claude/tenure.md`.
 
 ## 1 — Confirm the stages ran
 
@@ -84,7 +84,7 @@ That is the whole file. The Marker answers one question — what Context was las
 
 Confirm `.claude/marker.json` is gitignored **before** writing it. `/configure` puts the entry in `.claude/.gitignore`; without it the Marker gets committed, and a committed Marker always names the parent of the commit it describes, so every session afterwards opens by verifying drift that is not there.
 
-After this the **Marker equals `HEAD`** and the tree is clean. That postcondition is what every step above exists to leave true; what `CLAUDE.md` then does with it is `CLAUDE.md`'s.
+After this the **Marker equals `HEAD`** and the tree is clean. That postcondition is what every step above exists to leave true; what `.claude/tenure.md` then does with it is that file's.
 
 An amend produces a new SHA, so **the Marker re-advances on every amend**, exactly as it did on the first commit.
 

@@ -20,7 +20,7 @@ Which branch runs is decided by **what it finds, never by a flag.** A flag lets 
 
 ## 0 — Verification
 
-Open with the one-line verification report, exactly as every other skill does — including on a fresh repository, where it reads *"no Tenure here — nothing to verify"*. The rule is in `CLAUDE.md`.
+Open with the one-line verification report, exactly as every other skill does — including on a fresh repository, where it reads *"no Tenure here — nothing to verify"*. The rule is in `.claude/tenure.md`, which on a fresh repository this run is about to write.
 
 An audit run has Context to check and is the one case where this is real work. It still reports in one line; what it *finds* belongs to step 5.
 
@@ -66,6 +66,8 @@ The rest of the tree — `.claude/docs/{decisions,designs,research,prototypes}/`
 
 **`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
 
+**`.claude/tenure.md`**, from [tenure.template.md](tenure.template.md), copied as-is — it describes Tenure, not this repository, so it has nothing to fill in. It is the other half of `CLAUDE.md`: the always-on file is read by every Claude that opens the repository, so it carries only rules that hold with or without the plugin, and the machinery serving them lives here where only Tenure's skills look. Write both or neither — a `CLAUDE.md` whose pointer leads nowhere is worse than one that never split.
+
 **`.claude/rules/*.md`** for standards discovered in *this* repository — not Tenure's. Each is **path-scoped** where it applies to part of the tree. A standard that applies everywhere is one file; a standard about `packages/api/` says so, and is not paid for while working in `docs/`.
 
 **`.claude/tracker.md`**, from [tracker.template.md](tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
@@ -74,7 +76,20 @@ The rest of the tree — `.claude/docs/{decisions,designs,research,prototypes}/`
 
 The **single-file test command** is the one entry that must not be missing. It is the most-run command in the whole framework and the least guessable, and `tdd` says what happens without it.
 
-**`.claude/.gitignore`**, carrying `marker.json` and `prototypes/`. It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets Tenure be added or removed as one directory instead of leaking entries into a file the repository owns.
+**`.claude/.gitignore`**, written exactly as below. It is Position's definition (ADR 0012), so it states the category and the test rather than listing entries — a per-clone file added later is covered by the rule instead of needing a new exception argued for:
+
+```gitignore
+# Position. Add a file here when it would be wrong in another clone —
+# someone else's checkout, or this repository on another machine. A file that
+# would be equally true everywhere is knowledge, and knowledge is committed.
+#
+# `.claude/tenure.md` says what depends on that being true.
+
+marker.json
+prototypes/
+```
+
+It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets Tenure be added or removed as one directory instead of leaking entries into a file the repository owns.
 
 ## 5 — Audit, where Tenure is already here
 
@@ -97,7 +112,8 @@ Before reporting complete:
 - Every **Source Pointer** resolves, and a broken one is handled the way `CLAUDE.md` requires.
 - Every file under `contexts/` appears in the **routing table**, exactly once.
 - No **implementation** was written into Context — no API shapes, no function names, no file inventories.
-- `.claude/.gitignore` exists and covers both entries.
+- `CLAUDE.md` and `.claude/tenure.md` both exist, and **nothing committed depends on a file `.claude/.gitignore` matches** — read `CLAUDE.md` as a Claude without the plugin would and confirm every rule in it is followable.
+- `.claude/.gitignore` exists and states the category, not a list.
 
 Report what was written, what was moved, and what was left alone.
 

@@ -44,13 +44,25 @@ _Avoid_: notes, artifacts, output
 Divergence between Context and Codebase caused by changes made outside Claude's sessions — teammate commits, branch switches, or the human's own uncommitted edits.
 _Avoid_: staleness, rot
 
+**Position**:
+State describing where *this clone* stands, rather than what the repository knows — the commit Context was last verified against, the ticket this working tree has claimed, the prototype code currently on disk. Never committed: `.claude/.gitignore` is Position's definition, not a list of exceptions. Not a Knowledge Layer and not knowledge at all, so nothing shared may depend on it.
+_Avoid_: local state, cache, session state, workspace state
+
 **Marker**:
-The commit Context was last verified against, held machine-local in `.claude/marker.json`. A cache-validity check: when it matches `HEAD` and the tree is clean, Context can be trusted without re-verification. Per-clone, because a teammate's verification is not Claude's.
+The commit Context was last verified against — a Position, held in `.claude/marker.json`. A cache-validity check: when it matches `HEAD` and the tree is clean, Context can be trusted without re-verification. Per-clone, because a teammate's verification is not Claude's.
 _Avoid_: last_sync_commit, checkpoint, baseline
 
 **Healing**:
 Repairing Context where it has diverged from the Codebase, done at the moment the divergence is found rather than in a scheduled pass. There is no synchronization stage — verification happens where Context is used.
 _Avoid_: sync, reconciliation, refresh, drift repair
+
+**Assignment**:
+Which human owns delivering a ticket. Human-to-human, held on the tracker, and never Tenure's to write unasked — how that human delivers it, and with how many instances, is theirs to decide. Because Assignment separates humans, contention exists only ever *within* one Assignment.
+_Avoid_: owner, claim, allocation
+
+**Claim**:
+The assertion that an instance is building a ticket now, made before any work begins by creating the ticket-named branch. Scoped inside one Assignment, so it coordinates one human's instances and nothing wider. The branch *is* the Claim: git refuses to check one branch out in two worktrees, so exclusion is enforced rather than agreed, and reading the current branch is how an instance that lost its context knows what it was building. On a repository using stacked changes the unit is the whole stack rather than one branch, because restacking rewrites every descendant — see `tools/graphite.md` for the model. Never written to the tracker, which carries human-level facts only.
+_Avoid_: lock, lease, assignment, reservation
 
 **Grill**:
 The interrogation of a proposal before it is built. Where most durable understanding is produced, which is why `/design` captures vocabulary and Decisions as they resolve rather than afterwards.

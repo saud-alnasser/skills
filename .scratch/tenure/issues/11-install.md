@@ -1,7 +1,7 @@
 # chore(release): install Tenure and remove the mattpocock skills
 
 Status: ready-for-human
-Blocked by: 10
+Blocked by: 20
 
 ## Problem
 
@@ -39,3 +39,25 @@ This is outside any repository, so `/configure` cannot do it — it is a manual 
 - `~/.claude/skills/` contains Tenure and nothing it replaces.
 - Built-in `/review` still resolves to the GitHub PR reviewer.
 - A new session lists the Tenure skills and none of the removed ones.
+
+## Comments
+
+**The install method above is superseded by ADR 0015.** Tenure ships as a
+plugin installed at `local` scope, not as a copy into `~/.claude/skills/` —
+that location is personal scope, which means *every* project, and the
+requirement is personal *and* per-project. So "copy `./skills/*`", the
+copy-not-symlink note, and the first acceptance criterion no longer describe
+the work. Ticket 20 builds the distribution form; this ticket now depends on
+it, and its remit narrows to the parts that survive.
+
+**What survives unchanged:** removing the mattpocock skills, deciding what
+happens to `teach` and `find-skills`, trimming the global `CLAUDE.md` to cede
+the engineering rules, backing up first, and counting the context load. That
+last one still bites under a plugin — a model-invoked skill's `description`
+is paid on every turn whether it arrives by plugin or by directory, and it has
+still never been measured.
+
+**One criterion got easier rather than moot.** Built-in `/review` was the
+collision decision 13 avoided by naming the skill `code-review`; under a
+namespace `/tenure:review` cannot shadow it, so the criterion holds by
+construction instead of by naming discipline.

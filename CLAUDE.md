@@ -21,7 +21,9 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 
 **Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure over the mattpocock skills, then running `/configure` here for real. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+**Tickets 16–20 are `ready-for-agent`** — the multi-instance and distribution work decided by ADRs 0012–0016: Position and the shared/local line (16), Assignment and the Claim (17), the shared tracker's contract (18), stacked changes (19), and shipping as a plugin (20). Twenty goes last: the renames it carries touch every file the other four edit. They reopen shipped work — `TICKETS.md`, `/implement`'s frontier, `CLAUDE.template.md`, and `tools/github.md` all move, and `verify.ps1`'s assertions move with them.
+
+Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure over the mattpocock skills, then running `/configure` here for real. Ticket 11's install method is superseded by ADR 0015 and now depends on 20. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 
@@ -38,9 +40,9 @@ Extend it in the same pass as any change to `./skills` — it is the only thing 
 
 ### Sources of truth, in order
 
-1. `.scratch/tenure/spec.md` — the authoritative spec: 38 numbered decisions, the alteration checklist, the build order, the target layout.
+1. `.scratch/tenure/spec.md` — the authoritative spec: 43 numbered decisions, the alteration checklist, the build order, the target layout.
 2. `.scratch/tenure/issues/NN-*.md` — the tickets. `Status:` is `ready-for-agent` / `claimed` / `blocked` / `resolved` / `obsolete`; a `## Comments` section records deviations from the ticket.
-3. `docs/adr/` — 11 ADRs. These bind: read the ones covering the area before changing it.
+3. `docs/adr/` — 16 ADRs. These bind: read the ones covering the area before changing it.
 4. `CONTEXT.md` — the glossary. Use these terms exactly, and avoid each entry's `_Avoid_` list.
 
 `workflow.md` is the **superseded** original specification, kept only until the framework it describes is fully built (decision 38). `.scratch/tenure/spec.md` supersedes it. Do not design from `workflow.md`.

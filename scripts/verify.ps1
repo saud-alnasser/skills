@@ -373,6 +373,13 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
 # fires when that skill runs. /configure (ticket 08) installs this template.
 $claudeTemplate = 'configure/CLAUDE.template.md'
 
+# Ticket 16 split the always-on file. `CLAUDE.md` is committed and read by every
+# Claude that opens the repository, so it keeps only rules that hold with or
+# without the plugin; the machinery serving them — the Marker, the drift reads,
+# the verification report — moved here, where only Tenure's skills look.
+# Assertions follow the rule they are about, so the Marker ones below read this.
+$tenureTemplate = 'configure/tenure.template.md'
+
 # A rule's *pattern* gets one home too, for the reason the rule does. Ticket 02
 # asserts each rule is stated once; ticket 13 asserts where, and which skills
 # reach it by pointer. Those are three uses of the same regex, and a second copy
@@ -423,7 +430,7 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   }
 
   Assert "the Marker rule states the trusted path — matching HEAD plus a clean tree costs no reading" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     if (-not $c) { throw 'template is missing' }
     ($c -match 'marker\.json') -and
     ($c -match '(?i)clean') -and
@@ -431,12 +438,12 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   }
 
   Assert "the clean path costs one git check and no reading" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     $c -match '(?i)(no reading|without reading|read nothing)'
   }
 
   Assert "both drift sources are named, with the command that reads each" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     $missing = @()
     if ($c -notmatch 'git diff --name-only') { $missing += 'committed drift' }
     if ($c -notmatch 'git status --porcelain') { $missing += 'uncommitted drift' }
@@ -445,7 +452,7 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   }
 
   Assert "the non-ancestor case is covered — a moved HEAD makes the diff meaningless" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     ($c -match '(?i)ancestor') -and ($c -match '(?i)rebase|branch switch|switched branch')
   }
 
@@ -466,12 +473,12 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   }
 
   Assert "only /commit advances the Marker" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     ($c -match '/commit') -and ($c -match '(?i)nothing else (moves|advances)|only `?/commit`?')
   }
 
   Assert "the Marker is machine-local — a teammate's verification is not Claude's" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $tenureTemplate
     $c -match '(?i)gitignored|machine-local|per-clone|not committed'
   }
 
@@ -2063,7 +2070,7 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
     $c -match '(?i)(skip[^\r\n]{0,80}greenfield|greenfield[^\r\n]{0,40}skip)'
   }
 
-  foreach ($t in @('CLAUDE.template.md', 'tracker.template.md')) {
+  foreach ($t in @('CLAUDE.template.md', 'tenure.template.md', 'tracker.template.md')) {
     Assert "$t is reached from the skill that installs it" {
       if (-not (Test-Path (Join-Path $skills "configure/$t"))) { throw "configure/$t is missing" }
       (Get-SkillFile $cfg) -match [regex]::Escape($t)
@@ -2359,6 +2366,8 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   # ADR 0006: `.claude/.gitignore` is what makes "one directory" literal, so
   # both entries and the hands-off rule for the repo's own ignore file are the
   # criterion — writing to the root ignore file is the failure it prevents.
+  # Ticket 16 kept the entries and added the category above them; both are
+  # asserted, because a category with nothing under it ignores nothing.
   Assert ".claude/.gitignore covers marker.json and prototypes/, and the root ignore file is left alone" {
     $c = Get-SkillFile $cfg
     if ($c -notmatch '\.claude/\.gitignore') { throw 'the workflow leaks into the repo root' }
@@ -3097,6 +3106,129 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
   }
 }
 
+# --- ticket 16 — Position, and the line between shared and local -------------
+
+Describe-Ticket '16' 'position, and the line between shared and local' {
+
+  # Criterion 1, and criterion 4 with it. Both reduce to the same mechanical
+  # question: does the committed always-on file name anything the ignore file
+  # matches? A rule about `marker.json` in `CLAUDE.md` is an instruction a
+  # Claude without the plugin cannot follow and cannot know to skip.
+  #
+  # Read off the ignore block rather than hardcoded, so an entry added there
+  # later is checked here without anyone remembering to.
+  Assert "the always-on file names no per-clone file — nothing committed reads Position" {
+    $ignore = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
+    if (-not $ignore.Success) { throw 'no ignore block to read the category from' }
+    $entries = $ignore.Groups[1].Value -split '\r?\n' |
+      Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' } |
+      ForEach-Object { $_.Trim() }
+    if (-not $entries) { throw 'the category has no members' }
+    $c = Get-SkillFile $claudeTemplate
+    $found = $entries | Where-Object { $c -match [regex]::Escape($_) }
+    if ($found) { throw "always-on instruction about Position: $($found -join ', ')" }
+    $true
+  }
+
+  # Criterion 5's readable half: a reader of either file can see which one they
+  # are in and why the other exists. Two-sided, because a pointer out of
+  # `CLAUDE.md` with nothing acknowledging the split at the far end leaves the
+  # protocol file looking like a stray duplicate of the rules.
+  Assert "each half names the other and says why the split exists" {
+    $claude = Get-SkillFile $claudeTemplate
+    $tenure = Get-SkillFile $tenureTemplate
+    if ($claude -notmatch '\.claude/tenure\.md') { throw 'CLAUDE.md never points at the protocol' }
+    if ($claude -notmatch '(?i)with or without|plugin or not|either way') {
+      throw 'CLAUDE.md never says why it is the half that holds universally'
+    }
+    if ($tenure -notmatch 'CLAUDE\.md') { throw 'the protocol never names the file it split from' }
+    if ($tenure -notmatch '(?i)only[^\r\n]{0,60}Tenure.{0,20}skills read|only Tenure.{0,20}skills') {
+      throw 'the protocol never says who reads it'
+    }
+    $true
+  }
+
+  # Criterion 3, and ADR 0007's consequence held visibly. A rule inside the
+  # moved file fires only when a Tenure skill runs — correct for machinery,
+  # a silent failure for anything unconditional. `$rulePattern` is the set
+  # ticket 13 placed in `CLAUDE.md` precisely because it must always hold.
+  Assert "no rule that must hold on every turn moved into the protocol file" {
+    $c = Get-SkillFile $tenureTemplate
+    $leaked = $rulePattern.Keys | Where-Object { $c -match $rulePattern[$_] }
+    $alwaysOn = @{
+      'Claude never silently decides architecture' = '(?i)never silently decid'
+      'the instruction precedence chain'           = '(?im)^##[^\r\n]*precedence'
+      'the cold-request path'                      = '(?i)state the classification'
+    }
+    $leaked += $alwaysOn.Keys | Where-Object { $c -match $alwaysOn[$_] }
+    if ($leaked) { throw "unconditional rule in a file only skills read: $($leaked -join ', ')" }
+    $true
+  }
+
+  # The Marker had to survive the move as machinery, not vanish with it. It is
+  # only safe out of the always-on file because it never *adds* an obligation:
+  # with no marker at all, CLAUDE.md's verification rule applies unchanged.
+  Assert "the Marker is stated as a shortcut whose absence costs nothing but the shortcut" {
+    $c = Get-SkillFile $tenureTemplate
+    if ($c -notmatch '(?i)cache-validity') { throw 'the Marker is not framed as a cache' }
+    # Bounded to one line rather than one sentence: the clause names
+    # `CLAUDE.md`, and `[^.]` stops dead on the dot in the filename.
+    $c -match '(?i)(no marker|without[^\r\n]{0,30}marker)[^\r\n]{0,160}(unchanged|still applies)'
+  }
+
+  # Criterion 2. The category has to carry a test, or `/configure` is back to
+  # being told about each new file one at a time — which is the failure ADR
+  # 0012 names: a list is what it forgets.
+  Assert "the ignore file states the category with a test a reader can apply, not a list" {
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n.*?^```')
+    if (-not $block.Success) { throw 'the ignore file is described but never written out' }
+    $b = $block.Value
+    if ($b -notmatch '(?i)Position') { throw 'the category is unnamed' }
+    if ($b -notmatch '(?i)wrong in another clone') { throw 'no membership test a reader can apply' }
+    if ($b -notmatch '(?i)knowledge is committed|committed and reviewed') { throw 'the other side of the test is missing' }
+    $true
+  }
+
+  # The invariant is what keeps Position from becoming a fourth knowledge
+  # layer, and it belongs with the concept rather than in the ignore file,
+  # which carries the membership test. Stated as a deletion, because that is
+  # the form that can actually be checked against a repository.
+  Assert "the Position invariant is stated — nothing shared may depend on it" {
+    $c = Get-SkillFile $tenureTemplate
+    if ($c -notmatch '(?i)nothing shared may depend on it') { throw 'the invariant is never stated' }
+    $c -match '(?i)delete[^\r\n]{0,120}(no other person|no other clone)'
+  }
+
+  # Criterion 5. Both files or neither: `/configure` writing only the always-on
+  # half leaves every pointer in it dangling, and writing only the protocol
+  # leaves nothing loading it.
+  Assert "/configure writes both halves, and says they go together" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch 'tenure\.template\.md') { throw 'the protocol template is never installed' }
+    if ($c -notmatch '\.claude/tenure\.md') { throw 'the destination is never named' }
+    $c -match '(?i)both or neither|write both'
+  }
+
+  # The pointers that moved with the rules. Cutting a rule out of `CLAUDE.md`
+  # without repointing the skills that reached it there is how a rule stops
+  # firing at all — and every one of these files still names `CLAUDE.md` for
+  # unrelated rules, so a file-wide search proves nothing.
+  $moved = @(
+    @{ f = 'design/SKILL.md';      what = 'the drift reads' }
+    @{ f = 'implement/SKILL.md';   what = 'the drift reads' }
+    @{ f = 'code-review/SKILL.md'; what = 'the verification report' }
+    @{ f = 'commit/SKILL.md';      what = 'the verification report' }
+    @{ f = 'configure/SKILL.md';   what = 'the verification report' }
+  )
+  foreach ($m in $moved) {
+    Assert "$($m.f) reaches $($m.what) at its new home" {
+      $c = Get-SkillFile $m.f
+      if ($c -notmatch '\.claude/tenure\.md') { throw 'still pointed at the always-on file, or nowhere' }
+      $true
+    }
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3104,7 +3236,7 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

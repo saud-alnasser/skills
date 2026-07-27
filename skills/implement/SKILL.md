@@ -13,7 +13,7 @@ One ticket, built and closed out. `/design` always leaves at least one ticket on
 
 Open with the verification report. Not conditional on tier, on size, or on the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit.
 
-The rule and both drift reads live in `CLAUDE.md`; `tools/git.md` has the invocations.
+The rule and both drift reads live in `.claude/tenure.md`; `tools/git.md` has the invocations.
 
 ```
 Verification

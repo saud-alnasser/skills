@@ -4,6 +4,11 @@
   Installed by /configure. This is the repository's sole always-on entrypoint:
   every turn pays for it, including turns where no skill runs.
 
+  It is committed, so *every* Claude that opens this repository loads it —
+  including one with no Tenure installed. It therefore carries only what holds
+  either way. Tenure's own protocol lives in `.claude/tenure.md`, which only
+  Tenure's skills read.
+
   What belongs here is only what must hold *unconditionally*. A rule that
   applies to one stage belongs in the skill that enforces that stage — a rule
   written into a skill fires only when that skill runs, which is exactly right
@@ -42,36 +47,9 @@ The order is a **truth hierarchy, and it is absolute**. Where they disagree, the
 
 Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of `context.md` says which and when. Loading them all defeats the point.
 
-## Trusting Context — the Marker
+## If you are running Tenure
 
-`.claude/marker.json` holds the commit Context was last verified against. It is machine-local and gitignored: a teammate's verification is not Claude's.
-
-```
-marker.json commit == HEAD  AND  working tree clean
-  → Context is trusted as-is. No verification, no reading.
-
-otherwise
-  → verify the statements you are about to rely on, and only those
-```
-
-The clean path is one `git` check and no reading. That is the whole point of the Marker — it is a cache-validity check, not a task.
-
-Only `/commit` advances the Marker, to the new `HEAD` after committing. Nothing else moves it.
-
-### When the Marker does not match
-
-Drift has two sources, and a check that reads only one will miss the other:
-
-```
-git diff --name-only <marker>..HEAD -- . ":(exclude).claude/"   # what commits changed
-git status --porcelain --untracked-files=all                    # what the human changed, uncommitted
-```
-
-Discount files Claude wrote this session — those are not drift, they are this session's own work.
-
-If the Marker is not an ancestor of `HEAD` — a branch switch, a rebase, a reset — the diff between them is meaningless. Do not try to salvage one: treat everything the request touches as unverified.
-
-See `tools/git.md` for the exact invocations and for how `--porcelain` output is parsed.
+`.claude/tenure.md` carries Tenure's protocol — how a verification may be skipped, how drift is read, and the report every skill opens with. It is **not** loaded from here, and nothing in this file depends on it. It names machinery that exists only where the plugin is installed, and this file is read by every Claude that opens the repository. Tenure's skills reach it by pointer; without them, everything here still holds on its own.
 
 ## Verify before claiming
 
@@ -91,11 +69,7 @@ Instead: at the moment a Context statement is about to be relied on, check it ag
 
 Fix what you find, where you find it. A stale pointer is repaired in the same breath as discovering it is stale; a boundary that moved is corrected then and there. No queue, no deferred pass, no note to come back.
 
-## Strict, and reported
-
-This discipline is **not best-effort**. The safety net — a periodic reconciliation stage — does not exist, so nothing catches a lapse except the reporting.
-
-Every skill that relies on Context opens with a one-line verification report. **Including when there was nothing to verify.** "Marker matches HEAD, tree clean — Context trusted" is a statement; silence is indistinguishable from the check never having run.
+This discipline is **not best-effort**. There is no periodic reconciliation stage to catch a lapse, so nothing catches one except doing it.
 
 ## Requests that would change code
 
@@ -103,9 +77,8 @@ A question gets an answer: load what you need to answer it, and stop.
 
 A request that would **change code** takes the cold path, on every turn, whether or not a workflow command was invoked:
 
-1. Marker check.
-2. Route, load, verify — as above.
-3. **State the classification** before touching anything: what kind of change this is, and the tier it implies. One line.
+1. Route, load, verify — as above.
+2. **State the classification** before touching anything: what kind of change this is, and how much process it warrants. One line.
 
 The point of stating it is that the user can disagree. A classification held silently is a decision made silently.
 

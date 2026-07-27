@@ -12,7 +12,7 @@ Everything between a request and a plan `/implement` can work. Discovery, the gr
 
 ## 1 — Discover
 
-**Check the Marker first.** One `git` call, before anything is read. The rule and both drift reads are in `CLAUDE.md`; `tools/git.md` has the invocations.
+**Check the Marker first.** One `git` call, before anything is read. The rule and both drift reads are in `.claude/tenure.md`; `tools/git.md` has the invocations.
 
 Then, in this order:
 

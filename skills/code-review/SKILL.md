@@ -16,7 +16,7 @@ They are separate because a change can pass either one while failing the other. 
 
 ## 0 — Verification
 
-This review reads Context for boundaries and Decisions for ADRs, so it opens with the one-line verification report `CLAUDE.md` requires:
+This review reads Context for boundaries and Decisions for ADRs, so it opens with the one-line verification report `.claude/tenure.md` requires:
 
 ```
 Verification
@@ -24,7 +24,7 @@ Verification
   → contexts loaded: database, api
 ```
 
-Nothing to report is still reported. The rule and both drift reads are in `CLAUDE.md`.
+Nothing to report is still reported. The rule and both drift reads are in `.claude/tenure.md`.
 
 ## 1 — Pin the fixed point
 

@@ -26,13 +26,13 @@ Resolved by grill; each ADR in `docs/adr/` carries the reasoning.
 | 8 | Tier is chosen **after** the Grill, as `max(Floor, Gates)` — classification only ever raises rigor | — |
 | 9 | **There is no `/sync`.** Context is verified where it is used and healed where the break is found; the Marker is a cache-validity check | 0010 |
 | 10 | Knowledge is owned **by type**: `/design` writes vocabulary + ADRs, `/implement` writes concepts + pointers, `/configure`'s re-run prunes | 0005, 0010 |
-| 11 | The Marker lives machine-local in `.claude/marker.json` — a commit cannot contain its own SHA | 0005 |
+| 11 | The Marker lives machine-local in `.claude/marker.json` — a commit cannot contain its own SHA. An instance of **Position** (39) | 0005, 0012 |
 | 12 | `.claude/` holds everything; root `CLAUDE.md` is the sole entrypoint, under 200 lines | 0006 |
-| 13 | Review ships as `/code-review`, preserving the built-in `/review` for GitHub PRs | — |
+| 13 | **Superseded by 42.** Review shipped as `/code-review` to preserve the built-in `/review`; a plugin namespace removes the collision | 0015 |
 | 14 | Tenure owns the engineering rules; the global `CLAUDE.md` is trimmed to cede them. Each rule lives where it fires — always-on rules in `CLAUDE.md`, stage rules inside the skill that enforces them, repo-discovered standards in `.claude/rules/` | 0007 |
 | 15 | Instruction precedence puts `CONTRIBUTING.md` above `README.md` | 0007 |
 | 16 | Tenure's conventions are **defaults**; a repository's documented conventions win. Detect before asserting | 0008 |
-| 17 | The tracker tracks work only. Tickets need an observable outcome; structure comes from `part of` / `blocks`, not ticket count. Labels are reused before any is created | — |
+| 17 | The tracker tracks work only. Tickets need an observable outcome; structure comes from `part of` / `blocks`, not ticket count. Labels are reused before any is created | 0014 |
 | 18 | Prototype code is always deleted; the write-up is the artifact. Research and prototype findings are **Evidence** — nothing validates them afterwards, and durable findings graduate to context or an ADR | 0009 |
 | 19 | ADRs use matt's strict 3-of-3 test and light format. Draft until committed, then reasoning frozen and only `status` moves | — |
 | 20 | `/design` plans and never builds. `/implement` claims a **single** unblocked ticket, builds, reviews, applies fixes, then **asks** before committing and resolving. A *not yet* keeps the ticket claimed and the loop open | — |
@@ -54,6 +54,11 @@ Resolved by grill; each ADR in `docs/adr/` carries the reasoning.
 | 23 | **A document's reasoning is frozen; only its status moves.** Applies to ADRs (`superseded by NNNN`) and specs (`implemented`, `superseded by <path>`, `abandoned`). No status means current. `/commit` marks a spec implemented; `/configure`'s audit catches the ones it never saw | — |
 | 24 | Released under Apache 2.0, Copyright 2026 Saud Alnasser. Upstream is MIT, so relicensing is permitted with matt's notice preserved in `NOTICE` | 0001 |
 | 25 | **`/design` is the whole planning surface** — it absorbs `to-spec`, `to-tickets`, and `wayfinder`. Deliverable formats are progressively disclosed, which also hides them from the grill | 0011 |
+| 39 | Knowledge is shared and committed; **Position** is per-clone and never committed — `.claude/.gitignore` is its definition. Root `CLAUDE.md` splits: universal rules stay, Tenure's own machinery moves behind a file only its skills read | 0012 |
+| 40 | **Assignment** — which human owns delivery — is human-level and lives on the tracker. The **Claim** — which instance is building now — *is the branch*, enforced by git refusing one branch in two worktrees. Contention exists only within one Assignment, and a claim another instance holds is never taken | 0013 |
+| 41 | Creating an issue is **publishing**. One `/design` run creates one root issue with sub-issues beneath it; the frontier is build tickets only; the **merge** resolves the ticket, not Tenure | 0014 |
+| 42 | Tenure ships as a **plugin** installed at `local` scope — personal, per-project, gitignored. Typed skills take one-word names; model-invoked skills stay expressive, because the name is how they are selected. **Supersedes 13** | 0015 |
+| 43 | On a repository using stacked changes, `Blocked by` means *stacked on*, and a ticket joins the frontier once its blockers are **committed** rather than merged. The Claim's unit becomes the stack | 0016 |
 
 ## Scope
 
