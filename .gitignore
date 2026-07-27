@@ -26,7 +26,5 @@ Desktop.ini
 .idea/
 *.swp
 
-# Issue tracker
-# .scratch/ holds this repo's issues (see docs/agents/issue-tracker.md) and is
-# intentionally tracked. Uncomment to keep issues local instead.
-# .scratch/
+# Tickets live at .claude/tickets/ and are tracked. Position — the per-clone
+# state that must never be committed — is defined by .claude/.gitignore.

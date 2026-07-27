@@ -1,139 +1,110 @@
-# CLAUDE.md
+# Tenure
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+<!--
+  Installed by Tenure's configure stage. This is the repository's sole
+  always-on entrypoint: every turn pays for it, including turns where no skill
+  runs.
 
-## Repository status
+  It is committed, so *every* Claude that opens this repository loads it —
+  including one with no Tenure installed. It therefore carries only what holds
+  either way. Tenure's own protocol lives in `.claude/tenure.md`, which only
+  Tenure's skills read.
 
-Phase 1 of the build is done. Shipped under `./skills/`:
+  What belongs here is only what must hold *unconditionally*. A rule that
+  applies to one stage belongs in the skill that enforces that stage — a rule
+  written into a skill fires only when that skill runs, which is exactly right
+  for stage rules and silently wrong for these. A standard discovered in this
+  repository belongs in `.claude/rules/`.
 
-- the four vendored primitives — `grilling`, `tdd`, `codebase-design`, `domain-modeling` (ticket 01)
-- `tools/` — the tool reference: `git.md`, `github.md`, `gitlab.md`, `graphite.md` (ticket 15)
-- `configure/CLAUDE.template.md` — the always-on verification and healing rules (ticket 02)
-- `design/` — `/design`, with `SPEC-FORMAT.md`, `TICKETS.md`, `MAP.md` behind pointers (ticket 03)
-- `implement/` — `/implement`, the build stage (ticket 04)
-- `review/` — `/review`, two axes plus the smell baseline behind a pointer (ticket 05)
-- `commit/` — `/commit`, the transaction boundary and the Marker's only writer (ticket 06)
-- `research/` and `prototype/` — the two evidence commands, with `LOGIC.md` and `UI.md` behind pointers (ticket 07)
-- the on-ramps — `triage/`, `diagnosing-bugs/`, `handoff/`, `resolving-merge-conflicts/`, `survey/` — plus `configure/tracker.template.md`, the one home for tracker config (ticket 09)
-- the nineteen engineering rules, each placed where it fires (ticket 13) — the always-on set in `configure/CLAUDE.template.md`, the conditional ones in `codebase-design`, `tdd`, `design/`, and `implement/`
-- `configure/` — `/configure`, the way a repository joins Tenure, with `MIGRATION.md` behind a pointer (ticket 08)
-- `help/` — `/help`, the router over the whole set, replacing `ask-matt` (ticket 10)
+  Keep it under 200 lines. Everything else is reached by pointer.
+-->
 
-**Tickets 16–20 are resolved** — the multi-instance and distribution work decided by ADRs 0012–0016:
+This repository builds **Tenure**, a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time rather than a stateless execution pipeline. It is also configured by Tenure — `skills/` is what ships, `.claude/` is what this repository runs on, and `.claude/context.md` holds the boundary between them.
 
-- **16** — Position named as a category. `CLAUDE.template.md` split: the always-on file keeps only rules that hold with or without the plugin, and Tenure's protocol moved to `configure/tenure.template.md`, installed at `.claude/tenure.md`.
-- **17** — the Claim is the ticket's branch, created before any work. `claimed` left the ticket lifecycle entirely; Assignment stays on the tracker and is never written unasked.
-- **18** — creating an issue is publishing and is gated; one root issue per `/design` run; the frontier is build tickets only; the merge resolves a shared ticket.
-- **19** — on a stacking repository `Blocked by` means *stacked on*, and a ticket is buildable once its blockers are committed. The Claim's unit widens to the stack.
-- **20** — Tenure ships as a plugin from `.claude-plugin/`, installed at `local` scope. Three skills were renamed to suit the namespace — `help`, `review`, `survey`; ADR 0015 has the table and the reason for each.
+## Precedence
 
-**Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
+When instructions conflict, the later source loses:
 
-Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure and removing the mattpocock skills it replaces, then running `/configure` here for real. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tenure.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/review` → `/commit` chain exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+1. What the user said in this conversation
+2. This file
+3. `.claude/context.md` and the Domain Contexts
+4. `.claude/docs/decisions/` — an accepted ADR
+5. `.claude/rules/` and `CONTRIBUTING.md`
+6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is
 
-**There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
+A user instruction overrides everything here. Say so when it does, and follow it.
 
-```
-pwsh -NoProfile -File scripts/verify.ps1            # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket 09 # one, two digits
-```
+`.claude/rules/` holds standards discovered in **this repository** — they belong to it, not to Tenure. A rule that applies to only part of the tree is **path-scoped** to that part; check the scope before applying one.
 
-Extend it in the same pass as any change to `./skills` — it is the only thing that catches a broken build here.
+For what is being *built* here, `.claude/tickets/tenure/spec.md` is authoritative — 43 numbered decisions, the build order, and the target layout — and the tickets beside it record what was actually done. Where the spec and an ADR disagree, the ADR is later and wins.
 
-## What this project is
+## Knowledge layers
 
-**Tenure** — a Claude Code skill framework derived from https://github.com/mattpocock/skills/tree/main/skills/engineering, adding a persistent repository-knowledge layer. The eventual intent is to replace the user's installed mattpocock skills with it and migrate existing projects onto it (tickets 11 and 12).
-
-### Sources of truth, in order
-
-1. `.scratch/tenure/spec.md` — the authoritative spec: 43 numbered decisions, the alteration checklist, the build order, the target layout.
-2. `.scratch/tenure/issues/NN-*.md` — the tickets. `Status:` is `ready-for-agent` / `blocked` / `resolved` / `obsolete`; a `## Comments` section records deviations from the ticket.
-3. `docs/adr/` — 16 ADRs. These bind: read the ones covering the area before changing it.
-4. `CONTEXT.md` — the glossary. Use these terms exactly, and avoid each entry's `_Avoid_` list.
-
-`workflow.md` is the **superseded** original specification, kept only until the framework it describes is fully built (decision 38). `.scratch/tenure/spec.md` supersedes it. Do not design from `workflow.md`.
-
-## Architecture the spec defines
-
-**Three knowledge layers, never duplicating each other:**
-
-| Layer | Answers | Lives in |
+| Knowledge layer | Answers | Lives in |
 | --- | --- | --- |
-| Codebase | What currently exists | source |
-| Context | How this repository thinks | `.claude/context.md`, `.claude/contexts/*.md` |
-| Decisions | Why this approach was selected | `.claude/docs/decisions/*` |
+| Codebase | what currently exists | source |
+| Context | how this repository thinks | `.claude/context.md`, `.claude/contexts/**` |
+| Decisions | why this approach was selected | `.claude/docs/decisions/` |
 
-**Truth hierarchy is absolute:** Codebase → Context → Decisions. Conflicts are always resolved by changing documentation to match reality, never the reverse.
+The order is a **truth hierarchy, and it is absolute**. Where they disagree, the Codebase is right. Resolve every conflict by changing the documentation to match reality — never the reverse, and never by explaining the code away.
 
-**Source pointers** (`Sources: src/auth/`) are navigation coordinates only. They say "start investigating here" — never what APIs, functions, or behavior exist. Every pointer must be verified against the repository before use, and broken pointers are recovered by searching, never by inventing a replacement path.
+Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of `context.md` says which and when. Loading them all defeats the point.
 
-**Context loading is demand-driven.** Load `context.md` at startup; load domain contexts (`contexts/database.md`, etc.) only when the request touches that domain.
+## If you are running Tenure
 
-**The Spine — seven commands**, each owning one stage: `/configure`, `/design`, `/implement`, `/review`, `/research`, `/prototype`, `/commit`. There is no `/sync` (ADR 0010). Review ships as `/review`: decision 13 named it otherwise to avoid shadowing the built-in reviewer, and ADR 0015 supersedes that, because a namespaced command shadows nothing.
+`.claude/tenure.md` carries Tenure's protocol — how a verification may be skipped, how drift is read, and the report every skill opens with. It is **not** loaded from here, and nothing in this file depends on it. It names machinery that exists only where the plugin is installed, and this file is read by every Claude that opens the repository. Tenure's skills reach it by pointer; without them, everything here still holds on its own.
 
-**Primitives** are the model-invoked skills the Spine composes and that own no stage: `grilling`, `tdd`, `codebase-design`, `domain-modeling`, `tools`.
+## Verify before claiming
 
-**Three adaptive tiers** scale process with risk:
-- Express — bug fixes, config, isolated refactors: Discovery → Grill → Implement → Commit (no spec; review folds into commit)
-- Standard (default) — features, API additions, schema evolution: adds Specification and `/review`
-- Heavyweight — architecture, migrations, security- or performance-critical: adds `/research` or `/prototype` before the spec
+**Inspect source before any repository-specific claim** — before implementing, designing, reviewing, or answering a question about this repository. Not sometimes: a claim about what is here is either checked or it is a guess wearing the same words.
 
-The user can override tier selection at any time; Claude may recommend but never decides architecture silently.
+**Names are not proof.** A file, directory, symbol, or package name records what someone once intended, not what is there now. Neither is memory, and neither is a plausible-sounding API.
 
-**Frontmatter is load-bearing only** (ADR 0002). `tags` are gone — the routing table in `context.md` replaced them, because a tag has to be read to be useful and a routing table is read once. Keep only what something acts on.
+## Verification at use
 
-**Target layout** produced by `/configure` (ADR 0006):
+**Never a scan. Never a phase.** There is no synchronization stage to run and nothing to reconcile up front — a startup scan would be Claude rediscovering what it already knows, and paying for it on every session.
 
-```
-CLAUDE.md            the sole always-on entrypoint, at the root, under 200 lines
-.claude/
-├── context.md       ends with the routing table
-├── contexts/        Domain Contexts; directories group a Project Context
-├── tools/           this repo's own tooling, discovered by /configure
-├── rules/           standards discovered in this repo
-├── docs/            designs, research, prototypes, decisions
-├── prototypes/      disposable experiment code
-├── tickets/
-├── skills/
-├── tenure.md        Tenure's own protocol, read only by Tenure's skills
-├── marker.json      Position: machine-local, gitignored
-└── .gitignore       Position's definition, not a list of exceptions
-```
+Instead: at the moment a Context statement is about to be relied on, check it against the Codebase. Scope is whatever the work touches. Drift somewhere else is not this request's problem, and chasing it is how a check becomes a phase.
 
-Note `docs/prototypes/` (prototype write-ups) is distinct from `prototypes/` (throwaway experiment code).
+**Source Pointers are verified before use, always.** A pointer says *start investigating here* — never what APIs, functions, or behavior exist there. When a pointer is broken, recover it by searching the repository for where the concept moved. **Never invent a replacement path.** A pointer that cannot be recovered is reported as broken, not guessed at.
 
-**This repo is deliberately not in that state yet** (ADR 0006), so `/configure` has a genuine migration to perform when ticket 12 runs.
+## Healing in place
 
-**Distribution** (ADR 0015). Tenure ships as a Claude Code plugin published from this repository's own `.claude-plugin/marketplace.json`, and installs at `local` scope — recorded in a project's gitignored `.claude/settings.local.json`, which makes enabling Tenure an instance of Position. Commands are namespaced `/tenure:<name>`; the short forms are used throughout the skills for readability. `README.md` has the install steps.
+Fix what you find, where you find it. A stale pointer is repaired in the same breath as discovering it is stale; a boundary that moved is corrected then and there. No queue, no deferred pass, no note to come back.
 
-## Conventions the spec mandates
+This discipline is **not best-effort**. There is no periodic reconciliation stage to catch a lapse, so nothing catches one except doing it.
 
-- Conventional Commits (`type(scope): summary`) for commits, PR titles, and issue titles. Scope names the engineering domain; avoid `misc`/`stuff`/`update`.
-- Context stores concepts, vocabulary, principles, constraints, relationships — never code, APIs, or implementation walkthroughs. Compression test before writing anything: "will this improve future engineering decisions?"
-- CI must never modify repository knowledge (`context.md`, `contexts/*`, `docs/decisions/*`, `docs/research/*`, `docs/designs/*`). Those change only through the workflow's own commands.
-- **The Marker**, not a field in `context.md`, records what Context was last verified against: `.claude/marker.json`, machine-local and gitignored, because a commit cannot contain its own SHA (ADR 0005). Only `/commit` advances it.
-- **There is no synchronization stage** (ADR 0010). Context is verified at the moment it is relied on and healed where the break is found. The full discipline is in `skills/configure/CLAUDE.template.md` — that file is the one home for these rules, and restating them elsewhere is the failure this framework exists to prevent.
+## Requests that would change code
 
-## Writing skills here
+A question gets an answer: load what you need to answer it, and stop.
 
-The authoring standard is `writing-great-skills` (in the user's skill set, not this repo): model-invoked vs user-invoked, context load vs cognitive load, the information hierarchy, progressive disclosure, and the named failure modes — premature completion, duplication, sediment, sprawl, no-op, negation.
+A request that would **change code** takes the cold path, on every turn, whether or not a workflow command was invoked:
 
-Three rules bite hardest in this repo:
+1. Route, load, verify — as above.
+2. **State the classification** before touching anything: what kind of change this is, and how much process it warrants. One line.
 
-- **A rule has exactly one home.** ADR 0007 places it: root `CLAUDE.md` for what must hold on every turn, the enforcing skill for a stage rule, `.claude/rules/` for a standard discovered in the repo. A rule that must hold unconditionally *has* to be in `CLAUDE.md` — putting it in a skill means it fires only when that skill runs, which is a silent failure. `scripts/verify.ps1` asserts single-home through the `$rulePattern` table; add an entry there when you place a rule. Every restatement found so far was caught by an assertion, and two were missed first time because the assertion matched a phrase that travelled *with* the rule rather than the rule — check that a new guard would actually fire.
-- **Vendored skills keep their attribution.** Every skill derived from mattpocock/skills says so (ADR 0001).
-- **Short names are for the keyboard; descriptive names are for the model** (ADR 0015). A skill the user types wants one word, because `/tenure:` is already in front of it. A skill only Claude invokes keeps an expressive name — the name is part of how it gets selected, and shortening it trades accuracy for brevity nobody ever types. The rule bans shortening *for brevity*, not every short name — `review` is model-invoked and one word because the namespace removed the collision its old prefix existed to avoid, and it still says when to use it. `scripts/verify.ps1` asserts the split against each skill's `disable-model-invocation`.
+The point of stating it is that the user can disagree. A classification held silently is a decision made silently.
 
-## Agent skills
+**Claude never silently decides architecture.** Where more than one reasonable approach exists, put the options on the table — each named, with what it buys, what it costs, and what it risks — recommend one, and let the user choose. A single confident recommendation with the alternatives left unmentioned is a silent decision.
 
-### Issue tracker
+## Writing knowledge
 
-Issues live as markdown files under `.scratch/<feature-slug>/` in this repo. See `docs/agents/issue-tracker.md`.
+CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/**`, and `.claude/docs/decisions/**` change through the workflow's own commands and nothing else.
 
-### Triage labels
+**The compression test, before anything is written into knowledge:** *will this improve a future engineering decision?* If not, don't write it. This applies on every turn, including the ones where a concept moves and no command was typed — capture is not a licence to accumulate.
 
-The five canonical triage roles, using their default label strings. See `docs/agents/triage-labels.md`.
+What belongs in Context and what never does is the `domain-modeling` skill's business — it is the skill that writes it.
 
-### Domain docs
+## Conventions
 
-Single-context — one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+**Tenure's conventions are defaults for when the repository is silent** (`.claude/docs/decisions/0008-repo-conventions-outrank-tenure-defaults.md`), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
+
+The defaults, applied when nothing else is found:
+
+Conventional Commits — `type(scope): summary` — for commit subjects, PR titles, and issue titles. The scope names an engineering domain; `misc`, `stuff`, and `update` are not domains.
+
+A **pull request description** covers the problem, the solution, the architectural impact, the testing performed, the related issues, and any breaking changes. Never a commit-by-commit account — the commits are already on the PR.
+
+**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers this repository's own tooling. Where Tenure is installed, its `tools/` reference covers the workflow's own tools as well; where it is not, this rule still binds and the docs are the answer.
+
+**Never push and never publish.** Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.

@@ -5,8 +5,8 @@
 .DESCRIPTION
   Tenure ships as markdown, so there is no compiler to catch a broken build.
   This script is the substitute: every mechanically checkable acceptance
-  criterion in .scratch/tenure/issues/ gets one assertion here, named after
-  the ticket that demands it.
+  criterion in .claude/tickets/tenure/issues/ gets one assertion here, named
+  after the ticket that demands it.
 
   A criterion that cannot be checked mechanically (does the grill actually
   grill?) is out of scope by design — those are settled by the Phase 2
@@ -3729,8 +3729,14 @@ Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type
   # costs selection accuracy and buys brevity nobody types. Asserted as the
   # rule being written down, because the rule is what stops the next skill
   # being shortened to match.
+  #
+  # Its home is `.claude/rules/skills.md`, not the always-on `CLAUDE.md`: it
+  # is a standard discovered in this repository and it fires only when a skill
+  # is being authored. Ticket 12 moved it there, and this assertion moved with
+  # it — a guard left pointing at the old home would have passed on a stale
+  # copy and failed on the real one.
   Assert "the naming rule is written down, not just applied" {
-    $c = Get-Content (Join-Path $repo 'CLAUDE.md') -Raw
+    $c = Get-Content (Join-Path $repo '.claude/rules/skills.md') -Raw
     if ($c -notmatch '(?i)short names are for the keyboard') { throw 'the rule is stated nowhere' }
     if ($c -notmatch '(?i)descriptive names are for the model') { throw 'only half the rule is stated' }
     # And why a model-invoked `review` is not a breach of it.
@@ -3743,7 +3749,7 @@ Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type
   Assert "no renamed skill's old name survives anywhere" {
     $old = @('code-review', 'improve-codebase-architecture')
     $files = @(Get-SkillFiles) +
-             @('CLAUDE.md', 'CONTEXT.md', 'README.md' | ForEach-Object { Get-Item (Join-Path $repo $_) })
+             @('CLAUDE.md', '.claude/context.md', 'README.md' | ForEach-Object { Get-Item (Join-Path $repo $_) })
     $hits = @()
     foreach ($file in $files) {
       $lines = (Get-Content $file.FullName -Raw) -split '\r?\n'
@@ -3800,7 +3806,7 @@ Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type
   # to what replaced it — editing it to read as though it never said otherwise
   # destroys the reasoning the record exists for.
   Assert "decision 13 records what superseded it rather than being rewritten" {
-    $spec = Get-Content (Join-Path $repo '.scratch/tenure/spec.md') -Raw
+    $spec = Get-Content (Join-Path $repo '.claude/tickets/tenure/spec.md') -Raw
     $row = [regex]::Match($spec, '(?m)^\|\s*13\s*\|(.+)$')
     if (-not $row.Success) { throw 'decision 13 is gone from the spec' }
     $r = $row.Groups[1].Value

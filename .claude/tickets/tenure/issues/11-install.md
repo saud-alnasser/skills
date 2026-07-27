@@ -1,6 +1,6 @@
 # chore(release): install Tenure and remove the mattpocock skills
 
-Status: ready-for-human
+Status: resolved
 Blocked by: —
 
 ## Problem
@@ -44,8 +44,8 @@ This is outside any repository, so `/configure` cannot do it — it is a manual 
 
 **The install method above is superseded by ADR 0015.** Tenure ships as a
 plugin installed at `local` scope, not as a copy into `~/.claude/skills/` —
-that location is personal scope, which means *every* project, and the
-requirement is personal *and* per-project. So "copy `./skills/*`", the
+that location is personal scope, which means _every_ project, and the
+requirement is personal _and_ per-project. So "copy `./skills/*`", the
 copy-not-symlink note, and the first acceptance criterion no longer describe
 the work. Ticket 20 builds the distribution form; this ticket now depends on
 it, and its remit narrows to the parts that survive.

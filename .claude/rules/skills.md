@@ -1,0 +1,40 @@
+# Authoring skills
+
+Scope: `skills/**`
+
+Standards this repository holds itself to when changing what ships. The vocabulary behind them is in `.claude/contexts/skill-authoring.md`; these are the checkable obligations.
+
+## Every change to `skills/` moves `scripts/verify.ps1` in the same pass
+
+There is no package manifest and no test runner here. `verify.ps1` asserts each ticket's mechanically-checkable acceptance criteria against `./skills`, and it is the only thing that catches a broken build.
+
+```
+pwsh -NoProfile -File scripts/verify.ps1            # all tickets
+pwsh -NoProfile -File scripts/verify.ps1 -Ticket 09 # one, two digits
+```
+
+A change that adds a checkable claim and no assertion is untested by construction, not merely under-tested.
+
+## Placing a rule adds an entry to the `$rulePattern` table
+
+Single-home is asserted, not trusted. When a rule is placed, add its guard to `$rulePattern` in `verify.ps1`.
+
+**Check that the guard would actually fire.** Two guards have been written that matched a phrase travelling *with* a rule rather than the rule itself, and both passed while the restatement they existed to catch sat in the tree. Write the guard, then confirm it fails against a deliberate restatement before trusting it.
+
+## Derived skills carry their attribution
+
+Every skill derived from mattpocock/skills says so, in the skill. This is a licence obligation — see `LICENSE` and `NOTICE` — and it survives rewrites of the surrounding text.
+
+## Short names are for the keyboard; descriptive names are for the model
+
+User-invoked (`disable-model-invocation: true`): one word. The `/tenure:` namespace is already in front of it, so the name only has to be typeable.
+
+Model-invoked: an expressive name, and a `description` that states when to use it. That description is the entire basis on which the skill gets selected, so shortening the name for consistency costs selection accuracy and buys brevity nobody types.
+
+This bans shortening **for brevity**, not every short name. `review` is model-invoked and one word because the namespace removed the collision its old prefix existed to avoid, and it still says when to use it.
+
+`verify.ps1` asserts the split against each skill's frontmatter, so a rename that crosses the axis fails the build.
+
+## Nothing shipped names a pre-migration path
+
+`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what Tenure migrates *away from*. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.

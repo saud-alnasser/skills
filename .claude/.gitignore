@@ -1,0 +1,9 @@
+# Position. Add a file here when it would be wrong in another clone —
+# someone else's checkout, or this repository on another machine. A file that
+# would be equally true everywhere is knowledge, and knowledge is committed.
+#
+# `.claude/tenure.md` says what depends on that being true.
+
+marker.json
+prototypes/
+settings.local.json
