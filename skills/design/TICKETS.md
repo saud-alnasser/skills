@@ -1,8 +1,16 @@
 # Tickets
 
-Every `/design` run leaves at least one ticket on disk, in `.claude/tickets/`, numbered from `01` in dependency order — blockers first.
+Every `/design` run leaves at least one ticket, numbered from `01` in dependency order — blockers first.
 
-One ticket per file. Never a single combined file: tickets are claimed one at a time, and a combined file cannot be claimed.
+**Where they go is `.claude/tracker.md`'s**, and it is the only place that records it: on a local-markdown tracker they are files under `.claude/tickets/`; on GitHub they are issues in the repository. The format below is the same either way. Read the config rather than assuming the form.
+
+One ticket per file, or one per issue. Never a single combined file: tickets are claimed one at a time, and a combined file cannot be claimed.
+
+## A ticket tracks work — nothing else
+
+Engineering knowledge lives in the Codebase, in Context, and in Decisions. **None of it lives in a ticket body.** A tracker that accumulates it becomes a fourth knowledge layer that nothing verifies and nothing prunes, and it is the layer people will read first because it is the one with the search box.
+
+So: **no implementation diary.** Not what you tried, not what went wrong on the way, not a running log of the session. Detailed engineering belongs in a spec under `.claude/docs/designs/`, which the ticket **references** — never pastes.
 
 ## Format
 
@@ -30,6 +38,8 @@ implementation list — the ticket says what "done" looks like, and
 
 The title is a Conventional Commit subject, so the ticket's commit writes itself.
 
+`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/tracker.md` says which applies, and `tools/github.md` has the invocations.
+
 ### Lifecycle
 
 ```
@@ -44,6 +54,14 @@ obsolete   no longer needed. Requires a one-line reason. Never deleted
 **This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
 
 Claiming is the first write of any session that touches a ticket: set it and save before doing any work.
+
+## One ticket, one observable outcome
+
+The checkable rule against a tracker filling with hundreds of AI-generated micro-tickets nobody reads: **a ticket must have an outcome someone can observe when it closes.** If closing it produces nothing visible, it is a step inside another ticket, not a ticket.
+
+**Deepen, don't widen.** A small set of parent tickets, each with sub-tickets where the work actually divides — never a flat spray of siblings. Structure is carried by relationships, not by ticket count.
+
+Never create a ticket to rename a variable, move a file, or update a comment. Those happen inside a ticket that has an outcome.
 
 ## Acceptance criteria state observable outcomes
 
@@ -70,11 +88,26 @@ Blocked by: 02, 05        # must be resolved before this can start
 Part of: <spec name>      # the spec this ticket implements
 ```
 
-`Blocked by: —` is a positive statement that this one can start immediately, and it is not the same as omitting the line. Before writing the edges, read the tickets already on disk — an edge invented without checking is how a cycle or a dangling number gets in.
+`Blocked by: —` is a positive statement that this one can start immediately, and it is not the same as omitting the line. Before writing the edges, read the tickets that already exist — an edge invented without checking is how a cycle or a dangling number gets in.
 
-The **frontier** is every ticket whose blockers are all `resolved`. That is what `/implement` picks from.
+`/implement` picks from the **frontier**, and defines it.
 
 Only real gates. A ticket listed as a blocker because it is *tidier* to do first serializes work that could have run in parallel.
+
+An edge means the same thing on either tracker; only the syntax moves. `.claude/tracker.md` says which applies.
+
+| Tracker | `part of` | `blocks` | `related` |
+| --- | --- | --- | --- |
+| local markdown | a `Part of:` line | a `Blocked by: NN, NN` line | a `Related: NN` line |
+| GitHub | the sub-issues API, else a task list in the parent | `Blocked by: #NN` in the body | `#NN` mentioned in the body |
+
+The GitHub column is what `tools/github.md` documents and nothing more: `gh` has **no blocking subcommand**, so the edge lives in the issue body — legible to humans, and exactly what the local tracker does anyway. Read that file before issuing anything; a native-sounding invocation that does not exist is the guessed CLI the reference exists to prevent.
+
+`related` carries no ordering and blocks nothing. It is for an issue worth reading first, and it is the edge to reach for when a blocker would be a lie.
+
+### Scanning for booming
+
+The edges make the anti-booming rule checkable, which is the point of requiring them: **scan the set, and any ticket that is neither the root nor carries an edge is a stray.** Either it belongs under a parent nobody linked, or it should not exist. Do this when the tickets are cut, while the answer is still cheap.
 
 ### Wide refactors are the exception
 

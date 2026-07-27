@@ -397,6 +397,14 @@ $rulePattern = [ordered]@{
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
   'the stale-command rule'             = '(?i)stale command is worse than no command'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
+  # TICKETS.md owns the ticket format, so it owns which tracker expresses
+  # a state which way. /implement claims tickets and pointed at the config,
+  # but restated the mapping too.
+  'the local-markdown status form'    = '(?i)the same states are labels'
+  # ADR 0008 classes the PR description shape as a Tenure convention, so it
+  # lives with the others in CLAUDE.md rather than as prose inside one
+  # CLI's task-to-command reference.
+  'the PR body shape'                 = '(?i)architectural impact'
   # The router tells the human the tier is theirs; /design enforces it. Both
   # are legitimate, but the enforcement clause is one sentence and drifts.
   'the tier-override enforcement'      = '(?i)(their|your) override stands'
@@ -1827,7 +1835,10 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
     # Ticket 09 names three readers. Listing only the one that happens to
     # comply makes the assertion pass *because* of the gap it should catch.
     # /design's half is ticket 14's (its Comments say so); /implement is 09's.
-    $readers = @('triage/SKILL.md', 'implement/SKILL.md')
+    # /design's half landed in ticket 14, which is why it is here now: the
+    # criterion passed on a two-name list while the third named reader had
+    # nothing.
+    $readers = @('triage/SKILL.md', 'implement/SKILL.md', 'design/TICKETS.md')
     foreach ($r in $readers) {
       $c = Get-SkillFile $r
       if ($c -notmatch '\.claude/tracker\.md') { throw "$r does not read the tracker config" }
@@ -2642,6 +2653,240 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
   }
 }
 
+# --- ticket 14 — tracker hierarchy, relationships, labels, titles ------------
+
+Describe-Ticket '14' 'hierarchy, relationships, labels, and title conventions' {
+
+  $tickets = 'design/TICKETS.md'
+  $map     = 'design/MAP.md'
+  $tracker = 'configure/tracker.template.md'
+
+  # --- tracking only ---------------------------------------------------------
+
+  # "Issues track work. Engineering knowledge lives in the codebase, context,
+  # and decisions — never in an issue body." The failure is a tracker that
+  # slowly becomes the place people look things up, which nothing verifies.
+  Assert "a ticket tracks work and never becomes a knowledge store" {
+    $c = Get-SkillFile $tickets
+    if ($c -notmatch '(?i)(implementation|engineering) (diar|log|journal)|no diar') { throw 'nothing forbids an implementation diary' }
+    $c -match '(?is)\.claude/docs/designs/[^.]{0,160}(referenc|link|point)|(?is)(referenc|link|point)[^.]{0,160}\.claude/docs/designs/'
+  }
+
+  # --- anti-booming ----------------------------------------------------------
+
+  # The one checkable rule against a tracker filling with micro-tickets:
+  # closing it has to produce something someone can see.
+  Assert "a ticket must have an outcome someone can observe when it closes" {
+    $c = Get-SkillFile $tickets
+    if ($c -notmatch '(?is)(observ|visible)[^.]{0,120}(when it closes|on clos)') { throw 'the closure test is not stated' }
+    # `not a ticket` as a bare third branch subsumes the other two: it is
+    # the tail of the same sentence, so deleting the redirect leaves it
+    # matching. The redirect is the half that says where the work goes.
+    $c -match '(?is)(step inside|part of) another ticket, not a ticket'
+  }
+
+  Assert "structure deepens rather than widens, and the never-ticket-this list is concrete" {
+    $c = Get-SkillFile $tickets
+    if ($c -notmatch '(?i)deepen') { throw 'nothing says to deepen rather than widen' }
+    # The sentence, not the file. `renam` also matches the wide-refactor
+    # section's "rename a column", and `comment` matches almost any prose.
+    $line = [regex]::Match($c, '(?i)Never create a ticket[^.]*\.').Value
+    if (-not $line) { throw 'nothing is ruled out of being a ticket' }
+    $never = @('renam', 'mov\w* a file', 'comment')
+    $missing = $never | Where-Object { $line -notmatch "(?i)$_" }
+    if ($missing) { throw "the never-ticket list omits: $($missing -join ', ')" }
+    $true
+  }
+
+  # Decision 37's checkable half. Requiring an edge on every ticket buys
+  # nothing unless something says to go and look for the ones without.
+  Assert "the edges are scanned for strays, which is what makes the rule checkable" {
+    $c = Get-SkillFile $tickets
+    $c -match '(?is)scan the set[^.]{0,160}(stray|edgeless|neither the root)'
+  }
+
+  # --- relationships, on both trackers --------------------------------------
+
+  # Decision 35: GitHub and local markdown are both first-class, so an edge
+  # has to be expressible on both. A format that only describes the local
+  # form makes GitHub a second-class tracker by omission.
+  Assert "part-of and blocks are expressible on both trackers" {
+    $c = Get-SkillFile $tickets
+    $rows = @(($c -split '\r?\n') | Where-Object { $_ -match '^\|' })
+    foreach ($t in @('local markdown', 'GitHub')) {
+      if (-not ($rows -match "(?i)$t")) { throw "no representation for: $t" }
+    }
+    # Per edge, per tracker, out of the table. A single alternation is
+    # satisfied by whichever column happens to survive, and the obvious
+    # closer — `Part of:` and `Blocked by:` anywhere — matches the format
+    # block above with the table deleted entirely.
+    $gh = @($rows | Where-Object { $_ -match '(?i)GitHub' })
+    if ($gh.Count -ne 1) { throw 'no single GitHub row' }
+    foreach ($edge in @('sub-issue', 'Blocked by', 'body')) {
+      if ($gh[0] -notmatch [regex]::Escape($edge)) { throw "the GitHub row omits: $edge" }
+    }
+    $lm = @($rows | Where-Object { $_ -match '(?i)local markdown' })
+    if ($lm.Count -ne 1) { throw 'no single local-markdown row' }
+    foreach ($edge in @('Part of:', 'Blocked by:', 'Related:')) {
+      if ($lm[0] -notmatch [regex]::Escape($edge)) { throw "the local-markdown row omits: $edge" }
+    }
+    # Decision 34. `gh` has no blocking subcommand, and a table promising a
+    # native one sends /design to invent an invocation.
+    if ($c -match '(?i)native blocking') { throw 'the table promises a subcommand gh does not have' }
+    $true
+  }
+
+  # Ticket 09: `.claude/tracker.md` is the one home for which tracker a
+  # repository uses, "read by every skill that touches the tracker — /design,
+  # /implement, /triage". /design was the last of the three with nothing.
+  # Named *and* used to branch. A single mention passed while every `Status:`
+  # instruction below it stayed local-markdown-only, which is the half that
+  # actually makes GitHub a second-class tracker.
+  $trackerReaders = [ordered]@{
+    $tickets = '(?is)`Status:`[^.]{0,160}(local[- ]markdown|on GitHub)'
+    $map     = '(?i)Record it:[^\r\n]{0,240}(tracker\.md|on GitHub|label)'
+  }
+  foreach ($f in $trackerReaders.Keys) {
+    $branch = $trackerReaders[$f]
+    Assert "$f reads .claude/tracker.md rather than assuming local markdown" {
+      $c = Get-SkillFile $f
+      if ($c -notmatch '\.claude/tracker\.md') { throw 'the config is never named' }
+      if ($c -notmatch $branch) { throw 'named, but the status form is still local-markdown-only' }
+      $true
+    }
+  }
+
+  # --- the lifecycle ---------------------------------------------------------
+
+  Assert "the build lifecycle carries blocked alongside the ticket's four states" {
+    $c = Get-SkillFile $tickets
+    # The lifecycle fence, not the file. `-match` is case-insensitive, so a
+    # file-wide `^blocked\s` is satisfied by the `Blocked by:` edge line and
+    # the state could be deleted with the check still green.
+    $fence = [regex]::Match($c, '(?ms)^```
+?
+(open\s.*?)^```')
+    if (-not $fence.Success) { throw 'there is no lifecycle block' }
+    $states = @('open', 'claimed', 'blocked', 'resolved', 'obsolete')
+    $missing = $states | Where-Object { $fence.Groups[1].Value -notmatch "(?m)^$_\s+\S" }
+    if ($missing) { throw "not in the lifecycle: $($missing -join ', ')" }
+    $true
+  }
+
+  # `obsolete` is the state that stops a ticket an earlier one made
+  # unnecessary from being built anyway, so the reason is not optional.
+  Assert "obsolete requires a reason and is never deleted" {
+    $s = Get-Section (Get-SkillFile $tickets) 'obsolete'
+    ($s -match '(?i)one-line reason') -and ($s -match '(?i)never delet')
+  }
+
+  # ADR 0007. /implement selects from the frontier, so it owns what the
+  # frontier is; TICKETS.md described it too, and differently — it omitted
+  # unclaimed and the lowest-number rule, which is the half that keeps two
+  # sessions deterministic.
+  Assert "the frontier is defined once, by the skill that picks from it" {
+    $homes = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '(?i)frontier[^\r\n]{0,80}(unclaimed|lowest number)' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
+    if ($homes.Count -eq 0) { throw 'the frontier is defined nowhere' }
+    $strays = @($homes | Where-Object { $_ -ne 'implement/SKILL.md' })
+    if ($strays) { throw "also defined in: $($strays -join ', ')" }
+    $true
+  }
+
+  # --- labels: reuse first ---------------------------------------------------
+
+  # Ticket 09 placed the label *vocabulary* in tracker.template.md as a
+  # per-repository mapping. The *procedure* is Tenure's and belongs in the
+  # skill that creates labels, not in a config file a user can edit.
+  Assert "labels are listed, mapped onto, and only then created" {
+    # Scoped to the procedure. `/triage` reads labels all over — "Read the
+    # whole thing: body, comments, labels" — so a file-wide check for
+    # list-near-label passes with the first step of the procedure deleted.
+    $c = [regex]::Match((Get-SkillFile 'triage/SKILL.md'),
+                        '(?ms)^### Reuse a label.*?(?=^#{2,3}\s|\z)').Value
+    if (-not $c) { throw 'there is no reuse procedure' }
+    $steps = [ordered]@{
+      'list what exists'          = '(?i)(list|read)[^\r\n]{0,60}(label)'
+      'map onto an existing one'  = '(?is)(map|reuse)[^.]{0,120}exist'
+      'create only when nothing fits' = '(?is)creat[^.]{0,120}(nothing fits|no[^.]{0,20}fits|last resort)'
+      # The dimensions, not the word. Step 3 already says "match the style
+      # already there", which satisfies any pattern containing `style` while
+      # the list telling you what to match is gone.
+      "match the repository's style"  = '(?is)prefix.{0,120}casing.{0,120}(separator|colour|color)'
+    }
+    $missing = $steps.Keys | Where-Object { $c -notmatch $steps[$_] }
+    if ($missing) { throw "the reuse procedure omits: $($missing -join ', ')" }
+    # And the one label that must never be created: workflow state is already
+    # carried by the ticket's own status, and a label for it is a second
+    # answer to the same question.
+    $c -match '(?is)(never|not) creat[^.]{0,140}(workflow state|status)'
+  }
+
+  # --- titles and PRs --------------------------------------------------------
+
+  # ADR 0007: Conventional Commits and the scope vocabulary are CLAUDE.md's.
+  # What is left here is the *PR body shape*, which has no other home — and
+  # `gh pr create` is where someone drafting one is standing.
+  Assert "a PR description covers the six things, and never a commit-by-commit account" {
+    $c = Get-Section (Get-SkillFile $claudeTemplate) 'Conventions'
+    $covers = @('problem', 'solution', 'architectur', 'testing', 'related issue', 'breaking change')
+    $missing = $covers | Where-Object { $c -notmatch "(?i)$_" }
+    if ($missing) { throw "the PR body omits: $($missing -join ', ')" }
+    $c -match '(?i)(never|not)[^\r\n]{0,40}commit-by-commit'
+  }
+
+  # ADR 0007. Ticket 13 gave Conventional Commits and the detect-before-
+  # asserting rule one home apiece; this ticket's Titles section must reach
+  # them, not re-argue them.
+  Assert "the commit convention is not restated here — CLAUDE.md owns it" {
+    $banned = [ordered]@{
+      'the scope vocabulary'      = '(?i)`misc`'
+      'the convention as a rule'  = '(?i)Conventional Commits\s*(—|-|is|are)'
+      'the defaults-not-mandates' = $rulePattern['conventions are defaults']
+    }
+    foreach ($f in @($tickets, 'tools/github.md')) {
+      $c = Get-SkillFile $f
+      foreach ($b in $banned.Keys) {
+        if ($c -match $banned[$b]) { throw "$b is restated in $f" }
+      }
+    }
+    $true
+  }
+
+  # Acceptance: "Conventional Commits is applied only after confirming the repo
+  # documents nothing else." The principle is CLAUDE.md's; the procedure — what
+  # to actually read — has one home, and it is the step that does the applying.
+  Assert "the detection procedure has one home, and names what to read" {
+    $homes = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '(?i)CONTRIBUTING\.md[^\r\n]{0,80}PULL_REQUEST_TEMPLATE[^\r\n]{0,80}git log' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
+    if ($homes.Count -eq 0) { throw 'nothing says what to read before asserting a convention' }
+    $strays = @($homes | Where-Object { $_ -ne 'commit/SKILL.md' })
+    if ($strays) { throw "also in: $($strays -join ', ')" }
+    $true
+  }
+
+  # --- nothing forks the triage vocabulary -----------------------------------
+
+  # "Nothing in this ticket contradicts triage's existing role vocabulary."
+  Assert "no build-lifecycle state collides with a triage role" {
+    $c = Get-SkillFile $tickets
+    foreach ($role in @('needs-triage', 'needs-info', 'ready-for-agent', 'ready-for-human', 'wontfix')) {
+      if ($c -match "(?m)^$role\s") { throw "a triage role appears in the build lifecycle: $role" }
+    }
+    # And the distinction is stated, not merely observed.
+    $c -match '(?is)not the triage vocabulary'
+  }
+
+  Assert "the tracker template still holds the label strings, not the procedure" {
+    $c = Get-SkillFile $tracker
+    if ($c -notmatch '(?i)Label in this repository') { throw 'the per-repository mapping is gone' }
+    if ($c -match '(?is)creat[^.]{0,80}only when nothing fits') { throw 'the procedure was copied into the config' }
+    $true
+  }
+}
+
 # --- ticket 13 — the engineering rules, distributed --------------------------
 
 Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
@@ -2859,7 +3104,7 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 15 (two digits)" -ForegroundColor DarkGray
+  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15 (two digits)" -ForegroundColor DarkGray
   exit 2
 }
 

@@ -1,6 +1,6 @@
 # feat(tracker): hierarchy, relationships, labels, and title conventions
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 09
 
 ## Problem
@@ -109,3 +109,66 @@ ticket's.** Ticket 09 folded the five state roles and two category roles into
 `tracker.template.md` as a canonical-name-to-label-string mapping. The reuse
 procedure above — list what exists, map onto it, create only when nothing fits,
 match the repository's prefix and casing — is not written anywhere yet.
+
+---
+
+**Resolved.** The remaining four items landed: `blocked` was already folded in
+by ticket 03, and `TICKETS.md`, `MAP.md`, and the label procedure are done.
+
+**The label procedure went to `/triage`, not to `tracker.template.md`.**
+Ticket 09's split decides it: the template is a *form a repository fills in*,
+so a Tenure procedure written there becomes user-editable config. `/triage` is
+the skill that creates a label, and the per-repository strings stay where 09
+put them. `verify.ps1` asserts both halves — the procedure in the skill, the
+mapping still in the template and the procedure *not* copied into it.
+
+**The GitHub column promised a subcommand that does not exist.** The first
+draft of the representation table offered *"native blocking links"*.
+`tools/github.md` states plainly that `gh` has **no blocking or sub-issue
+subcommand** and gives two routes, neither of them that. A format file
+promising a native invocation is exactly the guessed CLI decision 34 forbids,
+and the table now says only what the tool reference documents. Asserted
+negatively too: the table must not contain the phrase.
+
+**`related` and the booming scan were in the ticket and missing from the
+build.** The Outcome names three relationship types and this shipped two; and
+decision 37's *checkable* half — *"scan the set, and any edgeless non-root
+ticket is a booming symptom"* — is the whole reason edges are mandatory, but
+nothing said to run the scan. Both added.
+
+**The `Status:` branch was half-landed.** The paths branched on the tracker;
+the *status form* did not, so `MAP.md` still said `set Status: resolved`
+unconditionally and `TICKETS.md` showed a `Status:` block with no caveat.
+Found by review. Both branch now — and the fix immediately produced a second
+home, because `/implement` already carried the same mapping near-verbatim from
+ticket 09. `TICKETS.md` owns the ticket format, so it owns which tracker
+expresses a state which way; `/implement` points, and a `$rulePattern` guard
+stops it coming back.
+
+**The PR description shape moved out of `tools/github.md`.** It was placed
+there because `gh pr create` is where someone drafting one is standing — but
+`tools/` is a task-to-command reference for one CLI, and ADR 0008 classes the
+PR description shape as a Tenure *convention*. It sits in `CLAUDE.md`'s
+Conventions beside Conventional Commits, where it also reaches `glab`.
+
+**`gh label list` had no entry, and ticket 15's own guard caught it** — the
+same shape as ticket 09's `git bisect`. Added with the gotchas that earn an
+entry: `create` fails on an existing name rather than editing it, and
+`--color` takes a bare hex.
+
+**Five assertions were weaker than they read**, each found by review or by
+mutation: the never-ticket list matched *"rename a column"* from the
+wide-refactor section; the tracker-config check passed on any mention while
+the step needing the branch stayed local-only; the commit-convention guard
+banned one word rather than the rule; the GitHub-edge alternation was
+satisfied by whichever column survived; and `not a ticket` as a bare
+alternation branch subsumed the redirect it was meant to require.
+
+**The Standards axis died on an API session limit**, as it did in ticket 09.
+Those checks were run inline instead: an `_Avoid_` sweep over every added line
+against all of `CONTEXT.md`'s lists (three hits, all different senses of the
+word — *implementation diary*, the map as an *index*, the tools *reference*),
+a sediment sweep of every added sentence against all seventeen skills, and a
+pass over the new block for subsuming alternations and array `-match`.
+
+329 assertions, 36 mutations. All seven harnesses re-run clean — 298 mutations.

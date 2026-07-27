@@ -21,7 +21,7 @@ Phase 1 of the build is done. Shipped under `./skills/`:
 
 **Phase 2 — the dogfood checkpoint — has not been run**, and ticket 07 was built directly rather than designed first. It remains a human-in-the-loop step: run `/design` on a real piece of work in this repo and watch what breaks.
 
-Tickets 11, 12, and 14 are not built. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
+Tickets 11 and 12 are not built — both are `ready-for-human`: installing Tenure over the mattpocock skills, then running `/configure` here for real. `/configure` now exists but **has never been run**, so everything it writes — `.claude/context.md`, `.claude/tracker.md`, `.claude/tools/*.md` — still only exists as a template or a description. The `/implement` → `/code-review` → `/commit` chain now exists end to end, but it has only ever been executed by hand — no run has gone through it as skills.
 
 **There is no package manifest and no test runner.** `scripts/verify.ps1` stands in for one: it asserts each ticket's mechanically-checkable acceptance criteria against `./skills`.
 

@@ -41,6 +41,17 @@ For a PR the same states read against the attached code: `ready-for-agent` means
 
 Every triaged item carries **exactly one category role and one state role**. Conflicting state roles are flagged to the maintainer before anything else happens.
 
+### Reuse a label before creating one
+
+The canonical names above are what this skill says; the strings the tracker actually holds are in `.claude/tracker.md`. When a role has no string recorded, or a new label is genuinely wanted:
+
+1. **List what exists** — `gh label list`, or the repository's own label file.
+2. **Map onto an existing label.** This is the expected outcome. A repository that has been triaged by humans usually already has a word for every role, and inventing a parallel one leaves the maintainer with two.
+3. **Create only when nothing fits**, and match the style already there: the prefix convention (`type:`, `kind/`, or bare), the casing, the separator, the colour family. A label that looks foreign is one a maintainer has to think about every time they see it.
+4. **Never create a label for workflow state a `Status:` already carries.** That is a second answer to the same question, and the two will disagree.
+
+Record whatever is created back into `.claude/tracker.md`, or the next session creates it again.
+
 Transitions: an unlabelled item goes to `needs-triage` first, and from there to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer overrides at any time — flag a transition that looks unusual and ask.
 
 These roles describe **incoming** work. They are not the lifecycle a build ticket moves through once `/design` has cut it; nothing carries both vocabularies.

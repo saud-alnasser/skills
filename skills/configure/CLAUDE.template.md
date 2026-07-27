@@ -127,6 +127,8 @@ The defaults, applied when nothing else is found:
 
 Conventional Commits — `type(scope): summary` — for commit subjects, PR titles, and issue titles. The scope names an engineering domain; `misc`, `stuff`, and `update` are not domains.
 
+A **pull request description** covers the problem, the solution, the architectural impact, the testing performed, the related issues, and any breaking changes. Never a commit-by-commit account — the commits are already on the PR.
+
 **Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `tools/` covers the workflow's own tools; `.claude/tools/` covers this repository's.
 
 Tenure never pushes and never publishes. Committing is asked for; pushing, opening a PR, and submitting a stack are the human's call.

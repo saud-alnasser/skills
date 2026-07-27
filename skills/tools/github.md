@@ -38,9 +38,13 @@ gh issue view <number> --comments
 ```
 gh issue comment <number> --body-file -
 gh issue edit <number> --add-label "in-progress" --remove-label "ready-for-agent"
+gh label list                                     # read before creating any
+gh label create "<name>" --color <hex> --description "<text>"
 ```
 
 `gh issue edit` adds and removes labels; it does not replace the set.
+
+`gh label list` is the read that comes before `gh label create`, always — `/triage` has the reuse rule. `create` fails on a name that already exists rather than editing it, so the list is what tells you whether you are adding or colliding. `--color` takes a bare hex with no leading `#`.
 
 ## Link a blocking relationship
 
@@ -62,3 +66,5 @@ gh pr create --title "<conventional title>" --body-file - --base main
 ```
 
 Tenure does not open PRs unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
+
+What the body covers is a convention, not an invocation: `CLAUDE.md` has it.
