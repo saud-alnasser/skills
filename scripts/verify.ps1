@@ -4047,11 +4047,13 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
 
 # --- ticket layout/02 — adopt the layout here --------------------------------
 
-# The only section that asserts against `.claude/` rather than `./skills`, and
-# it has to: this ticket's subject *is* this repository's own tree. The two are
-# kept apart everywhere else — `skills/` is what ships, `.claude/` is what this
-# repository runs on — so reading the second one here is the exception, not a
-# licence to widen the others.
+# One of two sections whose *subject* is `.claude/` rather than `./skills`, and
+# it has to be: this ticket moved this repository's own tree. `layout/04` is the
+# other. Corroborating reads of `.claude/` are ordinary and several sections
+# make them — `tenure/20` checks a rule is written down here and that a rename
+# left no trace — but reading it as the thing under test is what `skills/` is
+# what ships, `.claude/` is what this repository runs on holds apart, so it is
+# marked where it happens rather than left to be inferred.
 Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
 
   function Get-RepoFile {
@@ -4376,6 +4378,166 @@ Parse the status columns carefully.
       if ($divergent) { $problems += "$($f.Name) diverges from $srcName in: $($divergent -join '; ')" }
     }
     if ($problems) { throw ($problems -join ' | ') }
+    $true
+  }
+}
+
+# --- ticket layout/04 — derive this repository's own tool references ---------
+
+# The second section whose subject is `.claude/` rather than `./skills`, for the
+# reason `layout/02` gives: this ticket's deliverable *is* this repository's own
+# tree. See that section's comment for why the crossing is marked rather than
+# assumed.
+Describe-Ticket 'layout/04' "derive this repository's own tool references" {
+
+  $toolDir = Join-Path $repo '.claude/tools'
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  # --- detection is read off the repository, never off a list ----------------
+
+  # A hardcoded expectation would keep passing after the repository stopped
+  # matching it. Each row reads the same fact TOOLS.md keys the tool on, so
+  # adding a GitLab remote or running `gt init` here turns this red instead of
+  # leaving a reference that describes somebody else's repository.
+  Assert "a file exists for each tool this repository is detected to use, and none for the rest" {
+    $config = Get-RepoText '.git/config'
+    $expected = [ordered]@{
+      'git.md'      = $true
+      'github.md'   = [bool]($config -match '(?im)^\s*url\s*=.*github\.com')
+      'gitlab.md'   = [bool]($config -match '(?im)^\s*url\s*=.*gitlab\.com')
+      'graphite.md' = Test-Path (Join-Path $repo '.git/.graphite_repo_config')
+    }
+    $wrong = @()
+    foreach ($name in $expected.Keys) {
+      $present = Test-Path (Join-Path $toolDir $name)
+      if ($expected[$name] -and -not $present) { $wrong += "$name — detected, but no file" }
+      if (-not $expected[$name] -and $present)  { $wrong += "$name — a file, but not detected" }
+    }
+    if ($wrong) { throw ($wrong -join '; ') }
+    $true
+  }
+
+  # --- what keeps the byte-identity check alive ------------------------------
+
+  # `layout/03`'s comparison skips any file without a `Derived from:` line, so
+  # losing the line silently exempts that file from the only check that catches
+  # a summarized entry. One assertion per file, because an aggregate one passes
+  # while a single file drops out.
+  foreach ($derived in @('git.md', 'github.md')) {
+    Assert "$derived names the shipped entry it was derived from" {
+      $c = Get-RepoText ".claude/tools/$derived"
+      if ($c -notmatch "(?m)^Derived from:\s*tenure/$([regex]::Escape($derived))\s*$") {
+        throw 'no provenance line — the divergence check skips this file'
+      }
+      $true
+    }
+  }
+
+  # "The entries this repository already had for its own tooling survive
+  # unchanged." Named one by one: a count survives one being replaced by
+  # another. Neither may claim a shipped source, because nothing upstream
+  # describes this repository's verifier or its own plugin distribution.
+  foreach ($own in @('verify.md', 'plugin.md')) {
+    Assert "$own is still here, and still this repository's own" {
+      $c = Get-RepoText ".claude/tools/$own"
+      if ($c -match '(?m)^Derived from:') { throw 'claims a shipped source it cannot have' }
+      $true
+    }
+  }
+
+  # --- every pointer into the directory resolves -----------------------------
+
+  # Scoped to the files that navigate. The tickets are excluded for the reason
+  # `layout/02` gives — they are the build record, and one of them names a tool
+  # file that was correct when it was written.
+  Assert "every tools/ pointer in this repository's knowledge resolves" {
+    $files = @('CLAUDE.md', 'README.md') +
+             (Get-ChildItem (Join-Path $repo '.claude') -Filter '*.md' |
+               ForEach-Object { ".claude/$($_.Name)" })
+    $broken = @()
+    foreach ($f in $files) {
+      foreach ($m in [regex]::Matches((Get-RepoText $f), '(?<![\w/])(?:\.claude/)?tools/([a-z0-9.-]+\.md)')) {
+        if (-not (Test-Path (Join-Path $toolDir $m.Groups[1].Value))) { $broken += "$f → $($m.Value)" }
+      }
+    }
+    if ($broken) { throw ($broken -join '; ') }
+    $true
+  }
+
+  # Carrying an entry byte-for-byte means carrying its cross-references, and
+  # git.md's never-push entry links graphite.md — which a repository with no
+  # stack has no reason to derive. The link is kept and the file says so above
+  # its first entry, rather than the entry being edited: editing inside a kept
+  # entry is the one thing the derivation rule forbids. Asserted so the
+  # exemption stays singular instead of becoming the general case.
+  Assert "graphite.md is the only unresolvable sibling link, and the file carrying it says so" {
+    $dangling = @()
+    foreach ($f in (Get-ChildItem $toolDir -Filter '*.md')) {
+      foreach ($m in [regex]::Matches((Get-Content $f.FullName -Raw), '\]\((?!https?:|#)([a-z0-9.-]+\.md)\)')) {
+        if (-not (Test-Path (Join-Path $toolDir $m.Groups[1].Value))) {
+          $dangling += "$($f.Name) → $($m.Groups[1].Value)"
+        }
+      }
+    }
+    $unexpected = @($dangling | Where-Object { $_ -ne 'git.md → graphite.md' })
+    if ($unexpected) { throw "undocumented dangling link: $($unexpected -join '; ')" }
+    if ($dangling -contains 'git.md → graphite.md') {
+      $preamble = ((Get-RepoText '.claude/tools/git.md') -split '(?m)^##\s')[0]
+      if ($preamble -notmatch '(?i)graphite') { throw 'git.md links graphite.md without saying so above its first entry' }
+    }
+    $true
+  }
+
+  # --- what ticket layout/03 left for this one -------------------------------
+
+  # Two assertions, not one with two clauses: deleting the stale sentence and
+  # stating the replacement are separate failures, and a single assertion that
+  # covers both reports whichever it hits first.
+  Assert "CLAUDE.md no longer routes the workflow's tools through the plugin" {
+    $c = Get-RepoText 'CLAUDE.md'
+    if ($c -match '(?i)where Tenure is installed') { throw 'still conditions the tool reference on the plugin' }
+    $true
+  }
+
+  Assert "CLAUDE.md states that one committed directory covers every tool" {
+    $c = Get-RepoText 'CLAUDE.md'
+    if ($c -notmatch '(?i)covers every tool this repository uses') { throw 'the replacement claim is not stated' }
+    $true
+  }
+
+  # verify.md described a CLI that `layout/01` replaced — bare two-digit ids.
+  # A tool reference naming a form the tool rejects is worse than no entry.
+  #
+  # Scoped to the fenced blocks, which is what gets copied. Rejected forms are
+  # named in the prose deliberately — `-Ticket 09` is the whole point of the
+  # entry — so a guard over the whole file fails on the counterexample it
+  # asked for and pushes the next author to delete the teaching.
+  Assert "every runnable -Ticket example in verify.md uses the form the script accepts" {
+    $c = Get-RepoText '.claude/tools/verify.md'
+    foreach ($f in [regex]::Matches($c, '(?ms)^```\r?\n(.*?)^```')) {
+      if ($f.Groups[1].Value -match '-Ticket\s+(?!\w+/)') { throw "a copy-pasteable example omits the effort: $($f.Groups[1].Value.Trim())" }
+    }
+    if ($c -notmatch '-Ticket\s+tenure/09') { throw 'no worked example in <effort>/NN form' }
+    $true
+  }
+
+  # verify.md names which sections read `.claude/` as their subject. The claim
+  # is only true while those sections say so themselves, which is what a reader
+  # arriving at one of them actually needs.
+  Assert "both sections that read .claude/ by subject say why, where they do it" {
+    $script = Get-RepoText 'scripts/verify.ps1'
+    $doc = Get-RepoText '.claude/tools/verify.md'
+    foreach ($id in @('layout/02', 'layout/04')) {
+      $m = [regex]::Match($script, "(?s)(.{0,800})Describe-Ticket '$([regex]::Escape($id))'")
+      if ($m.Groups[1].Value -notmatch '(?i)subject') { throw "$id does not say why it reads .claude/" }
+      if ($doc -notmatch [regex]::Escape($id)) { throw "verify.md does not name $id" }
+    }
     $true
   }
 }
