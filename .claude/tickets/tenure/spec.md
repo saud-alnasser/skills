@@ -1,5 +1,7 @@
 # Tenure
 
+Status: implemented
+
 ## Problem
 
 mattpocock's engineering skills are an excellent **execution pipeline**: idea → grill → spec → tickets → implement → review → ship. What they have no answer for is **memory**. `CONTEXT.md` is a glossary and nothing else; every session rediscovers the repository's architecture, boundaries, and conventions from scratch. Claude arrives as a capable stranger every time.
@@ -12,7 +14,7 @@ A skill framework where Claude is a **partner whose understanding of the reposit
 
 ## Decisions
 
-Resolved by grill; each ADR in `docs/adr/` carries the reasoning.
+Resolved by grill; each ADR in `.claude/docs/decisions/` carries the reasoning.
 
 | # | Decision | ADR |
 | --- | --- | --- |
@@ -82,7 +84,7 @@ Seven, not eight — `/sync` dissolved into a discipline (0010), and `/design` a
 
 ## Method — what is authoritative, what is reference
 
-**Authoritative — what to build:** this spec, the tickets, and the ADRs in `docs/adr/`. Where any of them conflicts with matt's, they win; that conflict is usually a decision we made deliberately and recorded.
+**Authoritative — what to build:** this spec, the tickets, and the ADRs in `.claude/docs/decisions/`. Where any of them conflicts with matt's, they win; that conflict is usually a decision we made deliberately and recorded.
 
 **Reference — how to build it well:** matt's skills, and `writing-great-skills` for the craft.
 
@@ -151,6 +153,8 @@ PHASE 4  install and migrate
 
 Phase 2 is the whole reason for the ordering. A red loop on day one beats a red loop after eighteen skills, and every skill built in phase 3 is written by a system whose failures are already known.
 
+**Phase 2 never ran, and is closed by ADR 0017.** Phases 3 and 4 were built by hand instead, so no skill in this spec was written by a system whose failures were already known. The checkpoint is replaced by adopting the workflow for all subsequent work rather than by a gated session — see the ADR for what that costs.
+
 ## Target layout in a Tenure repository
 
 ```
@@ -181,6 +185,8 @@ CLAUDE.md                     entrypoint, auto-loaded, <200 lines
 
 No `reviews/` — reviews are never persisted. No `workflows/` — the skills are the command specifications.
 
+**The `skills/` line above is superseded by ADR 0015**, which ticket 20 built: Tenure is installed as a plugin from `.claude-plugin/` rather than copied into each repository's `.claude/skills/`, so a Tenure repository has no `skills/` under `.claude/` at all. In *this* repository `skills/` sits at the root because this is the repository that builds Tenure, not one configured by it — `.claude/context.md` holds that boundary.
+
 ## Acceptance criteria
 
 - Every skill in `./skills` follows `writing-great-skills`: correct invocation axis, no duplication, checkable completion criteria, progressive disclosure where a branch earns it.
@@ -193,5 +199,5 @@ No `reviews/` — reviews are never persisted. No `workflows/` — the skills ar
 ## Out of scope
 
 - Building this repo's own `.claude/` tree by hand. Tenure is built using matt's conventions deliberately, so `/configure` has a genuine migration to perform (see ADR 0006).
-- Publishing as a plugin/marketplace. Installation is a copy into `~/.claude/skills/`.
+- Publishing as a plugin/marketplace. Installation is a copy into `~/.claude/skills/`. **Superseded by ADR 0015** — Tenure ships as a plugin from `.claude-plugin/`, published as the `tenure-marketplace` by this repository. Ticket 20 built it, and the copy-into-`~/.claude/skills/` install no longer exists.
 - CI configuration. `workflow.md`'s CI section is guidance for Tenure *users*, not a deliverable here.

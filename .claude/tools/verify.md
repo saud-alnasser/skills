@@ -26,7 +26,7 @@ pwsh -NoProfile -File scripts/verify.ps1 -Ticket 09
 
 **Two digits, always.** `-Ticket 9` matches no ticket. It does not fall back to running everything and it does not run ticket `09`; it runs nothing, prints the known ids, and exits `2`. That exit code exists specifically so a zero-assertion run cannot read as a pass.
 
-Not every number is a ticket. `11` and `12` are `ready-for-human` and have no assertions, so they are absent from the known list even though the ticket files exist.
+Not every number is a ticket. `11` and `12` are absent from the known list even though the ticket files exist, because neither landed anything under `./skills` — 11 installed the plugin on this machine, 12 migrated `.claude/` — and `./skills` is the only tree this script asserts against.
 
 ## Exit codes
 

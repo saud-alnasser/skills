@@ -39,8 +39,16 @@ Done, outside the ticket's own process. Tenure is installed at `local` scope fro
 
 Done. This file is part of it. See ticket 12's `## Comments` for the deviations.
 
-## Not done
+## The effort is closed
 
-**Phase 2 — the dogfood checkpoint.** Ticket 07 was built directly rather than designed first, and phase 2 remains a human-in-the-loop step: run `/design` on a real piece of work in this repository and watch what breaks.
+All twenty tickets are `resolved` and the spec is `implemented`. Every skill its Scope section names exists — seven Spine, five on-ramps, five Primitives, and the `help` router.
 
-**The chain has never run end to end as skills.** `/configure` has run once — this migration — and `/commit` has run once, on that migration's own diff. `/implement` and `/review` have still only ever been executed by hand, and no single piece of work has passed through all four as skills.
+**Phase 2 — the dogfood checkpoint — never ran, and is closed by ADR 0017** rather than by being executed. Phases 3 and 4 were built by hand, so no skill here was written by a system whose failures were already known. The checkpoint is replaced by using the workflow for all subsequent work in this repository.
+
+Carried forward, because closing the effort does not make it untrue:
+
+- **`/implement` and `/review` have never run as skills.** Every ticket in this build executed them by hand. They are the least-exercised part of the framework.
+- **The chain has never run end to end.** `/configure` has run twice — the migration and its first audit — and `/commit` once, on the migration's own diff. No single piece of work has passed through all four.
+- **Nothing validates a skill's behaviour but use.** `verify.ps1` checks that a rule is stated and stated in the right place; whether the grill actually grills was phase 2's job and now has no owner but the next real ticket.
+
+A failure in any of this is a framework bug. Fix it in `skills/`, with an assertion in `scripts/verify.ps1` — not by working around it in the work that found it.

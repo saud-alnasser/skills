@@ -1,5 +1,6 @@
 {
   "name": "tenure",
+  "version": "1.0.0",
   "description": "A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline.",
   "author": {
     "name": "SAUD ALNASSER"

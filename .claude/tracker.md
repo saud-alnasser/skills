@@ -45,7 +45,7 @@ Category roles are not recorded separately — the Conventional Commits type in 
 
 **One deviation from the standard shape, recorded rather than tidied away.** The tracker template holds that triage roles and the build lifecycle are separate vocabularies and that nothing carries both. Here, one `Status:` line carries both: `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from the `Blocked by:` line rather than written.
 
-Today's tree holds only `resolved` (18) and `ready-for-human` (2). Treat the union above as the vocabulary and the split as a known wrinkle in this repository — not as licence to introduce a second field.
+Treat the union above as the vocabulary and the split as a known wrinkle in this repository — not as licence to introduce a second field. Which of those strings are in the tree at any moment is a census rather than a convention: read it off the tickets, and do not record it here, where it is wrong again the next time one closes.
 
 ## External pull requests
 
