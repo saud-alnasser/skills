@@ -2840,9 +2840,7 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
     # The lifecycle fence, not the file. `-match` is case-insensitive, so a
     # file-wide `^blocked\s` is satisfied by the `Blocked by:` edge line and
     # the state could be deleted with the check still green.
-    $fence = [regex]::Match($c, '(?ms)^```
-?
-(open\s.*?)^```')
+    $fence = [regex]::Match($c, '(?ms)^```\r?\n(open\s.*?)^```')
     if (-not $fence.Success) { throw 'there is no lifecycle block' }
     $states = @('open', 'blocked', 'resolved', 'obsolete')
     $missing = $states | Where-Object { $fence.Groups[1].Value -notmatch "(?m)^$_\s+\S" }
