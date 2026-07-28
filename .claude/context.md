@@ -39,7 +39,7 @@ Why an approach was selected, preserved as an ADR at `.claude/docs/decisions/`. 
 _Avoid_: rationale doc, design doc
 
 **Evidence**:
-The trail showing how a claim was earned — research findings and prototype write-ups. Distinct from knowledge: evidence records what was verified and when, and nothing validates it afterwards. Durable findings graduate out of evidence into Context or a Decision.
+The trail showing how a claim was earned — research findings, prototype write-ups, and the record of a rejected request. Distinct from knowledge: evidence records what was verified and when, and nothing validates it afterwards. That shared property is what earns the three of them one grouping directory. Durable findings graduate out of evidence into Context or a Decision.
 _Avoid_: notes, artifacts, output
 
 **Drift**:

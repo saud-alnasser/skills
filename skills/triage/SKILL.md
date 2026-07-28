@@ -74,12 +74,12 @@ Counts, and one line each. Let the maintainer choose.
 
 ## Triage one item
 
-**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through `.claude/context.md` and the Domain Contexts its routing table points at, and read the ADRs in `.claude/docs/decisions/` covering the area — those are not to be re-litigated here.
+**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through `.claude/context.md` and the Domain Contexts its routing table points at, and read the ADRs in `.claude/decisions/` covering the area — those are not to be re-litigated here.
 
 Then two checks the maintainer should not have to do from memory:
 
 - **Redundancy.** Search for an existing implementation of the requested behaviour **by domain concept, not by the words the reporter used**, and report where you looked. Found means already-implemented, which is a `wontfix` with a pointer.
-- **Prior rejection.** Read `.claude/docs/out-of-scope/` and surface anything the request resembles.
+- **Prior rejection.** Read `.claude/evidence/out-of-scope/` and surface anything the request resembles.
 
 **2 — Recommend.** State the category and state you would apply, with reasoning, plus what the codebase already does about it. Then wait. This is a recommendation to a maintainer, not a decision.
 

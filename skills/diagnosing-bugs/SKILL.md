@@ -7,7 +7,7 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Skip a phase only with a stated reason.
 
-Load `.claude/context.md` for the mental model, and the Domain Contexts its routing table points at for the area the bug is in. Read the ADRs in `.claude/docs/decisions/` covering that area before proposing anything that would contradict one.
+Load `.claude/context.md` for the mental model, and the Domain Contexts its routing table points at for the area the bug is in. Read the ADRs in `.claude/decisions/` covering that area before proposing anything that would contradict one.
 
 ## Phase 1 — Build a feedback loop
 

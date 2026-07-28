@@ -14,7 +14,7 @@ Built on a shared vocabulary:
 
 - `codebase-design` owns the architecture terms — **module**, **interface**, **depth**, **seam**, **adapter**, **leverage**, **locality** — and the principles behind them, including the deletion test and *the interface is the test surface*. Use those words **exactly**. Do not drift into *component*, *service*, *API*, or *boundary*.
 - `.claude/context.md` and its Domain Contexts give the **domain** names, which are what a good seam gets named after. If Context defines *Order*, the card says *the Order intake module* — not *the FooBarHandler*, and not *the Order service*.
-- `.claude/docs/decisions/` records what has already been settled and is not to be re-litigated here.
+- `.claude/decisions/` records what has already been settled and is not to be re-litigated here.
 
 ## 1 — Scope, then explore
 

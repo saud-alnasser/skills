@@ -1,16 +1,16 @@
 # The out-of-scope knowledge base
 
-`.claude/docs/out-of-scope/` holds the record of **rejected requests**. Two jobs:
+`.claude/evidence/out-of-scope/` holds the record of **rejected requests**. Two jobs:
 
 1. **Memory** — why a request was rejected, kept once the issue is closed and the discussion has scrolled away.
 2. **Deduplication** — the same request arrives again in different words, and the previous decision surfaces instead of being argued from scratch.
 
-It sits under `.claude/docs/` with the other evidence — research findings, prototype write-ups — because it is the same kind of thing: a record of what was concluded and why, which nothing revalidates afterwards. It is not a Decision. An ADR answers *why this approach*; this answers *why not this request at all*.
+It sits under `.claude/evidence/` with the research findings and prototype write-ups because it is the same kind of thing: a record of what was concluded and when, which nothing revalidates afterwards. It is not a Decision, and that is why it is not a peer of `.claude/decisions/`. An ADR answers *why this approach*; this answers *why not this request at all*.
 
 ## One file per concept
 
 ```
-.claude/docs/out-of-scope/
+.claude/evidence/out-of-scope/
 ├── dark-mode.md
 ├── plugin-system.md
 └── graphql-api.md
@@ -48,7 +48,7 @@ Theming is a downstream concern for whoever embeds the output.
 
 During step 1 of triage, every time. Match by **concept similarity, not keyword** — *night theme* matches `dark-mode.md`. On a match, surface it rather than acting on it:
 
-> This looks like `.claude/docs/out-of-scope/dark-mode.md` — rejected before because {reason}. Still the same view?
+> This looks like `.claude/evidence/out-of-scope/dark-mode.md` — rejected before because {reason}. Still the same view?
 
 The maintainer may **confirm** (append the new issue to *Prior requests*, close), **reconsider** (delete or rewrite the file, and the issue goes through normal triage), or **disagree** (related but distinct — normal triage).
 

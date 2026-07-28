@@ -20,11 +20,12 @@ The three knowledge layers and the truth hierarchy between them are in `CLAUDE.m
 │   └── web/                   a project earns a directory on the same test
 │       ├── routing.md         a domain earns a file — its own vocabulary
 │       └── forms.md           or ownership
-└── docs/
-    └── decisions/
-        ├── 0001-event-sourced-orders.md
-        └── 0002-postgres-for-write-model.md
+└── decisions/                 the third layer, a peer of the second
+    ├── 0001-event-sourced-orders.md
+    └── 0002-postgres-for-write-model.md
 ```
+
+Decisions sit beside Context rather than below it because `CLAUDE.md` presents the two as peers, and a tree that buries one of them contradicts the model on the page a reader meets first (ADR 0018).
 
 A single-package repo simply has no directories under `contexts/`. The flat case is not a special mode — it is the same model with nothing to group.
 

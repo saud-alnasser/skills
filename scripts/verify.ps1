@@ -5,7 +5,7 @@
 .DESCRIPTION
   Tenure ships as markdown, so there is no compiler to catch a broken build.
   This script is the substitute: every mechanically checkable acceptance
-  criterion in .claude/tickets/tenure/issues/ gets one assertion here, named
+  criterion in .claude/tickets/<effort>/issues/ gets one assertion here, named
   after the ticket that demands it.
 
   A criterion that cannot be checked mechanically (does the grill actually
@@ -13,11 +13,18 @@
   dogfood run, not by a script.
 
 .PARAMETER Ticket
-  Run only the assertions for one ticket, e.g. -Ticket 01. Omit to run all.
+  Run only the assertions for one ticket, addressed the way the tracker
+  addresses it: <effort>/NN, e.g. -Ticket layout/01. Omit to run all.
+
+  Ticket numbers restart at 01 in each effort, so the effort is part of the
+  id rather than a comment beside it. Where a comment in this file says a
+  bare "ticket NN", it means the effort that comment's own section belongs
+  to; a cross-effort reference is written out in full.
 
 .EXAMPLE
   pwsh scripts/verify.ps1
-  pwsh scripts/verify.ps1 -Ticket 03
+  pwsh scripts/verify.ps1 -Ticket tenure/03
+  pwsh scripts/verify.ps1 -Ticket layout/01
 #>
 [CmdletBinding()]
 param(
@@ -32,9 +39,14 @@ $script:Failures = @()
 $script:Passes = 0
 $script:CurrentTicket = ''
 $script:Ran = @()
+# Every id declared, filtered or not — the error message for an unknown
+# -Ticket is built from this rather than from a hand-kept list, which had
+# already drifted from the sections in the file.
+$script:Known = @()
 
 function Describe-Ticket {
   param([string]$Id, [string]$Name, [scriptblock]$Body)
+  $script:Known += $Id
   if ($Ticket -and $Ticket -ne $Id) { return }
   $script:Ran += $Id
   $script:CurrentTicket = $Id
@@ -117,9 +129,9 @@ function Test-UserInvoked {
   [bool]($fm -match '(?m)^disable-model-invocation:\s*true\s*$')
 }
 
-# --- ticket 01 — vendor the primitives ---------------------------------------
+# --- ticket tenure/01 — vendor the primitives ---------------------------------------
 
-Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
+Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
 
   $primitives = @('grilling', 'tdd', 'codebase-design', 'domain-modeling')
 
@@ -144,12 +156,19 @@ Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
   # a hardcoded `\` here silently un-exempts both files everywhere else — which
   # fails every assertion in this loop rather than passing one, but on someone
   # else's machine.
+  #
+  # `.claude/docs/` joins the table for layout/01 rather than in a table of its
+  # own. It is a different *kind* of legacy path — Tenure's own superseded
+  # layout, not another workflow's — but the guard is identical and the
+  # exemption it needs is the same two files, so a second table would be two
+  # places to add the next one.
   $legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
   $legacy = @{
     'CONTEXT\.md'     = 'CONTEXT.md (use .claude/context.md)'
     'CONTEXT-MAP\.md' = 'CONTEXT-MAP.md (use the routing table)'
-    'docs/adr/'       = 'docs/adr/ (use .claude/docs/decisions/)'
+    'docs/adr/'       = 'docs/adr/ (use .claude/decisions/)'
     '\.scratch/'      = '.scratch/ (use .claude/tickets/)'
+    '\.claude/docs/'  = '.claude/docs/ (ADR 0018 dissolved it — use .claude/{decisions,designs,evidence}/)'
   }
   foreach ($pattern in $legacy.Keys) {
     $label = $legacy[$pattern]
@@ -206,9 +225,9 @@ Describe-Ticket '01' 'vendor the primitives and rewrite their paths' {
   }
 }
 
-# --- ticket 15 — tool reference ----------------------------------------------
+# --- ticket tenure/15 — tool reference ----------------------------------------------
 
-Describe-Ticket '15' 'tool reference — how to drive every tool the workflow touches' {
+Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the workflow touches' {
 
   # file → the binary its entries invoke. The file is named for the platform,
   # the commands are named for the executable, and they are not the same word.
@@ -366,7 +385,7 @@ Describe-Ticket '15' 'tool reference — how to drive every tool the workflow to
   }
 }
 
-# --- ticket 02 — verification at use, healing where the break is found --------
+# --- ticket tenure/02 — verification at use, healing where the break is found --------
 
 # The always-on half of the discipline. ADR 0007: a rule that must hold
 # unconditionally has to live in CLAUDE.md, because a rule inside a skill only
@@ -422,9 +441,22 @@ $rulePattern = [ordered]@{
   # neither sees the other's claim.
   'the branch-name convention'         = '(?i)ticket.?id[^\r\n]{0,24}slug'
   'a claim held elsewhere is not taken' = '(?i)claim held elsewhere is \*{0,2}never\*{0,2} taken'
+  # layout/01. ADR-FORMAT.md owns ADR numbering, so it owns the rule that a
+  # number survives a move; MIGRATION.md reaches it by pointer. That direction
+  # was got wrong first time round — MIGRATION.md restated the rule, and the
+  # guard written alongside it matched only the restatement's wording, so it
+  # passed with both copies in the tree. This pattern matches the *subject*
+  # rather than either phrasing, which is what makes it detect a second home.
+  #
+  # A file may say "unchanged in content" freely, and MIGRATION.md has to.
+  # Number and slug spoken about together is what means the rule lives here.
+  'ADR numbers survive a move'         = '(?i)numbers? and slug|numbers and slugs'
+  # MIGRATION.md's own: the layout move is mechanical, so the classification
+  # step that governs every other row on that page does not run.
+  'a migrated file is not reclassified' = '(?i)classification does not apply'
 }
 
-Describe-Ticket '02' 'verification at use, healing where the break is found' {
+Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
 
   Assert "the always-on rules ship as the CLAUDE.md template /configure installs" {
     Test-Path (Join-Path $skills $claudeTemplate)
@@ -543,9 +575,9 @@ Describe-Ticket '02' 'verification at use, healing where the break is found' {
   }
 }
 
-# --- ticket 03 — /design, the whole planning surface -------------------------
+# --- ticket tenure/03 — /design, the whole planning surface -------------------------
 
-Describe-Ticket '03' 'the whole planning surface' {
+Describe-Ticket 'tenure/03' 'the whole planning surface' {
 
   Assert "/design ships as a skill" {
     Test-Path (Join-Path $skills 'design/SKILL.md')
@@ -692,9 +724,9 @@ Describe-Ticket '03' 'the whole planning surface' {
   }
 }
 
-# --- ticket 04 — /implement, build and record what moved ---------------------
+# --- ticket tenure/04 — /implement, build and record what moved ---------------------
 
-Describe-Ticket '04' 'build, and record what moved' {
+Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "/implement ships as a skill" {
     Test-Path (Join-Path $skills 'implement/SKILL.md')
@@ -917,9 +949,9 @@ Describe-Ticket '04' 'build, and record what moved' {
   }
 }
 
-# --- ticket 05 — /review, two axes --------------------------------------
+# --- ticket tenure/05 — /review, two axes --------------------------------------
 
-Describe-Ticket '05' 'review axes for Tenure' {
+Describe-Ticket 'tenure/05' 'review axes for Tenure' {
 
   Assert "/review ships as a skill" {
     Test-Path (Join-Path $skills 'review/SKILL.md')
@@ -1004,7 +1036,7 @@ Describe-Ticket '05' 'review axes for Tenure' {
   # surfaced explicitly, not silently accepted."
   Assert "a diff contradicting an ADR is surfaced explicitly, never silently accepted" {
     $c = Get-SkillFile 'review/SKILL.md'
-    if ($c -notmatch '\.claude/docs/decisions') { throw 'the decisions are never read' }
+    if ($c -notmatch '\.claude/decisions') { throw 'the decisions are never read' }
     $c -match '(?i)(contradict|conflict).{0,160}(surfac|report|explicit|say|flag)|(surfac|report|explicit|flag).{0,160}(contradict|conflict)'
   }
 
@@ -1170,9 +1202,9 @@ Describe-Ticket '05' 'review axes for Tenure' {
   }
 }
 
-# --- ticket 06 — /commit, the transaction boundary ---------------------------
+# --- ticket tenure/06 — /commit, the transaction boundary ---------------------------
 
-Describe-Ticket '06' 'the transaction boundary' {
+Describe-Ticket 'tenure/06' 'the transaction boundary' {
 
   Assert "/commit ships as a skill" {
     Test-Path (Join-Path $skills 'commit/SKILL.md')
@@ -1476,9 +1508,9 @@ Describe-Ticket '06' 'the transaction boundary' {
   }
 }
 
-# --- ticket 07 — /research and /prototype, the evidence commands -------------
+# --- ticket tenure/07 — /research and /prototype, the evidence commands -------------
 
-Describe-Ticket '07' 'vendor /research and /prototype' {
+Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
 
   foreach ($s in @('research', 'prototype')) {
     Assert "/$s ships as a skill" {
@@ -1498,11 +1530,11 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
   # Scoped to the step that writes it. "one small cited file" appears up in the
   # dispatch rationale, so a file-wide check stays green with the one-file rule
   # deleted from the place it governs.
-  Assert "findings are written to .claude/docs/research/, as one cited file" {
+  Assert "findings are written to .claude/evidence/research/, as one cited file" {
     $c = Get-SkillFile 'research/SKILL.md'
     $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*write one cited file.*?(?=^#{2}\s|\z)').Value
     if (-not $step) { throw 'writing the findings is not its own step' }
-    if ($step -notmatch '\.claude/docs/research/') { throw 'the findings location is wrong or missing' }
+    if ($step -notmatch '\.claude/evidence/research/') { throw 'the findings location is wrong or missing' }
     $step -match '(?i)one question, one[^\n]{0,40}file'
   }
 
@@ -1571,7 +1603,7 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
   # so a sentence-scoped pattern can never span it.
   Assert "existing research is read before new research is started" {
     $c = Get-SkillFile 'research/SKILL.md'
-    if ($c -notmatch '\.claude/docs/research/') { throw 'the findings directory is never read back' }
+    if ($c -notmatch '\.claude/evidence/research/') { throw 'the findings directory is never read back' }
     $c -match '(?i)before (starting|beginning)[^\n]{0,40}research|(existing|recorded)[^\n]{0,60}before[^\n]{0,40}research'
   }
 
@@ -1590,12 +1622,12 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
   # Against the table that declares them, not the file. Both paths are named
   # several times over, so a file-wide check survives either one being moved
   # out of .claude/ where it is actually specified.
-  Assert "code lives in .claude/prototypes/, the write-up in .claude/docs/prototypes/" {
+  Assert "code lives in .claude/prototypes/, the write-up in .claude/evidence/prototypes/" {
     $c = Get-SkillFile 'prototype/SKILL.md'
     $table = [regex]::Match($c, '(?ms)^\|\s*What\s*\|.*?(?=\r?\n\r?\n)').Value
     if (-not $table) { throw 'the two locations are not declared in one table' }
     if ($table -notmatch '`\.claude/prototypes/') { throw 'the code location is wrong or missing' }
-    if ($table -notmatch '`\.claude/docs/prototypes/') { throw 'the write-up location is wrong or missing' }
+    if ($table -notmatch '`\.claude/evidence/prototypes/') { throw 'the write-up location is wrong or missing' }
     $c -match '(?i)deliberately \*{0,2}apart'
   }
 
@@ -1750,9 +1782,9 @@ Describe-Ticket '07' 'vendor /research and /prototype' {
   }
 }
 
-# --- ticket 09 — the gap-fillers, and the tracker's one home -----------------
+# --- ticket tenure/09 — the gap-fillers, and the tracker's one home -----------------
 
-Describe-Ticket '09' 'vendor the gap-fillers' {
+Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
 
   $onramps = @('triage', 'diagnosing-bugs', 'handoff', 'resolving-merge-conflicts',
                'survey')
@@ -1911,7 +1943,7 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   # ADR 0003/0006: everything the workflow owns lives under .claude/.
   Assert "the out-of-scope knowledge base moved under .claude/" {
     $c = Get-SkillFile 'triage/OUT-OF-SCOPE.md'
-    if ($c -notmatch '\.claude/docs/out-of-scope/') { throw 'the location is not under .claude/docs/' }
+    if ($c -notmatch '\.claude/evidence/out-of-scope/') { throw 'the location is not under .claude/evidence/' }
     $stray = Get-SkillFiles |
       Select-String -Pattern '(?<![\w/.])\.out-of-scope/' |
       ForEach-Object { "$(Split-Path -Leaf $_.Path):$($_.LineNumber)" }
@@ -2054,9 +2086,9 @@ Describe-Ticket '09' 'vendor the gap-fillers' {
   }
 }
 
-# --- ticket 08 — /configure, initialize or migrate a repository --------------
+# --- ticket tenure/08 — /configure, initialize or migrate a repository --------------
 
-Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
+Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
 
   $cfg = 'configure/SKILL.md'
 
@@ -2202,9 +2234,14 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   $conversions = [ordered]@{
     'CONTEXT\.md'     = '\.claude/context\.md'
     'CONTEXT-MAP\.md' = '(\.claude/contexts/|deleted)'
-    'docs/adr/'       = '\.claude/docs/decisions/'
+    'docs/adr/'       = '\.claude/decisions/'
     'docs/agents/'    = '(CLAUDE\.md|\.claude/)'
     '\.scratch/'      = '\.claude/tickets/'
+    # layout/01. The one row whose source is Tenure's own superseded layout;
+    # it belongs here because the sweep below derives its candidate list from
+    # this table, and a legacy path the exempt files name without converting
+    # is exactly what that sweep exists to catch.
+    '\.claude/docs/'  = '(\.claude/(decisions|designs|evidence)/|deleted)'
   }
   foreach ($from in $conversions.Keys) {
     $to = $conversions[$from]
@@ -2391,9 +2428,13 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   }
 
   # ADR 0006's tree, minus the directories nothing has content for yet.
-  # domain-modeling creates files lazily; pre-creating `docs/research/` would
-  # assert that research happened. So the rest of the layout is named, with
-  # who fills it — not created empty.
+  # domain-modeling creates files lazily; pre-creating `evidence/research/`
+  # would assert that research happened. So the rest of the layout is named,
+  # with who fills it — not created empty.
+  #
+  # layout/01 replaced the single `docs/` entry with the four directories it
+  # dissolved into. All four are checked: after a change that moved every one
+  # of them, a list naming three is the likeliest way this goes wrong.
   Assert "the rest of the .claude tree is created lazily, not pre-created empty" {
     $gen = Get-Section (Get-SkillFile $cfg) 'Generate'
     $lazy = [regex]::Match($gen, '(?s)The rest of the tree.*?(?=\r?\n\r?\n)')
@@ -2402,7 +2443,8 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
     # Read off that sentence, not the section: `.claude/prototypes/` is named
     # again by the .gitignore bullet a few lines down, so a file-wide check
     # passes with the path dropped from the layout it is supposed to describe.
-    $missing = @('docs/', 'tickets/', 'prototypes/') | Where-Object { $lazy.Value -notmatch [regex]::Escape($_) }
+    $missing = @('decisions/', 'designs/', 'evidence/', 'tickets/', 'prototypes/') |
+      Where-Object { $lazy.Value -notmatch [regex]::Escape($_) }
     if ($missing) { throw "the layout never names: $($missing -join ', ')" }
     $true
   }
@@ -2438,9 +2480,9 @@ Describe-Ticket '08' 'initialize or migrate a repository onto Tenure' {
   }
 }
 
-# --- ticket 10 — /tenure, the router over the skill set ----------------------
+# --- ticket tenure/10 — /tenure, the router over the skill set ----------------------
 
-Describe-Ticket '10' 'router over the Tenure skill set' {
+Describe-Ticket 'tenure/10' 'router over the Tenure skill set' {
 
   $router = 'help/SKILL.md'
   # Read once. Eight assertions want the same file, and re-reading it in each
@@ -2679,9 +2721,9 @@ Describe-Ticket '10' 'router over the Tenure skill set' {
   }
 }
 
-# --- ticket 14 — tracker hierarchy, relationships, labels, titles ------------
+# --- ticket tenure/14 — tracker hierarchy, relationships, labels, titles ------------
 
-Describe-Ticket '14' 'hierarchy, relationships, labels, and title conventions' {
+Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title conventions' {
 
   $tickets = 'design/TICKETS.md'
   $map     = 'design/MAP.md'
@@ -2695,7 +2737,7 @@ Describe-Ticket '14' 'hierarchy, relationships, labels, and title conventions' {
   Assert "a ticket tracks work and never becomes a knowledge store" {
     $c = Get-SkillFile $tickets
     if ($c -notmatch '(?i)(implementation|engineering) (diar|log|journal)|no diar') { throw 'nothing forbids an implementation diary' }
-    $c -match '(?is)\.claude/docs/designs/[^.]{0,160}(referenc|link|point)|(?is)(referenc|link|point)[^.]{0,160}\.claude/docs/designs/'
+    $c -match '(?is)\.claude/designs/[^.]{0,160}(referenc|link|point)|(?is)(referenc|link|point)[^.]{0,160}\.claude/designs/'
   }
 
   # --- anti-booming ----------------------------------------------------------
@@ -2913,9 +2955,9 @@ Describe-Ticket '14' 'hierarchy, relationships, labels, and title conventions' {
   }
 }
 
-# --- ticket 13 — the engineering rules, distributed --------------------------
+# --- ticket tenure/13 — the engineering rules, distributed --------------------------
 
-Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
+Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflow' {
 
   # "Every one of the nineteen principles is accounted for — placed, cut, or
   # identified as embodied elsewhere. None silently dropped." The three tables
@@ -3123,9 +3165,9 @@ Describe-Ticket '13' 'distribute the engineering rules across the workflow' {
   }
 }
 
-# --- ticket 16 — Position, and the line between shared and local -------------
+# --- ticket tenure/16 — Position, and the line between shared and local -------------
 
-Describe-Ticket '16' 'position, and the line between shared and local' {
+Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
 
   # Criterion 1, and criterion 4 with it. Both reduce to the same mechanical
   # question: does the committed always-on file name anything the ignore file
@@ -3246,9 +3288,9 @@ Describe-Ticket '16' 'position, and the line between shared and local' {
   }
 }
 
-# --- ticket 17 — assignment, and the branch as the lock ----------------------
+# --- ticket tenure/17 — assignment, and the branch as the lock ----------------------
 
-Describe-Ticket '17' 'assignment, claim, and the branch as the lock' {
+Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
 
   $imp = 'implement/SKILL.md'
   $tix = 'design/TICKETS.md'
@@ -3378,9 +3420,9 @@ Describe-Ticket '17' 'assignment, claim, and the branch as the lock' {
   }
 }
 
-# --- ticket 18 — what tenure may write to a shared tracker -------------------
+# --- ticket tenure/18 — what tenure may write to a shared tracker -------------------
 
-Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
+Describe-Ticket 'tenure/18' 'what tenure may write to a tracker other people read' {
 
   $gh  = 'tools/github.md'
   $tix = 'design/TICKETS.md'
@@ -3510,9 +3552,9 @@ Describe-Ticket '18' 'what tenure may write to a tracker other people read' {
   }
 }
 
-# --- ticket 19 — on a stack, blocked means stacked ---------------------------
+# --- ticket tenure/19 — on a stack, blocked means stacked ---------------------------
 
-Describe-Ticket '19' 'on a stack, blocked means stacked' {
+Describe-Ticket 'tenure/19' 'on a stack, blocked means stacked' {
 
   $imp = 'implement/SKILL.md'
   $gt  = 'tools/graphite.md'
@@ -3620,9 +3662,9 @@ Describe-Ticket '19' 'on a stack, blocked means stacked' {
   }
 }
 
-# --- ticket 20 — ship tenure as a plugin -------------------------------------
+# --- ticket tenure/20 — ship tenure as a plugin -------------------------------------
 
-Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type' {
+Describe-Ticket 'tenure/20' 'ship tenure as a plugin, and shorten the names people type' {
 
   # Both manifests are read as JSON rather than grepped: a file that does not
   # parse is not a manifest, and every field below is only meaningful if it
@@ -3819,6 +3861,183 @@ Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type
   }
 }
 
+# --- ticket layout/01 — dissolve the docs level ------------------------------
+
+Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
+
+  # The headline criterion — "no file under ./skills names a .claude/docs/
+  # path" — is asserted by the $legacy sweep in ticket tenure/01, where the
+  # other superseded paths already are. What is here is the other half: the
+  # new homes are actually named, by the skill that writes to each. Without
+  # this, deleting every mention of a location passes the sweep.
+
+  # skill that owns writing it → where it now writes.
+  $homes = [ordered]@{
+    'domain-modeling/ADR-FORMAT.md' = '\.claude/decisions/'
+    'design/SPEC-FORMAT.md'         = '\.claude/designs/'
+    'research/SKILL.md'             = '\.claude/evidence/research/'
+    'prototype/SKILL.md'            = '\.claude/evidence/prototypes/'
+    'triage/OUT-OF-SCOPE.md'        = '\.claude/evidence/out-of-scope/'
+  }
+  foreach ($file in $homes.Keys) {
+    $path = $homes[$file]
+    Assert "$file writes to $($path -replace '\\','')" {
+      (Get-SkillFile $file) -match $path
+    }
+  }
+
+  # ADR 0018's actual claim, and the only one a path rewrite can satisfy
+  # accidentally: Decisions are a *peer* of Context, so the tree domain-modeling
+  # draws has to show them at the same depth. Matched structurally — a
+  # `decisions/` at the top level of the fence, with no `docs/` above it —
+  # because the prose around it could say "peer" while the diagram says
+  # otherwise, and the diagram is what a reader copies.
+  Assert "domain-modeling's tree puts decisions/ beside contexts/, not below docs/" {
+    $c = Get-SkillFile 'domain-modeling/SKILL.md'
+    $fence = [regex]::Match($c, '(?ms)^```\r?\n\.claude/\r?\n(.*?)^```')
+    if (-not $fence.Success) { throw 'the .claude/ tree is gone' }
+    $tree = $fence.Groups[1].Value
+    if ($tree -match '(?m)^[^\r\n]*\bdocs/') { throw 'the docs level is still in the tree' }
+    # A top-level entry is one whose box-drawing prefix is the first thing on
+    # the line; a nested one is indented behind its parent's `│` or spaces.
+    if ($tree -notmatch '(?m)^[├└]──\s*decisions/') { throw 'decisions/ is not at the top level' }
+    if ($tree -notmatch '(?m)^[├└]──\s*contexts/') { throw 'contexts/ is not at the top level' }
+    $true
+  }
+
+  # The ignore pattern has to be anchored, and this is not cosmetic: a bare
+  # `prototypes/` matches at every depth, so it swallows `evidence/prototypes/`
+  # — the write-ups, which are kept. ADR 0018 says moving the write-up resolves
+  # the collision "as a side effect"; against git's matching rules it does not,
+  # and the anchor is what actually resolves it. Verified against git rather
+  # than reasoned about: the two directories differ only in depth, which is
+  # exactly what an unanchored pattern ignores.
+  Assert "the shipped .gitignore anchors /prototypes/ so evidence write-ups survive" {
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
+    if (-not $block.Success) { throw 'the .gitignore block is gone' }
+    $entries = $block.Groups[1].Value -split '\r?\n' | Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' }
+    if ($entries -notcontains '/prototypes/') {
+      throw "unanchored — would also ignore evidence/prototypes/: $($entries -join ', ')"
+    }
+    $true
+  }
+
+  # The consequence ADR 0018 names: throwaway prototype code and the write-up
+  # stop being one word apart at the same depth with opposite gitignore status.
+  # Both halves — asserting only the move leaves the code silently relocated.
+  Assert "prototype code stays at .claude/prototypes/ while the write-up moves under evidence/" {
+    $c = Get-SkillFile 'prototype/SKILL.md'
+    if ($c -notmatch '\.claude/prototypes/') { throw 'the throwaway-code location is gone' }
+    if ($c -notmatch '\.claude/evidence/prototypes/') { throw 'the write-up did not move' }
+    $true
+  }
+
+  # `evidence/` earns its existence by grouping things that share a property —
+  # nothing revalidates them. A Knowledge Layer filed under it would make it
+  # the `docs/` this ticket just deleted, wearing a better name.
+  Assert "no Knowledge Layer is filed under evidence/" {
+    $bad = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '\.claude/evidence/(decisions|designs|contexts)/' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) }
+    if ($bad) { throw "a knowledge layer is under evidence/ in: $($bad -join ', ')" }
+    $true
+  }
+
+  # --- the migration --------------------------------------------------------
+
+  # "The shipped migration branch converts an existing Tenure repository's
+  # layout." Each old location needs a row naming where it goes — the same
+  # shape the mattpocock rows use, which is what ticket tenure/08's sweep over
+  # the exempt files reads.
+  # Keys are the *superseded* paths — this is the one table in the file that
+  # has to keep naming them, because it asserts they are converted rather than
+  # merely absent.
+  $layoutRows = [ordered]@{
+    '\.claude/docs/decisions/'    = '\.claude/decisions/'
+    '\.claude/docs/designs/'      = '\.claude/designs/'
+    '\.claude/docs/research/'     = '\.claude/evidence/research/'
+    '\.claude/docs/prototypes/'   = '\.claude/evidence/prototypes/'
+    '\.claude/docs/out-of-scope/' = '\.claude/evidence/out-of-scope/'
+  }
+  foreach ($from in $layoutRows.Keys) {
+    $to = $layoutRows[$from]
+    Assert "the migration carries $($from -replace '\\','') across, and names where it goes" {
+      $mig = Get-SkillFile 'configure/MIGRATION.md'
+      if ($mig -notmatch "(?m)^\|[^\r\n]*$from[^\r\n]*\|[^\r\n]*$to") {
+        throw 'no row, or the row does not name the destination'
+      }
+      $true
+    }
+  }
+
+  # "Preserving each decision record's number and slug." Asserted where the
+  # rule lives, not where this ticket happened to need it — ADR-FORMAT.md owns
+  # ADR numbering, and the single-home check in ticket tenure/02 is what stops
+  # MIGRATION.md growing a second copy.
+  #
+  # The reason is what makes it a rule rather than a preference: inbound
+  # references resolve by number, so renumbering breaks all of them at once.
+  # Without it stated, the next person to see a gap in the sequence closes it.
+  Assert "ADR-FORMAT preserves numbers and slugs across a move, and says why" {
+    $adr = Get-SkillFile 'domain-modeling/ADR-FORMAT.md'
+    if ($adr -notmatch $rulePattern['ADR numbers survive a move']) {
+      throw 'the preservation rule is not stated'
+    }
+    if ($adr -notmatch '(?is)(referenc|resolve)[^.]{0,200}number') {
+      throw 'stated without the reason inbound references depend on'
+    }
+    # It has to cover *this* move, not only a migration in from someone else's
+    # layout — which is all it said before layout/01, and would have read as
+    # not applying to Tenure's own change.
+    if ($adr -notmatch '(?is)whenever|(in from another layout, or|as well as)') {
+      throw 'scoped to migrations in from elsewhere, so it misses this one'
+    }
+    $true
+  }
+
+  # And MIGRATION.md reaches that rule rather than restating it. A pointer is
+  # what keeps the rule in one place; the assertion is here because this is the
+  # ticket that introduced the second site.
+  Assert "the layout migration points at the numbering rule instead of restating it" {
+    $mig = Get-SkillFile 'configure/MIGRATION.md'
+    $mig -match '(?i)ADR-FORMAT\.md'
+  }
+
+  # The layout migration's risk is the opposite of the mattpocock migration's:
+  # not a wrong classification, but a reference left pointing at a directory
+  # that is gone. A page that converts files and never repairs what named them
+  # leaves the repository half-migrated and passing.
+  Assert "the migration repairs what pointed at the old locations" {
+    $mig = Get-SkillFile 'configure/MIGRATION.md'
+    $mig -match '(?is)(Source Pointer|referenc)[^.]{0,300}(broken|update|repair)'
+  }
+
+  # /configure has to *find* a repository on the old layout, or the branch it
+  # gained is unreachable. Scoped to the detect step for ticket tenure/08's
+  # reason: MIGRATION.md names the path too, as something it converts, so a
+  # file-wide search passes while nothing ever looks for it.
+  Assert "detection finds a Tenure repository still on the superseded layout" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Detect'
+    $s -match '\.claude/docs/'
+  }
+
+  # --- still lazy -----------------------------------------------------------
+
+  # "/configure still pre-creates none of these directories." The rewrite ran
+  # through the sentence that says so, and a rewrite is exactly how a rule gets
+  # dropped while its neighbours survive. Both halves: the new paths, and the
+  # laziness that still governs them.
+  Assert "the new directories are still created lazily, never pre-created" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate'
+    $named = @('\.claude/decisions/', '\.claude/designs/', 'evidence/')
+    $missing = $named | Where-Object { $s -notmatch $_ }
+    if ($missing) { throw "not covered by the lazy rule: $($missing -join ', ')" }
+    if ($s -notmatch '(?i)created lazily') { throw 'the laziness rule is gone' }
+    if ($s -notmatch '(?i)does not pre-create') { throw 'nothing forbids pre-creating them' }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero
@@ -3826,7 +4045,9 @@ Describe-Ticket '20' 'ship tenure as a plugin, and shorten the names people type
 if ($Ticket -and $script:Ran.Count -eq 0) {
   Write-Host ""
   Write-Host "no ticket '$Ticket' — nothing ran" -ForegroundColor Red
-  Write-Host "known tickets: 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 13, 14, 15, 16, 17, 18, 19, 20 (two digits)" -ForegroundColor DarkGray
+  # Listed from the ids the run actually declared, so an effort added later
+  # cannot be missing from its own error message.
+  Write-Host "known tickets: $($script:Known -join ', ')" -ForegroundColor DarkGray
   exit 2
 }
 

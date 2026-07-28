@@ -1,6 +1,6 @@
 # Spec Format
 
-Standard and above. Written to `.claude/docs/designs/<slug>.md`.
+Standard and above. Written to `.claude/designs/<slug>.md`.
 
 A spec is the reasoning behind the tickets — the thing that lets someone judge whether the tickets are the right ones. Tickets say what to build; the spec says why that and not something else.
 
@@ -65,7 +65,7 @@ creeping back in during review.
 - **No file paths outside `Sources:`, and no code.** Both go stale, and inside a spec they read as commitments. The exception is a snippet from a prototype that encodes a decision more precisely than prose can — a state machine, a reducer, a schema, a type shape. Inline it, say it came from a prototype, trim it to the decision-rich part.
 - **Use the repository's vocabulary.** Terms come from `.claude/context.md` and the Domain Contexts the work touches. A spec that invents its own words for existing concepts forces every reader to translate.
 - **A section with nothing to say gets deleted, not padded.** Filler trains the reader to skim, and the sections that matter are the casualty.
-- **The spec is not the decision record.** When the grill produced something that passes the 3-of-3 test, it becomes an ADR in `.claude/docs/decisions/` and the spec links to it. A spec is superseded by the next spec; an ADR is not.
+- **The spec is not the decision record.** When the grill produced something that passes the 3-of-3 test, it becomes an ADR in `.claude/decisions/` and the spec links to it. A spec is superseded by the next spec; an ADR is not.
 
 ## Status
 

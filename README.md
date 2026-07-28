@@ -50,8 +50,8 @@ This repository is itself configured by Tenure, so `.claude/` here is an example
 There is no package manifest and no test runner. `scripts/verify.ps1` stands in for one:
 
 ```
-pwsh -NoProfile -File scripts/verify.ps1            # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket 20 # one, two digits
+pwsh -NoProfile -File scripts/verify.ps1                    # all tickets
+pwsh -NoProfile -File scripts/verify.ps1 -Ticket tenure/20  # one, as <effort>/NN
 ```
 
 ## Licence

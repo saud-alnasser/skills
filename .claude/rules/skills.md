@@ -9,9 +9,11 @@ Standards this repository holds itself to when changing what ships. The vocabula
 There is no package manifest and no test runner here. `verify.ps1` asserts each ticket's mechanically-checkable acceptance criteria against `./skills`, and it is the only thing that catches a broken build.
 
 ```
-pwsh -NoProfile -File scripts/verify.ps1            # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket 09 # one, two digits
+pwsh -NoProfile -File scripts/verify.ps1                    # all tickets
+pwsh -NoProfile -File scripts/verify.ps1 -Ticket tenure/09  # one, as <effort>/NN
 ```
+
+Ticket numbers restart at `01` in each effort, so the effort is part of the id. An unknown id exits `2` and lists what it knows, rather than passing with nothing run.
 
 A change that adds a checkable claim and no assertion is untested by construction, not merely under-tested.
 
@@ -37,4 +39,4 @@ This bans shortening **for brevity**, not every short name. `review` is model-in
 
 ## Nothing shipped names a pre-migration path
 
-`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what Tenure migrates *away from*. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.
+`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what Tenure migrates *away from*, and `.claude/docs/` is Tenure's own superseded layout (ADR 0018) — the same guard covers both kinds. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.

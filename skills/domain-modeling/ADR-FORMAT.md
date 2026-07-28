@@ -1,6 +1,6 @@
 # ADR Format
 
-Decisions are preserved as ADRs in `.claude/docs/decisions/`, sequentially numbered: `0001-slug.md`, `0002-slug.md`, and so on.
+Decisions are preserved as ADRs in `.claude/decisions/`, sequentially numbered: `0001-slug.md`, `0002-slug.md`, and so on.
 
 Create the directory lazily — only when the first ADR is needed.
 
@@ -26,9 +26,9 @@ Mandatory sections produce filler, and filler trains the reader to skim.
 
 ## Numbering
 
-Scan `.claude/docs/decisions/` for the highest existing number and increment by one.
+Scan `.claude/decisions/` for the highest existing number and increment by one.
 
-When migrating decisions in from another layout, **preserve each ADR's existing number and slug** rather than renumbering. Inbound references to `0007` must keep resolving.
+Whenever decisions move — in from another layout, or across a change to Tenure's own — **preserve each ADR's existing number and slug** rather than renumbering. Inbound references to `0007` must keep resolving, and they resolve by number, so renumbering to close a gap breaks every one of them at once.
 
 ## Supersession
 

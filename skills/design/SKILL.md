@@ -105,7 +105,7 @@ Report the classification, the gates that fired, and the resulting tier. The use
 Formats:
 
 - [TICKETS.md](TICKETS.md) — always.
-- [SPEC-FORMAT.md](SPEC-FORMAT.md) — Standard and above. Written to `.claude/docs/designs/`.
+- [SPEC-FORMAT.md](SPEC-FORMAT.md) — Standard and above. Written to `.claude/designs/`.
 - [MAP.md](MAP.md) — only when the fog gate fired. That branch exists; everything about it lives in that file.
 
 Read a format file when the tier selects it, not before. Knowing what the deliverable looks like while you are still grilling is an invitation to rush toward it.

@@ -52,7 +52,7 @@ A repository with no `.claude/` has not been configured and has no Context to co
 
 Acceptance criteria can span several commits, so this is the only place the last one is knowable — the diff is finished and its effect on the criteria is visible.
 
-When this commit completes them, set `Status: implemented` on the spec in `.claude/docs/designs/`. **Only the status line moves** — never a word of the spec's content. The full status vocabulary, and why the rest of the document is frozen, are in `/design`'s [`SPEC-FORMAT.md`](../design/SPEC-FORMAT.md).
+When this commit completes them, set `Status: implemented` on the spec in `.claude/designs/`. **Only the status line moves** — never a word of the spec's content. The full status vocabulary, and why the rest of the document is frozen, are in `/design`'s [`SPEC-FORMAT.md`](../design/SPEC-FORMAT.md).
 
 Do this **before staging**, not after committing. The spec is a tracked file, so marking it afterwards leaves the tree dirty the moment the commit lands — and a dirty tree defeats the Marker's clean path on the very next turn, which is the whole point of the step below.
 

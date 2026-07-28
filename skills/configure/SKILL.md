@@ -15,6 +15,7 @@ Which branch runs is decided by **what it finds, never by a flag.** A flag lets 
 | no Tenure, no AI workflow | analyse, then generate |
 | no Tenure, another AI workflow present | the above, plus the migration in [MIGRATION.md](MIGRATION.md) |
 | Tenure already present | audit, and generate whatever is still missing |
+| Tenure present on a superseded layout | the above, plus the layout migration in [MIGRATION.md](MIGRATION.md) |
 
 **Every run generates.** The third row audits *as well*, it does not audit *instead* — a first run interrupted halfway leaves a repository with `context.md` and no `tracker.md`, which detects as "Tenure already present" and would otherwise never be finished. The branch changes what is *found*, never which steps run.
 
@@ -32,6 +33,7 @@ Nothing is generated before the repository has been looked at. Search for an exi
 .claude/            CLAUDE.md            AGENTS.md
 CONTEXT.md          CONTEXT-MAP.md       docs/agents/
 docs/adr/           .scratch/            .ai/
+.claude/docs/       — Tenure's own superseded layout
 .cursor/ .cursorrules                    .windsurfrules
 .clinerules         .github/copilot-instructions.md
 ```
@@ -54,13 +56,15 @@ The user may strike any line. A struck line is not worked around: leave it as it
 
 ## 3 — Migrate, where there is something to migrate
 
-[MIGRATION.md](MIGRATION.md) has this branch, and step 1 decides whether to open it: another AI workflow found, read it; greenfield, skip it entirely. Reading it on a repository with nothing to migrate costs context and answers nothing.
+[MIGRATION.md](MIGRATION.md) has this branch, and step 1 decides whether to open it: another AI workflow found, or Tenure found on a superseded layout, read it; greenfield, skip it entirely. Reading it on a repository with nothing to migrate costs context and answers nothing.
+
+The two cases are different work and only one page. Converting another workflow classifies prose and reshapes it, so it is judgement all the way down. Converting Tenure's own superseded layout moves files whose format is already correct, so it is mechanical — and its risk is the opposite one: not a wrong classification, but a reference left pointing at a directory that no longer exists.
 
 ## 4 — Generate
 
 **Write what is missing; check what is already there.** Both, on every run — a file that exists is checked against the repository it claims to describe, and one that does not is written. Neither is conditional on which branch step 1 selected.
 
-The rest of the tree — `.claude/docs/{decisions,designs,research,prototypes}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `docs/research/` is a claim that research happened.
+The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
 **`.claude/context.md` and `.claude/contexts/**`.** The format, the routing table, and the test a domain has to pass before it earns a file are `domain-modeling`'s — see its [`CONTEXT-FORMAT.md`](../domain-modeling/CONTEXT-FORMAT.md); the compression test that gates every line of it is in `CLAUDE.md`. What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file.
 
@@ -84,9 +88,14 @@ The **single-file test command** is the one entry that must not be missing. It i
 # would be equally true everywhere is knowledge, and knowledge is committed.
 #
 # `.claude/tenure.md` says what depends on that being true.
+#
+# The leading slash on `/prototypes/` is load-bearing. Unanchored, the pattern
+# matches at every depth, so it would also swallow `evidence/prototypes/` —
+# the write-ups, which are kept and committed. Ignoring throwaway code is the
+# whole intent; ignoring the record of what it proved is silent data loss.
 
 marker.json
-prototypes/
+/prototypes/
 settings.local.json
 ```
 

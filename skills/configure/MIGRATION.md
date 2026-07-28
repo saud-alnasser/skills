@@ -26,11 +26,32 @@ The case this will meet most often, since Tenure is derived from those skills. E
 | --- | --- |
 | `CONTEXT.md` | `.claude/context.md`, reshaped to orientation plus a routing table |
 | `CONTEXT-MAP.md` | deleted — structure is carried by directories under `.claude/contexts/` |
-| `docs/adr/*` | `.claude/docs/decisions/`, unchanged in content |
+| `docs/adr/*` | `.claude/decisions/`, unchanged in content |
 | `docs/agents/*` | folded into `CLAUDE.md` and `.claude/tracker.md`; the originals are removed |
 | `.scratch/*` | `.claude/tickets/` |
 
 `CONTEXT.md` is the only one that is genuinely a rewrite. matt's is a glossary; Tenure's `context.md` is orientation with a routing table at the end, and the Domain Contexts it routes to may not exist yet. The glossary's terms survive; the file's shape does not.
+
+## The Tenure layout migration
+
+Tenure once grouped decisions, designs, research, and prototype write-ups under `.claude/docs/`. ADR 0018 dissolved that level, so a repository configured before it needs carrying across. This is the one migration whose source *is* Tenure — every other row on this page converts somebody else's workflow.
+
+| From | To |
+| --- | --- |
+| `.claude/docs/decisions/*` | `.claude/decisions/`, unchanged in content |
+| `.claude/docs/designs/*` | `.claude/designs/`, unchanged in content |
+| `.claude/docs/research/*` | `.claude/evidence/research/`, unchanged in content |
+| `.claude/docs/prototypes/*` | `.claude/evidence/prototypes/`, unchanged in content |
+| `.claude/docs/out-of-scope/*` | `.claude/evidence/out-of-scope/`, unchanged in content |
+| `.claude/docs/` itself | deleted, once empty |
+
+**A file moves; it is never rewritten.** Unlike the mattpocock rows above, nothing here changes shape — the destination format is the source format, and the whole change is which directory the file sits in. Classification does not apply and neither does the compression test: this content was already admitted to Tenure once.
+
+**ADRs keep their filenames.** The rule is `domain-modeling`'s — see the numbering section of [ADR-FORMAT.md](../domain-modeling/ADR-FORMAT.md) — and it governs this move exactly as it governs a migration in from somebody else's layout.
+
+Then repair what pointed at the old paths. `CLAUDE.md`, `.claude/context.md`, the Domain Contexts, tickets, and specs all name these locations, and a Source Pointer to `.claude/docs/decisions/` is broken the moment the directory is gone. **Do not leave a pointer stub** — the section below applies to references from outside Tenure's reach, and every reference here is inside it, so the fix is to update the reference.
+
+A repository that has never had `.claude/docs/` needs none of this. Say so and skip it; there is nothing to report but its absence.
 
 ## Classify, never copy
 

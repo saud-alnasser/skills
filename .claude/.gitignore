@@ -5,5 +5,5 @@
 # `.claude/tenure.md` says what depends on that being true.
 
 marker.json
-prototypes/
+/prototypes/
 settings.local.json

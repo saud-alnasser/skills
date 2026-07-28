@@ -11,7 +11,7 @@ What it produces is **Evidence**: a record of what was checked and when. Nothing
 
 ## 0 — Has this already been answered?
 
-Read `.claude/docs/research/` before starting new research. A finding whose question matches and whose assumptions still hold is the answer — cite it and move on.
+Read `.claude/evidence/research/` before starting new research. A finding whose question matches and whose assumptions still hold is the answer — cite it and move on.
 
 Check its **verified-against line** first. A finding recorded against a version you are no longer on has not aged into being wrong, it has aged into being unknown, and it is re-run rather than trusted.
 
@@ -35,7 +35,7 @@ The rule against guessing an API — and a CLI counts — is in `CLAUDE.md`. It 
 
 ## 3 — Write one cited file
 
-One question, one Markdown file, in `.claude/docs/research/`.
+One question, one Markdown file, in `.claude/evidence/research/`.
 
 ```markdown
 # <the question, as a question>

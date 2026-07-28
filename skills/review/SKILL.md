@@ -51,7 +51,7 @@ In order, stopping at the first that answers:
 1. **The ticket the caller is holding.** `/implement` knows which ticket it claimed; that is the spec.
 2. **Issue references in the commit messages** — resolve them through the tracker ([`tools/github.md`](../tools/github.md), [`tools/gitlab.md`](../tools/gitlab.md)).
 3. **A path the user passed.**
-4. **A spec under `.claude/docs/designs/`** matching the branch or the feature.
+4. **A spec under `.claude/designs/`** matching the branch or the feature.
 
 If none of these answers, ask. If the user says there is no spec, the Spec axis reports **no spec available** and is skipped — it does not reconstruct one from the diff. **Never invent, guess, or infer the requirements from the code being reviewed**: a spec derived from the diff agrees with the diff by construction, which turns the axis into a rubber stamp while still producing a report that reads like a review.
 
@@ -61,7 +61,7 @@ This repository's own standards, always first:
 
 - `.claude/rules/` — the standards `/configure` discovered here, path-scoped where they apply to part of the tree
 - `.claude/context.md` and the Domain Contexts it routes to — boundaries and ownership
-- `.claude/docs/decisions/` — the ADRs
+- `.claude/decisions/` — the ADRs
 - `CONTRIBUTING.md` and whatever else this repository documents about how code is written
 
 Under those sits a fallback vocabulary of design smells, in [SMELLS.md](SMELLS.md). It exists so that a repository documenting nothing still gets a review with something to say. **The repository always overrides it.** Where a documented standard endorses something the baseline would flag, the standard wins and the smell is suppressed — silently, without a note explaining that Tenure would have preferred otherwise.
@@ -119,7 +119,7 @@ Record an acceptance as an **ADR** when it clears the 3-of-3 test in [`domain-mo
 
 ## Reviews are never persisted
 
-There is no `.claude/docs/reviews/`. A review is about a diff, and once that diff is merged its subject no longer exists — a stored review is a document describing a state of the repository that has not been true since the day it was written.
+There is no `.claude/reviews/`. A review is about a diff, and once that diff is merged its subject no longer exists — a stored review is a document describing a state of the repository that has not been true since the day it was written.
 
 Everything durable graduates out instead: a fix is in the code, a boundary rule is in Context, an accepted trade-off is an ADR, an unfixed problem is a ticket. What is left after those four is genuinely disposable.
 

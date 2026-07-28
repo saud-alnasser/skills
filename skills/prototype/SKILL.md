@@ -11,7 +11,7 @@ The durable output is not the code. It is a **write-up**, and the code is delete
 
 ## 0 — Has this already been answered?
 
-Read `.claude/docs/prototypes/` first. **Reuse operates on the write-up, not on the code** — the code is gone by design, and rebuilding an experiment whose answer is already recorded is the waste this directory exists to prevent.
+Read `.claude/evidence/prototypes/` first. **Reuse operates on the write-up, not on the code** — the code is gone by design, and rebuilding an experiment whose answer is already recorded is the waste this directory exists to prevent.
 
 Same question, assumptions still hold, conclusion recorded: trust it.
 
@@ -29,7 +29,7 @@ The two produce very different things, and getting it wrong wastes the whole pro
 | What | Where | Fate |
 | --- | --- | --- |
 | The code | `.claude/prototypes/<name>/` | deleted, always |
-| The write-up | `.claude/docs/prototypes/<name>.md` | kept |
+| The write-up | `.claude/evidence/prototypes/<name>.md` | kept |
 
 The two are deliberately **apart**, because the write-up outlives the code and a document filed next to something that is about to be deleted invites deleting both.
 
@@ -57,7 +57,7 @@ The interesting feedback is the moment they say *wait, that shouldn't be possibl
 
 **Before deleting anything.** A prototype is not finished until its conclusion is recorded, and that ordering is the whole mechanism — deleting code that took real effort is uncomfortable, and a write-up deferred until after the deletion is a write-up that never gets written.
 
-`.claude/docs/prototypes/<name>.md`:
+`.claude/evidence/prototypes/<name>.md`:
 
 ```markdown
 # <the question tested, as a question>
