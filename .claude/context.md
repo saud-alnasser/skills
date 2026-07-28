@@ -35,7 +35,7 @@ A navigation coordinate — "start investigating here." Never a claim about what
 _Avoid_: reference, path, link
 
 **Decision**:
-Why an approach was selected, preserved as an ADR at `.claude/docs/decisions/`. A draft until committed; after that its reasoning is frozen and only its status moves. A changed mind is a new file that supersedes it.
+Why an approach was selected, preserved as an ADR at `.claude/decisions/`. A draft until committed; after that its reasoning is frozen and only its status moves. A changed mind is a new file that supersedes it.
 _Avoid_: rationale doc, design doc
 
 **Evidence**:

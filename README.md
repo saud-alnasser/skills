@@ -41,8 +41,8 @@ A repository Tenure has configured stays useful to them. `CLAUDE.md` is committe
 skills/                  the plugin's skills — the whole framework
 scripts/verify.ps1       asserts the build tickets' acceptance criteria against ./skills
 .claude/                 this repository's own knowledge, written by Tenure
-├── docs/decisions/      the decisions behind the framework
-└── tickets/tenure/      the spec and the build tickets
+├── decisions/           the decisions behind the framework
+└── tickets/<effort>/    each effort's spec and build tickets
 ```
 
 This repository is itself configured by Tenure, so `.claude/` here is an example of the output as well as the input to it. `skills/` is what ships; `.claude/` is what this repository runs on.

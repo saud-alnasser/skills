@@ -21,7 +21,9 @@ A change that adds a checkable claim and no assertion is untested by constructio
 
 Single-home is asserted, not trusted. When a rule is placed, add its guard to `$rulePattern` in `verify.ps1`.
 
-**Check that the guard would actually fire.** Two guards have been written that matched a phrase travelling *with* a rule rather than the rule itself, and both passed while the restatement they existed to catch sat in the tree. Write the guard, then confirm it fails against a deliberate restatement before trusting it.
+**Check that the guard would actually fire.** The recurring failure is a guard that matches a phrase travelling *with* the thing it checks rather than the thing itself — it passes while what it existed to catch sits in the tree. It has happened often enough not to be worth counting; assume you have just written one. Write the guard, then confirm it fails against a deliberate reintroduction before trusting it.
+
+Two shapes it takes. A guard written from *your own* new wording matches only that wording, so an existing restatement elsewhere goes unseen — match the subject instead. And a guard covering two claims passes when either holds, so deleting one leaves it green — one assertion per site, anchored to that site.
 
 ## Derived skills carry their attribution
 

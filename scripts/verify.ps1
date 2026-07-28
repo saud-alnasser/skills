@@ -4038,6 +4038,124 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   }
 }
 
+# --- ticket layout/02 — adopt the layout here --------------------------------
+
+# The only section that asserts against `.claude/` rather than `./skills`, and
+# it has to: this ticket's subject *is* this repository's own tree. The two are
+# kept apart everywhere else — `skills/` is what ships, `.claude/` is what this
+# repository runs on — so reading the second one here is the exception, not a
+# licence to widen the others.
+Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
+
+  function Get-RepoFile {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  Assert "decisions sit beside Context, and the docs level is gone" {
+    if (-not (Test-Path (Join-Path $repo '.claude/decisions'))) { throw '.claude/decisions/ does not exist' }
+    if (Test-Path (Join-Path $repo '.claude/docs')) { throw '.claude/docs/ is still here' }
+    $true
+  }
+
+  # "Every number and slug unchanged." Numbers are what inbound references
+  # resolve by, so a gap or a duplicate is what breaking them looks like —
+  # checked as a sequence rather than a count, because losing 0007 and gaining
+  # 0021 keeps the count identical.
+  Assert "every ADR number survives the move, contiguous and unique" {
+    $adrs = Get-ChildItem (Join-Path $repo '.claude/decisions') -Filter '*.md' | Sort-Object Name
+    if ($adrs.Count -eq 0) { throw 'no decision records at the new location' }
+    $numbers = $adrs | ForEach-Object {
+      if ($_.Name -notmatch '^(\d{4})-.+\.md$') { throw "not numbered-and-slugged: $($_.Name)" }
+      [int]$Matches[1]
+    }
+    $dupes = $numbers | Group-Object | Where-Object Count -gt 1
+    if ($dupes) { throw "duplicated: $(($dupes.Name) -join ', ')" }
+    $expected = 1..$adrs.Count
+    $gaps = Compare-Object $expected $numbers | Where-Object SideIndicator -eq '<='
+    if ($gaps) { throw "missing: $(($gaps.InputObject | ForEach-Object { '{0:d4}' -f $_ }) -join ', ')" }
+    $true
+  }
+
+  # Scoped to the files that *navigate*. Three kinds of file are deliberately
+  # excluded and each for its own reason: an accepted ADR is frozen (0018
+  # records the supersession rather than editing 0006), `.claude/rules/` states
+  # the legacy-path rule and has to name what it rejects, and the tickets are
+  # the build record — rewriting a resolved ticket makes it describe a decision
+  # nobody made. The ticket's criterion allows exactly this: "except where it
+  # is deliberately recording the migration."
+  $navigational = @('CLAUDE.md', 'README.md', '.claude/context.md', '.claude/contexts/skill-authoring.md')
+  foreach ($file in $navigational) {
+    Assert "$file names no pre-change path" {
+      $c = Get-RepoFile $file
+      if ($c -match '\.claude/docs/') { throw 'still points into the dissolved docs level' }
+      $true
+    }
+  }
+
+  # A pointer is verified before use, always — so the ones Context ships with
+  # are verified here rather than at the moment something trips over them.
+  Assert "every Source Pointer in Context and the Domain Contexts resolves" {
+    $files = @(Join-Path $repo '.claude/context.md') +
+             (Get-ChildItem (Join-Path $repo '.claude/contexts') -Recurse -Filter '*.md' | ForEach-Object FullName)
+    $broken = @()
+    foreach ($f in $files) {
+      foreach ($m in [regex]::Matches((Get-Content $f -Raw), '`(\.claude/[^`\r\n]+|skills/[^`\r\n]*)`')) {
+        $target = $m.Groups[1].Value.TrimEnd('*')
+        if (-not (Test-Path (Join-Path $repo $target))) {
+          $broken += "$(Split-Path -Leaf $f) → $($m.Groups[1].Value)"
+        }
+      }
+    }
+    if ($broken) { throw ($broken -join '; ') }
+    $true
+  }
+
+  # Every Domain Context has exactly one row, and every row a file. The audit
+  # branch of /configure owns this for a configured repository; here it is the
+  # one thing that catches a context file nothing loads.
+  Assert "the routing table and contexts/ agree, one row per file" {
+    $table = Get-RepoFile '.claude/context.md'
+    $files = Get-ChildItem (Join-Path $repo '.claude/contexts') -Recurse -Filter '*.md' |
+      ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_.Name) }
+    $missing = $files | Where-Object { $table -notmatch "\[$([regex]::Escape($_))\]" }
+    if ($missing) { throw "no routing-table row for: $($missing -join ', ')" }
+    $true
+  }
+
+  # Two guarantees, and they need two assertions anchored to two sites. Written
+  # as one, it passed with the banner deleted — the decision-1 annotation
+  # carried both "0018" and the wording, so the check matched text travelling
+  # with a different claim than the one it existed to make. That is the failure
+  # `.claude/rules/skills.md` warns about, caught here by deliberate deletion.
+
+  # A reader arriving at the top must learn the whole document predates 0018.
+  # Scoped to the preamble — everything before the first `##` — because that is
+  # the only region a reader is guaranteed to cross.
+  Assert "the closed effort's spec warns up front that its paths predate ADR 0018" {
+    $spec = Get-RepoFile '.claude/tickets/tenure/spec.md'
+    $preamble = ($spec -split '(?m)^##\s', 2)[0]
+    if ($preamble -notmatch '0018') { throw 'the preamble never names the ADR that superseded the layout' }
+    if ($preamble -notmatch '(?is)(predate|after this effort closed|built and closed)') {
+      throw 'the preamble names 0018 without saying the spec came first'
+    }
+    $true
+  }
+
+  # And the one decision that still spells a superseded path says so on its own
+  # line, for the reader who arrives by search rather than from the top.
+  Assert "the decision naming a superseded path is annotated in place" {
+    $spec = Get-RepoFile '.claude/tickets/tenure/spec.md'
+    $line = ($spec -split '\r?\n') | Where-Object { $_ -match '\*\*Paths\*\*' }
+    if (-not $line) { throw 'the paths decision is gone from the spec' }
+    if ($line -notmatch '\.claude/docs/decisions/') { throw 'the decision was rewritten rather than annotated' }
+    if ($line -notmatch '0018') { throw 'the superseded path is stated with nothing marking it superseded' }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero

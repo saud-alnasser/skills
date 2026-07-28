@@ -2,6 +2,8 @@
 
 Status: implemented
 
+> **On paths in this document.** This effort was built and closed before ADR 0018 dissolved `.claude/docs/`. Its Source Pointers have been repaired to the current tree; its *decisions* still read as they were made, and where one names a superseded path it says so in place. Nothing here is rewritten to describe a layout it did not specify — the build record's job is to say what was built.
+
 ## Problem
 
 mattpocock's engineering skills are an excellent **execution pipeline**: idea → grill → spec → tickets → implement → review → ship. What they have no answer for is **memory**. `CONTEXT.md` is a glossary and nothing else; every session rediscovers the repository's architecture, boundaries, and conventions from scratch. Claude arrives as a capable stranger every time.
@@ -14,7 +16,7 @@ A skill framework where Claude is a **partner whose understanding of the reposit
 
 ## Decisions
 
-Resolved by grill; each ADR in `.claude/docs/decisions/` carries the reasoning.
+Resolved by grill; each ADR in `.claude/decisions/` carries the reasoning.
 
 | # | Decision | ADR |
 | --- | --- | --- |
@@ -84,7 +86,7 @@ Seven, not eight — `/sync` dissolved into a discipline (0010), and `/design` a
 
 ## Method — what is authoritative, what is reference
 
-**Authoritative — what to build:** this spec, the tickets, and the ADRs in `.claude/docs/decisions/`. Where any of them conflicts with matt's, they win; that conflict is usually a decision we made deliberately and recorded.
+**Authoritative — what to build:** this spec, the tickets, and the ADRs in `.claude/decisions/`. Where any of them conflicts with matt's, they win; that conflict is usually a decision we made deliberately and recorded.
 
 **Reference — how to build it well:** matt's skills, and `writing-great-skills` for the craft.
 
@@ -109,7 +111,7 @@ The result is derivative work either way — `NOTICE` covers the attribution reg
 
 Applied to every vendored skill, without exception:
 
-1. **Paths** → `.claude/context.md`, `.claude/contexts/`, `.claude/docs/decisions/`, `.claude/tickets/`. No `CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, `.scratch/`.
+1. **Paths** → `.claude/context.md`, `.claude/contexts/`, `.claude/docs/decisions/`, `.claude/tickets/`. No `CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, `.scratch/`. — *`.claude/docs/decisions/` is now `.claude/decisions/`; ADR 0018 dissolved the `docs/` level after this effort closed.*
 2. **Vocabulary** → the terms in `context.md`. Context, Domain Context, Source Pointer, Marker, Evidence, Healing, Tier, Floor, Gate. Do not leave two words for one concept.
 3. **Invocation axis** → per the Scope section. A skill another skill must reach is model-invoked; a skill only the human types is user-invoked.
 4. **Tool commands** → reference `tools/*.md` (ticket 15) rather than inlining a guessed flag.

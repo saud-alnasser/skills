@@ -1,6 +1,6 @@
 # Skill authoring
 
-Sources: `skills/`, `.claude/docs/decisions/`
+Sources: `skills/`, `.claude/decisions/`
 
 How a skill in this repository is shaped, named, and placed. This is the domain with the most vocabulary of its own, because the product here *is* skills — a decision about where a sentence goes is an engineering decision, not an editorial one.
 

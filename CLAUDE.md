@@ -28,7 +28,7 @@ When instructions conflict, the later source loses:
 1. What the user said in this conversation
 2. This file
 3. `.claude/context.md` and the Domain Contexts
-4. `.claude/docs/decisions/` — an accepted ADR
+4. `.claude/decisions/` — an accepted ADR
 5. `.claude/rules/` and `CONTRIBUTING.md`
 6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is
 
@@ -44,7 +44,7 @@ For what is being *built* here, `.claude/tickets/tenure/spec.md` is authoritativ
 | --- | --- | --- |
 | Codebase | what currently exists | source |
 | Context | how this repository thinks | `.claude/context.md`, `.claude/contexts/**` |
-| Decisions | why this approach was selected | `.claude/docs/decisions/` |
+| Decisions | why this approach was selected | `.claude/decisions/` |
 
 The order is a **truth hierarchy, and it is absolute**. Where they disagree, the Codebase is right. Resolve every conflict by changing the documentation to match reality — never the reverse, and never by explaining the code away.
 
@@ -89,7 +89,7 @@ The point of stating it is that the user can disagree. A classification held sil
 
 ## Writing knowledge
 
-CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/**`, and `.claude/docs/decisions/**` change through the workflow's own commands and nothing else.
+CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/**`, and `.claude/decisions/**` change through the workflow's own commands and nothing else.
 
 **The compression test, before anything is written into knowledge:** *will this improve a future engineering decision?* If not, don't write it. This applies on every turn, including the ones where a concept moves and no command was typed — capture is not a licence to accumulate.
 
@@ -97,7 +97,7 @@ What belongs in Context and what never does is the `domain-modeling` skill's bus
 
 ## Conventions
 
-**Tenure's conventions are defaults for when the repository is silent** (`.claude/docs/decisions/0008-repo-conventions-outrank-tenure-defaults.md`), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
+**Tenure's conventions are defaults for when the repository is silent** (`.claude/decisions/0008-repo-conventions-outrank-tenure-defaults.md`), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
 
 The defaults, applied when nothing else is found:
 
