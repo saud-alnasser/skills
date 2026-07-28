@@ -238,25 +238,23 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
     'graphite' = 'gt'
   }
 
-  Assert "the tools reference ships as a skill" {
-    Test-Path (Join-Path $skills 'tools/SKILL.md')
-  }
-
-  Assert "tools is model-invoked — any skill can reach it" {
-    -not (Test-UserInvoked 'tools/SKILL.md')
-  }
-
+  # ADR 0019 reversed this ticket's two-tier model, so what it asserted about
+  # the *shipping shape* — a model-invoked skill, and a second tier for the
+  # repository's own tooling — moved to ticket layout/03, which asserts the
+  # skill's absence and the single tier that replaced it. What survives here is
+  # everything about the reference's *content*, which 0019 did not touch: it is
+  # the same text, now source material rather than a skill.
   foreach ($f in $tools.Keys) {
-    Assert "$f.md ships with the reference" {
-      Test-Path (Join-Path $skills "tools/$f.md")
+    Assert "$f.md ships as /configure's source material" {
+      Test-Path (Join-Path $skills "configure/tools/$f.md")
     }
   }
 
   # "A URL with no trigger is decoration." Both halves, in every tool file.
   foreach ($f in $tools.Keys) {
     Assert "$f.md names its docs URL and the condition for fetching it" {
-      $c = Get-SkillFile "tools/$f.md"
-      if (-not $c) { throw "tools/$f.md is missing" }
+      $c = Get-SkillFile "configure/tools/$f.md"
+      if (-not $c) { throw "configure/tools/$f.md is missing" }
       if ($c -notmatch '(?m)^Docs:\s*https?://') { throw 'no `Docs:` URL' }
       if ($c -notmatch '(?m)^Fetch the docs when:\s*\S') { throw 'no fetch condition' }
       $true
@@ -269,7 +267,7 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   foreach ($f in $tools.Keys) {
     $bin = $tools[$f]
     Assert "$f.md entries are task-to-command — every command block carries a $bin invocation" {
-      $lines = (Get-SkillFile "tools/$f.md") -split '\r?\n'
+      $lines = (Get-SkillFile "configure/tools/$f.md") -split '\r?\n'
       $section = $null
       $inFence = $false
       $hasFence = $false
@@ -295,12 +293,12 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   # The reference exists to stop guessing, so it must not itself carry an
   # unverifiable claim silently. A file written without the tool present says so.
   Assert "gitlab.md declares that its entries were not verified against an installed glab" {
-    $c = Get-SkillFile 'tools/gitlab.md'
+    $c = Get-SkillFile 'configure/tools/gitlab.md'
     $c -match '(?i)not verified|without a `?glab`? on the machine'
   }
 
   Assert "git.md carries the operations Tenure depends on and gets wrong easily" {
-    $c = Get-SkillFile 'tools/git.md'
+    $c = Get-SkillFile 'configure/tools/git.md'
     $required = @{
       'the Marker diff'   = 'Marker'
       '--porcelain'       = '--porcelain'
@@ -312,18 +310,13 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
     $true
   }
 
-  Assert "tier 2 is documented — /configure writes .claude/tools/ for the repo's own tooling" {
-    $c = Get-SkillFile 'tools/SKILL.md'
-    ($c -match '\.claude/tools/') -and ($c -match '/configure')
-  }
-
   # The headline criterion. Every invocation a skill issues has to be an entry
   # somewhere in the reference — a skill that writes `gh issue develop` without
   # `gh.md` listing it has guessed.
   Assert "no skill issues a command for a tool with no entry" {
     # binary → the reference text that must list it
     $reference = @{}
-    foreach ($f in $tools.Keys) { $reference[$tools[$f]] = Get-SkillFile "tools/$f.md" }
+    foreach ($f in $tools.Keys) { $reference[$tools[$f]] = Get-SkillFile "configure/tools/$f.md" }
     $binaries = ($tools.Values | ForEach-Object { [regex]::Escape($_) }) -join '|'
 
     # Both forms a skill writes a command in. Fenced blocks are the dominant
@@ -359,7 +352,7 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   # wrong: `..HEAD` still produces a plausible diff, just one that blames the
   # work for commits that landed on the base branch after it started.
   Assert "the review-diff entry pairs three dots with the diff and two with the log" {
-    $c = Get-SkillFile 'tools/git.md'
+    $c = Get-SkillFile 'configure/tools/git.md'
     if ($c -notmatch '(?m)^git diff <fixed-point>\.\.\.HEAD') { throw 'the review diff is not three-dot' }
     if ($c -notmatch '(?m)^git log <fixed-point>\.\.HEAD') { throw 'the commit list is not a two-dot range' }
     $c -match '(?i)merge-?base'
@@ -372,14 +365,14 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   # it the session continues against a detached HEAD, and the next status read
   # looks like catastrophic drift that is not real.
   Assert "the bisect entry pairs run with the reset that has to follow it" {
-    $c = Get-SkillFile 'tools/git.md'
+    $c = Get-SkillFile 'configure/tools/git.md'
     if ($c -notmatch '(?m)^git bisect run') { throw 'bisect cannot be driven unattended' }
     if ($c -notmatch '(?m)^git bisect reset') { throw 'the reset is missing' }
     $c -match '(?i)detached HEAD|bisect state'
   }
 
   Assert "the review reads staged, unstaged, and untracked — not just the commit range" {
-    $c = Get-SkillFile 'tools/git.md'
+    $c = Get-SkillFile 'configure/tools/git.md'
     if ($c -notmatch '(?m)^git diff HEAD\b') { throw 'staged changes are not read' }
     $c -match '(?m)^git ls-files --others --exclude-standard'
   }
@@ -410,7 +403,11 @@ $tenureTemplate = 'configure/tenure.template.md'
 # *properly* is a different, stronger pattern and belongs at its own site.
 $rulePattern = [ordered]@{
   'verify before claiming'             = '(?i)before any repository-specific claim'
-  'the tools routing rule'             = "(?i)covers the workflow'?s own tools"
+  # ADR 0019 collapsed the two tiers this rule used to route between, so the
+  # rule it now states is which *one* directory covers everything. Repointed
+  # rather than deleted: a skill restating where tool references live is still
+  # a second home, and that was always what the guard was for.
+  'the tools routing rule'             = '(?i)covers every tool this repository uses'
   'never guess an API'                 = '(?i)a CLI is an API'
   'conventions are defaults'           = '(?i)defaults? for when the repository is silent'
   'one concept per file'               = '(?i)one concept per file'
@@ -454,6 +451,15 @@ $rulePattern = [ordered]@{
   # MIGRATION.md's own: the layout move is mechanical, so the classification
   # step that governs every other row on that page does not run.
   'a migrated file is not reclassified' = '(?i)classification does not apply'
+  # layout/03. TOOLS.md owns derivation, so it owns the rule that an entry is
+  # dropped whole or carried whole. Restating it in /configure's SKILL.md is
+  # the likeliest second home, since that is where the reader is sent from.
+  'derivation never summarizes'        = '(?i)never summarize'
+  # The reader's half of the gap rule is `CLAUDE.md`'s, because it must hold
+  # with no plugin installed; TOOLS.md carries only the part that names
+  # /configure as the remedy, which is meaningless without Tenure. The router
+  # points at both and restates neither.
+  'the never-guess fallback'           = '(?i)fall back to the tool'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -1157,7 +1163,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   Assert "the diff is taken against the merge-base, and the invocation is not guessed" {
     $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)merge-?base') { throw 'the merge-base is never named' }
-    $c -match 'tools/git\.md'
+    $c -match '.claude/tools/git.md'
   }
 
   Assert "the two axes are reported separately, never merged or reranked" {
@@ -1501,7 +1507,7 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # commands is the duplication ADR 0007 exists to stop.
   Assert "the git invocations are pointed at, not restated" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch 'tools/git\.md') { throw 'tools/git.md is never referenced' }
+    if ($c -notmatch '.claude/tools/git.md') { throw '.claude/tools/git.md is never referenced' }
     if ($c -match '(?m)^git status --porcelain') { throw 'the uncommitted drift read is restated' }
     if ($c -match '(?m)^git diff --name-only') { throw 'the Marker diff read is restated' }
     $c -notmatch '(?im)^\s*never\s+`?git commit -a'
@@ -1862,9 +1868,9 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # a guessed `gh` flag here is the duplication ticket 15 exists to stop.
   Assert "tracker operations point at tools/github.md rather than inlining gh" {
     $t = Get-SkillFile 'configure/tracker.template.md'
-    if ($t -notmatch 'tools/github\.md') { throw 'the gh reference is missing or guessed' }
+    if ($t -notmatch '.claude/tools/github.md') { throw 'the gh reference is missing or guessed' }
     # Ticket 09 says `tools/gh.md`; the file ticket 15 shipped is github.md.
-    if ($t -match 'tools/gh\.md') { throw 'points at tools/gh.md, which does not exist' }
+    if ($t -match '\.claude/tools/gh\.md') { throw 'points at .claude/tools/gh.md, which does not exist' }
     $true
   }
 
@@ -2079,7 +2085,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
     $c = Get-SkillFile 'resolving-merge-conflicts/SKILL.md'
     # Both ends — reading the conflict state, and finishing the operation. One
     # reference standing in for the other step is how a guessed flag gets in.
-    if (([regex]::Matches($c, 'tools/git\.md')).Count -lt 2) {
+    if (([regex]::Matches($c, '.claude/tools/git.md')).Count -lt 2) {
       throw 'only one step defers to the tool reference'
     }
     $true
@@ -2390,7 +2396,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     if ($c -notmatch '\.claude/tools/') { throw 'repo tooling is never written' }
     # The path, not the word. "the `tools` skill" survives the link being cut,
     # and a named skill with no route to it is not progressive disclosure.
-    if ($c -notmatch '\.\./tools/SKILL\.md') { throw 'the format is not pointed at' }
+    if ($c -notmatch 'TOOLS\.md') { throw 'the format is not pointed at' }
     # The six the ticket names, read off the `.claude/tools/` bullet itself.
     # Step 1's analysis list already contains most of these words, so a
     # file-wide check passes with the tooling bullet gutted.
@@ -2665,9 +2671,12 @@ Describe-Ticket 'tenure/10' 'router over the Tenure skill set' {
     $true
   }
 
+  # Four, not five: ADR 0019 deleted `tools`, so the router routing to it would
+  # be a pointer at a skill that no longer exists. layout/03 asserts what
+  # replaced the entry.
   Assert "the primitives are grouped as what runs underneath" {
     $s = Get-Section $rt 'What runs underneath'
-    $primitives = @('grilling', 'tdd', 'codebase-design', 'domain-modeling', 'tools')
+    $primitives = @('grilling', 'tdd', 'codebase-design', 'domain-modeling')
     # `(?m)` or `^` anchors to the start of the whole section rather than to
     # each line, and only the first primitive could ever match.
     $missing = $primitives | Where-Object { $s -notmatch ('(?m)^- \*\*' + $tick + [regex]::Escape($_) + $tick) }
@@ -2913,7 +2922,7 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
       'the convention as a rule'  = '(?i)Conventional Commits\s*(—|-|is|are)'
       'the defaults-not-mandates' = $rulePattern['conventions are defaults']
     }
-    foreach ($f in @($tickets, 'tools/github.md')) {
+    foreach ($f in @($tickets, 'configure/tools/github.md')) {
       $c = Get-SkillFile $f
       foreach ($b in $banned.Keys) {
         if ($c -match $banned[$b]) { throw "$b is restated in $f" }
@@ -3098,9 +3107,9 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
     @{ f = 'implement/SKILL.md'; rule = 'files and names'
        restatement = $rulePattern['one concept per file']
        route       = '(?i)`codebase-design`[^\r\n]{0,120}Files and names' }
-    @{ f = 'tools/SKILL.md';     rule = 'never guess an API'
+    @{ f = 'configure/TOOLS.md'; rule = 'never guess an API'
        restatement = $rulePattern['never guess an API']
-       route       = '(?i)`CLAUDE\.md` carries the rule' }
+       route       = '(?i)never-guess rule in `CLAUDE\.md`' }
     @{ f = 'commit/SKILL.md';    rule = 'conventions are defaults'
        restatement = $rulePattern['conventions are defaults']
        route       = '(?i)`CLAUDE\.md` carries the convention' }
@@ -3386,7 +3395,7 @@ Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
   # at all; this one names the reads the Claim actually depends on, so dropping
   # one from the reference is caught here rather than by nothing.
   Assert "every read the Claim depends on is an entry in the tool reference" {
-    $g = Get-SkillFile 'tools/git.md'
+    $g = Get-SkillFile 'configure/tools/git.md'
     $required = @{
       'the current branch'   = '(?m)^git branch --show-current'
       'creating the branch'  = '(?m)^git switch -c <branch>'
@@ -3405,7 +3414,7 @@ Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
   # and it is wrong twice over — it publishes, and it names the branch GitHub's
   # way. Both have to be in the reference, or it gets used.
   Assert "gh issue develop is documented as publishing, and as not the claim" {
-    $c = Get-SkillFile 'tools/github.md'
+    $c = Get-SkillFile 'configure/tools/github.md'
     if ($c -notmatch 'gh issue develop') { throw 'the trap is undocumented' }
     if ($c -notmatch '(?i)ON THE REMOTE|creates the branch in the repository') { throw 'it is not marked as publishing' }
     $c -match '(?i)not the read that answers whether a ticket is claimed|is not the claim'
@@ -3424,7 +3433,7 @@ Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
 
 Describe-Ticket 'tenure/18' 'what tenure may write to a tracker other people read' {
 
-  $gh  = 'tools/github.md'
+  $gh  = 'configure/tools/github.md'
   $tix = 'design/TICKETS.md'
 
   # Criterion 1. The gate has to be on the invocation, not only in the skill
@@ -3557,7 +3566,7 @@ Describe-Ticket 'tenure/18' 'what tenure may write to a tracker other people rea
 Describe-Ticket 'tenure/19' 'on a stack, blocked means stacked' {
 
   $imp = 'implement/SKILL.md'
-  $gt  = 'tools/graphite.md'
+  $gt  = 'configure/tools/graphite.md'
 
   # The stacking branch of step 1, scoped like the Claim's — step 1 is long and
   # says "branch", "blocked" and "commit" throughout for other reasons.
@@ -4152,6 +4161,223 @@ Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
     if (-not $line) { throw 'the paths decision is gone from the spec' }
     if ($line -notmatch '\.claude/docs/decisions/') { throw 'the decision was rewritten rather than annotated' }
     if ($line -notmatch '0018') { throw 'the superseded path is stated with nothing marking it superseded' }
+    $true
+  }
+}
+
+# --- ticket layout/03 — derive tool references per repository -----------------
+
+# Sections keyed by heading. A tool file's entries *are* its `## ` sections —
+# ticket tenure/15 already treats them that way — so the heading is the entry's
+# identity, and that is what makes derivation checkable without markers in the
+# committed file.
+function Get-ToolSections {
+  param([string]$Content)
+  $sections = [ordered]@{}
+  $heading = $null
+  $body = [Collections.Generic.List[string]]::new()
+  foreach ($line in ($Content -split '\r?\n')) {
+    if ($line -match '^##\s+(.+?)\s*$') {
+      if ($heading) { $sections[$heading] = ($body -join "`n").Trim() }
+      $heading = $Matches[1]
+      $body.Clear()
+    } elseif ($heading) {
+      $body.Add($line)
+    }
+  }
+  if ($heading) { $sections[$heading] = ($body -join "`n").Trim() }
+  $sections
+}
+
+# The whole mechanism. A derived entry either matches its source exactly or it
+# does not exist — those are the only two passing states, and "roughly the same
+# but shorter" is the failure this returns.
+#
+# Interior whitespace is deliberately NOT normalised. A summarized entry is
+# most often a reflowed one, and normalising away the reflow is normalising
+# away the evidence.
+function Get-DivergentEntries {
+  param([string]$Derived, [string]$Source)
+  $d = Get-ToolSections $Derived
+  $s = Get-ToolSections $Source
+  @($d.Keys | Where-Object { $s.Contains($_) -and $d[$_] -ne $s[$_] })
+}
+
+Describe-Ticket 'layout/03' 'derive tool references per repository, and delete the tools skill' {
+
+  $toolSources = @('git', 'github', 'gitlab', 'graphite')
+
+  # --- the skill is gone, the source material is not ------------------------
+
+  Assert "the model-invoked tools skill is absent" {
+    if (Test-Path (Join-Path $skills 'tools')) { throw 'skills/tools/ still exists' }
+    $true
+  }
+
+  Assert "the reference survives as /configure's source material" {
+    $missing = $toolSources | Where-Object { -not (Test-Path (Join-Path $skills "configure/tools/$_.md")) }
+    if ($missing) { throw "lost in the move: $($missing -join ', ')" }
+    $true
+  }
+
+  # Criterion 4. The point of the change is one place to look, and a shipped
+  # skill still naming the plugin's own copy is a second place. Scoped to a
+  # path *outside* `.claude/tools/` — naming `.claude/tools/git.md` is the
+  # correct new form and must not trip this.
+  Assert "no shipped skill points at a tool file outside .claude/tools/" {
+    $bad = Get-SkillFiles |
+      Where-Object { ($_.FullName -replace '\\', '/') -notmatch '/configure/tools/' } |
+      Select-String -Pattern '(?<!\.claude/)(?<![\w/])tools/(git|github|gitlab|graphite|SKILL)\.md' |
+      ForEach-Object { "$(Split-Path -Leaf $_.Path):$($_.LineNumber)" }
+    if ($bad) { throw ($bad -join ', ') }
+    $true
+  }
+
+  # --- what /configure is told to do ----------------------------------------
+
+  # Criterion 1, and the half that is easy to lose: writing a file only for a
+  # detected tool. `gt` is the case that matters — it is the one where being
+  # installed and being in use come apart, and a stacking reference in a
+  # non-stacking repository reads as permission to start stacking.
+  Assert "TOOLS.md ties each tool file to detecting that tool, gt included" {
+    $c = Get-SkillFile 'configure/TOOLS.md'
+    foreach ($t in @('git', 'gh', 'glab', 'gt')) {
+      if ($c -notmatch "``$t``") { throw "no detection condition for $t" }
+    }
+    if ($c -notmatch '(?is)initialised here|initialized here|`gt init` having been run') {
+      throw 'gt is detected by presence on the machine rather than in the repository'
+    }
+    $true
+  }
+
+  Assert "TOOLS.md states that derivation filters whole entries and never summarizes" {
+    $c = Get-SkillFile 'configure/TOOLS.md'
+    if ($c -notmatch '(?i)never summarize') { throw 'the rule is not stated' }
+    # The reason, not just the rule: filtering is visible and summarizing is
+    # not, which is the whole argument for preferring one failure to the other.
+    if ($c -notmatch '(?is)filtering[^.]{0,120}visible') { throw 'stated without why it is the safer failure' }
+    $true
+  }
+
+  Assert "TOOLS.md defines the provenance line the check depends on" {
+    $c = Get-SkillFile 'configure/TOOLS.md'
+    if ($c -notmatch '(?m)^Derived from:') { throw 'no `Derived from:` line is specified' }
+    if ($c -notmatch '(?is)heading[^.]{0,160}(exactly|identity)') { throw 'headings are not pinned as the entry identity' }
+    $true
+  }
+
+  # Criterion 6. Naming /configure is what makes the report actionable — "there
+  # is no entry" without it is a dead end, and a dead end is where guessing
+  # starts.
+  Assert "a missing entry is a configuration gap naming /configure, never a guess" {
+    $c = Get-SkillFile 'configure/TOOLS.md'
+    if ($c -notmatch '(?i)configuration gap') { throw 'the gap is not named as such' }
+    if ($c -notmatch '/configure') { throw 'nothing says what fills it' }
+    if ($c -notmatch '(?i)not licence to guess|never a guess|never guess') { throw 'guessing is not ruled out' }
+    $true
+  }
+
+  # Criterion 3 — unchanged by this ticket, which is exactly why it is checked:
+  # the sentence carrying it was rewritten, and a rewrite is how a rule gets
+  # dropped while its neighbours survive.
+  Assert "the single-file test command is still the one entry that must not be missing" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate'
+    $s -match '(?is)single-file test command[^.]{0,120}(must not be missing|not be missing)'
+  }
+
+  # Criterion 5. The gap this whole ticket exists to close: the always-on file
+  # used to admit that the workflow's reference existed only with the plugin,
+  # in the same breath as forbidding a guessed CLI.
+  Assert "the always-on template no longer conditions the tool reference on the plugin" {
+    $c = Get-SkillFile $claudeTemplate
+    if ($c -match '(?i)Where Tenure is installed, its ``?tools/') {
+      throw 'the plugin-conditional wording survives'
+    }
+    if ($c -notmatch '(?i)with or without the plugin') { throw 'nothing says the rule is followable either way' }
+    $true
+  }
+
+  # --- criterion 7: the check is mechanical, and proven so ------------------
+
+  # A comparison that runs over zero files is trusted, not checked — and until
+  # ticket layout/04 derives this repository's own files there are zero. So the
+  # function is exercised against a fixture here, which is what makes the
+  # criterion true in the ticket that states it rather than the one after.
+  Assert "the entry comparison passes a filtered derivation and fails a summarized one" {
+    $source = @"
+# git
+
+## Read uncommitted drift
+
+``````
+git status --porcelain --untracked-files=all
+``````
+
+Each line is ``XY<space><path>``: status in columns 1-2, path from column 4.
+Split on the first space and you mis-read `` M`` as a one-character status.
+
+## Bisect to the first bad commit
+
+``````
+git bisect start <bad> <good>
+``````
+"@
+    # Filtering: the bisect entry is dropped whole, the kept entry is intact.
+    $filtered = @"
+# git
+Derived from: tenure/git.md
+
+## Read uncommitted drift
+
+``````
+git status --porcelain --untracked-files=all
+``````
+
+Each line is ``XY<space><path>``: status in columns 1-2, path from column 4.
+Split on the first space and you mis-read `` M`` as a one-character status.
+"@
+    if ((Get-DivergentEntries $filtered $source).Count -ne 0) {
+      throw 'a correctly filtered derivation was reported as divergent'
+    }
+
+    # Summarizing: the entry is kept, and the column-layout gotcha is gone.
+    # This is the exact failure ADR 0019 says filtering is preferred for.
+    $summarized = @"
+# git
+Derived from: tenure/git.md
+
+## Read uncommitted drift
+
+``````
+git status --porcelain --untracked-files=all
+``````
+
+Parse the status columns carefully.
+"@
+    $divergent = Get-DivergentEntries $summarized $source
+    if ($divergent -notcontains 'Read uncommitted drift') {
+      throw 'a summarized entry was not detected'
+    }
+    $true
+  }
+
+  # And it runs over the real thing. Zero derived files today; four once
+  # layout/04 lands, at which point this starts asserting rather than idling —
+  # so the count is reported, because a silent zero is how this would rot.
+  Assert "every derived tool file in this repository matches its source" {
+    $dir = Join-Path $repo '.claude/tools'
+    if (-not (Test-Path $dir)) { return $true }
+    $problems = @()
+    foreach ($f in (Get-ChildItem $dir -Filter '*.md')) {
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?m)^Derived from:\s*tenure/(\S+\.md)\s*$') { continue }
+      $srcName = $Matches[1]
+      $srcPath = Join-Path $skills "configure/tools/$srcName"
+      if (-not (Test-Path $srcPath)) { $problems += "$($f.Name) names a source that does not exist: $srcName"; continue }
+      $divergent = Get-DivergentEntries $c (Get-Content $srcPath -Raw)
+      if ($divergent) { $problems += "$($f.Name) diverges from $srcName in: $($divergent -join '; ')" }
+    }
+    if ($problems) { throw ($problems -join ' | ') }
     $true
   }
 }

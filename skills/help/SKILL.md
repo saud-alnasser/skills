@@ -66,7 +66,8 @@ Vocabulary and discipline the commands above pull in. Reach for one directly whe
 - **`tdd`** — when you want to build one concrete behaviour test-first.
 - **`codebase-design`** — when you are deciding a module's *shape*: where the seam goes, how much sits behind the interface.
 - **`domain-modeling`** — when the problem's *words* are the trouble: a fuzzy term, one word doing three jobs, or a choice you are unsure is worth recording.
-- **`tools`** — before issuing any command-line invocation you are not already certain of.
+
+**How to type a command is not a skill.** `.claude/tools/` holds one file per tool this repository uses — the workflow's own and yours — written by `/configure` and committed, so it is there with or without Tenure installed. `CLAUDE.md` has the rule about reading it, and what to do when an entry is missing.
 
 ## Crossing sessions
 

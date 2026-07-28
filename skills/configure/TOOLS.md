@@ -1,0 +1,82 @@
+# Deriving `.claude/tools/`
+
+One directory, one format, one place to look for how to type any command — the workflow's tools and this repository's, together and committed (ADR 0019).
+
+Committed is the point. The reference used to ship inside the plugin, so a teammate who cloned without Tenure had none of it while still being bound by the rule against guessing a CLI. Deriving into the repository is what closes that, and it only closes if the result is a file git tracks.
+
+## Write a file only for a tool the repository uses
+
+Detection is off the repository, never off the list below.
+
+| Ship a file for | When |
+| --- | --- |
+| `git` | there is a `.git/` — so, always |
+| `gh` | a remote points at GitHub |
+| `glab` | a remote points at GitLab |
+| `gt` | Graphite is initialised here, which is not the same as `gt` being on the machine |
+| the repository's own | the manifest, scripts, or CI name it |
+
+A tool the repository does not use gets no file. A stacking reference in a repository with no stack is a page that answers a question nobody standing here can ask, and it will be read as permission to start.
+
+**`gt` is the one worth checking carefully.** Graphite being installed says nothing about this repository; only `gt init` having been run here does. The check is in `graphite.md` — and read what that entry says about the check's own side effects before running it.
+
+## Filter whole entries; never summarize
+
+This is the load-bearing rule of the whole file.
+
+A tool reference's value is concentrated in gotchas — the exact column layout of a porcelain read, a verb whose name lies about what it does, a flag that does not exist. Those are precisely what a rewrite smooths away, because they read as noise until the day they don't.
+
+So:
+
+```
+keep an entry   → carry it over intact, byte for byte
+drop an entry   → drop the whole section, heading and all
+summarize       → never
+```
+
+**Filtering loses whole entries, which is visible. Summarizing loses clauses, which is not.** A dropped section is one grep away from being noticed; a paragraph that lost its qualifier looks exactly like a paragraph.
+
+Drop an entry when the operation cannot arise here — the GitLab entries in a GitHub repository, the stack entries where there is no stack. Keep it when you are unsure. An entry that is never read costs a screenful; an entry that was needed and is missing costs a guessed command.
+
+## The heading is the entry's identity
+
+A derived file names its source directly under the title:
+
+```markdown
+# git — version control
+
+Derived from: tenure/git.md
+```
+
+Every section kept from that source **keeps its heading exactly**, and its body byte-for-byte. That is what makes the rule checkable rather than a promise: the verifier pairs sections by heading and compares bodies, so a filtered entry passes by being absent and a summarized one fails by differing.
+
+Entries newly written for this repository are ordinary sections with no counterpart upstream, and nothing compares them. Put them under their own heading in the same file — a repository's own `git` entries belong beside the workflow's, not in a second document.
+
+## The format
+
+Every file: what it is for, the docs URL, **and the condition for fetching it** — a URL with no trigger is decoration.
+
+```markdown
+# <tool> — <what it is for here>
+
+Docs: https://...
+Fetch the docs when: <the condition>
+```
+
+Then task-to-command pairs under task-shaped headings. The question a reader arrives with is always *"how do I do X here"*, never *"what does `-n` mean"*. A flag catalogue is what the docs are for.
+
+Leave out what is already certain. An entry for `git log` earns nothing; an entry for the exact `--porcelain` column layout earns its place. **Note the gotcha, not the syntax.**
+
+## A missing entry is a configuration gap
+
+When an operation is needed and no file has an entry for it, that is a gap in the configuration — **not licence to guess**.
+
+Say so, naming `/configure` as what fills it, and re-run it to derive the entry. That remedy is all this file carries, because it is the half that means nothing without Tenure installed.
+
+What to do when the entry still is not there is the never-guess rule in `CLAUDE.md`. It lives there rather than here because it has to hold for someone working in this repository with no plugin at all.
+
+## Refreshing a derived file
+
+The relationship is a vendoring one: a fix Tenure makes to its own reference does not reach an already-configured repository on its own.
+
+`/configure`'s audit branch re-checks `.claude/tools/` against the repository, and that is the only path by which a derived file is refreshed. This is deliberate — the audit checks the file against the repository it describes, which is the check that matters, and a repository whose tooling has not changed does not need the shipped text's changes.

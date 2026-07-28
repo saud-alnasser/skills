@@ -42,14 +42,14 @@ Then prove it, here, in the parent:
 
 A bad ref or an empty subject fails at this step, before two subagents are spawned to review nothing. Inside a subagent that failure is invisible: it comes back as a confident report on no content.
 
-The committed side compares against the **merge-base**, not the raw ref, so commits that landed on the base branch since this work started are not attributed to it. Every invocation — the diff, the commit list, and the working-tree read — is in [`tools/git.md`](../tools/git.md).
+The committed side compares against the **merge-base**, not the raw ref, so commits that landed on the base branch since this work started are not attributed to it. Every invocation — the diff, the commit list, and the working-tree read — is in `.claude/tools/git.md`.
 
 ## 2 — Find what was asked for
 
 In order, stopping at the first that answers:
 
 1. **The ticket the caller is holding.** `/implement` knows which ticket it claimed; that is the spec.
-2. **Issue references in the commit messages** — resolve them through the tracker ([`tools/github.md`](../tools/github.md), [`tools/gitlab.md`](../tools/gitlab.md)).
+2. **Issue references in the commit messages** — resolve them through the tracker (`.claude/tools/github.md`, `.claude/tools/gitlab.md`).
 3. **A path the user passed.**
 4. **A spec under `.claude/designs/`** matching the branch or the feature.
 

@@ -20,13 +20,13 @@ fallback for the other, and a repository may use either.
 
 | Tracker | Tickets live in | Driven by |
 | --- | --- | --- |
-| **GitHub** | this repository's issues | `gh` — the invocations are in `tools/github.md` |
+| **GitHub** | this repository's issues | `gh` — the invocations are in `.claude/tools/github.md` |
 | **Local markdown** | `.claude/tickets/<effort>/` | files, one per ticket |
 
 {Delete whichever row this repository does not use, and say why in one line if
 the choice is not obvious — a repository with GitHub issues disabled, say.}
 
-On GitLab, the same shape holds with `glab`; see `tools/gitlab.md`.
+On GitLab, the same shape holds with `glab`; see `.claude/tools/gitlab.md`.
 
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a
 docs fetch, not an assumption.

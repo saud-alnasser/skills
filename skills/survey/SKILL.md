@@ -21,7 +21,7 @@ Built on a shared vocabulary:
 **Decide where to look before looking.** Deepening pays off by making future changes easier, so weight the parts of the codebase that keep changing.
 
 - If the user named a direction — a module, a subsystem, a pain point — take it and skip the inference.
-- Otherwise walk back a good stretch of history to find the hot spots, the files that keep coming up, and let those pull first. The invocation is in [`tools/git.md`](../tools/git.md). Scattered changes with no hot spot mean widening the net, not guessing.
+- Otherwise walk back a good stretch of history to find the hot spots, the files that keep coming up, and let those pull first. The invocation is in `.claude/tools/git.md`. Scattered changes with no hot spot mean widening the net, not guessing.
 
 Read the routing table in `.claude/context.md` and load the Domain Contexts for the area, plus the ADRs covering it, before exploring.
 

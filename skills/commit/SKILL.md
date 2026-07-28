@@ -71,11 +71,11 @@ Reference the ticket. On a shared tracker, **which form** depends on how this co
 | a branch merged by a pull request the human writes | a reference that closes nothing | a closing keyword in a commit stays live — a cherry-pick or a rebase onto the default branch later closes an issue nobody merged. The keyword goes in the pull request body instead |
 | a branch in a stack, submitted by the stacking tool | the closing keyword | the commit reaches the default branch only by merging that branch's own pull request, so the hazard above cannot happen — and the commit body is the only text Tenure can pre-write that reaches the pull request at all |
 
-`tools/github.md` has both forms and their constraints; `tools/graphite.md` records what was and was not verified about the submit path. Read them rather than picking a word that looks equivalent, because several of them are not.
+`.claude/tools/github.md` has both forms and their constraints; `.claude/tools/graphite.md` records what was and was not verified about the submit path. Read them rather than picking a word that looks equivalent, because several of them are not.
 
 ## 5 — Make the commit
 
-The staging rule, the commit invocation, and the amend that further changes take instead of a fixup are all in [`tools/git.md`](../tools/git.md). Read it rather than reaching for a flag from memory.
+The staging rule, the commit invocation, and the amend that further changes take instead of a fixup are all in `.claude/tools/git.md`. Read it rather than reaching for a flag from memory.
 
 What belongs to `/commit` is only the consequence: an amend rewrites the commit, so the step below runs again.
 
@@ -101,7 +101,7 @@ In an unconfigured repository there is no Marker to advance. State that and stop
 
 ## Never push
 
-`/commit` **never runs `git push`.** The rule and its reasoning are in `CLAUDE.md`; `tools/git.md` names the invocations it covers, including the ones that push as a side effect.
+`/commit` **never runs `git push`.** The rule and its reasoning are in `CLAUDE.md`; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect.
 
 The prohibition is stated here rather than only pointed at, because this is the file a reader opens to find out whether the commit skill publishes.
 

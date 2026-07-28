@@ -12,7 +12,7 @@ Everything between a request and a plan `/implement` can work. Discovery, the gr
 
 ## 1 — Discover
 
-**Check the Marker first.** One `git` call, before anything is read. The rule and both drift reads are in `.claude/tenure.md`; `tools/git.md` has the invocations.
+**Check the Marker first.** One `git` call, before anything is read. The rule and both drift reads are in `.claude/tenure.md`; `.claude/tools/git.md` has the invocations.
 
 Then, in this order:
 
@@ -122,7 +122,7 @@ Read a format file when the tier selects it, not before. Knowing what the delive
 
 The set lives in the design document until step 3, which is what makes it survivable: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal.
 
-**One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. [TICKETS.md](TICKETS.md) has the hierarchy and the edges; `tools/github.md` has the invocations, including which id the sub-issues API actually wants.
+**One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. [TICKETS.md](TICKETS.md) has the hierarchy and the edges; `.claude/tools/github.md` has the invocations, including which id the sub-issues API actually wants.
 
 ## 6 — Capture
 

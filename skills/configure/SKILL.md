@@ -76,9 +76,9 @@ The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evid
 
 **`.claude/tracker.md`**, from [tracker.template.md](tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
 
-**`.claude/tools/*.md`** for this repository's own tooling — package manager, test runner, typechecker, linter, build, deploy. The format belongs to the `tools` skill; read [tools/SKILL.md](../tools/SKILL.md) and follow it. Take every command from the repository's own manifest, scripts, or CI configuration, never from what the ecosystem usually does.
+**`.claude/tools/*.md`**, one file per tool this repository actually uses — the workflow's own (`git`, `gh`, `glab`, `gt`) *and* this repository's (package manager, test runner, typechecker, linter, build, deploy), in one directory with one format. [TOOLS.md](TOOLS.md) has the derivation rules and the format; it is the step where information is most easily lost, so read it before writing a tool file.
 
-The **single-file test command** is the one entry that must not be missing. It is the most-run command in the whole framework and the least guessable, and `tdd` says what happens without it.
+Take every repository-specific command from the manifest, scripts, or CI configuration, never from what the ecosystem usually does. The **single-file test command** is the one entry that must not be missing — the most-run command in the framework and the least guessable, and `tdd` says what happens without it.
 
 **`.claude/.gitignore`**, written exactly as below. It is Position's definition (ADR 0012), so it states the category and the test rather than listing entries — a per-clone file added later is covered by the rule instead of needing a new exception argued for:
 

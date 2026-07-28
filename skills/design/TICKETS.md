@@ -38,7 +38,7 @@ implementation list — the ticket says what "done" looks like, and
 
 The title is a Conventional Commit subject, so the ticket's commit writes itself. The id and the summary are also what `/implement` builds the branch name from, so write a summary that reads as one.
 
-`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/tracker.md` says which applies, and `tools/github.md` has the invocations.
+`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/tracker.md` says which applies, and `.claude/tools/github.md` has the invocations.
 
 ### Lifecycle
 
@@ -50,7 +50,7 @@ resolved   the work is delivered. Who sets it depends on the tracker —
 obsolete   no longer needed. Requires a one-line reason. Never deleted
 ```
 
-**On a shared tracker the merge resolves the ticket, not Tenure.** Tenure commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. Which text carries the closing keyword, and which carries a reference that closes nothing, depends on how the work reaches the default branch — `/commit` decides it and `tools/github.md` has the forms. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
+**On a shared tracker the merge resolves the ticket, not Tenure.** Tenure commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. Which text carries the closing keyword, and which carries a reference that closes nothing, depends on how the work reaches the default branch — `/commit` decides it and `.claude/tools/github.md` has the forms. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
 
 **This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
 
@@ -110,7 +110,7 @@ An edge means the same thing on either tracker; only the syntax moves. `.claude/
 | local markdown | a `Part of:` line | a `Blocked by: NN, NN` line | a `Related: NN` line |
 | GitHub | the sub-issues API, else a task list in the parent | `Blocked by: #NN` in the body | `#NN` mentioned in the body |
 
-The GitHub column is what `tools/github.md` documents and nothing more: `gh` has **no blocking subcommand**, so the edge lives in the issue body — legible to humans, and exactly what the local tracker does anyway. Read that file before issuing anything; a native-sounding invocation that does not exist is the guessed CLI the reference exists to prevent.
+The GitHub column is what `.claude/tools/github.md` documents and nothing more: `gh` has **no blocking subcommand**, so the edge lives in the issue body — legible to humans, and exactly what the local tracker does anyway. Read that file before issuing anything; a native-sounding invocation that does not exist is the guessed CLI the reference exists to prevent.
 
 `related` carries no ordering and blocks nothing. It is for an issue worth reading first, and it is the edge to reach for when a blocker would be a lie.
 

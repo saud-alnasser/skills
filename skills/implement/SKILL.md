@@ -13,7 +13,7 @@ One ticket, built and closed out. `/design` always leaves at least one ticket on
 
 Open with the verification report. Not conditional on tier, on size, or on the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit.
 
-The rule and both drift reads live in `.claude/tenure.md`; `tools/git.md` has the invocations.
+The rule and both drift reads live in `.claude/tenure.md`; `.claude/tools/git.md` has the invocations.
 
 ```
 Verification
@@ -58,7 +58,7 @@ frontier = tickets open, unblocked, unclaimed
        not yet  the branch stays. keep refining in place.
 ```
 
-**Where the tickets are comes from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. `/design`'s [`TICKETS.md`](../design/TICKETS.md) has the ticket format and the lifecycle, and `tools/github.md` has the invocations. Read the config rather than assuming.
+**Where the tickets are comes from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. `/design`'s [`TICKETS.md`](../design/TICKETS.md) has the ticket format and the lifecycle, and `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
 
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
@@ -83,7 +83,7 @@ The branch name is **Tenure's own convention**, not the default of whichever too
 
 The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/tracker.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
 
-**Check before creating, on both sides.** `tools/git.md` has the reads:
+**Check before creating, on both sides.** `.claude/tools/git.md` has the reads:
 
 ```
 claimed here      a local branch of that name exists
@@ -99,7 +99,7 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 `Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
-**Read which one applies off the repository; never guess it.** `tools/graphite.md` has the check, and it is one command. Getting it wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+**Read which one applies off the repository; never guess it.** `.claude/tools/graphite.md` has the check, and it is one command. Getting it wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
 
 So, on a stacking repository only:
 
@@ -116,7 +116,7 @@ a ticket joins the frontier once its blockers are COMMITTED
 
 Say the cost too, in the same breath, because it is being accepted on the user's behalf: **a rejected review low in the stack invalidates every branch above it.** That is the trade for not waiting.
 
-Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. `tools/graphite.md` has the invocation and what it restacks.
+Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. `.claude/tools/graphite.md` has the invocation and what it restacks.
 
 The closing keyword also moves, into the commit body, reversing the split that applies to plain git. `/commit` has the rule and the reason — `/implement` only has to know that stacking is what selects it.
 
@@ -128,7 +128,7 @@ A detached HEAD names no branch and therefore holds no Claim. Do not guess from 
 
 ### Assignment is not this
 
-**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `tools/github.md` has the invocation.
+**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `.claude/tools/github.md` has the invocation.
 
 It matters here for one reason: Assignment already separates humans, so the Claim only ever has to arbitrate between one person's own instances. That is why a branch is enough, and why nothing heavier is needed.
 
@@ -189,7 +189,7 @@ Then **ask**: *commit and resolve this ticket?* `/implement` does not decide tha
 
 ### Never push. Amend instead.
 
-`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `CLAUDE.md`; `tools/git.md` names the invocations it covers, including the ones that push as a side effect.
+`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `CLAUDE.md`; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect.
 
 That guard is what makes the rest safe. Once a commit exists and further changes are asked for, `/implement` **amends** rather than stacking `fix typo` commits, so **one ticket stays one commit**. Amending rewrites history, which is only safe while nothing has been pushed: keep the amend without the push guard and you rewrite published history.
 

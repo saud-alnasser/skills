@@ -87,7 +87,7 @@ The seven commands that own the workflow's stages — `/configure`, `/design`, `
 _Avoid_: core, pipeline, main flow
 
 **Primitive**:
-A model-invoked skill with no stage of its own, existing to be composed by the Spine — `grilling`, `tdd`, `codebase-design`, `domain-modeling`, `tools`.
+A model-invoked skill with no stage of its own, existing to be composed by the Spine — `grilling`, `tdd`, `codebase-design`, `domain-modeling`. Four: `tools` was one until ADR 0019 replaced it with a directory `/configure` derives, on the ground that a reference reachable only through the plugin is unreachable to a teammate without it.
 _Avoid_: helper, sub-skill, utility
 
 **Vendored Skill**:

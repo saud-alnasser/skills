@@ -24,7 +24,7 @@ Spend disproportionate effort here. Be aggressive, be creative, refuse to give u
 5. **A replayed trace.** Save a real request, payload, or event log, and push it through the code path in isolation.
 6. **A throwaway harness** — the smallest subset of the system that reaches the bug in one call.
 7. **A property or fuzz loop**, when the symptom is *sometimes wrong*.
-8. **A bisection harness**, when the bug appeared between two known states — automate "boot at X, check, repeat" so bisection can drive it unattended. The invocations, and the reset that has to follow, are in [`tools/git.md`](../tools/git.md).
+8. **A bisection harness**, when the bug appeared between two known states — automate "boot at X, check, repeat" so bisection can drive it unattended. The invocations, and the reset that has to follow, are in `.claude/tools/git.md`.
 9. **A differential loop** — same input through two versions or two configs, outputs diffed.
 10. **A human in the loop.** Last resort, and still structured: a script that tells the human exactly what to click and captures what came back.
 

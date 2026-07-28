@@ -8,11 +8,21 @@ Never guess a `gt` command. Graphite's verbs are its own — several read like g
 
 ## Know whether the repo uses Graphite
 
+A repo is on Graphite only if `gt init` has been run **in it**. `gt` being on the machine says nothing.
+
 ```
-gt log --stack           # non-zero, or "not initialized" → this is a plain git repo, use git
+ls .git/.graphite_repo_config      # exists → initialised here. absent → plain git
 ```
 
-A repo is on Graphite only if `gt init` has been run in it. On a repo that isn't, use [git.md](git.md) and don't offer to initialize one unasked.
+Read the filesystem, not `gt`. **This command initialises the repository as a side effect** — do not use it to probe:
+
+```
+gt log --stack          # NOT a probe: initialises the repo, then exits 0
+```
+
+Verified on gt 1.8.6 in a repo that had never seen `gt`. It printed `Graphite has not been initialized, attempting to setup now...`, set trunk to `main`, then failed with `ERROR: Cannot perform this operation on untracked branch <name>` — and wrote `.graphite_repo_config`, `.graphite_metadata.db`, `.graphite_pr_info`, and `.gtlocalprinfo` into `.git/`, **and exited 0** — so a probe keyed on a non-zero exit reads an uninitialised repo as initialised, having just made that true. Nothing lands in the tracked tree, so `git status` stays clean and the change is invisible where you would look for it.
+
+On a repo that is not on Graphite, use [git.md](git.md) and don't offer to initialize one unasked.
 
 ## The model
 

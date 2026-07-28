@@ -56,7 +56,7 @@ Discount files Claude wrote this session — those are not drift, they are this 
 
 If the Marker is not an ancestor of `HEAD` — a branch switch, a rebase, a reset — the diff between them is meaningless. Do not try to salvage one: treat everything the request touches as unverified.
 
-See `tools/git.md` for the exact invocations and for how `--porcelain` output is parsed.
+See `.claude/tools/git.md` for the exact invocations and for how `--porcelain` output is parsed.
 
 ## Reported, every time
 

@@ -102,6 +102,6 @@ Conventional Commits — `type(scope): summary` — for commit subjects, PR titl
 
 A **pull request description** covers the problem, the solution, the architectural impact, the testing performed, the related issues, and any breaking changes. Never a commit-by-commit account — the commits are already on the PR.
 
-**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers this repository's own tooling. Where Tenure is installed, its `tools/` reference covers the workflow's own tools as well; where it is not, this rule still binds and the docs are the answer.
+**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers every tool this repository uses, the workflow's own included, and it is committed — so this rule is followable with or without the plugin. An operation with no entry there is a configuration gap: say so, and fall back to the tool's own documentation. Never a remembered flag.
 
 **Never push and never publish.** Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.
