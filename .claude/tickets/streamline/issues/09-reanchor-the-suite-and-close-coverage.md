@@ -1,7 +1,7 @@
 # test(verify): re-anchor the suite to the new layout and close its coverage gaps
 
 Status: open
-Blocked by: 08
+Blocked by: 16
 Part of: streamline
 
 ## Problem
@@ -24,5 +24,7 @@ The suite asserts the new layout, and its coverage is audited file by file so th
 ## Comments
 
 This is the gate for the rest of the effort and is placed before every compression ticket deliberately. Compressing first would leave the suite red across four tickets with no way to tell an intended rewrite from a lost claim.
+
+It is also placed *after* adoption rather than before it, so the new layout it asserts against is a tree that exists rather than one that is planned. Assertions written against an imagined layout are the ones that pass while describing nothing.
 
 Both failure shapes named in the authoring standards apply. A guard written from new wording matches only that wording; a guard covering two claims passes when either holds. One assertion per claim, anchored to the subject.

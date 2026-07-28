@@ -22,4 +22,9 @@ The always-on load is asserted, so exceeding it fails the build. What loads unco
 
 ## Comments
 
-Record the measured before-and-after in this ticket's comments when it closes. The baseline is 20,581 chars across three files, of which 12,144 are harness-injected and 8,437 are loaded because the entrypoint instructs it.
+Record the measured before-and-after in this ticket's comments when it closes.
+
+**Measure what loads, not what is on disk.** Block-level HTML comments are stripped before injection, so a raw byte count overstates the budget. The spec's figure of 12,144 harness-injected chars is a raw count; measured the way it is loaded, the baseline before this effort was **11,074** — `CLAUDE.md` 7,726 and the authoring standards 3,348. Ticket 01 established both numbers before being partly reverted, and its comments hold the working.
+
+This ticket runs after adoption, not after the templates change. Until this repository is on the new layout there is nothing here to measure, and measuring the templates instead would report the budget of a repository that does not exist.
+

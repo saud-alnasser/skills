@@ -1,4 +1,4 @@
-# feat(configure): the templates and the migration write the new layout
+# feat(configure): the migration converts the superseded layout
 
 Status: open
 Blocked by: 05, 06, 07
@@ -6,21 +6,31 @@ Part of: streamline
 
 ## Problem
 
-Onboarding writes the old shape. Its templates generate the entrypoint and the protocol file as they were, know nothing about the guide directory or path-scoped rules, and its migration branch converts other workflows onto a layout that no longer exists. A repository configured after this effort would be born on the superseded structure.
+The templates now generate the new layout, so a repository configured from scratch is born correct. A repository already running Tenure is not: it sits on the shape those templates replaced, and the migration branch knows how to convert other AI workflows and Tenure's previous layout, but not this one.
+
+Onboarding is documented as the intended way to maintain a configured repository, so a migration that does not cover the newest move makes re-running it report a repository as current when it is a layout behind.
 
 ## Outcome
 
-Onboarding generates the new layout: a pointer entrypoint, a routing protocol, rules split by loading mechanism, and one guide per workflow concern. The migration branch gains the conversion from this repository's own previous layout, alongside the conversions it already performs. Re-running it on a repository already migrated recognises the new shape rather than duplicating it.
+**Shipped behaviour changes; this repository's own configuration does not.**
+
+The migration gains the conversion from the layout this effort replaced, alongside the conversions it already performs. It moves files whose format is already correct, so the work is mechanical and its risk is the mechanical one: a reference left pointing where a file no longer is. Re-running it on an already-converted repository recognises the new shape rather than duplicating it.
 
 ## Acceptance
 
-- A freshly configured repository has the layout this effort defines, with no file from the superseded shape.
-- A repository on the superseded layout is migrated to the new one, and the migration is listed in the move plan before anything is touched.
-- Re-running onboarding on an already-migrated repository reports what exists rather than duplicating it.
+- A repository on the superseded layout is converted to the new one, and the conversion is listed in the move plan before anything is touched.
+- Every reference into a moved file is repointed, including references inside files the move did not otherwise rewrite.
+- Re-running onboarding on an already-converted repository reports what exists rather than duplicating it, and does not report a converted repository as needing conversion.
+- Recognition is by content rather than by presence, so a file that exists but describes the superseded shape is a finding rather than a pass.
 - Nothing shipped names a pre-migration path except the files whose job is detecting and converting them.
-- The generated entrypoint stays within its line budget, asserted rather than assumed.
+- The conversion is demonstrated against a **fixture** built from the pre-effort tree — a throwaway copy, converted and inspected — rather than against any live repository, and the fixture carries every shape the migration claims to handle rather than only the ones this repository has.
+- Re-running the migration against an already-converted fixture changes nothing, so idempotence is shown rather than asserted.
 - `pwsh -NoProfile -File scripts/verify.ps1` passes.
 
 ## Comments
 
-This ticket has the widest blast radius in the effort. The templates are what every future repository is born from, so an error here is not visible in this tree at all — it appears in somebody else's. The existing template assertions are the detection and need extending to the new file set rather than repointing.
+This ticket was originally the whole of onboarding's catch-up, cut when the effort ran repository-first. The template work distributed into the structural tickets that own each file, so what remains is the migration alone — a much narrower blast radius than the ticket started with.
+
+It is still the ticket whose errors are invisible here and visible in somebody else's repository, which is why the fixture belongs to this ticket rather than to the one that adopts. A migration first exercised while converting something that matters is being debugged, not tested.
+
+The pre-effort tree is at `087ab58`, recoverable with `git show` or a throwaway worktree. `.claude/decisions/0026-a-fixture-tests-the-migration-and-the-revert-is-dropped.md` has why the fixture beats the live tree on every axis, including repeatability and coverage.

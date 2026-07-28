@@ -19,12 +19,14 @@ Underneath all three: rules are written as arguments rather than directives. Nea
 
 Measured baseline, before any work begins:
 
-| | chars | loads because |
-| --- | --- | --- |
-| `CLAUDE.md` | 8,739 | harness, mechanical |
-| `.claude/rules/skills.md` | 3,405 | harness, mechanical — should be conditional |
-| `.claude/context.md` | 8,437 | `CLAUDE.md` instructs it — behavioural |
-| **total** | **20,581** | **≈5.1k tokens** |
+| | raw chars | as loaded | loads because |
+| --- | --- | --- | --- |
+| `CLAUDE.md` | 8,739 | 7,726 | harness, mechanical |
+| `.claude/rules/skills.md` | 3,405 | 3,348 | harness, mechanical — should be conditional |
+| `.claude/context.md` | 8,437 | — | `CLAUDE.md` instructs it — behavioural |
+| **harness-injected total** | **12,144** | **11,074** | |
+
+**As loaded** is the column that matters, and it is the one to measure against: block-level HTML comments are stripped before injection, so a raw byte count charges the budget for maintainer notes that never reach Claude. Ticket 01 established the corrected figures before being partly reverted.
 
 Everything shipped under `skills/` totals 232,430 chars. It is never loaded at once, but each skill re-establishes shared machinery in its own words, which is why the same understanding is rebuilt on every invocation.
 
@@ -74,11 +76,29 @@ That guard has a hole worth naming: it only covers claims someone chose to asser
 
 ## Approach
 
-Restructure first, compress second, enforced by ticket edges rather than by two efforts. Ticket numbers restart per effort and the branch convention does not encode the effort, so two efforts in flight would collide on `01-` — one effort, ordered by edges, avoids inventing a problem the repository has documented.
+**Ship first, adopt once, compress last** — enforced by ticket edges rather than by separate efforts. Ticket numbers restart per effort and the branch convention does not encode the effort, so two efforts in flight would collide on `01-`; one effort ordered by edges avoids inventing a problem the repository has documented.
 
-Tickets 01–08 move the structure. Ticket 09 re-anchors `verify.ps1` and closes its coverage gaps, which is the gate: compression cannot start until the fidelity test is trustworthy. Tickets 10–13 compress against a settled structure, sliced so each fits one fresh context window. Ticket 14 adopts the result here and confirms the budget.
+Every structural ticket changes `skills/` only. This repository moves onto the new layout in one ticket, by running the migration rather than by being edited into shape — see ADR 0025. The deciding argument is that the migration has exactly one repository available to prove itself against, and editing this tree as the effort goes leaves that ticket nothing to convert.
 
-The risky part is ticket 09, and it is deliberately placed before every compression ticket rather than after. Compressing first would leave the suite red for four tickets with no way to distinguish an intended rewrite from a lost claim.
+```
+02  entrypoint points, protocol routes
+03  guides ship, one per concern             07  commit follows review
+04  context format splits routing            06  skills declare their guides
+05  the generated layout
+08  the migration converts the old shape     → proven against a fixture
+16  adopt here, by running that migration
+09  re-anchor the suite, close coverage      → asserts against a tree that exists
+10–13  compress, sliced one per context window
+14  confirm the budget
+```
+
+Two placements carry the risk and both are deliberate. **Ticket 09 sits before every compression ticket**, because compressing first would leave the suite red across four tickets with no way to distinguish an intended rewrite from a lost claim. **Ticket 16 sits before ticket 09**, so the layout the suite is re-anchored to is one that exists rather than one that is planned.
+
+Ticket 01 landed under the earlier ordering and is left where it is. It reached the shape ADR 0021 targets, so this repository holds part of the new layout early; ticket 16 recognises that rather than duplicating or reverting it.
+
+**Rejected: repository-first, with the templates catching up at the end.** This is how the effort was originally cut, and ticket 01 was built that way. It reverse-engineers the templates from wherever this tree happened to land, and defers every error to somebody else's repository. Reversed by ADR 0025.
+
+**Rejected: reverting ticket 01 to give the migration a clean before-state.** Cut as ticket 15 and dropped. The premise — that this repository is the only tree the migration can be proven against — is false, because the pre-effort tree is recoverable from history. A fixture beats it on repeatability, on coverage, and on not writing a revert-then-redo pair into a history that is this framework's build record. See ADR 0026.
 
 **Rejected: compress first, then restructure.** Every compressed line may land in a different file afterwards, so the same content is reviewed twice and the compression has no settled structure to compress toward.
 

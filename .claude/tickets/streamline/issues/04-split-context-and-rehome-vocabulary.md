@@ -6,17 +6,26 @@ Part of: streamline
 
 ## Problem
 
-The root Context is one file holding a routing table and twenty-five glossary terms, and the entrypoint instructs that all of it be loaded at session start. Most terms are irrelevant to any given request: the tier vocabulary loads when the work is a docs fix, the claim vocabulary loads when nobody is claiming anything. Routing — the cheap part, and the part needed first — cannot be read without the expensive part.
+The root Context a repository is given is one file holding a routing table and its glossary, and the entrypoint instructs that all of it be loaded at session start. Most terms are irrelevant to any given request: the tier vocabulary loads when the work is a docs fix, the claim vocabulary loads when nobody is claiming anything. Routing — the cheap part, and the part needed first — cannot be read without the expensive part.
+
+The format that decides this is owned by the skill that writes Context, and it currently describes one file doing both jobs.
 
 ## Outcome
 
-Routing and vocabulary are separate files. The routing table is read first and is small. Cross-cutting vocabulary stays in the root Context. A term owned by one workflow stage moves to the guide that uses it, and a term owned by one domain moves to that domain's Context, so each term is paid for by the work that needs it.
+**Shipped behaviour changes; this repository's own configuration does not.**
+
+The Context format separates routing from vocabulary. A configured repository is given a routing file that is read first and is small, and a root Context holding only cross-cutting vocabulary. A term owned by one workflow stage belongs to the guide that uses it, and a term owned by one domain belongs to that domain's Context, so each term is paid for by the work that needs it.
 
 ## Acceptance
 
 - The routing table is readable without loading any vocabulary.
-- Every term appears exactly once across the routing file, the root Context, the guides, and the Domain Contexts.
-- A term that moved is reachable from the file that uses it, and no file references a term whose home it does not name.
+- The format states where a term belongs, mechanically enough that two people placing the same term agree.
+- A term owned by a workflow stage is defined in that stage's guide, and the vocabulary files do not restate it.
 - Every file under the contexts directory has exactly one row in the routing table, and every row points at a file that exists.
-- No implementation detail entered Context during the move.
+- Onboarding generates the split shape, and its audit branch recognises a repository already on it.
+- The compression test still gates every line written into Context, and no implementation detail is admitted by the split.
 - `pwsh -NoProfile -File scripts/verify.ps1` passes.
+
+## Comments
+
+The terms in this repository's own Context are not moved by this ticket. Their content is repository-specific knowledge rather than shipped structure, and ticket 16 moves them through the migration — which is the only way the migration gets tested against real vocabulary rather than a fixture.

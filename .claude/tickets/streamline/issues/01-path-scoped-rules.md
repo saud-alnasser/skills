@@ -53,6 +53,17 @@ Harness-injected, block-level HTML comments stripped because those never reach c
 
 The spec's baseline of 12,144 for this set is a raw byte count; stripping comments first puts the true always-on baseline at 11,074. `streamline/14` should measure the ceiling the same way it is loaded, which its second criterion already requires.
 
-### Deliberate inconsistency, until `streamline/08`
+### This landed before the effort was re-ordered, and it stands
 
-The shipped templates under `skills/` still tell a configured repository that unconditional rules live in `CLAUDE.md`. That is this effort's sequencing — the repository adopts the layout before the templates emit it — and `streamline/08` closes it. Recorded so it is not filed as drift in the meantime.
+Recorded here rather than by editing the work above, because this ticket is the build record of what actually happened.
+
+The effort was re-cut ship-first afterwards (`.claude/decisions/0025-the-templates-change-before-the-repository-adopts-them.md`), which briefly implied reverting the entrypoint split so the migration would have a clean superseded layout to convert. That revert was cut as ticket 15 and then dropped: the pre-effort tree is recoverable from history, so the migration is tested against a fixture instead, which is repeatable and covers more than this tree ever would. `.claude/decisions/0026-a-fixture-tests-the-migration-and-the-revert-is-dropped.md` has the reasoning.
+
+So nothing here is unwound:
+
+- **The entrypoint split stands.** It is the shape ADR 0021 targets, reached early rather than wrongly. Ticket 02 makes the template emit it; ticket 16 recognises it as already done rather than duplicating it.
+- **The scope fix stands.** The authoring standards are a rule about building Tenure itself and exist in no other repository, so there is nothing to ship. Onboarding already instructs that repository-discovered rules be path-scoped; this repository was not following its own shipped instruction. That was a defect here regardless of which tree leads.
+- **The empirical result stands.** The table above is the confirmation later tickets rely on — and the fixture technique it used is the one ticket 08 now adopts for the migration.
+- **The verification work stands**, including the assertions about the split.
+
+What this ticket got wrong was only its *position* in the effort, and position is not something a landed change has to carry.
