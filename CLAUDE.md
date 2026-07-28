@@ -48,7 +48,16 @@ For what is being *built* here, `.claude/tickets/tenure/spec.md` is authoritativ
 
 The order is a **truth hierarchy, and it is absolute**. Where they disagree, the Codebase is right. Resolve every conflict by changing the documentation to match reality — never the reverse, and never by explaining the code away.
 
-Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of `context.md` says which and when. Loading them all defeats the point.
+Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of it says which and when. Loading them all defeats the point.
+
+## How this repository operates
+
+Two committed files answer that, and both are reached by pointer rather than loaded every turn:
+
+- **`.claude/tracker.md`** — which tracker holds the tickets, and how it is driven.
+- **`.claude/version-control.md`** — which version-control model applies, the branch convention, the commit discipline, and how a finished branch lands.
+
+Both are **policy**: what this repository does. `.claude/tools/` answers the neighbouring question of how to *type* any of it. Neither policy file depends on Tenure being installed.
 
 ## If you are running Tenure
 

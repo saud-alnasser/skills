@@ -385,6 +385,17 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
 # fires when that skill runs. /configure (ticket 08) installs this template.
 $claudeTemplate = 'configure/CLAUDE.template.md'
 
+# The sections whose *subject* is this repository's own `.claude/` rather than
+# `./skills` — the adoption tickets, where the deliverable is this tree. Reading
+# `.claude/` as evidence is ordinary and several sections do it; reading it as
+# the thing under test is what the ships/runs-on boundary otherwise holds apart.
+#
+# Declared once and checked both ways in `layout/04`: every id here is marked at
+# its own section, and every section marked as one appears here. The list on its
+# own would be a comment; the reverse direction is what makes widening the
+# exception fail the build instead of passing silently.
+$subjectSections = @('layout/02', 'layout/04', 'layout/06')
+
 # Ticket 16 split the always-on file. `CLAUDE.md` is committed and read by every
 # Claude that opens the repository, so it keeps only rules that hold with or
 # without the plugin; the machinery serving them — the Marker, the drift reads,
@@ -4054,13 +4065,13 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
 
 # --- ticket layout/02 — adopt the layout here --------------------------------
 
-# One of two sections whose *subject* is `.claude/` rather than `./skills`, and
-# it has to be: this ticket moved this repository's own tree. `layout/04` is the
-# other. Corroborating reads of `.claude/` are ordinary and several sections
-# make them — `tenure/20` checks a rule is written down here and that a rename
-# left no trace — but reading it as the thing under test is what `skills/` is
-# what ships, `.claude/` is what this repository runs on holds apart, so it is
-# marked where it happens rather than left to be inferred.
+# A section whose *subject* is `.claude/` rather than `./skills`, and it has to
+# be: this ticket moved this repository's own tree. Corroborating reads of
+# `.claude/` are ordinary and several sections make them — `tenure/20` checks a
+# rule is written down here and that a rename left no trace — but reading it as
+# the thing under test is what `skills/` is what ships, `.claude/` is what this
+# repository runs on holds apart, so it is marked where it happens rather than
+# left to be inferred. `$subjectSections` is where they are enumerated.
 Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
 
   function Get-RepoFile {
@@ -4391,10 +4402,9 @@ Parse the status columns carefully.
 
 # --- ticket layout/04 — derive this repository's own tool references ---------
 
-# The second section whose subject is `.claude/` rather than `./skills`, for the
-# reason `layout/02` gives: this ticket's deliverable *is* this repository's own
-# tree. See that section's comment for why the crossing is marked rather than
-# assumed.
+# A section whose subject is `.claude/` rather than `./skills`, for the reason
+# `layout/02` gives: this ticket's deliverable *is* this repository's own tree.
+# See that section's comment for why the crossing is marked rather than assumed.
 Describe-Ticket 'layout/04' "derive this repository's own tool references" {
 
   $toolDir = Join-Path $repo '.claude/tools'
@@ -4534,17 +4544,34 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
     $true
   }
 
-  # verify.md names which sections read `.claude/` as their subject. The claim
-  # is only true while those sections say so themselves, which is what a reader
-  # arriving at one of them actually needs.
-  Assert "both sections that read .claude/ by subject say why, where they do it" {
+  # `$subjectSections` names the sections whose subject is `.claude/`, and
+  # verify.md tells a reader which those are. Checked in both directions: the
+  # forward one keeps the marking present, the reverse one is what makes the
+  # exception fail the build when it widens.
+  #
+  # A marker is a column-0 comment block directly above `Describe-Ticket` that
+  # names both `subject` and `.claude/`. Indented comments inside a block are
+  # not markers, which is what keeps the several sections discussing subjects
+  # for other reasons out of this.
+  Assert "every section marked as reading .claude/ by subject is declared, and vice versa" {
     $script = Get-RepoText 'scripts/verify.ps1'
-    $doc = Get-RepoText '.claude/tools/verify.md'
-    foreach ($id in @('layout/02', 'layout/04')) {
-      $m = [regex]::Match($script, "(?s)(.{0,800})Describe-Ticket '$([regex]::Escape($id))'")
-      if ($m.Groups[1].Value -notmatch '(?i)subject') { throw "$id does not say why it reads .claude/" }
-      if ($doc -notmatch [regex]::Escape($id)) { throw "verify.md does not name $id" }
+    $marked = @()
+    foreach ($m in [regex]::Matches($script, "(?m)((?:^#[^\r\n]*\r?\n)+)Describe-Ticket '([^']+)'")) {
+      if ($m.Groups[1].Value -match '(?i)subject' -and $m.Groups[1].Value -match '\.claude/') {
+        $marked += $m.Groups[2].Value
+      }
     }
+    $undeclared = @($marked | Where-Object { $_ -notin $subjectSections })
+    if ($undeclared) { throw "marked but not in `$subjectSections: $($undeclared -join ', ')" }
+    $unmarked = @($subjectSections | Where-Object { $_ -notin $marked })
+    if ($unmarked) { throw "declared but not marked at its own section: $($unmarked -join ', ')" }
+    $true
+  }
+
+  Assert "verify.md names every section that reads .claude/ by subject" {
+    $doc = Get-RepoText '.claude/tools/verify.md'
+    $missing = @($subjectSections | Where-Object { $doc -notmatch [regex]::Escape($_) })
+    if ($missing) { throw "verify.md does not name: $($missing -join ', ')" }
     $true
   }
 }
@@ -4672,6 +4699,102 @@ Describe-Ticket 'layout/05' 'give version control its own policy file' {
   Assert "the check warns against asking the stacking tool" {
     $s = Get-Section (Get-SkillFile $vcTemplate) 'Which model'
     if ($s -notmatch '(?i)initialise|initialize') { throw 'does not say why the tool is not the probe' }
+    $true
+  }
+}
+
+# --- ticket layout/06 — state this repository's version-control policy -------
+
+# A section whose subject is `.claude/` rather than `./skills`, for the reason
+# `layout/02` gives: this ticket's deliverable *is* this repository's own tree.
+Describe-Ticket 'layout/06' "state this repository's version-control policy" {
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  Assert "this repository has its own version-control policy file" {
+    Get-RepoText '.claude/version-control.md' | Out-Null
+    $true
+  }
+
+  # One per section, for the reason `layout/05` gives about the template: a
+  # single assertion demanding all four goes green the moment the first one it
+  # reaches is restored.
+  foreach ($section in @('Which model', 'Branch naming', 'Commit discipline', 'How work lands')) {
+    Assert "the policy file answers: $section" {
+      Get-Section (Get-RepoText '.claude/version-control.md') $section | Out-Null
+      $true
+    }
+  }
+
+  # The statement is only worth having while it is true, and this is the same
+  # read the file itself prescribes. A repository that adopted a stacking tool
+  # and did not heal the file fails here rather than misleading the next run.
+  Assert "the stated model still matches the repository" {
+    $stated = Get-Section (Get-RepoText '.claude/version-control.md') 'Which model'
+    $stacked = Test-Path (Join-Path $repo '.git/.graphite_repo_config')
+    if ($stacked -and $stated -notmatch '(?im)^\*\*Stacked changes\.\*\*') { throw 'a stack is initialised here and the file says otherwise' }
+    if (-not $stacked -and $stated -notmatch '(?im)^\*\*Plain git\.\*\*') { throw 'no stack is initialised here and the file does not say plain git' }
+    $true
+  }
+
+  # Criterion 1's fourth item, resolved the way `layout/05` resolved it in the
+  # template: pointed at, never restated, because `CLAUDE.md` must carry it
+  # unconditionally. Both directions, so it cannot relax into a copy.
+  Assert "the landing section reaches the standing rule rather than restating it" {
+    $s = Get-Section (Get-RepoText '.claude/version-control.md') 'How work lands'
+    if ($s -notmatch 'CLAUDE\.md') { throw 'does not reach the standing rule at all' }
+    if ($s -match '(?i)cannot undo locally') { throw "restates CLAUDE.md's never-push rule verbatim" }
+    $true
+  }
+
+  Assert "the branch convention is stated with an example a reader can copy" {
+    $s = Get-Section (Get-RepoText '.claude/version-control.md') 'Branch naming'
+    if ($s -notmatch '(?i)ticket') { throw 'does not tie the name to the ticket' }
+    if ($s -notmatch '(?m)^\d{2}-[a-z0-9-]+$|\s\d{2}-[a-z0-9-]+') { throw 'no worked example of the form' }
+    $true
+  }
+
+  Assert "the tracker configuration carries no branch naming" {
+    if ((Get-RepoText '.claude/tracker.md') -match '(?im)^##\s+Branch naming') { throw 'the section is here' }
+    $true
+  }
+
+  # --- criteria 3 and 4: the always-on file is a complete starting point -----
+
+  foreach ($policy in @('.claude/tracker.md', '.claude/version-control.md')) {
+    Assert "the root always-on file names $policy" {
+      if ((Get-RepoText 'CLAUDE.md') -notmatch [regex]::Escape($policy)) { throw 'not named' }
+      $true
+    }
+  }
+
+  Assert "the root always-on file stays an entrypoint, not a manual — under 200 lines" {
+    $n = ((Get-RepoText 'CLAUDE.md') -split '\r?\n').Count
+    if ($n -ge 200) { throw "$n lines" }
+    $true
+  }
+
+  # "A reader with no plugin installed can reach every instruction this
+  # repository depends on starting from the root always-on file." Every path it
+  # names has to exist, or that reader hits a dead end on their first hop.
+  #
+  # `CONTRIBUTING.md` is named conditionally — "where CONTRIBUTING.md documents
+  # a convention" — and this repository has none, so it is excluded by name
+  # rather than by a pattern that would also excuse a genuine break.
+  Assert "every file the root always-on file points at exists" {
+    $conditional = @('CONTRIBUTING.md')
+    $broken = @()
+    foreach ($m in [regex]::Matches((Get-RepoText 'CLAUDE.md'), '`(\.claude/[^`\r\n]+|[A-Za-z0-9_.-]+\.(?:md|ps1))`')) {
+      $target = $m.Groups[1].Value.TrimEnd('*', '/')
+      if ($target -in $conditional) { continue }
+      if (-not (Test-Path (Join-Path $repo $target))) { $broken += $m.Groups[1].Value }
+    }
+    if ($broken) { throw "named but absent: $(($broken | Sort-Object -Unique) -join ', ')" }
     $true
   }
 }
