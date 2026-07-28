@@ -32,7 +32,7 @@ To see what to reach for and when, `/tenure:help`.
 
 ## What a teammate without the plugin sees
 
-A repository Tenure has configured stays useful to them. `CLAUDE.md` is committed and carries only rules that hold with or without the plugin — precedence, the knowledge layers, verifying before claiming, healing documentation where it has gone stale. Tenure's own protocol is in `.claude/tenure.md`, which only Tenure's skills open, and nothing committed assumes a Tenure command exists.
+A repository Tenure has configured stays useful to them. `CLAUDE.md` and `.claude/rules/` are committed and carry only rules that hold with or without the plugin — precedence, the knowledge layers, verifying before claiming, healing documentation where it has gone stale. The harness loads both whether or not Tenure is installed. Tenure's own protocol is in `.claude/tenure.md`, which only Tenure's skills open, and nothing committed assumes a Tenure command exists.
 
 ## Repository layout
 

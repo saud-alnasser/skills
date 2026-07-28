@@ -47,4 +47,4 @@ The maintainer fast-forwards `main` from each ticket branch, in ticket order. Th
 
 Where tickets stack — one built on another's branch before either has landed — they land in the same order they were built, each still producing one commit on `main`.
 
-Publishing is the human's call. `CLAUDE.md` carries that as a standing rule and this section does not repeat it; what is recorded here is only what happens once the work is ready.
+Publishing is the human's call. `.claude/rules/engineering.md` carries that as a standing rule and this section does not repeat it; what is recorded here is only what happens once the work is ready.

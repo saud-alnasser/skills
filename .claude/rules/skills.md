@@ -1,6 +1,18 @@
+---
+paths:
+  - "skills/**"
+  - "scripts/verify.ps1"
+---
+
 # Authoring skills
 
-Scope: `skills/**`
+<!--
+  The scope is the frontmatter above, not prose. It was prose until this rule
+  cost 3,405 chars on every turn, including turns that never opened `skills/`.
+  `scripts/verify.ps1` is in scope because the first standard below is an
+  obligation *on* that file — a rule about the suite that did not load when
+  the suite was open would fire only where it was not needed.
+-->
 
 Standards this repository holds itself to when changing what ships. The vocabulary behind them is in `.claude/contexts/skill-authoring.md`; these are the checkable obligations.
 

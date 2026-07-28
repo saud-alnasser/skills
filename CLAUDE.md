@@ -10,33 +10,26 @@
   either way. Tenure's own protocol lives in `.claude/tenure.md`, which only
   Tenure's skills read.
 
-  What belongs here is only what must hold *unconditionally*. A rule that
-  applies to one stage belongs in the skill that enforces that stage — a rule
-  written into a skill fires only when that skill runs, which is exactly right
-  for stage rules and silently wrong for these. A standard discovered in this
-  repository belongs in `.claude/rules/`.
+  Placement is by **loading mechanism**, not by subject (ADR 0021). A rule in
+  `.claude/rules/` with no `paths:` frontmatter is injected on every turn, the
+  same as this file; one with `paths:` loads only when Claude reads a file it
+  covers. A rule that governs one stage belongs in the skill enforcing that
+  stage — written into a skill it fires only when that skill runs, which is
+  exactly right for stage rules and silently wrong for unconditional ones.
 
   Keep it under 200 lines. Everything else is reached by pointer.
 -->
 
 This repository builds **Tenure**, a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time rather than a stateless execution pipeline. It is also configured by Tenure — `skills/` is what ships, `.claude/` is what this repository runs on, and `.claude/context.md` holds the boundary between them.
 
-## Precedence
+## Rules that always apply
 
-When instructions conflict, the later source loses:
+These files in `.claude/rules/` load unconditionally, alongside this one. They are not restated here, because a standard with two homes drifts at one of them:
 
-1. What the user said in this conversation
-2. This file
-3. `.claude/context.md` and the Domain Contexts
-4. `.claude/decisions/` — an accepted ADR
-5. `.claude/rules/` and `CONTRIBUTING.md`
-6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is
+- **`.claude/rules/precedence.md`** — which source wins when two instructions conflict.
+- **`.claude/rules/engineering.md`** — verifying before claiming, never guessing an API, never pushing or publishing, and never silently deciding architecture.
 
-A user instruction overrides everything here. Say so when it does, and follow it.
-
-`.claude/rules/` holds standards discovered in **this repository** — they belong to it, not to Tenure. A rule that applies to only part of the tree is **path-scoped** to that part; check the scope before applying one.
-
-For what is being *built* here, `.claude/tickets/tenure/spec.md` is authoritative — 43 numbered decisions, the build order, and the target layout — and the tickets beside it record what was actually done. Where the spec and an ADR disagree, the ADR is later and wins.
+Everything else in that directory is **path-scoped** and loads only when Claude reads a file it covers; the scope is in each rule's `paths:` frontmatter, not in its prose.
 
 ## Knowledge layers
 
@@ -63,12 +56,6 @@ Both are **policy**: what this repository does. `.claude/tools/` answers the nei
 
 `.claude/tenure.md` carries Tenure's protocol — how a verification may be skipped, how drift is read, and the report every skill opens with. It is **not** loaded from here, and nothing in this file depends on it. It names machinery that exists only where the plugin is installed, and this file is read by every Claude that opens the repository. Tenure's skills reach it by pointer; without them, everything here still holds on its own.
 
-## Verify before claiming
-
-**Inspect source before any repository-specific claim** — before implementing, designing, reviewing, or answering a question about this repository. Not sometimes: a claim about what is here is either checked or it is a guess wearing the same words.
-
-**Names are not proof.** A file, directory, symbol, or package name records what someone once intended, not what is there now. Neither is memory, and neither is a plausible-sounding API.
-
 ## Verification at use
 
 **Never a scan. Never a phase.** There is no synchronization stage to run and nothing to reconcile up front — a startup scan would be Claude rediscovering what it already knows, and paying for it on every session.
@@ -92,9 +79,7 @@ A request that would **change code** takes the cold path, on every turn, whether
 1. Route, load, verify — as above.
 2. **State the classification** before touching anything: what kind of change this is, and how much process it warrants. One line.
 
-The point of stating it is that the user can disagree. A classification held silently is a decision made silently.
-
-**Claude never silently decides architecture.** Where more than one reasonable approach exists, put the options on the table — each named, with what it buys, what it costs, and what it risks — recommend one, and let the user choose. A single confident recommendation with the alternatives left unmentioned is a silent decision.
+The point of stating it is that the user can disagree. A classification held silently is a decision made silently — which is the case `.claude/rules/engineering.md` covers for architecture.
 
 ## Writing knowledge
 
@@ -113,7 +98,3 @@ The defaults, applied when nothing else is found:
 Conventional Commits — `type(scope): summary` — for commit subjects, PR titles, and issue titles. The scope names an engineering domain; `misc`, `stuff`, and `update` are not domains.
 
 A **pull request description** covers the problem, the solution, the architectural impact, the testing performed, the related issues, and any breaking changes. Never a commit-by-commit account — the commits are already on the PR.
-
-**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers every tool this repository uses, the workflow's own included, and it is committed — so this rule is followable with or without the plugin. An operation no entry covers is a configuration gap: say so, and fetch the docs.
-
-**Never push and never publish.** Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.

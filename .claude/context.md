@@ -105,7 +105,7 @@ _Avoid_: forked, imported, borrowed
 
 - **Every skill derived from mattpocock/skills carries its attribution.** Licence-derived, not stylistic — see `LICENSE` and `NOTICE`.
 - **The root `CLAUDE.md` stays under 200 lines.** It is always-on, so every turn pays for it whether or not a skill runs.
-- **Nothing committed may assume Tenure is installed.** A teammate who clones this repository without the plugin must be able to follow every rule in `CLAUDE.md` on their own.
+- **Nothing committed may assume Tenure is installed.** A teammate who clones this repository without the plugin must be able to follow every rule in `CLAUDE.md` and `.claude/rules/` on their own — the harness loads both without it.
 
 ## Domain contexts
 

@@ -6,7 +6,7 @@ Docs: https://code.claude.com/docs/en/plugin-marketplaces and https://code.claud
 
 ## Editing `skills/` does not change the running Tenure
 
-An installed Tenure runs from a **cache pinned to a commit**, never from this working directory — whichever source the marketplace was added from. So a fix written into `skills/` here does not reach the running plugin until it is committed, published to that source, and the installed copy updated. `CLAUDE.md` makes publishing the human's call. Expect the edit to appear to do nothing until then; that is the design, not a fault.
+An installed Tenure runs from a **cache pinned to a commit**, never from this working directory — whichever source the marketplace was added from. So a fix written into `skills/` here does not reach the running plugin until it is committed, published to that source, and the installed copy updated. `.claude/rules/engineering.md` makes publishing the human's call. Expect the edit to appear to do nothing until then; that is the design, not a fault.
 
 Where a given clone's Tenure came from is **Position** — per-machine, and recorded in the gitignored `settings.local.json` rather than here. Read it with:
 

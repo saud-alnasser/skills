@@ -32,7 +32,7 @@ _Avoid_: canonical location, source of truth (for rules)
 
 ## Boundaries
 
-- **When a rule fires decides where it lives**, and nothing else does. Unconditional rules belong in the root `CLAUDE.md`; a rule that governs one stage belongs in the skill enforcing that stage; a standard discovered in this repository belongs in `.claude/rules/`. Topic similarity is not a placement argument.
+- **When a rule fires decides where it lives**, and nothing else does. A rule that governs one stage belongs in the skill enforcing that stage; a standard discovered in this repository belongs in `.claude/rules/`, where the presence or absence of `paths:` frontmatter decides whether it loads on every turn or only when a file it covers is read (ADR 0021). Topic similarity is not a placement argument.
 - **A name's audience decides its length**, not its subject matter. The two audiences are the keyboard and the selector, and they want opposite things; `.claude/rules/skills.md` carries the rule that resolves it.
 - **Vendored skills are altered, not rewritten.** The derivation from mattpocock/skills stays visible in the file, and the attribution is a licence obligation rather than a courtesy.
 

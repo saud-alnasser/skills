@@ -1,6 +1,6 @@
 # refactor(rules): split the rules directory and make a scoped rule actually scoped
 
-Status: open
+Status: resolved
 Blocked by: —
 Part of: streamline
 
@@ -25,3 +25,34 @@ Rules are placed by loading mechanism. Standards that fire unconditionally live 
 ## Comments
 
 Confirm the scoping empirically before trusting it. The documented behaviour around path frontmatter has changed across several recent releases, and this ticket is the one that finds out whether it works on the installed version rather than assuming from the reference.
+
+### Confirmed, on Claude Code 2.1.220
+
+Measured with an `InstructionsLoaded` hook over a throwaway fixture, dumping each event to a log. The installed version is past every version caveat the reference records for this feature.
+
+| Claude reads | unscoped rule | scoped rule |
+| --- | --- | --- |
+| a file no glob covers | `session_start` | *absent* |
+| `src/app.ts` against `src/**/*.ts` | `session_start` | `path_glob_match` |
+| `skills/design/SKILL.md` against `skills/**` | `session_start` | `path_glob_match` |
+| `scripts/verify.ps1` against the bare path | `session_start` | `path_glob_match` |
+
+Both glob forms this repository now depends on were confirmed individually, rather than inferring `skills/**` from the reference's `src/**/*.ts` example. A scope that matches nothing is the failure mode with no symptom — the rule silently never fires and the frontmatter still reads as correct — so `verify.ps1` also resolves every declared glob against the tree.
+
+### Budget
+
+Harness-injected, block-level HTML comments stripped because those never reach context:
+
+| | before | after |
+| --- | --- | --- |
+| `CLAUDE.md` | 7,726 | 6,120 |
+| `.claude/rules/precedence.md` | — | 1,321 |
+| `.claude/rules/engineering.md` | — | 1,373 |
+| `.claude/rules/skills.md` | 3,348 | *conditional* |
+| **always-on total** | **11,074** | **8,814** |
+
+The spec's baseline of 12,144 for this set is a raw byte count; stripping comments first puts the true always-on baseline at 11,074. `streamline/14` should measure the ceiling the same way it is loaded, which its second criterion already requires.
+
+### Deliberate inconsistency, until `streamline/08`
+
+The shipped templates under `skills/` still tell a configured repository that unconditional rules live in `CLAUDE.md`. That is this effort's sequencing — the repository adopts the layout before the templates emit it — and `streamline/08` closes it. Recorded so it is not filed as drift in the meantime.

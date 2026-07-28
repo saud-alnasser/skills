@@ -95,6 +95,36 @@ function Get-Frontmatter {
   return $null
 }
 
+# Everything the harness injects without a pointer being followed: the root
+# `CLAUDE.md`, plus every rule file with no `paths:` key in its frontmatter.
+#
+# Derived from the frontmatter rather than from a list, because the list is
+# the thing that goes wrong — a rule added without `paths:` is a new charge on
+# every turn, and a hand-kept set would not notice it. Confirmed empirically
+# against Claude Code 2.1.220 via the `InstructionsLoaded` hook: an unscoped
+# rule reports `session_start`, a scoped one reports `path_glob_match` only
+# when a covered file is read, and reports nothing otherwise.
+function Get-RuleFiles {
+  $rules = Join-Path $repo '.claude/rules'
+  if (-not (Test-Path $rules)) { return @() }
+  # Relative to the rules root, not `$_.Name`. Claude Code discovers rules
+  # recursively and the reference shows them organised into subdirectories, so
+  # a name-only path would silently address the wrong file the first time one
+  # is nested — and every assertion built on it would read a file that is not
+  # the one it named.
+  Get-ChildItem $rules -Recurse -File -Filter *.md | ForEach-Object {
+    '.claude/rules/' + ($_.FullName.Substring($rules.Length + 1) -replace '\\', '/')
+  }
+}
+
+function Get-AlwaysOnFiles {
+  $unscoped = @(Get-RuleFiles | Where-Object {
+    $fm = Get-Frontmatter (Get-Content (Join-Path $repo $_) -Raw)
+    -not ($fm -and $fm -match '(?m)^paths:')
+  })
+  @('CLAUDE.md') + $unscoped
+}
+
 # One `## ` section: from its heading to the next heading at the same level or
 # higher. A rule is checked where it is supposed to be stated, not anywhere in
 # the file — a file-wide search passes on unrelated prose that happens to use
@@ -394,7 +424,7 @@ $claudeTemplate = 'configure/CLAUDE.template.md'
 # its own section, and every section marked as one appears here. The list on its
 # own would be a comment; the reverse direction is what makes widening the
 # exception fail the build instead of passing silently.
-$subjectSections = @('layout/02', 'layout/04', 'layout/06')
+$subjectSections = @('layout/02', 'layout/04', 'layout/06', 'streamline/01')
 
 # Ticket 16 split the always-on file. `CLAUDE.md` is committed and read by every
 # Claude that opens the repository, so it keeps only rules that hold with or
@@ -4473,10 +4503,14 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
   # Scoped to the files that navigate. The tickets are excluded for the reason
   # `layout/02` gives — they are the build record, and one of them names a tool
   # file that was correct when it was written.
+  # `.claude/rules/` is included from `streamline/01` on: it is loaded by the
+  # harness, so a broken tool pointer there is one Claude reads without ever
+  # following a link. The top-level scan alone would not have seen it.
   Assert "every tools/ pointer in this repository's knowledge resolves" {
     $files = @('CLAUDE.md', 'README.md') +
              (Get-ChildItem (Join-Path $repo '.claude') -Filter '*.md' |
-               ForEach-Object { ".claude/$($_.Name)" })
+               ForEach-Object { ".claude/$($_.Name)" }) +
+             (Get-RuleFiles)
     $broken = @()
     foreach ($f in $files) {
       foreach ($m in [regex]::Matches((Get-RepoText $f), '(?<![\w/])(?:\.claude/)?tools/([a-z0-9.-]+\.md)')) {
@@ -4522,9 +4556,16 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
     $true
   }
 
-  Assert "CLAUDE.md states that one committed directory covers every tool" {
-    $c = Get-RepoText 'CLAUDE.md'
-    if ($c -notmatch '(?i)covers every tool this repository uses') { throw 'the replacement claim is not stated' }
+  # `streamline/01` moved the never-guess rule out of `CLAUDE.md` into an
+  # unscoped rule file, so this guard moved with it rather than being relaxed:
+  # a check still pointed at the old home would pass on a stale copy and fail
+  # on the real one. What the criterion demands is that the claim is reachable
+  # without a pointer being followed, which is the always-on set — not one
+  # named file — so the set is what is searched, and it must hold exactly once.
+  Assert "the always-on set states that one committed directory covers every tool, exactly once" {
+    $homes = @(Get-AlwaysOnFiles | Where-Object { (Get-RepoText $_) -match '(?i)covers every tool this repository uses' })
+    if ($homes.Count -eq 0) { throw 'the replacement claim is not stated in anything loaded unconditionally' }
+    if ($homes.Count -gt 1) { throw "stated in more than one always-on home: $($homes -join ', ')" }
     $true
   }
 
@@ -4742,13 +4783,24 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
     $true
   }
 
-  # Criterion 1's fourth item, resolved the way `layout/05` resolved it in the
-  # template: pointed at, never restated, because `CLAUDE.md` must carry it
-  # unconditionally. Both directions, so it cannot relax into a copy.
+  # Criterion 1's fourth item: pointed at, never restated, because the rule
+  # must hold unconditionally. Both directions, so it cannot relax into a copy.
+  #
+  # `streamline/01` moved the never-push rule from `CLAUDE.md` into an unscoped
+  # rule file. The guard follows it, and is strengthened while it is being
+  # touched: the old form matched the literal string `CLAUDE.md`, which would
+  # have stayed green against a pointer at a file that no longer held the rule.
+  # This resolves the pointer instead — the named file must exist and must
+  # actually state the rule.
   Assert "the landing section reaches the standing rule rather than restating it" {
     $s = Get-Section (Get-RepoText '.claude/version-control.md') 'How work lands'
-    if ($s -notmatch 'CLAUDE\.md') { throw 'does not reach the standing rule at all' }
-    if ($s -match '(?i)cannot undo locally') { throw "restates CLAUDE.md's never-push rule verbatim" }
+    if ($s -match '(?i)cannot undo locally') { throw 'restates the never-push rule verbatim' }
+    $named = [regex]::Matches($s, '`((?:\.claude/)?[A-Za-z0-9_./-]+\.md)`') | ForEach-Object { $_.Groups[1].Value }
+    if (-not $named) { throw 'does not reach the standing rule at all' }
+    $resolved = @($named | Where-Object {
+      (Test-Path (Join-Path $repo $_)) -and ((Get-RepoText $_) -match '(?i)never push and never publish')
+    })
+    if (-not $resolved) { throw "points at $($named -join ', '), and none of those states the never-push rule" }
     $true
   }
 
@@ -4796,6 +4848,152 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
     }
     if ($broken) { throw "named but absent: $(($broken | Sort-Object -Unique) -join ', ')" }
     $true
+  }
+}
+
+# --- ticket streamline/01 — split the rules directory ------------------------
+
+# Another section whose subject is `.claude/` rather than `./skills`, for the
+# reason `layout/02` gives. The shipped templates still describe the previous
+# placement; `streamline/08` moves them. That gap is the sequencing this effort
+# chose — the repository dogfoods the layout before the templates emit it — and
+# it is recorded here so the next reader does not file it as drift.
+Describe-Ticket 'streamline/01' 'split the rules directory and make a scoped rule actually scoped' {
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  # --- criterion 2: the unconditional rules load unconditionally -------------
+
+  foreach ($rule in @('.claude/rules/precedence.md', '.claude/rules/engineering.md')) {
+    Assert "$rule loads on every turn — no paths: in its frontmatter" {
+      if ($rule -notin (Get-AlwaysOnFiles)) { throw 'scoped, or absent — it would not fire on a turn that opens no file' }
+      $true
+    }
+  }
+
+  Assert "the precedence ladder is stated where it loads, with every rank" {
+    $c = Get-RepoText '.claude/rules/precedence.md'
+    foreach ($rank in 1..6) {
+      if ($c -notmatch "(?m)^$rank\.\s") { throw "rank $rank is missing" }
+    }
+    if ($c -notmatch '(?i)user instruction overrides everything') { throw 'the user override is not stated' }
+    $true
+  }
+
+  # The ladder now ranks the directory it lives in, at two different ranks. A
+  # ladder that did not say why would read as a contradiction to the next
+  # reader, who would then "fix" it by collapsing the two back together.
+  Assert "the ladder says why the same directory appears at two ranks" {
+    $c = Get-RepoText '.claude/rules/precedence.md'
+    if ($c -notmatch '(?i)how a rule loads|loading mechanism') { throw 'the discriminator is not named' }
+    if ($c -notmatch '(?i)`paths:`') { throw 'the mechanical test is not given' }
+    $true
+  }
+
+  # --- criteria 2 and 3: each standard has exactly one always-on home --------
+  #
+  # One assertion per standard, anchored to that standard. A single assertion
+  # demanding all four goes green the moment the first one it reaches is found,
+  # which is the failure `.claude/rules/skills.md` warns about by name.
+  $standards = [ordered]@{
+    'verify before claiming'                    = '(?i)before any repository-specific claim'
+    'never guess an API'                        = '(?i)covers every tool this repository uses'
+    'never push and never publish'              = '(?i)cannot undo locally'
+    'Claude never silently decides architecture' = '(?i)is a silent decision'
+  }
+  foreach ($standard in $standards.Keys) {
+    $pattern = $standards[$standard]
+    Assert "'$standard' is stated in exactly one always-on file" {
+      $homes = @(Get-AlwaysOnFiles | Where-Object { (Get-RepoText $_) -match $pattern })
+      if ($homes.Count -eq 0) { throw 'stated in nothing that loads unconditionally' }
+      if ($homes.Count -gt 1) { throw "two homes: $($homes -join ', ')" }
+      if ($homes[0] -eq 'CLAUDE.md') { throw 'still in the entrypoint the effort exists to empty' }
+      $true
+    }
+  }
+
+  # --- criterion 4: every scope is machine-readable --------------------------
+
+  # The defect this ticket was cut for: a scope announced in prose is a scope
+  # the harness does not enforce, so the file loads everywhere while reading as
+  # though it does not. Checked over the directory, not over the one file that
+  # had it, or the next one written this way passes.
+  Assert "no rule states its scope in prose" {
+    $prose = @()
+    foreach ($f in (Get-RuleFiles)) {
+      $body = (Get-RepoText $f) -replace '(?s)\A---\r?\n.*?\r?\n---\r?\n', ''
+      if ($body -match '(?im)^\s*(scope|applies to)\s*:') { $prose += $f }
+    }
+    if ($prose) { throw "prose scope in: $($prose -join ', ')" }
+    $true
+  }
+
+  Assert "the authoring standards are scoped rather than charged to every turn" {
+    if ('.claude/rules/skills.md' -in (Get-AlwaysOnFiles)) { throw 'still loads unconditionally' }
+    $fm = Get-Frontmatter (Get-RepoText '.claude/rules/skills.md')
+    if ($fm -notmatch '(?m)^paths:') { throw 'no paths: key' }
+    $true
+  }
+
+  # A scope that matches nothing is worse than no scope: the rule silently
+  # never fires, and every inspection of the frontmatter says it is fine. The
+  # globs are resolved against the tree rather than eyeballed.
+  Assert "every scoped rule's globs match at least one file that exists here" {
+    $tracked = (& git -C $repo ls-files) -replace '\\', '/'
+    $dead = @()
+    foreach ($f in (Get-RuleFiles)) {
+      $fm = Get-Frontmatter (Get-RepoText $f)
+      if (-not ($fm -and $fm -match '(?m)^paths:')) { continue }
+      foreach ($m in [regex]::Matches($fm, '(?m)^\s*-\s*"?([^"\r\n]+?)"?\s*\r?$')) {
+        $glob = $m.Groups[1].Value
+        # `**` is parked under a token first: a replacement string is literal
+        # text, so a regex escape written there would be matched literally by
+        # the pass that follows and the two would never meet.
+        $rx = '\A' + ([regex]::Escape($glob) `
+                -replace '\\\*\\\*', 'DOUBLESTAR' `
+                -replace '\\\*', '[^/]*' `
+                -replace 'DOUBLESTAR', '.*') + '\z'
+        if (-not ($tracked | Where-Object { $_ -match $rx })) { $dead += "$($f.Name): $glob" }
+      }
+    }
+    if ($dead) { throw "matches nothing in the tree: $($dead -join '; ')" }
+    $true
+  }
+
+  # A pointer is verified before use, always — and these files are read on
+  # every turn without any pointer being followed to reach them, so a broken
+  # one here is the most-read broken pointer in the repository.
+  #
+  # This caught a real defect on the pass that added it: a rule file named
+  # `.claude/protocol.md`, which is a later ticket's deliverable and does not
+  # exist yet. A forward reference reads exactly like a working pointer.
+  Assert "every pointer in an always-on file resolves" {
+    $broken = @()
+    foreach ($f in (Get-AlwaysOnFiles)) {
+      foreach ($m in [regex]::Matches((Get-RepoText $f), '`(\.claude/[^`\r\n]+)`')) {
+        $target = $m.Groups[1].Value.TrimEnd('*', '/')
+        if (-not (Test-Path (Join-Path $repo $target))) { $broken += "$f → $($m.Groups[1].Value)" }
+      }
+    }
+    if ($broken) { throw ($broken -join '; ') }
+    $true
+  }
+
+  # --- criterion 3, the other direction: the entrypoint still routes ---------
+
+  # Emptying `CLAUDE.md` of the standards is only safe if it still names where
+  # they went. Without this, a reader who opens the entrypoint alone concludes
+  # the repository has no precedence rule.
+  foreach ($rule in @('.claude/rules/precedence.md', '.claude/rules/engineering.md')) {
+    Assert "the entrypoint names $rule" {
+      if ((Get-RepoText 'CLAUDE.md') -notmatch [regex]::Escape($rule)) { throw 'not named' }
+      $true
+    }
   }
 }
 

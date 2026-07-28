@@ -10,10 +10,11 @@
   only where the plugin does.
 
   Nothing here is a rule that must fire on every turn. A rule that must hold
-  unconditionally belongs in `CLAUDE.md`; putting one here means it fires only
-  when a Tenure skill happens to run, which is a silent failure. What is here
-  is a cache, the two reads that invalidate it, and the report that proves the
-  check happened.
+  unconditionally belongs in `CLAUDE.md` or in an unscoped file under
+  `.claude/rules/`, both of which the harness injects every turn; putting one
+  here means it fires only when a Tenure skill happens to run, which is a
+  silent failure. What is here is a cache, the two reads that invalidate it,
+  and the report that proves the check happened.
 
   Only Tenure's skills read this file, and they reach it by pointer. Nothing
   committed reads it to learn a fact about the repository.
