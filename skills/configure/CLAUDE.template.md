@@ -47,6 +47,15 @@ The order is a **truth hierarchy, and it is absolute**. Where they disagree, the
 
 Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of `context.md` says which and when. Loading them all defeats the point.
 
+## How this repository operates
+
+Two committed files answer that, and both are reached by pointer rather than loaded every turn:
+
+- **`.claude/tracker.md`** — which tracker holds the tickets, and how it is driven.
+- **`.claude/version-control.md`** — which version-control model applies, the branch convention, the commit discipline, and how a finished branch lands.
+
+Both are **policy**: what this repository does. `.claude/tools/` answers the neighbouring question of how to *type* any of it, which is why it is a third directory rather than a section in either. Neither policy file depends on Tenure being installed.
+
 ## If you are running Tenure
 
 `.claude/tenure.md` carries Tenure's protocol — how a verification may be skipped, how drift is read, and the report every skill opens with. It is **not** loaded from here, and nothing in this file depends on it. It names machinery that exists only where the plugin is installed, and this file is read by every Claude that opens the repository. Tenure's skills reach it by pointer; without them, everything here still holds on its own.

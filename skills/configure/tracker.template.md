@@ -10,7 +10,10 @@
   about where the tickets are.
 
   Delete the rows that do not apply. Keep the file short: it answers "which
-  tracker, and how", and nothing else.
+  tracker, and how", and nothing else. What happens to a ticket once somebody
+  builds it — the model, the branch convention, how work lands — is
+  `.claude/version-control.md`'s, and branch naming lived here only because
+  that file did not exist yet.
 -->
 
 ## Which tracker
@@ -30,15 +33,6 @@ On GitLab, the same shape holds with `glab`; see `.claude/tools/gitlab.md`.
 
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a
 docs fetch, not an assumption.
-
-## Branch naming
-
-{This repository's branch convention, if it has one — read it off the recent
-branches and off `CONTRIBUTING.md` rather than asserting one. Delete this
-section if there is none, and `/implement`'s default applies.}
-
-The branch is how `/implement` claims a ticket, so whatever goes here has to
-encode the ticket id and has to be reproducible from the ticket alone.
 
 ## Assignment
 

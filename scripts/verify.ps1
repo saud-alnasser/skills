@@ -3598,9 +3598,16 @@ Describe-Ticket 'tenure/19' 'on a stack, blocked means stacked' {
 
   # Criterion 2. Both readings exist, and which applies is read rather than
   # assumed — a guess is wrong in a way that looks like nothing happening.
+  #
+  # `layout/05` moved *where* the read points, from a build-time probe to
+  # `.claude/version-control.md`, which states the model and carries the check
+  # for its own claim. The criterion is unchanged and so is this assertion's
+  # subject: determination must have a stated source. Naming that file is the
+  # second alternative, so dropping the file and going back to guessing fails
+  # here as well as in `layout/05`.
   Assert "which meaning applies is read off the repository, never guessed" {
     $s = & $stackSection
-    if ($s -notmatch '(?i)never guess it|read[^\r\n]{0,40}off the repository') { throw 'the detection is not required' }
+    if ($s -notmatch '(?i)never guess it|version-control\.md') { throw 'the detection is not required' }
     # Both failure directions, because only one of them is loud.
     if ($s -notmatch '(?i)assume plain git on a stacking') { throw 'the stalling direction is unstated' }
     $s -match '(?i)assume stacking on a plain'
@@ -4538,6 +4545,133 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
       if ($m.Groups[1].Value -notmatch '(?i)subject') { throw "$id does not say why it reads .claude/" }
       if ($doc -notmatch [regex]::Escape($id)) { throw "verify.md does not name $id" }
     }
+    $true
+  }
+}
+
+# --- ticket layout/05 — give version control its own policy file -------------
+
+Describe-Ticket 'layout/05' 'give version control its own policy file' {
+
+  $vcTemplate = 'configure/version-control.template.md'
+  $trackerTemplate = 'configure/tracker.template.md'
+
+  Assert "the policy file ships as a template /configure installs" {
+    if (-not (Test-Path (Join-Path $skills $vcTemplate))) { throw "skills/$vcTemplate is missing" }
+    $true
+  }
+
+  # Criterion 1, one assertion per section. A single assertion demanding all
+  # four reports whichever it reaches first and goes green again the moment
+  # that one is restored, which is how a template loses a section quietly.
+  foreach ($section in @('Which model', 'Branch naming', 'Commit discipline', 'How work lands')) {
+    Assert "the policy template answers: $section" {
+      Get-Section (Get-SkillFile $vcTemplate) $section | Out-Null
+      $true
+    }
+  }
+
+  # Criterion 1's fourth item is worded "the never-push rule", and `CLAUDE.md`
+  # carries that unconditionally — restating it here would be a second home for
+  # a rule that must fire on every turn. What the policy file owns instead is
+  # how work lands in *this* repository, which is a fact about the repository
+  # and about its humans. Asserted in both directions so the deviation cannot
+  # quietly relax back into a copy.
+  Assert "the landing section reaches the standing rule rather than restating it" {
+    $s = Get-Section (Get-SkillFile $vcTemplate) 'How work lands'
+    if ($s -notmatch 'CLAUDE\.md') { throw 'does not reach the standing rule at all' }
+    if ($s -match '(?i)cannot undo locally') { throw "restates CLAUDE.md's never-push rule verbatim" }
+    $true
+  }
+
+  # --- criterion 2: the tracker template gives it up entirely ----------------
+
+  Assert "the tracker template no longer carries branch naming" {
+    if ((Get-SkillFile $trackerTemplate) -match '(?im)^##\s+Branch naming') { throw 'the section is still there' }
+    $true
+  }
+
+  # Checked at both ends. A move that drops the constraint on the way looks
+  # exactly like one that never carried it, and only the destination check
+  # tells them apart.
+  Assert "the ticket-id constraint travelled to the policy template" {
+    $s = Get-Section (Get-SkillFile $vcTemplate) 'Branch naming'
+    if ($s -notmatch '(?i)ticket id') { throw 'the constraint did not arrive with the convention' }
+    $true
+  }
+
+  Assert "the tracker template states no version-control policy at all" {
+    $c = Get-SkillFile $trackerTemplate
+    $subjects = [ordered]@{
+      'the branch/ticket-id constraint' = '(?i)encode the ticket id'
+      'which model applies'             = '(?i)plain git|stacked changes'
+      'how work lands'                  = '(?i)never push'
+    }
+    $held = @($subjects.Keys | Where-Object { $c -match $subjects[$_] })
+    if ($held) { throw "still states: $($held -join ', ')" }
+    $true
+  }
+
+  # --- criterion 3: the always-on file names both ----------------------------
+
+  # The 200-line budget is asserted in tenure/02 against the same template, so
+  # this is only the naming half. Per file, because one pointer landing and the
+  # other not is the likely half-failure.
+  foreach ($policy in @('.claude/tracker.md', '.claude/version-control.md')) {
+    Assert "the always-on template names $policy" {
+      if ((Get-SkillFile $claudeTemplate) -notmatch [regex]::Escape($policy)) { throw 'not named' }
+      $true
+    }
+  }
+
+  # --- criteria 4 and 5: read the statement, verify it, heal it --------------
+
+  # Anchored to the subsection that owns the question. `Get-Section` handles
+  # `## ` only, and widening this to the whole of step 1 would let the branch
+  # convention's own mention of the same file satisfy it.
+  Assert "/implement reads the stated model rather than discovering it" {
+    $m = [regex]::Match((Get-SkillFile 'implement/SKILL.md'), '(?ms)^###[^\r\n]*blocked means stacked.*?(?=^#{1,3}\s|\z)')
+    if (-not $m.Success) { throw 'the stacking subsection is gone' }
+    if ($m.Value -notmatch 'version-control\.md') { throw 'does not reach the file that states the model' }
+    $true
+  }
+
+  # The probe is gone as the *source* of the answer, which means /implement must
+  # not carry the invocation either — a skill that still runs it will run it,
+  # whatever the prose above says.
+  #
+  # Deliberately not a $rulePattern entry: the check appears in the policy
+  # template and in the Graphite tool reference, and those are two audiences
+  # rather than two homes — one says what this repository is, the other says
+  # how to drive a CLI. A duplication guard on the subject would fail on a
+  # correct tree.
+  Assert "no build-time probe survives inside /implement" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -match '(?i)graphite_repo_config|gt log') { throw 'still carries the probe invocation' }
+    $true
+  }
+
+  # The whole point of the chosen placement: the check travels with the claim,
+  # so it is followable in a repository with no plugin installed.
+  Assert "the policy template carries the check for its own claim" {
+    $s = Get-Section (Get-SkillFile $vcTemplate) 'Which model'
+    if ($s -notmatch '\.graphite_repo_config') { throw 'states the model with no way to confirm it' }
+    $true
+  }
+
+  Assert "a stale model is healed where it is found, and the read wins" {
+    $s = Get-Section (Get-SkillFile $vcTemplate) 'Which model'
+    if ($s -notmatch '(?i)the read is\s*\**\s*right') { throw 'does not say which side wins' }
+    if ($s -notmatch '(?i)correct this file') { throw 'does not say to repair it here' }
+    $true
+  }
+
+  # The trap the previous design fell into: a probe that shells out to the
+  # stacking tool makes its own answer true. Stated where the check is given,
+  # or the next reader reaches for the obvious command.
+  Assert "the check warns against asking the stacking tool" {
+    $s = Get-Section (Get-SkillFile $vcTemplate) 'Which model'
+    if ($s -notmatch '(?i)initialise|initialize') { throw 'does not say why the tool is not the probe' }
     $true
   }
 }

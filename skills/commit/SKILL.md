@@ -64,7 +64,7 @@ Where the repository documents or demonstrates another convention, follow it **s
 
 Say what capability changed, and why it changed. **Never a file-by-file account**: the diff already lists the files, and a message that re-lists them spends the reader's attention on the one thing they could have got for free.
 
-Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch, and there are exactly two cases:
+Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch — which `.claude/version-control.md` states, so it is read rather than inferred from the shape of the branch. There are exactly two cases:
 
 | How the work lands | The commit carries | Because |
 | --- | --- | --- |

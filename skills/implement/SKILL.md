@@ -81,7 +81,7 @@ The branch name is **Tenure's own convention**, not the default of whichever too
                                         142-retry-a-failed-payment
 ```
 
-The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/tracker.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
+The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/version-control.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
 
 **Check before creating, on both sides.** `.claude/tools/git.md` has the reads:
 
@@ -99,7 +99,9 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 `Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
-**Read which one applies off the repository; never guess it.** `.claude/tools/graphite.md` has the check, and it is one command. Getting it wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+**`.claude/version-control.md` states which one applies**, and states how to confirm it. Read it and do what it says — it is one line of fact and one read, and the check is beside the claim because the claim is what goes stale. Getting the model wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+
+**Never substitute a probe for the read.** Discovering the model afresh on every run was the previous design, and it was replaced because a fact rediscovered silently is a fact nobody can review — the file makes it visible, and verifying it costs the same command the probe was already running.
 
 So, on a stacking repository only:
 
