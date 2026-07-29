@@ -6325,8 +6325,11 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   # tier and landed the ceiling at 5,000. aep/11 raised it to 5,600 when the
   # user placed the what-gets-written directives in the always-on tier —
   # which is the deliberate act with a diff this comment requires, never drift.
+  # 5,800 for the eighth directive, forbidding `.claude/` file references from
+  # comments and repository documentation: measured 5,725, and the raise is
+  # recorded here rather than absorbed, exactly as the last one was.
   Assert "the always-on load is under the stated ceiling, measured rather than described" {
-    $ceiling = 5600
+    $ceiling = 5800
     $total = 0
     $unscoped = @('CLAUDE.md')
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
@@ -6430,7 +6433,10 @@ Describe-Ticket 'aep/11' 'the always-on tier covers what gets written, and close
   # continue to pin. Checked in both copies — the template that ships and the
   # rules file this repository runs on.
   $directives = [ordered]@{
-    'comments say why, never what'   = '(?i)comments say \*?why\*?'
+    # Either emphasis marker. The guard exists to catch the directive being
+    # deleted, and it once went red because the line was rewritten `*why*` →
+    # `_why_` — a markdown detail it was never aimed at.
+    'comments say why, never what'   = '(?i)comments say [*_]?why[*_]?'
     'the workaround-comment test'    = '(?i)workaround[^\r\n]{0,80}fix the code'
     'every public API is documented' = '(?i)document every public API'
     'files named for one thing'      = '(?i)directories carry the qualifiers'
@@ -6452,6 +6458,88 @@ Describe-Ticket 'aep/11' 'the always-on tier covers what gets written, and close
     $c = Get-SkillFile 'implement/SKILL.md'
     if ($c -notmatch '(?i)invok\w+ the `commit` skill') { throw 'the invocation is not named' }
     $c -match '(?i)never a hand-rolled `git commit`'
+  }
+}
+
+# --- ticket aep/12 — formatters are made to skip the protocol directory -------
+
+Describe-Ticket 'aep/12' 'whatever formats a repository is made to skip .claude/' {
+
+  # Bound to the paragraph, not to the file. Every guard below would otherwise
+  # pass on a coincidence somewhere else in a 200-line skill — `.claude/tools/`
+  # appears four times in it already, and the routing claim is only true if it
+  # is made *here*.
+  $formatterSection = {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    $m = [regex]::Match($c, '(?ms)^\*\*Whatever formats this repository.*?(?=^#{2}\s)')
+    if (-not $m.Success) { throw 'the formatter instruction is gone from step 4' }
+    $m.Value
+  }
+
+  Assert "step 4 makes the detected formatters skip the protocol directory" {
+    $s = & $formatterSection
+    if ($s -notmatch '(?i)skip `\.claude/`') { throw 'it never says what the formatters must do' }
+    $s -match '(?i)step 1'
+  }
+
+  # The *how* is a tool guide's, like every other invocation in the framework.
+  # Asserted with the gap clause, because an instruction that routes to
+  # `.claude/tools/` and stays silent about a missing entry is read as licence
+  # to guess the filename — which is the failure the routing exists to stop.
+  Assert "the how is routed through .claude/tools/, and a missing entry is a gap" {
+    $s = & $formatterSection
+    if ($s -notmatch '`\.claude/tools/`') { throw 'the instruction does not route the mechanism anywhere' }
+    if ($s -notmatch '(?i)own ignore mechanism') { throw 'it prescribes a mechanism instead of routing to one' }
+    $s -match '(?i)configuration gap'
+  }
+
+  # Detection is off the repository (ADR 0019's rule, applied to one more tool).
+  # A product name appearing here means the next reader edits a hardcoded
+  # filename instead of reading the repository, so this is the guard that has to
+  # fire on the tempting version of the change rather than on its absence.
+  Assert "the instruction names no specific formatter" {
+    $named = @('prettier', 'biome', 'dprint', 'eslint', 'rustfmt', 'gofmt', 'black', 'ruff',
+               'markdownlint', 'editorconfig', 'clang-format', 'ktlint', 'spotless')
+    $s = & $formatterSection
+    $hits = @($named | Where-Object { $s -match "(?i)$([regex]::Escape($_))" })
+    if ($hits) { throw "hardcodes: $($hits -join ', ')" }
+    $true
+  }
+
+  # The instruction is only actionable if the detection step collected the
+  # thing, and only derivable if the tool list expects a file for it. Two sites,
+  # two assertions — folded into one, either could rot while the other held.
+  Assert "step 1 reads formatting, and the tool list expects a file for the formatter" {
+    $detect = Get-Section (Get-SkillFile 'configure/SKILL.md') '1 — Detect'
+    if ($detect -notmatch '(?i)build, test, format') { throw 'step 1 never looks at formatting' }
+    # `.*$` rather than `[^\r\n]*$`: under CRLF the negated class stops before
+    # the `\r`, where `$` cannot match — it anchors immediately before `\n`.
+    $tools = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?m)^\*\*`\.claude/tools/\*\.md`\*\*.*$').Value
+    if (-not $tools) { throw 'the tool-derivation paragraph moved' }
+    $tools -match '(?i)formatter'
+  }
+
+  # The outcome, not the edit. A run that wrote an ignore entry a config file
+  # overrides has done the work and not the job.
+  Assert "step 6 validates that nothing formatting the repository reaches .claude/" {
+    $validate = Get-Section (Get-SkillFile 'configure/SKILL.md') '6 — Validate'
+    $validate -match '(?i)nothing that formats this repository reaches `\.claude/`'
+  }
+
+  # The reasoning is recorded here and the bound travels in the shipped prose,
+  # deliberately not as a citation: a skill installed elsewhere would be
+  # pointing at a decision record that repository does not have. So the two
+  # halves are asserted at their own homes rather than through a cross-reference.
+  Assert "the decision is recorded here, and the shipped instruction carries its own bound" {
+    $adr = Join-Path $repo '.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md'
+    if (-not (Test-Path $adr)) { throw 'the decision behind the exception is unrecorded' }
+    (& $formatterSection) -match '(?i)only thing `?/configure`? writes outside'
+  }
+
+  # ADR 0006 is bounded, not overturned. Asserted here as well as at its own
+  # ticket because this is the change that would have overturned it.
+  Assert "ADR 0006's root-ignore rule still stands beside the exception" {
+    (Get-SkillFile 'configure/SKILL.md') -match '(?i)root `?\.gitignore`? is left alone'
   }
 }
 

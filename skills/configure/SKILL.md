@@ -47,7 +47,7 @@ docs/adr/           .scratch/            .ai/
 
 The second group is what a repository configured by an **earlier version of this workflow** looks like. Finding any of them selects the layout migration rather than the conversion one — the formats are correct and only the locations are wrong: mechanical work, whose risk is a reference left pointing where a file no longer is.
 
-Then read the repository itself: languages, package manager, build, test, deploy, CI, source layout, **architectural style**, module boundaries, domains, and the conventions it already follows. **Read `CONTRIBUTING.md` and the recent `git log`** — those are how the repository documents and demonstrates its own conventions, and `CLAUDE.md`'s detect-before-asserting rule is what makes that a step rather than a courtesy.
+Then read the repository itself: languages, package manager, build, test, format, deploy, CI, source layout, **architectural style**, module boundaries, domains, and the conventions it already follows. **Read `CONTRIBUTING.md` and the recent `git log`** — those are how the repository documents and demonstrates its own conventions, and `CLAUDE.md`'s detect-before-asserting rule is what makes that a step rather than a courtesy.
 
 **Find the knowledge that is already written down**, wherever it lives: architecture documents, onboarding and developer guides, design documents, decision records, standards, conventions. Ordinary documentation, usually under `docs/`, not detected by the list above — and the input the classification step works on. A migration that never found them silently generates from scratch what was already written.
 
@@ -131,7 +131,7 @@ The guides are what the workflow's stages read instead of restating; `.claude/pr
 
 **`.claude/policies/version-control.md`**, from [policies/version-control.template.md](policies/version-control.template.md). The tracker file's neighbour: that says where the tickets are, this says what happens to one once somebody builds it. **Which model applies is read off the repository, not asked about**, by the check the template itself carries — a stacking tool installed on the machine says nothing about this repository. The branch convention and commit discipline are *detected*, from the recent branches, `CONTRIBUTING.md`, and the log; asserting AEP's defaults over a repository that demonstrates its own is what ADR 0008 forbids.
 
-**`.claude/tools/*.md`**, one file per tool this repository actually uses — the workflow's own (`git`, `gh`, `glab`, `gt`) *and* this repository's (package manager, test runner, typechecker, linter, build, deploy), in one directory with one format. [TOOLS.md](TOOLS.md) has the derivation rules and the format; it is the step where information is most easily lost, so read it before writing a tool file.
+**`.claude/tools/*.md`**, one file per tool this repository actually uses — the workflow's own (`git`, `gh`, `glab`, `gt`) *and* this repository's (package manager, test runner, typechecker, linter, formatter, build, deploy), in one directory with one format. [TOOLS.md](TOOLS.md) has the derivation rules and the format; it is the step where information is most easily lost, so read it before writing a tool file.
 
 Take every repository-specific command from the manifest, scripts, or CI configuration, never from what the ecosystem usually does. The **single-file test command** is the one entry that must not be missing — the most-run command in the framework and the least guessable, and `tdd` says what happens without it.
 
@@ -163,6 +163,12 @@ settings.local.json
 
 It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets AEP be added or removed as one directory instead of leaking entries into a file the repository owns.
 
+**Whatever formats this repository is made to skip `.claude/`.** A formatter that reaches it rewrites knowledge on the formatter's schedule — prose reflowed, tables realigned, list markers renormalized — and a knowledge file whose diff is unreadable has lost the thing it was for.
+
+Which formatters those are comes from step 1's read of the repository, never from a list here, and only the ones whose reach actually includes `.claude/` need anything. Make each one skip it **through its own ignore mechanism**, which its file in `.claude/tools/` describes — a formatter this repository runs earns a tool file like every other tool it runs, and **no entry there is a configuration gap**, not licence to guess a filename.
+
+That mechanism is the formatter's, so it is usually a file the repository owns, which is what the ignore rule above deliberately does not touch. **The exception is bounded and stays bounded**: the edit goes through step 2's plan like everything else, and it is the only thing `/configure` writes outside `.claude/` and `CLAUDE.md`.
+
 ## 5 — Audit, where AEP is already here
 
 The audit branch exists because **verification at use structurally cannot reach knowledge nothing loads**: a context file nobody references is never relied on, so nobody ever checks it — it just sits there being wrong.
@@ -187,6 +193,7 @@ Before reporting complete:
 - No **implementation** was written into Context — no API shapes, no function names, no file inventories.
 - Every file the always-on set points at exists: `CLAUDE.md`, `.claude/protocol.md`, and the two rules under `.claude/rules/`. **Nothing committed depends on a file `.claude/.gitignore` matches** — read `CLAUDE.md` as a Claude without the plugin would, follow every pointer, and confirm each rule it reaches is followable.
 - `.claude/.gitignore` exists and states the category, not a list.
+- **Nothing that formats this repository reaches `.claude/`.** The outcome, not the edit — a formatter whose ignore file was written but whose config overrides it is still reformatting knowledge.
 
 Report what was written, what was moved, and what was left alone.
 
