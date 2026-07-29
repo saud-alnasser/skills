@@ -64,7 +64,26 @@ The two cases are different work and only one page. Converting another workflow 
 
 **Write what is missing; check what is already there.** Both, on every run — a file that exists is checked against the repository it claims to describe, and one that does not is written. Neither is conditional on which branch step 1 selected.
 
-The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
+The shape being generated, so the tree reads as its own map — every category is a directory, and the one loose file is the router the entrypoint points at:
+
+```
+.claude/
+├── protocol.md          the router — the only file loose here
+├── rules/               always-on and path-scoped standards
+├── policies/            one guide per workflow concern
+├── contexts/            map.md, repository.md, and the domains
+├── decisions/           ADRs
+├── designs/             specs
+├── evidence/            research, prototypes, out-of-scope
+├── tickets/             one directory per effort
+├── tools/               one file per tool this repository uses
+├── position/            per-clone state — never committed
+└── .gitignore           what per-clone means, and the test for it
+```
+
+**A second loose file is a category nobody named.** When something does not fit a directory above, that is the finding — say so rather than dropping it at the root.
+
+The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope}/`, `.claude/tickets/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
 **`.claude/contexts/**`**, as three kinds of file: `.claude/contexts/map.md` holding the routing table alone, `.claude/contexts/repository.md` holding the vocabulary and boundaries that cross domains, and one file per domain that earns one. The format, the placement rule for a term, and the test a domain has to pass are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line is in `CLAUDE.md`.
 
@@ -107,19 +126,26 @@ Take every repository-specific command from the manifest, scripts, or CI configu
 **`.claude/.gitignore`**, written exactly as below. It is Position's definition (ADR 0012), so it states the category and the test rather than listing entries — a per-clone file added later is covered by the rule instead of needing a new exception argued for:
 
 ```gitignore
-# Position. Add a file here when it would be wrong in another clone —
-# someone else's checkout, or this repository on another machine. A file that
+# Position. Put a file under `position/` when it would be wrong in another clone
+# — someone else's checkout, or this repository on another machine. A file that
 # would be equally true everywhere is knowledge, and knowledge is committed.
 #
 # `.claude/protocol.md` says what depends on that being true.
 #
-# The leading slash on `/prototypes/` is load-bearing. Unanchored, the pattern
-# matches at every depth, so it would also swallow `evidence/prototypes/` —
-# the write-ups, which are kept and committed. Ignoring throwaway code is the
-# whole intent; ignoring the record of what it proved is silent data loss.
+# One directory rather than a list, so a per-clone file added later is covered
+# by the rule instead of needing a new exception argued for. It also removes a
+# hazard rather than guarding against one: throwaway prototype code and the
+# write-ups that outlive it used to share a name and differ only by a leading
+# slash, and they now sit under different parents.
+#
+# `settings.local.json` is separate because it is not the workflow's. The
+# harness writes it at exactly that path and would not find it anywhere else,
+# so it is the one per-clone file that cannot be moved under `position/`.
+#
+# The leading slash is still load-bearing: unanchored, `position/` would match
+# at every depth and swallow any directory of that name in the repository.
 
-marker.json
-/prototypes/
+/position/
 settings.local.json
 ```
 

@@ -24,7 +24,7 @@ It is not a knowledge layer, and the difference is the whole reason it has its o
 | prototype write-ups | `.claude/evidence/prototypes/` | `/prototype` |
 | rejected requests | `.claude/evidence/out-of-scope/` | `/triage` |
 
-**Throwaway prototype code is not evidence.** The code goes to `.claude/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent — ignoring the record of what it proved is silent data loss, which is why the ignore rules anchor the pattern rather than matching at every depth.
+**Throwaway prototype code is not evidence.** The code goes to `.claude/position/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent — ignoring the record of what it proved is silent data loss, and the two sit under different parents so that no ignore pattern can reach one while aiming at the other.
 
 **Read the directory before producing more.** A finding whose question matches and whose assumptions still hold is the answer: cite it and move on. Rebuilding an experiment whose answer is already recorded is the waste these directories exist to prevent.
 

@@ -1575,7 +1575,7 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # define. Nowhere else in Tenure says what is in it.
   Assert "the Marker's shape is defined, since /commit is its only writer" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch '\.claude/marker\.json') { throw 'the Marker path is never named' }
+    if ($c -notmatch '\.claude/position/marker\.json') { throw 'the Marker path is never named' }
     $c -match '(?ms)^```\s*json\s*$.*?commit.*?^```\s*$'
   }
 
@@ -1783,7 +1783,7 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
     $c = Get-SkillFile 'prototype/SKILL.md'
     $table = [regex]::Match($c, '(?ms)^\|\s*What\s*\|.*?(?=\r?\n\r?\n)').Value
     if (-not $table) { throw 'the two locations are not declared in one table' }
-    if ($table -notmatch '`\.claude/prototypes/') { throw 'the code location is wrong or missing' }
+    if ($table -notmatch '`\.claude/position/prototypes/') { throw 'the code location is wrong or missing' }
     if ($table -notmatch '`\.claude/evidence/prototypes/') { throw 'the write-up location is wrong or missing' }
     $c -match '(?i)deliberately \*{0,2}apart'
   }
@@ -1813,11 +1813,11 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
     $c -match '(?i)no reusable[- ]harness exception'
   }
 
-  Assert ".claude/prototypes/ is gitignored scratch" {
+  Assert "the throwaway-code directory is gitignored scratch" {
     $c = Get-SkillFile 'prototype/SKILL.md'
     # Bound to the directory. `.claude/.gitignore` is named in the same
     # paragraph, so a bare `gitignor` match survives the rule being cut.
-    $c -match '(?i)`\.claude/prototypes/`[^\n]{0,40}\*{0,2}gitignored'
+    $c -match '(?i)`\.claude/position/prototypes/`[^\n]{0,40}\*{0,2}gitignored'
   }
 
   # The ordering is the whole mechanism: deleting code that took real effort is
@@ -2590,7 +2590,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   Assert ".claude/.gitignore covers marker.json and prototypes/, and the root ignore file is left alone" {
     $c = Get-SkillFile $cfg
     if ($c -notmatch '\.claude/\.gitignore') { throw 'the workflow leaks into the repo root' }
-    foreach ($entry in @('marker\.json', 'prototypes/')) {
+    foreach ($entry in @('/position/', 'settings\.local\.json')) {
       if ($c -notmatch $entry) { throw "not ignored: $entry" }
     }
     $c -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root'
@@ -2612,7 +2612,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     # Read off that sentence, not the section: `.claude/prototypes/` is named
     # again by the .gitignore bullet a few lines down, so a file-wide check
     # passes with the path dropped from the layout it is supposed to describe.
-    $missing = @('decisions/', 'designs/', 'evidence/', 'tickets/', 'prototypes/') |
+    $missing = @('decisions/', 'designs/', 'evidence/', 'tickets/', 'position/') |
       Where-Object { $lazy.Value -notmatch [regex]::Escape($_) }
     if ($missing) { throw "the layout never names: $($missing -join ', ')" }
     $true
@@ -4108,7 +4108,7 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
     $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
     if (-not $block.Success) { throw 'the .gitignore block is gone' }
     $entries = $block.Groups[1].Value -split '\r?\n' | Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' }
-    if ($entries -notcontains '/prototypes/') {
+    if ($entries -notcontains '/position/') {
       throw "unanchored — would also ignore evidence/prototypes/: $($entries -join ', ')"
     }
     $true
@@ -4119,7 +4119,7 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # Both halves — asserting only the move leaves the code silently relocated.
   Assert "prototype code stays at .claude/prototypes/ while the write-up moves under evidence/" {
     $c = Get-SkillFile 'prototype/SKILL.md'
-    if ($c -notmatch '\.claude/prototypes/') { throw 'the throwaway-code location is gone' }
+    if ($c -notmatch '\.claude/position/prototypes/') { throw 'the throwaway-code location is gone' }
     if ($c -notmatch '\.claude/evidence/prototypes/') { throw 'the write-up did not move' }
     $true
   }
@@ -5584,6 +5584,131 @@ Describe-Ticket 'streamline/04' 'split routing from vocabulary, and re-home the 
     }
     if ($hits) { throw "still named in: $($hits -join ', ')" }
     $true
+  }
+}
+
+# --- ticket streamline/05 — directories at the root, Position in one place ----
+
+Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone state in one place' {
+
+  $layout = { Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate' }
+
+  # --- criterion 1: exactly one loose file ----------------------------------
+
+  # Read off the generated tree itself. A count taken across the whole skill
+  # would find every `.claude/x.md` it mentions in passing, most of which are
+  # inside directories, and pass while the tree grew a second loose file.
+  Assert "the generated layout has exactly one file loose at the workflow root" {
+    $tree = [regex]::Match((& $layout), '(?ms)^```\r?\n\.claude/\r?\n(.*?)^```')
+    if (-not $tree.Success) { throw 'the generated layout is not shown' }
+    $loose = @()
+    foreach ($line in ($tree.Groups[1].Value -split '\r?\n')) {
+      # Top level only: a nested entry is indented past the tree glyphs.
+      if ($line -notmatch '^[├└]──\s+(\S+)') { continue }
+      $entry = $Matches[1]
+      if ($entry -match '/$' -or $entry -like '.*') { continue }
+      $loose += $entry
+    }
+    if ($loose.Count -ne 1) { throw "loose at the root: $($loose -join ', ')" }
+    if ($loose[0] -ne 'protocol.md') { throw "the loose file is $($loose[0]), not the router" }
+    $true
+  }
+
+  Assert "a second loose file is named as a finding rather than tolerated" {
+    (& $layout) -match '(?i)second loose file|category nobody named'
+  }
+
+  # --- criterion 2: per-clone state has one directory -----------------------
+
+  foreach ($p in @('.claude/position/marker.json', '.claude/position/prototypes/')) {
+    Assert "$p is where the generated layout puts it" {
+      $named = @(Get-SkillFiles | Where-Object { (Get-Content $_.FullName -Raw) -match [regex]::Escape($p) })
+      if (-not $named) { throw 'nothing shipped names it' }
+      $true
+    }
+  }
+
+  # The superseded locations, swept rather than spot-checked. `/prototypes/` at
+  # the workflow root and `marker.json` beside it are the two the move retires,
+  # and either surviving anywhere means a reader is sent to a file that is not
+  # written. `configure/MIGRATION.md` is exempt: converting them is its job.
+  Assert "nothing shipped still puts per-clone state at the workflow root" {
+    $hits = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      if ($rel -eq 'configure/MIGRATION.md') { continue }
+      $c = Get-Content $f.FullName -Raw
+      foreach ($old in @('\.claude/marker\.json', '\.claude/prototypes/')) {
+        if ($c -match $old) { $hits += "$rel → $old" }
+      }
+    }
+    if ($hits) { throw ($hits -join '; ') }
+    $true
+  }
+
+  # --- criterion 3: the definition is a category and a test, not a list -----
+
+  $ignoreBlock = { [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```').Groups[1].Value }
+
+  Assert "the ignore file still states the category and a test a reader can apply" {
+    $b = & $ignoreBlock
+    if (-not $b) { throw 'the ignore file is described but never written out' }
+    if ($b -notmatch '(?i)Position') { throw 'the category is unnamed' }
+    # One line, deliberately: the test was split across a wrapped comment once
+    # and the guard for it went red, which is the only reason anyone noticed.
+    if ($b -notmatch '(?i)wrong in another clone') { throw 'no membership test a reader can apply' }
+    $b -match '(?i)knowledge is committed'
+  }
+
+  # --- criterion 4: the write-ups survive the move --------------------------
+
+  # The hazard changed shape. `/prototypes/` and `evidence/prototypes/` used to
+  # be one word apart at different depths, so the anchor was what kept an ignore
+  # rule off the write-ups. They now sit under different parents, which removes
+  # the collision rather than guarding it — so this asserts the outcome, and the
+  # anchor separately, instead of asserting the old mechanism.
+  Assert "no ignore entry can reach the evidence write-ups" {
+    $entries = @((& $ignoreBlock) -split '\r?\n' | Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' })
+    if (-not $entries) { throw 'nothing is ignored at all' }
+    foreach ($e in $entries) {
+      $pattern = $e.Trim().TrimStart('/').TrimEnd('/')
+      if ('evidence/prototypes' -match [regex]::Escape($pattern)) {
+        throw "'$e' reaches the write-ups"
+      }
+    }
+    $true
+  }
+
+  Assert "the per-clone directory is anchored, and says why" {
+    $b = & $ignoreBlock
+    $entries = @($b -split '\r?\n' | Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' })
+    if ($entries -notcontains '/position/') { throw "unanchored: $($entries -join ', ')" }
+    $b -match '(?i)leading slash'
+  }
+
+  # The one per-clone file that cannot move, and the reason — established by
+  # reading the tree rather than assumed: the harness writes it at that exact
+  # path, so relocating it would leave the harness unable to find it.
+  Assert "the harness-owned settings file is ignored where it is, and says why it stays" {
+    $b = & $ignoreBlock
+    $entries = @($b -split '\r?\n' | Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' })
+    if ($entries -notcontains 'settings.local.json') { throw 'it would be committed' }
+    $b -match '(?i)harness writes it|not the workflow''s'
+  }
+
+  # --- criterion 5: directories stay lazy -----------------------------------
+
+  Assert "the per-clone directory is created lazily like the rest" {
+    $lazy = [regex]::Match((& $layout), '(?ms)The rest of the tree.*?(?=\r?\n\r?\n)').Value
+    if (-not $lazy) { throw 'the lazy-creation rule is gone' }
+    if ($lazy -notmatch 'position/') { throw 'the per-clone directory is not covered by it' }
+    $true
+  }
+
+  # --- criterion 6: the repository's own ignore file is untouched -----------
+
+  Assert "the root ignore file is still left alone" {
+    (Get-SkillFile 'configure/SKILL.md') -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root'
   }
 }
 

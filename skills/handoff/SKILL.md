@@ -17,7 +17,7 @@ A bridge between context windows. Write a document that lets a fresh agent conti
 | Why the approach was chosen | `.claude/decisions/` |
 | How this repository thinks | `.claude/contexts/repository.md` and its Domain Contexts |
 | What has landed | the commits |
-| What was verified, and against what | `.claude/marker.json` |
+| What was verified, and against what | `.claude/position/marker.json` |
 
 Copying any of that produces a second version that goes stale the moment the first one changes, and nothing points at the copy to update it.
 

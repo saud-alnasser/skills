@@ -29,13 +29,15 @@
 
 **Position is state describing where *this clone* stands, rather than what the repository knows.** The commit Context was last verified against, the ticket this working tree has claimed, the prototype code currently on disk. It is per-clone and never committed.
 
-`.claude/.gitignore` is Position's **definition**, not a list of exceptions: it states the category and the test for membership in it, so a new per-clone file is covered by the rule rather than needing a new entry argued for. Read it there.
+**Position has a directory: `.claude/position/`.** That is the category made structural rather than declared — a per-clone file goes there and is covered by the existing ignore rule, instead of arguing for a new exception each time.
+
+`.claude/.gitignore` still carries the membership test in prose, because the directory says *where* and only the test says *which*. Read it there. One file sits outside: `settings.local.json` belongs to the harness rather than to this workflow, and the harness would not find it anywhere else.
 
 The invariant that keeps Position from becoming a fourth knowledge layer: **nothing shared may depend on it.** Delete every ignored file under `.claude/` and no other person and no other clone loses information they needed. This clone loses a shortcut and re-earns it.
 
 ## Trusting Context — the Marker
 
-`.claude/marker.json` holds the commit Context was last verified against. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
+`.claude/position/marker.json` holds the commit Context was last verified against. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
 
 ```
 marker.json commit == HEAD  AND  working tree clean

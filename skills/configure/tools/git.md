@@ -8,7 +8,7 @@ Everyday git — `add`, `commit`, `log`, `diff`, `checkout` — needs no entry h
 
 ## Check the Marker
 
-The Marker in `.claude/marker.json` is the commit Context was last verified against. Two questions, in order.
+The Marker is the commit Context was last verified against. Two questions, in order.
 
 ```
 git cat-file -e "<marker>^{commit}"            # exit 1 → the Marker commit is gone

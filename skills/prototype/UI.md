@@ -78,7 +78,7 @@ Surface the URL and the variant keys; the handback rule is in [SKILL.md](SKILL.m
 Two things are specific to this branch:
 
 - **Describe the variants in the write-up**, in enough detail that the comparison survives the code. Which one won is not a finding on its own — what it was beating is.
-- **The code is mounted in the application**, not in `.claude/prototypes/`, so deleting it is a real edit rather than removing a directory. The losing variants and the switcher come out wherever they were mounted, in the same change that records the answer.
+- **The code is mounted in the application**, not in `.claude/position/prototypes/`, so deleting it is a real edit rather than removing a directory. The losing variants and the switcher come out wherever they were mounted, in the same change that records the answer.
 
 Folding the winner into the real page is a **fresh implementation effort**, not a promotion of the variant file. Variant code was written under prototype constraints — no tests, minimal error handling, shared state taken wherever convenient — and every one of those ships with it if it is moved rather than rewritten.
 

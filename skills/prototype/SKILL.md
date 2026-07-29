@@ -28,12 +28,12 @@ The two produce very different things, and getting it wrong wastes the whole pro
 
 | What | Where | Fate |
 | --- | --- | --- |
-| The code | `.claude/prototypes/<name>/` | deleted, always |
+| The code | `.claude/position/prototypes/<name>/` | deleted, always |
 | The write-up | `.claude/evidence/prototypes/<name>.md` | kept |
 
 The two are deliberately **apart**, because the write-up outlives the code and a document filed next to something that is about to be deleted invites deleting both.
 
-`.claude/prototypes/` is **gitignored scratch**, carried by `.claude/.gitignore` so the whole workflow stays one removable directory.
+`.claude/position/prototypes/` is **gitignored scratch**, carried by `.claude/.gitignore` so the whole workflow stays one removable directory.
 
 **One exception, and it is the dangerous one.** A UI variant mounted inside the running application cannot live in a scratch directory — the whole reason sub-shape A in [UI.md](UI.md) works is that the variant renders against the real header, real data, real density. That code sits where it renders and is **not** gitignored, which makes it the prototype code most likely to be committed by accident. Deletion applies harder there, not softer: it comes out in the same change that records the answer, along with the switcher.
 

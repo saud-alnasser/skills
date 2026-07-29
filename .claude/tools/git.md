@@ -12,7 +12,7 @@ Every entry below is carried over intact, cross-references included. One of them
 
 ## Check the Marker
 
-The Marker in `.claude/marker.json` is the commit Context was last verified against. Two questions, in order.
+The Marker is the commit Context was last verified against. Two questions, in order.
 
 ```
 git cat-file -e "<marker>^{commit}"            # exit 1 → the Marker commit is gone
