@@ -1,11 +1,11 @@
 # Version control
 
 <!--
-  Installed by /configure at `.claude/version-control.md`. This is the **one
+  Installed by /configure at `.claude/policies/version-control.md`. This is the **one
   home** for how work moves from a ticket to a merged change in this
   repository.
 
-  It is the policy half of a pair. `.claude/tracker.md` says where the tickets
+  It is the policy half of a pair. `.claude/policies/tracker.md` says where the tickets
   are; this says what happens to a ticket once somebody starts building it.
   Both are policy — what this repository *does*. How to type any of it is
   `.claude/tools/`, which is invocation and a different question.

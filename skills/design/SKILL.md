@@ -62,9 +62,7 @@ This is the whole mechanism behind *Claude never silently decides architecture*.
 
 `/research` for facts. `/prototype` for feel.
 
-**Gated evidence blocks.** The gate fired because the answer is load-bearing; planning past it means planning on a guess. Ungated evidence runs in the background and the design continues.
-
-Durable findings **graduate** out of evidence and into knowledge — how the repo behaves becomes Context, why an approach was chosen becomes an ADR. `/design` owns that graduation, because `/design` read the findings and nothing downstream will.
+Whether a block waits, and what happens to a finding afterwards, are in `.claude/policies/evidence.md`. Two things there are `/design`'s to *do* rather than merely to know: this is the stage a gate stops, and this is the stage that promotes a durable finding into Context or a Decision — nothing downstream reads the findings.
 
 ## Scope assessment
 
@@ -102,11 +100,11 @@ Report the classification, the gates that fired, and the resulting tier. The use
 
 **Nothing lives only in the conversation.** The deliverable is always a file, so `/implement` always has something to read and context can be cleared between any two steps without losing the plan.
 
-Formats:
+Formats, all of them guides in the configured repository rather than files inside this skill — `.claude/protocol.md`'s routing table is the index:
 
-- [TICKETS.md](TICKETS.md) — always.
-- [SPEC-FORMAT.md](SPEC-FORMAT.md) — Standard and above. Written to `.claude/designs/`.
-- [MAP.md](MAP.md) — only when the fog gate fired. That branch exists; everything about it lives in that file.
+- `.claude/policies/tickets.md` — always.
+- `.claude/policies/specs.md` — Standard and above. Written to `.claude/designs/`.
+- `.claude/policies/maps.md` — only when the fog gate fired. That branch exists; everything about it lives in that file.
 
 Read a format file when the tier selects it, not before. Knowing what the deliverable looks like while you are still grilling is an invitation to rush toward it.
 
@@ -122,13 +120,13 @@ Read a format file when the tier selects it, not before. Knowing what the delive
 
 The set lives in the design document until step 3, which is what makes it survivable: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal.
 
-**One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. [TICKETS.md](TICKETS.md) has the hierarchy and the edges; `.claude/tools/github.md` has the invocations, including which id the sub-issues API actually wants.
+**One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. `.claude/policies/tickets.md` has the hierarchy and the edges; `.claude/tools/github.md` has the invocations, including which id the sub-issues API actually wants.
 
 ## 6 — Capture
 
-Vocabulary and ADRs are written **as they resolve**, not batched at the end. The refine step is where most durable understanding is produced, and batching loses the half of it that felt obvious at the time.
+Vocabulary and Decisions are `/design`'s to write, and this is the stage that writes them — `.claude/policies/knowledge.md` says why the pen sits here rather than downstream.
 
-Use `domain-modeling`. ADRs use its 3-of-3 test — a convention is not a decision.
+Use `domain-modeling` to do it. The bar a Decision has to clear is in `.claude/policies/decisions.md`: a convention is not a decision.
 
 ## An incoming issue is an input, not a plan
 

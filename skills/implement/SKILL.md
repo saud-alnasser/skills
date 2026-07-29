@@ -58,7 +58,7 @@ frontier = tickets open, unblocked, unclaimed
        not yet  the branch stays. keep refining in place.
 ```
 
-**Where the tickets are comes from `.claude/tracker.md`** — it is the only place that records which tracker this repository uses. `/design`'s [`TICKETS.md`](../design/TICKETS.md) has the ticket format and the lifecycle, and `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
+**Where the tickets are comes from `.claude/policies/tracker.md`** — it is the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and the lifecycle, and `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
 
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
@@ -72,7 +72,7 @@ Work with no ticket at all — hand-written edits, a change made outside this fl
 
 **Claiming is creating the ticket's branch, and it is the first act of the run** — before the first read of source, and long before the first edit. A claim made after the first edit is not a claim; it is a report of a race already lost.
 
-Nothing about the Claim is written to the tracker. A tracker carries human-level facts, and which instance is building something right now is not one — see [`TICKETS.md`](../design/TICKETS.md) for what the tracker does hold.
+Nothing about the Claim is written to the tracker. A tracker carries human-level facts, and which instance is building something right now is not one — see `.claude/policies/tickets.md` for what the tracker does hold.
 
 The branch name is **Tenure's own convention**, not the default of whichever tool created the branch, because two tools must produce the same name for the same ticket or the claim stops being a claim:
 
@@ -81,7 +81,7 @@ The branch name is **Tenure's own convention**, not the default of whichever too
                                         142-retry-a-failed-payment
 ```
 
-The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/version-control.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
+The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/policies/version-control.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
 
 **Check before creating, on both sides.** `.claude/tools/git.md` has the reads:
 
@@ -99,7 +99,7 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 `Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
-**`.claude/version-control.md` states which one applies**, and states how to confirm it. Read it and do what it says — it is one line of fact and one read, and the check is beside the claim because the claim is what goes stale. Getting the model wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+**`.claude/policies/version-control.md` states which one applies**, and states how to confirm it. Read it and do what it says — it is one line of fact and one read, and the check is beside the claim because the claim is what goes stale. Getting the model wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
 
 **Never substitute a probe for the read.** Discovering the model afresh on every run was the previous design, and it was replaced because a fact rediscovered silently is a fact nobody can review — the file makes it visible, and verifying it costs the same command the probe was already running.
 
@@ -184,7 +184,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 Then **ask**: *commit and resolve this ticket?* `/implement` does not decide that the work is done.
 
-- **yes** — close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `TICKETS.md` has why; `.claude/tracker.md` says which kind this repository has.
+- **yes** — close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
 - **not yet** — the branch stays, so the ticket stays claimed, and the loop stays open. Request changes, refine, ask again, in the same context and on the same ticket, for as long as it takes.
 
 `/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against.
@@ -199,13 +199,9 @@ Each amend produces a new SHA, so the Marker re-advances on **every amend**, not
 
 ## 5 — Record what moved
 
-`/implement` has the best available view of what just changed, which makes it the right writer for the **concepts, boundaries, and Source Pointers** the change altered. Update `.claude/context.md` and the Domain Contexts under `.claude/contexts/` that this work moved.
+Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/context.md` and the Domain Contexts under `.claude/contexts/`.
 
-What belongs there, and what never does, is in `domain-modeling`'s `CONTEXT-FORMAT.md`. Apply its compression test and write nothing that fails it. **Implementation detail never lands in Context** — a walkthrough of how the new code works is stale by the next commit, and nothing points at it.
-
-**A change that moves no concept updates no knowledge.** Silence is the correct output; writing something anyway to look thorough is how a context file turns into sediment.
-
-`/implement` does **not** write vocabulary or ADRs. Those crystallise in conversation, and that conversation belongs to `/design`.
+`.claude/policies/knowledge.md` says which layers this stage may write and which it may not, and `.claude/policies/context.md` says what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
 
 ---
 

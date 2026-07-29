@@ -66,7 +66,7 @@ The two cases are different work and only one page. Converting another workflow 
 
 The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
-**`.claude/context.md` and `.claude/contexts/**`.** The format, the routing table, and the test a domain has to pass before it earns a file are `domain-modeling`'s — see its [`CONTEXT-FORMAT.md`](../domain-modeling/CONTEXT-FORMAT.md); the compression test that gates every line of it is in `CLAUDE.md`. What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file.
+**`.claude/context.md` and `.claude/contexts/**`.** The format, the routing table, and the test a domain has to pass before it earns a file are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line of it is in `CLAUDE.md`. What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file.
 
 **`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
 
@@ -74,13 +74,29 @@ The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evid
 
 **`.claude/protocol.md`**, from [protocol.template.md](protocol.template.md), copied as-is for the same reason. It is the router rather than a rule — the Marker, the drift reads, the verification report, and the table saying which guides each stage reads — so it is reached by pointer and a turn that answers a question does not pay for it.
 
-**Write the whole set or none of it.** The entrypoint is a pointer at every file above, so a run that writes it and stops leaves those pointers going nowhere — which is worse than never having split the file, because the rules are now missing rather than merely expensive.
+**`.claude/policies/`**, one guide per workflow concern or repository aspect. Seven describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are (ADR 0019) — a copied guide would hand this repository somebody else's facts.
+
+| Guide | Source | Covers |
+| --- | --- | --- |
+| `knowledge.md` | copied | how knowledge loads, what heals it, and when |
+| `context.md` | copied | what belongs in Context, the routing table, the compression test |
+| `decisions.md` | copied | when a Decision is worth recording, and the numbering |
+| `tickets.md` | copied | the ticket format, the hierarchy, the edges, the lifecycle |
+| `specs.md` | copied | the spec sections and the status vocabulary |
+| `maps.md` | copied | the fog branch, worked before any spec exists |
+| `evidence.md` | copied | gating, and how a finding graduates into knowledge |
+| `tracker.md` | **derived** | which tracker, and the label vocabulary behind each role |
+| `version-control.md` | **derived** | which model, the branch convention, how work lands |
+
+The guides are what the workflow's stages read instead of restating; `.claude/protocol.md`'s routing table says which stage reads which, and is the only index. A guide with no row is unreachable, so write the row in the same pass.
+
+**Write the whole set or none of it.** The entrypoint is a pointer at the always-on files, and the protocol's table is a pointer at every guide, so a run that writes the entrypoint and stops leaves those pointers going nowhere — which is worse than never having split the file, because the rules are now missing rather than merely expensive.
 
 **More `.claude/rules/*.md`** for standards discovered in *this* repository. Each is **path-scoped** where it applies to part of the tree: a standard about `packages/api/` says so in `paths:` frontmatter and is not paid for while working in `docs/`. A standard with no `paths:` is a permanent cost on every turn, so adding one is a decision rather than a default — the two written above are the baseline, not the beginning of a collection.
 
-**`.claude/tracker.md`**, from [tracker.template.md](tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
+**`.claude/policies/tracker.md`**, from [policies/tracker.template.md](policies/tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
 
-**`.claude/version-control.md`**, from [version-control.template.md](version-control.template.md). The tracker file's neighbour: it says where the tickets are, this says what happens to one once somebody builds it. **Which model applies is read off the repository, not asked about**, by the check the template itself carries — a stacking tool being installed on the machine says nothing about this repository. The branch convention and the commit discipline are *detected* the same way everything else in step 1 was, from the recent branches and `CONTRIBUTING.md` and the log; asserting Tenure's defaults over a repository that demonstrates its own is what ADR 0008 forbids.
+**`.claude/policies/version-control.md`**, from [policies/version-control.template.md](policies/version-control.template.md). The tracker file's neighbour: it says where the tickets are, this says what happens to one once somebody builds it. **Which model applies is read off the repository, not asked about**, by the check the template itself carries — a stacking tool being installed on the machine says nothing about this repository. The branch convention and the commit discipline are *detected* the same way everything else in step 1 was, from the recent branches and `CONTRIBUTING.md` and the log; asserting Tenure's defaults over a repository that demonstrates its own is what ADR 0008 forbids.
 
 **`.claude/tools/*.md`**, one file per tool this repository actually uses — the workflow's own (`git`, `gh`, `glab`, `gt`) *and* this repository's (package manager, test runner, typechecker, linter, build, deploy), in one directory with one format. [TOOLS.md](TOOLS.md) has the derivation rules and the format; it is the step where information is most easily lost, so read it before writing a tool file.
 

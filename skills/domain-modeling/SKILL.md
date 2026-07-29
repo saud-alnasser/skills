@@ -55,11 +55,11 @@ Resolve it in the direction `CLAUDE.md`'s truth hierarchy requires: the document
 
 When a term resolves, write it to Context right there. Don't batch these up — capture them as they happen.
 
-What goes in, what stays out, and the compression test that decides: [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+What goes in, what stays out, and the compression test that decides: `.claude/policies/context.md`.
 
 ### Offer Decisions sparingly
 
-A Decision is recorded only when it passes the 3-of-3 test in [ADR-FORMAT.md](./ADR-FORMAT.md) — and most things don't. Offer one when the conversation has just produced a choice that was hard to reverse, will look surprising later, and had real alternatives; otherwise say nothing and keep grilling.
+A Decision is recorded only when it passes the 3-of-3 test in `.claude/policies/decisions.md` — and most things don't. Offer one when the conversation has just produced a choice that was hard to reverse, will look surprising later, and had real alternatives; otherwise say nothing and keep grilling.
 
 ---
 

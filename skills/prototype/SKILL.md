@@ -100,11 +100,9 @@ There is **no reusable-harness exception.** That carve-out gets claimed for almo
 
 ## 6 — Evidence is not knowledge
 
-The write-up is **Evidence**: the trail showing how a claim was earned, recording what was verified and when. Nothing validates it afterwards, which is why it is not part of the knowledge layer.
+The write-up is **Evidence**: the trail showing how a claim was earned, recording what was verified and when. `.claude/policies/evidence.md` says why that is not a knowledge layer.
 
-**Never write Context directly.** A prototype's result is true of the thing that was built, under the constraints it was built with — putting that into `.claude/context.md` states it about the repository instead.
-
-What is durable does graduate out of Evidence, but that is `/design`'s step and `/design` holds the rule for it.
+**Never write Context directly**, and never promote a write-up yourself. Both rules, and what does happen to a durable result, are in `.claude/policies/evidence.md`.
 
 ---
 

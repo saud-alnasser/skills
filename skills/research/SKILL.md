@@ -7,7 +7,7 @@ description: Investigate a question against primary sources and write the findin
 
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
 
-What it produces is **Evidence**: a record of what was checked and when. Nothing validates it afterwards, which is why it is filed apart from Context and never inside it.
+What it produces is **Evidence**: a record of what was checked and when, filed apart from Context and never inside it. `.claude/policies/evidence.md` says why that separation holds.
 
 ## 0 — Has this already been answered?
 
@@ -66,9 +66,7 @@ resting on a secondary source.
 
 The file stays as the trail showing how a claim was earned. `/research` writes that trail and stops there.
 
-**Never write Context directly.** A research finding copied into `.claude/context.md` puts a versioned external fact into a layer that has no version and nothing to re-verify it against — and the finding's whole value was that it said what it was true of.
-
-What is durable does graduate out of Evidence, but that is `/design`'s step and `/design` holds the rule for it.
+**Never write Context directly**, and never promote a finding yourself. Both rules, and what does happen to a durable finding, are in `.claude/policies/evidence.md`.
 
 ---
 

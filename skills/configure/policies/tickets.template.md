@@ -2,7 +2,7 @@
 
 Every `/design` run leaves at least one ticket, numbered from `01` in dependency order — blockers first.
 
-**Where they go is `.claude/tracker.md`'s**, and it is the only place that records it: on a local-markdown tracker they are files under `.claude/tickets/`; on GitHub they are issues in the repository. The format below is the same either way. Read the config rather than assuming the form.
+**Where they go is `.claude/policies/tracker.md`'s**, and it is the only place that records it: on a local-markdown tracker they are files under `.claude/tickets/`; on GitHub they are issues in the repository. The format below is the same either way. Read the config rather than assuming the form.
 
 One ticket per file, or one per issue. Never a single combined file: tickets are claimed one at a time, and a combined file cannot be claimed.
 
@@ -38,7 +38,7 @@ implementation list — the ticket says what "done" looks like, and
 
 The title is a Conventional Commit subject, so the ticket's commit writes itself. The id and the summary are also what `/implement` builds the branch name from, so write a summary that reads as one.
 
-`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/tracker.md` says which applies, and `.claude/tools/github.md` has the invocations.
+`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/policies/tracker.md` says which applies, and `.claude/tools/github.md` has the invocations.
 
 ### Lifecycle
 
@@ -103,7 +103,7 @@ Part of: <spec name>      # the spec this ticket implements
 
 Only real gates. A ticket listed as a blocker because it is *tidier* to do first serializes work that could have run in parallel.
 
-An edge means the same thing on either tracker; only the syntax moves. `.claude/tracker.md` says which applies.
+An edge means the same thing on either tracker; only the syntax moves. `.claude/policies/tracker.md` says which applies.
 
 | Tracker | `part of` | `blocks` | `related` |
 | --- | --- | --- | --- |

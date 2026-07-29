@@ -1,7 +1,7 @@
 # Tracker
 
 <!--
-  Installed by /configure at `.claude/tracker.md`. This is the **one home** for
+  Installed by /configure at `.claude/policies/tracker.md`. This is the **one home** for
   which tracker this repository uses and how it is driven.
 
   Every skill that touches the tracker reads this file — /design when it cuts
@@ -12,7 +12,7 @@
   Delete the rows that do not apply. Keep the file short: it answers "which
   tracker, and how", and nothing else. What happens to a ticket once somebody
   builds it — the model, the branch convention, how work lands — is
-  `.claude/version-control.md`'s, and branch naming lived here only because
+  `.claude/policies/version-control.md`'s, and branch naming lived here only because
   that file did not exist yet.
 -->
 

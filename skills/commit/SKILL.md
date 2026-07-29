@@ -42,9 +42,9 @@ The one question no earlier stage could ask. `/implement` sees one ticket at a t
 
 Read the diff and ask: did this move a boundary, retire a concept, or relocate something a Source Pointer names — and does `.claude/context.md` still say so?
 
-Where the diff contradicts Context, the commit is **blocked until Context is corrected**. The correction then goes into this commit, alongside the change that falsified it, so the two never land apart.
+Where the diff contradicts Context, the commit is **blocked until Context is corrected**, and that correction goes into this commit rather than the next one, so the change and the thing it falsified never land apart.
 
-This is **healing, not authorship**. `/commit` corrects what the diff falsified; it does not author new concepts or vocabulary, which belong to `/implement` and `/design` (ADR 0005). Anything added passes `domain-modeling`'s compression test first, or it is not added.
+The row for `/commit` in `.claude/policies/knowledge.md` is the narrowest in the table, and this step is where that bites: a diff that reveals a concept nobody had named is a finding to report, not a licence to name it here.
 
 A repository with no `.claude/` has not been configured and has no Context to contradict. Say so in one line and carry on.
 
@@ -52,7 +52,7 @@ A repository with no `.claude/` has not been configured and has no Context to co
 
 Acceptance criteria can span several commits, so this is the only place the last one is knowable — the diff is finished and its effect on the criteria is visible.
 
-When this commit completes them, set `Status: implemented` on the spec in `.claude/designs/`. **Only the status line moves** — never a word of the spec's content. The full status vocabulary, and why the rest of the document is frozen, are in `/design`'s [`SPEC-FORMAT.md`](../design/SPEC-FORMAT.md).
+When this commit completes them, set `Status: implemented` on the spec in `.claude/designs/`. **Only the status line moves** — never a word of the spec's content. The full status vocabulary, and why the rest of the document is frozen, are in `.claude/policies/specs.md`.
 
 Do this **before staging**, not after committing. The spec is a tracked file, so marking it afterwards leaves the tree dirty the moment the commit lands — and a dirty tree defeats the Marker's clean path on the very next turn, which is the whole point of the step below.
 
@@ -64,7 +64,7 @@ Where the repository documents or demonstrates another convention, follow it **s
 
 Say what capability changed, and why it changed. **Never a file-by-file account**: the diff already lists the files, and a message that re-lists them spends the reader's attention on the one thing they could have got for free.
 
-Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch — which `.claude/version-control.md` states, so it is read rather than inferred from the shape of the branch. There are exactly two cases:
+Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch — which `.claude/policies/version-control.md` states, so it is read rather than inferred from the shape of the branch. There are exactly two cases:
 
 | How the work lands | The commit carries | Because |
 | --- | --- | --- |

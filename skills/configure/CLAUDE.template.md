@@ -52,8 +52,8 @@ Load `.claude/context.md` at the start of a session. Load a Domain Context only 
 
 Two committed files answer that, and both are reached by pointer rather than loaded every turn:
 
-- **`.claude/tracker.md`** — which tracker holds the tickets, and how it is driven.
-- **`.claude/version-control.md`** — which version-control model applies, the branch convention, the commit discipline, and how a finished branch lands.
+- **`.claude/policies/tracker.md`** — which tracker holds the tickets, and how it is driven.
+- **`.claude/policies/version-control.md`** — which version-control model applies, the branch convention, the commit discipline, and how a finished branch lands.
 
 Both are **policy**: what this repository does. `.claude/tools/` answers the neighbouring question of how to *type* any of it, which is why it is a third directory rather than a section in either. Neither policy file depends on the plugin being installed.
 

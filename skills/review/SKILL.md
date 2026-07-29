@@ -113,7 +113,7 @@ A finding with no outcome is a finding that will be raised again next review.
 
 The third is the one that gets skipped. *"That's fine, leave it"* is a deliberate trade-off and it needs a home, because a trade-off nobody wrote down is re-discovered on every future review, argued again, and accepted again. That is how reviews become noise, and a reader who has learned to skim one review skims the one that mattered.
 
-Record an acceptance as an **ADR** when it clears the 3-of-3 test in [`domain-modeling`'s ADR-FORMAT.md](../domain-modeling/ADR-FORMAT.md) — most do not clear it. Otherwise it is a note on the ticket. Either way the next review reads it and does not re-raise it.
+Record an acceptance as an **ADR** when it clears the 3-of-3 test in `.claude/policies/decisions.md` — most do not clear it. Otherwise it is a note on the ticket. Either way the next review reads it and does not re-raise it.
 
 **Accepting is the user's call, never the reviewer's.** A reviewer that accepts its own findings has reviewed nothing.
 

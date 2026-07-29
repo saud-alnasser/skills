@@ -178,7 +178,7 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   # Two files are exempt, and they have to be: /configure is the skill that
   # *detects and converts* these paths, so it cannot do its job without naming
   # them. Named individually rather than by prefix — `configure/` also holds
-  # CLAUDE.template.md and tracker.template.md, which are installed into the
+  # CLAUDE.template.md and the policy templates, which are installed into the
   # user's repository and must stay guarded like any other shipped file.
   # Ticket 08 asserts every legacy reference inside the two exempt files is a
   # detection entry or a migration row, so the exemption is not a hole.
@@ -200,6 +200,11 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
     '\.scratch/'      = '.scratch/ (use .claude/tickets/)'
     '\.claude/docs/'  = '.claude/docs/ (ADR 0018 dissolved it — use .claude/{decisions,designs,evidence}/)'
     '\.claude/tenure\.md' = '.claude/tenure.md (streamline/02 renamed it — use .claude/protocol.md)'
+    # The two guides that predate the policies directory. Their new paths
+    # contain a `/policies/` segment, so neither pattern can match its own
+    # replacement and the guard cannot go quietly green on the fix.
+    '\.claude/tracker\.md'         = '.claude/tracker.md (streamline/03 — use .claude/policies/tracker.md)'
+    '\.claude/version-control\.md' = '.claude/version-control.md (streamline/03 — use .claude/policies/version-control.md)'
   }
   foreach ($pattern in $legacy.Keys) {
     $label = $legacy[$pattern]
@@ -214,8 +219,8 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   }
 
   Assert "domain-modeling writes the Tenure context.md shape, including the routing table" {
-    $fmt = Get-SkillFile 'domain-modeling/CONTEXT-FORMAT.md'
-    if (-not $fmt) { throw 'domain-modeling/CONTEXT-FORMAT.md is missing' }
+    $fmt = Get-SkillFile 'configure/policies/context.template.md'
+    if (-not $fmt) { throw 'configure/policies/context.template.md is missing' }
     $required = @('Routing Table', 'Source Pointer', 'Boundaries', 'Constraints')
     $missing = $required | Where-Object { $fmt -notmatch [regex]::Escape($_) }
     if ($missing) { throw "CONTEXT-FORMAT.md never mentions: $($missing -join ', ')" }
@@ -223,20 +228,20 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   }
 
   Assert "domain-modeling groups multi-context repos as directories under contexts/" {
-    $fmt = Get-SkillFile 'domain-modeling/CONTEXT-FORMAT.md'
+    $fmt = Get-SkillFile 'configure/policies/context.template.md'
     $fmt -match 'contexts/'
   }
 
   Assert "ADR-FORMAT keeps the strict 3-of-3 test" {
-    $adr = Get-SkillFile 'domain-modeling/ADR-FORMAT.md'
-    if (-not $adr) { throw 'domain-modeling/ADR-FORMAT.md is missing' }
+    $adr = Get-SkillFile 'configure/policies/decisions.template.md'
+    if (-not $adr) { throw 'configure/policies/decisions.template.md is missing' }
     ($adr -match 'Hard to reverse') -and
     ($adr -match 'Surprising without context') -and
     ($adr -match 'real trade-off')
   }
 
   Assert "ADR-FORMAT states the supersession rule — reasoning frozen, only status moves" {
-    $adr = Get-SkillFile 'domain-modeling/ADR-FORMAT.md'
+    $adr = Get-SkillFile 'configure/policies/decisions.template.md'
     ($adr -match 'superseded by') -and ($adr -match '(?i)frozen')
   }
 
@@ -450,6 +455,25 @@ $engineeringTemplate = 'configure/engineering.template.md'
 # file is caught by the first of them.
 $alwaysOnTemplates = @($claudeTemplate, $precedenceTemplate, $engineeringTemplate)
 
+# Where the two derived guides land in a *configured* repository. `streamline/03`
+# moved them under `policies/`, and the destination appears in assertion titles
+# as well as in patterns — so it gets a name rather than a search-and-replace,
+# which is what left seven assertions stranded when the move was made.
+#
+# Not to be confused with this repository's own `.claude/version-control.md`,
+# which has not moved: the adoption tickets read that path directly and are
+# supposed to, because their subject is this tree rather than what ships.
+$trackerPolicy = '.claude/policies/tracker.md'
+$vcPolicy      = '.claude/policies/version-control.md'
+
+# The two guides `streamline/03` wrote rather than moved. They consolidate rules
+# that were stated across several skills, so assertions about those rules read
+# the guide, and the skill that used to hold one is checked for the pointer —
+# both halves, because a rule cut without a route left behind is a rule nobody
+# reaches, and a route left behind with the rule still beside it is two homes.
+$knowledgeTemplate = 'configure/policies/knowledge.template.md'
+$evidenceTemplate  = 'configure/policies/evidence.template.md'
+
 # A rule's *pattern* gets one home too, for the reason the rule does. Ticket 02
 # asserts each rule is stated once; ticket 13 asserts where, and which skills
 # reach it by pointer. Those are three uses of the same regex, and a second copy
@@ -518,6 +542,22 @@ $rulePattern = [ordered]@{
   # /configure as the remedy, which is meaningless without Tenure. The router
   # points at both and restates neither.
   'the never-guess fallback'           = '(?i)fall back to the tool'
+  # `streamline/03`'s consolidations. Each was stated in two or three skills
+  # before it had a guide, so each gets a guard — criterion 5, and the reason
+  # the ticket asked for one per moved rule rather than one for the move.
+  #
+  # Anchored to the *reasoning*, not to the imperative. Each producing skill
+  # still says "never write Context directly" about itself, which is its own
+  # constraint and correctly local; what may not be restated is the argument
+  # for it, and the argument is what drifts when it is copied.
+  'the knowledge-authorship table'     = '(?im)^\|\s*Stage\s*\|\s*May write\s*\|'
+  'the silence rule'                   = '(?i)silence is the correct output'
+  'the research-finding version argument' = '(?i)no version[^\n]{0,160}re-verify'
+  'the prototype-result argument'      = '(?i)true of the thing that was built'
+  # `(re)?validates` because the guide and the skill spelled it differently, and
+  # a guard written from only the new spelling passed while the old one sat two
+  # files away — which is the failure the authoring standards name by example.
+  'the evidence-is-not-knowledge property' = '(?i)nothing (re)?validates it afterwards'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -599,7 +639,10 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   $singleHome = [ordered]@{
     'the Marker cache-validity rule'  = '(?is)marker.{0,80}(==|equals|matches).{0,40}HEAD.{0,200}(trusted|no reading|no verification)'
     'the commit scope vocabulary'     = '(?i)`misc`.{0,40}`stuff`'
-    'the evidence graduation rule'    = '(?i)owns that graduation'
+    # `that` optional: `streamline/03` moved this into its guide, where the
+    # sentence no longer needs the demonstrative. Anchored to the subject —
+    # who owns graduation — rather than to one file's phrasing of it.
+    'the evidence graduation rule'    = '(?i)owns (that )?graduation'
     'the evidence gating rule'        = '(?i)ungated[^\r\n]{0,120}background'
     'the never-invent-a-pointer rule' = '(?i)(never|not|rather than) invent(ing)?( a)? (replacement|path)'
     # Ticket 13's two rules whose single-home probe is looser than the pattern
@@ -666,10 +709,21 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
     Test-UserInvoked 'design/SKILL.md'
   }
 
-  foreach ($f in @('SPEC-FORMAT.md', 'TICKETS.md', 'MAP.md')) {
+  # `streamline/03` moved these out of the skill and into guides the configured
+  # repository holds, so the pointer is now a path in the user's tree rather
+  # than a sibling filename. The criterion is unchanged — the branch is reached,
+  # not inlined — and the pair is checked so a pointer at a template that was
+  # never written fails here instead of at the reader.
+  $designFormats = [ordered]@{
+    'the spec format'   = @{ template = 'configure/policies/specs.template.md';   installed = '.claude/policies/specs.md' }
+    'the ticket format' = @{ template = 'configure/policies/tickets.template.md'; installed = '.claude/policies/tickets.md' }
+    'the map format'    = @{ template = 'configure/policies/maps.template.md';    installed = '.claude/policies/maps.md' }
+  }
+  foreach ($f in $designFormats.Keys) {
+    $g = $designFormats[$f]
     Assert "$f is disclosed behind a pointer, not inlined" {
-      if (-not (Test-Path (Join-Path $skills "design/$f"))) { throw "design/$f is missing" }
-      (Get-SkillFile 'design/SKILL.md') -match [regex]::Escape($f)
+      if (-not (Test-Path (Join-Path $skills $g.template))) { throw "$($g.template) is missing" }
+      (Get-SkillFile 'design/SKILL.md') -match [regex]::Escape($g.installed)
     }
   }
 
@@ -746,7 +800,7 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
   # and is never triaged. Conflating the two sets makes a status answer two
   # questions at once, so both halves are asserted.
   Assert "tickets carry the build lifecycle, not triage roles" {
-    $tickets = Get-SkillFile 'design/TICKETS.md'
+    $tickets = Get-SkillFile 'configure/policies/tickets.template.md'
     $lifecycle = @('open', 'blocked', 'resolved', 'obsolete')
     $absent = $lifecycle | Where-Object { $tickets -notmatch "(?m)^$_\s" }
     if ($absent) { throw "lifecycle states undefined: $($absent -join ', ')" }
@@ -756,7 +810,7 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
   Assert "no triage role leaks into a build ticket's Status:" {
     $roles = 'needs-triage|needs-info|ready-for-agent|ready-for-human|wontfix'
     $leaked = @()
-    foreach ($f in @('design/TICKETS.md', 'design/MAP.md')) {
+    foreach ($f in @('configure/policies/tickets.template.md', 'configure/policies/maps.template.md')) {
       foreach ($m in [regex]::Matches((Get-SkillFile $f), "(?m)^Status:\s*($roles)")) {
         $leaked += "${f}: $($m.Groups[1].Value)"
       }
@@ -775,7 +829,7 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
   # branch exists.
   Assert "SKILL.md carries no deliverable-format detail — the map vocabulary lives in MAP.md" {
     $skill = Get-SkillFile 'design/SKILL.md'
-    $map = Get-SkillFile 'design/MAP.md'
+    $map = Get-SkillFile 'configure/policies/maps.template.md'
     $vocabulary = @('fog of war', 'frontier', 'destination', 'not yet specified')
     $leaked = $vocabulary | Where-Object { $skill -match [regex]::Escape($_) }
     if ($leaked) { throw "leaked into SKILL.md: $($leaked -join ', ')" }
@@ -786,7 +840,7 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
 
   Assert "SKILL.md carries no spec-format detail — the section list lives in SPEC-FORMAT.md" {
     $skill = Get-SkillFile 'design/SKILL.md'
-    $spec = Get-SkillFile 'design/SPEC-FORMAT.md'
+    $spec = Get-SkillFile 'configure/policies/specs.template.md'
     $sections = @('Acceptance criteria', 'Constraints')
     $leaked = $sections | Where-Object { $skill -match "(?m)^#+\s*$([regex]::Escape($_))" }
     if ($leaked) { throw "spec sections templated in SKILL.md: $($leaked -join ', ')" }
@@ -998,26 +1052,33 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   # Context stores concepts. An implementation walkthrough in context is
   # sediment: it goes stale on the next commit and nothing points at it.
+  # `streamline/03` consolidated these three into the knowledge guide, so each
+  # is now asserted where it lives and the skill is checked for the route. The
+  # criterion never changed — /implement writes concepts and not vocabulary —
+  # only which file is answerable for saying so.
   Assert "knowledge writing is scoped to concepts and boundaries, never implementation detail" {
-    $c = Get-SkillFile 'implement/SKILL.md'
-    if ($c -notmatch '\.claude/context\.md') { throw 'context.md is never written' }
+    $c = Get-SkillFile $knowledgeTemplate
     if ($c -notmatch '(?i)concept') { throw 'concepts are not named as what belongs' }
+    if ((Get-SkillFile 'implement/SKILL.md') -notmatch '\.claude/context\.md') { throw 'context.md is never written' }
     $c -match '(?i)(never|not).{0,60}implementation|implementation.{0,60}(never|does not)'
   }
 
   Assert "a change that moves no concept writes nothing — silence is the correct output" {
-    $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)silence is the correct output'
+    (Get-SkillFile $knowledgeTemplate) -match '(?i)silence is the correct output'
   }
 
   # ADR 0005: vocabulary and decisions crystallise in conversation, and that
-  # conversation is /design's.
+  # conversation is /design's. Read off the guide's table rather than prose —
+  # the row is the statement, and a row that loses its cell fails here.
   Assert "/implement writes no vocabulary and no ADRs — those belong to /design" {
-    $c = Get-SkillFile 'implement/SKILL.md'
-    if ($c -notmatch '(?i)(does\s+\*{0,2}not\*{0,2}|never)\s+writes?\s+vocabulary') {
-      throw 'the prohibition is not stated'
+    $c = Get-SkillFile $knowledgeTemplate
+    $row = [regex]::Match($c, '(?im)^\|\s*`?/implement`?\s*\|([^|\r\n]*)\|([^|\r\n]*)\|')
+    if (-not $row.Success) { throw 'the knowledge guide has no row for /implement' }
+    if ($row.Groups[2].Value -notmatch '(?i)vocabulary') { throw 'the prohibition is not stated' }
+    if ((Get-SkillFile 'implement/SKILL.md') -notmatch [regex]::Escape('.claude/policies/knowledge.md')) {
+      throw 'the skill does not reach the rule it stopped stating'
     }
-    $c -match '(?i)(vocabulary|adrs?).{0,140}/design'
+    $c -match '(?i)(vocabulary|decisions?).{0,200}/design'
   }
 
   # Ticket 02's placement rule, checked where the third file could restate it.
@@ -1136,7 +1197,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     $c = Get-SkillFile 'review/SKILL.md'
     if ($c -notmatch '(?i)3-of-3') { throw 'the ADR bar is never named' }
     if ($c -match '(?i)hard to reverse') { throw 'the 3-of-3 test is restated instead of referenced' }
-    $c -match '(?i)(ADR-FORMAT|domain-modeling)'
+    $c -match '\.claude/policies/decisions\.md'
   }
 
   Assert "acceptance is the user's call, never the reviewer's" {
@@ -1387,10 +1448,18 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # ADR 0005 leaves authorship with /implement and /design. What /commit does
   # here is healing — correcting what the diff falsified — not writing new
   # knowledge, and the boundary has to be stated or it erodes into authorship.
+  # The rule moved into the knowledge guide with `streamline/03`; what stays in
+  # /commit is the step that obeys it. Both ends, because "corrects what the
+  # diff falsified" reads identically whether or not the authorship half
+  # survived the move.
   Assert "/commit heals what the diff falsified and authors nothing new" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch '(?i)compression test') { throw 'the compression test does not gate what is written' }
-    $c -match '(?i)(does not|never) (author|write) (new )?(concepts|vocabulary)|authors? nothing new'
+    if ($c -notmatch '(?i)blocked until Context is corrected') { throw 'the healing step is gone' }
+    if ($c -notmatch [regex]::Escape('.claude/policies/knowledge.md')) { throw 'the authorship rule is not reached' }
+    $guide = Get-SkillFile $knowledgeTemplate
+    $row = [regex]::Match($guide, '(?im)^\|\s*`?/commit`?\s*\|([^|\r\n]*)\|([^|\r\n]*)\|')
+    if (-not $row.Success) { throw 'the knowledge guide has no row for /commit' }
+    $row.Groups[2].Value -match '(?i)anything new'
   }
 
   # --- the message -----------------------------------------------------------
@@ -1449,7 +1518,7 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # /commit writes.
   Assert "the status /commit writes is one SPEC-FORMAT defines, and the freeze rule stays there" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $fmt = Get-SkillFile 'design/SPEC-FORMAT.md'
+    $fmt = Get-SkillFile 'configure/policies/specs.template.md'
     # Against the enumeration line, not the section. SPEC-FORMAT names
     # `implemented` again further down when saying who writes it, so a
     # section-wide check survives the term being cut from the vocabulary itself.
@@ -1464,7 +1533,7 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
       if ($vocab -notmatch "``$s``") { throw "/commit writes Status: $s, which SPEC-FORMAT does not define" }
     }
     if ($fmt -notmatch '(?i)only the status line') { throw 'the freeze rule is not in SPEC-FORMAT' }
-    if ($c -notmatch 'SPEC-FORMAT\.md') { throw '/commit does not point at the format' }
+    if ($c -notmatch '\.claude/policies/specs\.md') { throw '/commit does not point at the format' }
     # The rationale belongs to the format file. /commit carries the imperative.
     $c -notmatch '(?i)stops being evidence'
   }
@@ -1673,9 +1742,13 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
   # The prohibition itself is asserted for both skills below. What is specific
   # to research is the reason: Context has no version, so a fact that was only
   # ever true of one lands there stripped of the thing that made it checkable.
+  # In the evidence guide since `streamline/03`, alongside /prototype's reason —
+  # which is a different argument for the same rule, and was the half most
+  # likely to be dropped when the two were merged. Both are asserted.
   Assert "the reason /research never writes Context is given, not just the rule" {
-    $c = Get-SkillFile 'research/SKILL.md'
-    $c -match '(?i)version[^\n]{0,120}(layer|context)[^\n]{0,80}no version|no version[^\n]{0,120}re-verify'
+    $c = Get-SkillFile $evidenceTemplate
+    if ($c -notmatch '(?i)true of the thing that was built') { throw "the prototype's own reason was lost in the merge" }
+    $c -match '(?i)version[^\n]{0,160}(layer|context)[^\n]{0,80}no version|no version[^\n]{0,160}re-verify'
   }
 
   # `[^\n]` rather than `[^.]` — the directory this has to name is full of dots,
@@ -1829,9 +1902,15 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
       # section heading and in the graduation pointer, so a bare \bEvidence\b
       # survives the skill calling its own output knowledge.
       if ($c -notmatch '(?i)is \*{0,2}Evidence\*{0,2}:') { throw 'what it produces is never called Evidence' }
-      if ($c -match '(?i)owns that graduation') { throw 'the graduation rule is restated here' }
+      if ($c -match '(?i)owns (that )?graduation') { throw 'the graduation rule is restated here' }
       if ($c -notmatch '(?i)never write Context directly') { throw 'the boundary is not stated' }
-      $c -match '(?i)graduat[a-z]*[^\n]{0,120}/design'
+      # `streamline/03` moved the destination out of this skill and into the
+      # guide, so what stays here is the route. Checked against the guide too:
+      # a route at a file that dropped the rule is the same dead end as no route.
+      if ((Get-SkillFile $evidenceTemplate) -notmatch '(?i)owns (that )?graduation') {
+        throw 'the guide this points at no longer holds the rule'
+      }
+      $c -match [regex]::Escape('.claude/policies/evidence.md')
     }
   }
 
@@ -1922,15 +2001,15 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # Acceptance: "The issue-tracker configuration has exactly one home, and every
   # skill reading it agrees." /configure writes the file; ticket 09 places the
   # template, exactly as tenure/02 placed CLAUDE.template.md before tenure/08.
-  Assert "the tracker template ships, and names .claude/tracker.md as its home" {
-    $t = Get-SkillFile 'configure/tracker.template.md'
-    $t -match '\.claude/tracker\.md'
+  Assert "the tracker template ships, and names $trackerPolicy as its home" {
+    $t = Get-SkillFile 'configure/policies/tracker.template.md'
+    $t -match [regex]::Escape($trackerPolicy)
   }
 
   # Decision 35: GitHub and local markdown are both first-class. A template
   # that documents one and mentions the other is not two first-class trackers.
   Assert "both trackers are first-class — GitHub and local markdown" {
-    $t = Get-SkillFile 'configure/tracker.template.md'
+    $t = Get-SkillFile 'configure/policies/tracker.template.md'
     if ($t -notmatch '(?i)github') { throw 'GitHub is not covered' }
     if ($t -notmatch '(?i)local markdown') { throw 'local markdown is not covered' }
     if ($t -notmatch '\.claude/tickets/') { throw 'the local ticket location is not given' }
@@ -1940,7 +2019,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # Decision 34 / alteration checklist item 4: the commands are in tools/, and
   # a guessed `gh` flag here is the duplication ticket 15 exists to stop.
   Assert "tracker operations point at tools/github.md rather than inlining gh" {
-    $t = Get-SkillFile 'configure/tracker.template.md'
+    $t = Get-SkillFile 'configure/policies/tracker.template.md'
     if ($t -notmatch '.claude/tools/github.md') { throw 'the gh reference is missing or guessed' }
     # Ticket 09 says `tools/gh.md`; the file ticket 15 shipped is github.md.
     if ($t -match '\.claude/tools/gh\.md') { throw 'points at .claude/tools/gh.md, which does not exist' }
@@ -1950,7 +2029,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # Ticket 09: "Triage label vocabulary folds into the same file rather than
   # getting one of its own."
   Assert "the triage label vocabulary lives in the tracker file, not its own" {
-    $t = Get-SkillFile 'configure/tracker.template.md'
+    $t = Get-SkillFile 'configure/policies/tracker.template.md'
     $roles = @('needs-triage', 'needs-info', 'ready-for-agent', 'ready-for-human', 'wontfix')
     $absent = $roles | Where-Object { $t -notmatch [regex]::Escape($_) }
     if ($absent) { throw "roles missing from the tracker file: $($absent -join ', ')" }
@@ -1962,20 +2041,20 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
     $true
   }
 
-  Assert "every skill that reads tracker config reads .claude/tracker.md" {
+  Assert "every skill that reads tracker config reads $trackerPolicy" {
     # Ticket 09 names three readers. Listing only the one that happens to
     # comply makes the assertion pass *because* of the gap it should catch.
     # /design's half is ticket 14's (its Comments say so); /implement is 09's.
     # /design's half landed in ticket 14, which is why it is here now: the
     # criterion passed on a two-name list while the third named reader had
     # nothing.
-    $readers = @('triage/SKILL.md', 'implement/SKILL.md', 'design/TICKETS.md')
+    $readers = @('triage/SKILL.md', 'implement/SKILL.md', 'configure/policies/tickets.template.md')
     foreach ($r in $readers) {
       $c = Get-SkillFile $r
-      if ($c -notmatch '\.claude/tracker\.md') { throw "$r does not read the tracker config" }
+      if ($c -notmatch [regex]::Escape($trackerPolicy)) { throw "$r does not read the tracker config" }
       # Naming the file once in passing is not reading it as the source. It has
       # to be the only place, or a skill infers the half it did not look up.
-      if ($c -notmatch '(?i)\.claude/tracker\.md[^\n]{0,200}(only place|one home|read it first)') {
+      if ($c -notmatch ([regex]::Escape($trackerPolicy) + '[^\n]{0,200}(?i:only place|one home|read it first)')) {
         throw "$r does not treat the tracker file as the single source"
       }
     }
@@ -2194,8 +2273,13 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     $c -match '(?i)(skip[^\r\n]{0,80}greenfield|greenfield[^\r\n]{0,40}skip)'
   }
 
-  foreach ($t in @('CLAUDE.template.md', 'protocol.template.md', 'tracker.template.md',
-                   'precedence.template.md', 'engineering.template.md')) {
+  # Path-relative from `configure/`, because `streamline/03` moved the policy
+  # templates into a subdirectory and the link in the skill has to match. The
+  # link is what a reader follows, so checking the bare filename would pass on a
+  # link that resolves nowhere.
+  foreach ($t in @('CLAUDE.template.md', 'protocol.template.md',
+                   'precedence.template.md', 'engineering.template.md',
+                   'policies/tracker.template.md', 'policies/version-control.template.md')) {
     Assert "$t is reached from the skill that installs it" {
       if (-not (Test-Path (Join-Path $skills "configure/$t"))) { throw "configure/$t is missing" }
       (Get-SkillFile $cfg) -match [regex]::Escape($t)
@@ -2418,9 +2502,9 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # /configure writes context.md; domain-modeling owns its shape. Restating the
   # format here is the duplication this framework exists to prevent, and the
   # copy that drifts would be the one a fresh repository is generated from.
-  Assert "the context format is reached by pointer to domain-modeling, never restated" {
+  Assert "the context format is reached by pointer to its guide, never restated" {
     $c = Get-SkillFile $cfg
-    if ($c -notmatch 'CONTEXT-FORMAT\.md') { throw 'the format is not pointed at' }
+    if ($c -notmatch 'policies/context\.template\.md') { throw 'the format is not pointed at' }
     if ($c -match '(?i)_Avoid_') { throw 'the context format is restated here' }
     $true
   }
@@ -2448,7 +2532,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # repository with several remotes is the one where guessing looks reasonable.
   Assert "the tracker is chosen from the remote, and asked for when that is ambiguous" {
     $c = Get-SkillFile $cfg
-    if ($c -notmatch '\.claude/tracker\.md') { throw 'the tracker config is never written' }
+    if ($c -notmatch [regex]::Escape($trackerPolicy)) { throw 'the tracker config is never written' }
     $choice = [regex]::Match($c, '(?is)Choose from the \*\*remote\*\*.*?(?=\r?\n\r?\n)')
     if (-not $choice.Success) { throw 'the remote does not select the tracker' }
     # All three, in the one sentence that does the choosing. A repository with
@@ -2808,9 +2892,9 @@ Describe-Ticket 'tenure/10' 'router over the Tenure skill set' {
 
 Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title conventions' {
 
-  $tickets = 'design/TICKETS.md'
-  $map     = 'design/MAP.md'
-  $tracker = 'configure/tracker.template.md'
+  $tickets = 'configure/policies/tickets.template.md'
+  $map     = 'configure/policies/maps.template.md'
+  $tracker = 'configure/policies/tracker.template.md'
 
   # --- tracking only ---------------------------------------------------------
 
@@ -2899,9 +2983,9 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
   }
   foreach ($f in $trackerReaders.Keys) {
     $branch = $trackerReaders[$f]
-    Assert "$f reads .claude/tracker.md rather than assuming local markdown" {
+    Assert "$f reads $trackerPolicy rather than assuming local markdown" {
       $c = Get-SkillFile $f
-      if ($c -notmatch '\.claude/tracker\.md') { throw 'the config is never named' }
+      if ($c -notmatch [regex]::Escape($trackerPolicy)) { throw 'the config is never named' }
       if ($c -notmatch $branch) { throw 'named, but the status form is still local-markdown-only' }
       $true
     }
@@ -3389,7 +3473,7 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
 Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
 
   $imp = 'implement/SKILL.md'
-  $tix = 'design/TICKETS.md'
+  $tix = 'configure/policies/tickets.template.md'
 
   # The Claim lives in a `### ` subsection of step 1, and Get-Section only
   # scopes `## `. Scoping matters more than usual here: step 1 also carries the
@@ -3521,7 +3605,7 @@ Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
 Describe-Ticket 'tenure/18' 'what tenure may write to a tracker other people read' {
 
   $gh  = 'configure/tools/github.md'
-  $tix = 'design/TICKETS.md'
+  $tix = 'configure/policies/tickets.template.md'
 
   # Criterion 1. The gate has to be on the invocation, not only in the skill
   # that usually issues it — the reference is what a reader opens when they are
@@ -3976,8 +4060,8 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
 
   # skill that owns writing it → where it now writes.
   $homes = [ordered]@{
-    'domain-modeling/ADR-FORMAT.md' = '\.claude/decisions/'
-    'design/SPEC-FORMAT.md'         = '\.claude/designs/'
+    'configure/policies/decisions.template.md' = '\.claude/decisions/'
+    'configure/policies/specs.template.md'         = '\.claude/designs/'
     'research/SKILL.md'             = '\.claude/evidence/research/'
     'prototype/SKILL.md'            = '\.claude/evidence/prototypes/'
     'triage/OUT-OF-SCOPE.md'        = '\.claude/evidence/out-of-scope/'
@@ -4082,7 +4166,7 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # references resolve by number, so renumbering breaks all of them at once.
   # Without it stated, the next person to see a gap in the sequence closes it.
   Assert "ADR-FORMAT preserves numbers and slugs across a move, and says why" {
-    $adr = Get-SkillFile 'domain-modeling/ADR-FORMAT.md'
+    $adr = Get-SkillFile 'configure/policies/decisions.template.md'
     if ($adr -notmatch $rulePattern['ADR numbers survive a move']) {
       throw 'the preservation rule is not stated'
     }
@@ -4103,7 +4187,7 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # ticket that introduced the second site.
   Assert "the layout migration points at the numbering rule instead of restating it" {
     $mig = Get-SkillFile 'configure/MIGRATION.md'
-    $mig -match '(?i)ADR-FORMAT\.md'
+    $mig -match '\.claude/policies/decisions\.md'
   }
 
   # The layout migration's risk is the opposite of the mattpocock migration's:
@@ -4671,8 +4755,8 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
 
 Describe-Ticket 'layout/05' 'give version control its own policy file' {
 
-  $vcTemplate = 'configure/version-control.template.md'
-  $trackerTemplate = 'configure/tracker.template.md'
+  $vcTemplate = 'configure/policies/version-control.template.md'
+  $trackerTemplate = 'configure/policies/tracker.template.md'
 
   Assert "the policy file ships as a template /configure installs" {
     if (-not (Test-Path (Join-Path $skills $vcTemplate))) { throw "skills/$vcTemplate is missing" }
@@ -4735,7 +4819,7 @@ Describe-Ticket 'layout/05' 'give version control its own policy file' {
   # The 200-line budget is asserted in tenure/02 against the same template, so
   # this is only the naming half. Per file, because one pointer landing and the
   # other not is the likely half-failure.
-  foreach ($policy in @('.claude/tracker.md', '.claude/version-control.md')) {
+  foreach ($policy in @($trackerPolicy, $vcPolicy)) {
     Assert "the always-on template names $policy" {
       if ((Get-SkillFile $claudeTemplate) -notmatch [regex]::Escape($policy)) { throw 'not named' }
       $true
@@ -5233,6 +5317,141 @@ Describe-Ticket 'streamline/02' 'the protocol becomes the router, and the entryp
     $budget = [int]$stated.Groups[1].Value
     $n = ($c -split '\r?\n').Count
     if ($n -ge $budget) { throw "$n lines against a stated budget of $budget" }
+    $true
+  }
+}
+
+# --- ticket streamline/03 — one guide per workflow concern -------------------
+
+Describe-Ticket 'streamline/03' 'one guide per workflow concern, reached by pointer' {
+
+  # The whole shipped set, and which side of ADR 0019's line each falls on.
+  # Declared once here rather than derived from the directory listing: a guide
+  # appearing on disk with nothing claiming it is exactly the drift this table
+  # exists to catch, and a listing would absorb it silently.
+  $policies = [ordered]@{
+    'knowledge'       = 'copied'
+    'context'         = 'copied'
+    'decisions'       = 'copied'
+    'tickets'         = 'copied'
+    'specs'           = 'copied'
+    'maps'            = 'copied'
+    'evidence'        = 'copied'
+    'tracker'         = 'derived'
+    'version-control' = 'derived'
+  }
+
+  # --- criterion 1: reachable, and reachable from the one index --------------
+
+  foreach ($p in $policies.Keys) {
+    Assert "the $p guide ships and is routed from the protocol" {
+      $t = "configure/policies/$p.template.md"
+      if (-not (Test-Path (Join-Path $skills $t))) { throw "$t is missing" }
+      $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which guides each stage reads'
+      if (-not $section) { throw 'the routing section is gone' }
+      if ($section -notmatch [regex]::Escape(".claude/policies/$p.md")) { throw 'no stage names it' }
+      $true
+    }
+  }
+
+  # The reverse direction, which is the one that goes wrong quietly: a row
+  # naming a guide nobody wrote is a pointer at nothing, and it reads exactly
+  # like a working one until somebody follows it.
+  Assert "every guide the routing table names is one that ships" {
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which guides each stage reads'
+    $missing = @()
+    foreach ($m in [regex]::Matches($section, '\.claude/policies/([a-z-]+)\.md')) {
+      $name = $m.Groups[1].Value
+      if (-not (Test-Path (Join-Path $skills "configure/policies/$name.template.md"))) { $missing += $name }
+    }
+    if ($missing) { throw "routed but never written: $(($missing | Sort-Object -Unique) -join ', ')" }
+    $true
+  }
+
+  Assert "/configure installs every guide it ships" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    $unwritten = @($policies.Keys | Where-Object { $c -notmatch [regex]::Escape("$_.md") })
+    if ($unwritten) { throw "shipped but never installed: $($unwritten -join ', ')" }
+    $true
+  }
+
+  # --- criterion 4: the derived guides stay derived --------------------------
+
+  # ADR 0019's line, drawn per guide rather than once for the directory. A
+  # copied `tracker.md` would tell every repository it uses whichever tracker
+  # this one does, which is the specific harm the derivation exists to prevent.
+  Assert "the copied and derived guides are distinguished where they are installed" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    foreach ($p in $policies.Keys) {
+      $row = [regex]::Match($c, '(?im)^\|\s*`' + [regex]::Escape("$p.md") + '`\s*\|([^|\r\n]*)\|')
+      if (-not $row.Success) { throw "$p has no row saying how it is written" }
+      $stated = if ($row.Groups[1].Value -match '(?i)derived') { 'derived' } else { 'copied' }
+      if ($stated -ne $policies[$p]) { throw "$p is installed as $stated, expected $($policies[$p])" }
+    }
+    $true
+  }
+
+  # --- criterion 3: the moved guides kept what they said ---------------------
+
+  # Location and name changed; substance did not. Checked by section, because a
+  # move that quietly drops a section is indistinguishable from one that did
+  # not — the file exists either way and every pointer at it still resolves.
+  $keptSections = [ordered]@{
+    'configure/policies/version-control.template.md' = @('Which model', 'Branch naming', 'Commit discipline', 'How work lands')
+    'configure/policies/tracker.template.md'         = @('Which tracker', 'Assignment', 'Roles')
+  }
+  foreach ($f in $keptSections.Keys) {
+    $sections = $keptSections[$f]
+    Assert "$f kept every section it had before the move" {
+      $c = Get-SkillFile $f
+      $lost = @($sections | Where-Object { $c -notmatch ('(?im)^##\s+' + [regex]::Escape($_) + '\s*$') })
+      if ($lost) { throw "lost: $($lost -join ', ')" }
+      $true
+    }
+  }
+
+  # --- criterion 2: consolidated means stated once, and reached from the rest -
+
+  # `$rulePattern`'s single-home sweep already proves each moved rule is stated
+  # once. What it cannot see is whether the skill that gave the rule up can
+  # still reach it — a rule with one home and no inbound route is not
+  # consolidated, it is lost.
+  $routes = [ordered]@{
+    'design/SKILL.md'    = @('.claude/policies/evidence.md', '.claude/policies/knowledge.md')
+    'implement/SKILL.md' = @('.claude/policies/knowledge.md', '.claude/policies/context.md')
+    'commit/SKILL.md'    = @('.claude/policies/knowledge.md', '.claude/policies/specs.md')
+    'research/SKILL.md'  = @('.claude/policies/evidence.md')
+    'prototype/SKILL.md' = @('.claude/policies/evidence.md')
+    'review/SKILL.md'    = @('.claude/policies/decisions.md')
+  }
+  foreach ($f in $routes.Keys) {
+    $targets = $routes[$f]
+    Assert "$f reaches every guide it stopped stating" {
+      $c = Get-SkillFile $f
+      $dead = @($targets | Where-Object { $c -notmatch [regex]::Escape($_) })
+      if ($dead) { throw "no route to: $($dead -join ', ')" }
+      $true
+    }
+  }
+
+  # The formats left the plugin entirely. A sibling filename left behind reads
+  # as a working link and resolves to nothing once the skill is the only file
+  # in its directory.
+  #
+  # `-cmatch`, for the reason the `$legacy` sweep matches `CONTEXT.md` case
+  # sensitively: the new guide is `tickets.md` and PowerShell's `-match` is
+  # case-insensitive, so the default comparison flags every correct pointer as
+  # the stale one it replaced.
+  Assert "no skill still points at a format document as a sibling file" {
+    $gone = @('TICKETS.md', 'SPEC-FORMAT.md', 'ADR-FORMAT.md', 'CONTEXT-FORMAT.md')
+    $hits = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      if ($rel -like 'configure/policies/*') { continue }
+      $c = Get-Content $f.FullName -Raw
+      foreach ($g in $gone) { if ($c -cmatch [regex]::Escape($g)) { $hits += "$rel → $g" } }
+    }
+    if ($hits) { throw ($hits -join '; ') }
     $true
   }
 }

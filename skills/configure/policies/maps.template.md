@@ -18,7 +18,7 @@ Every session orients to it before choosing a ticket.
 
 ## The map file
 
-The map lives beside the tickets, wherever `.claude/tracker.md` says those are: `.claude/tickets/map.md` on a local-markdown tracker, a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
+The map lives beside the tickets, wherever `.claude/policies/tracker.md` says those are: `.claude/tickets/map.md` on a local-markdown tracker, a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
 
 ```markdown
 # map: <effort name>
@@ -48,7 +48,7 @@ Open tickets are **not** listed. They carry `Part of: map` and are found by quer
 
 ## Decision tickets
 
-Same file and format as any other ticket (see [TICKETS.md](TICKETS.md)), with two differences: the body is a question, and the ticket carries a type.
+Same file and format as any other ticket (see `.claude/policies/tickets.md`), with two differences: the body is a question, and the ticket carries a type.
 
 ```markdown
 # <NN> — <the question, as a title>
@@ -104,7 +104,7 @@ One ticket per session. Research tickets are the exception — they run in paral
 1. Load the map. The low-resolution view, not every ticket body.
 2. Choose a ticket: the one the user named, or the first on the **frontier** as `/implement` defines it. **Claim it first**, before any work.
 3. Resolve it. Zoom as needed: read the full body of a related or resolved ticket on demand. Invoke the skills the `## Notes` block names; `grilling` and `domain-modeling` by default.
-4. Record it: write the answer into the ticket under `## Answer`, resolve it in whatever form `.claude/tracker.md` says — a `Status:` line on a local tracker, a label on GitHub — and append one line to **Decisions so far**.
+4. Record it: write the answer into the ticket under `## Answer`, resolve it in whatever form `.claude/policies/tracker.md` says — a `Status:` line on a local tracker, a label on GitHub — and append one line to **Decisions so far**.
 5. Update the map — add newly surfaced tickets, graduate the fog the answer made specifiable (clearing each graduated patch from **Not yet specified**, so it lives only as its ticket), and mark obsolete anything the decision invalidated.
 
 Expect other sessions to be editing the map concurrently — unblocked tickets can be worked in parallel.
