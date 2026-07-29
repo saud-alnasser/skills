@@ -32,7 +32,7 @@ Nothing to report is still reported. The rule and both drift reads are in `.clau
 
 Everything downstream is a function of one ref. Take whatever the caller supplied — a SHA, a branch, a tag, `main`, `HEAD~5` — or ask for it.
 
-**The subject is the working tree, not just what is committed.** `/implement` calls this review *before* the commit question, so on the path that matters most the entire change is uncommitted and a commit-range diff is empty. Pin the range and the tree together, and review their union:
+**The subject is the working tree, not just what is committed.** `/implement` calls this review *before* it commits, so on the path that matters most the entire change is uncommitted and a commit-range diff is empty. Pin the range and the tree together, and review their union:
 
 - committed — the range from the fixed point
 - uncommitted — staged and unstaged changes, plus untracked files

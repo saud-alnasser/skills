@@ -54,10 +54,10 @@ frontier = tickets open, unblocked, unclaimed
   → build it        tdd at the pre-agreed seams
   → /review    Spec + Standards
   → apply fixes
-  → ASK             "commit and resolve this ticket?"
+  → commit          through /commit — no prompt
+  → resolve         the Marker advances, and stop
 
-       yes      commit → resolve → advance the Marker → stop
-       not yet  the branch stays. keep refining in place.
+  further changes amend that commit. nothing is pushed.
 ```
 
 **Where the tickets are comes from `.claude/policies/tracker.md`** — it is the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and the lifecycle, and `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
@@ -182,14 +182,15 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 ## 4 — Close out
 
-`/review` runs **before** the commit question, both axes, and its fixes are applied before the question is asked. Reviewing after the user has approved the commit inverts the order the approval was given in — they approved reviewed work, not work about to be reviewed.
+`/review` runs **both axes**, and its fixes are applied, **before** anything is committed. Reviewing afterwards inverts the order: what lands would be work about to be reviewed rather than work that has been.
 
-Then **ask**: *commit and resolve this ticket?* `/implement` does not decide that the work is done.
+Then **commit — without asking.** Close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
 
-- **yes** — close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
-- **not yet** — the branch stays, so the ticket stays claimed, and the loop stays open. Request changes, refine, ask again, in the same context and on the same ticket, for as long as it takes.
+There is no prompt because there was never a choice. One ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree — the question asked which of two routes to the same place, once per ticket. What makes that safe is the push prohibition below, not the prompt: nothing is published, and every effect is locally reversible.
 
-`/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against.
+Further changes are requested the same way they always were, in the same context and on the same ticket. They amend.
+
+`/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against. A `/commit` that refuses — because a stage did not run, or the diff contradicts Context — stops the close-out; it is not worked around, and the ticket stays open.
 
 ### Never push. Amend instead.
 

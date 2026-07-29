@@ -30,7 +30,9 @@ Read the reference or fetch the docs — there is no third option where you try 
 
 ## Never push and never publish
 
-Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.
+Committing happens as part of building, without being asked for. Pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.
+
+That is the whole line: everything a commit does is reversible in this clone, and nothing after it is. Committing without asking is only safe while the second half holds, which makes the prohibition load-bearing rather than merely standing.
 
 ## Claude never silently decides architecture
 

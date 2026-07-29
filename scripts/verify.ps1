@@ -982,15 +982,28 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
     $c -match '(?i)/implement`?\*{0,2} never writes the Marker directly'
   }
 
-  Assert "a ticket resolves only when the user says so" {
+  # ADR 0024 retired the prompt, so what used to be "resolves only when the user
+  # says so" is now "resolves when /commit returns". The old assertion did not
+  # fail on the change — it passed on the word "asked" occurring in an unrelated
+  # sentence about further changes, which is the loose-pattern failure this file
+  # warns about, found by rewriting rather than by the suite.
+  Assert "a ticket resolves when /commit returns, and only /implement writes that field" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    if ($c -notmatch '(?i)resolve') { throw 'resolution is never described' }
-    $c -match '(?i)(ask|asks|the user.s call|user says).{0,200}(resolve|commit)|(resolve|commit).{0,200}(ask|asks|the user.s call)'
+    if ($c -notmatch '(?is)close out through `?/commit`?[^.]{0,80}Status:\s*resolved') {
+      throw 'resolution is not tied to /commit returning'
+    }
+    $c -match '(?i)shared tracker, do not'
   }
 
-  Assert "a not-yet keeps the ticket claimed and the loop open" {
+  # The prompt is gone and stays gone. Asserted as an absence *and* as the
+  # reason, because an absence alone would pass on a file that simply stopped
+  # describing the close-out at all.
+  Assert "there is no commit prompt, and the skill says why there is not" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)not yet.{0,160}claimed'
+    if ($c -match '(?i)commit and resolve this ticket\?') { throw 'the prompt is back' }
+    if ($c -notmatch '(?i)without asking|no prompt') { throw 'the absence is not stated' }
+    # The argument, not just the behaviour: both routes reach the same tree.
+    $c -match '(?i)identical tree|same place|same tree'
   }
 
   # Improvising past a wrong plan silently discards the grill, the options the
@@ -1058,16 +1071,22 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
     $c -match '(?i)(full|whole) suite'
   }
 
-  # Ordering, not presence. Approval given for reviewed work is not approval
-  # for work that is about to be reviewed.
-  Assert "/review closes the work out before the commit question" {
+  # Ordering, not presence, and it survived the prompt's removal — what lands
+  # must be work that has been reviewed rather than work about to be. With no
+  # prompt to order against, the fixed point is the commit itself.
+  Assert "/review and its fixes come before anything is committed" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $review = $c.IndexOf('/review')
-    $ask = $c.IndexOf('commit and resolve this ticket')
-    if ($review -lt 0) { throw '/review is never invoked' }
-    if ($ask -lt 0) { throw 'the close-out question is never asked' }
-    if ($review -gt $ask) { throw 'review comes after the commit question' }
-    $c -match '(?i)/review.{0,40}before\*{0,2} the commit question'
+    $closeOut = Get-Section $c 'Close out'
+    if (-not $closeOut) { throw 'there is no close-out step' }
+    $review = $closeOut.IndexOf('/review')
+    $commit = $closeOut.IndexOf('through `/commit`')
+    if ($review -lt 0) { throw '/review is never invoked in the close-out' }
+    if ($commit -lt 0) { throw 'the close-out never reaches /commit' }
+    if ($review -gt $commit) { throw 'review comes after the commit' }
+    # `\*{0,2}` because the word carries emphasis: the prose reads
+    # "**before** anything is committed", and a pattern that assumes the two
+    # words are adjacent fails on the file it was written from.
+    $closeOut -match '(?i)before\*{0,2}\s+(anything is committed|it commits)'
   }
 
   # Context stores concepts. An implementation walkthrough in context is
@@ -5840,6 +5859,90 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
     }
     if ($long) { throw "the declaration summarises rather than points: $($long -join ', ')" }
     $true
+  }
+}
+
+# --- ticket streamline/07 — commit follows review, without asking -------------
+
+Describe-Ticket 'streamline/07' 'commit follows review without asking' {
+
+  # Criteria 1 and 3 are asserted in `tenure/04`, where the close-out already
+  # had a home — the ordering and the amend rule are the same criteria they
+  # always were, and only what they order against changed. What is here is what
+  # this ticket added: the account in the always-on tier, and the guard that
+  # keeps the prompt from coming back by any of its names.
+
+  # --- criterion 5: the always-on account matches what happens --------------
+
+  # The line that stops being true is the one a reader trusts most, because it
+  # loads on every turn whether or not a stage runs. ADR 0024 names it as the
+  # consequence to correct, so it is asserted at the tier rather than the file:
+  # `streamline/02` moved it once already.
+  Assert "the always-on tier no longer says committing is asked for" {
+    $stale = @($alwaysOnTemplates | Where-Object { (Get-SkillFile $_) -match '(?i)committing is asked for' })
+    if ($stale) { throw "still stated in: $($stale -join ', ')" }
+    $true
+  }
+
+  Assert "the always-on tier says committing happens without being asked" {
+    $homes = @($alwaysOnTemplates | Where-Object { (Get-SkillFile $_) -match '(?i)without being asked' })
+    if ($homes.Count -eq 0) { throw 'nothing that loads unconditionally says so' }
+    if ($homes.Count -gt 1) { throw "two homes: $($homes -join ', ')" }
+    $true
+  }
+
+  # Criterion 4, and the reason the change is safe at all. The prohibition was
+  # standing before and is load-bearing now: it is the only thing between a
+  # commit nobody asked for and a publication nobody asked for.
+  Assert "the push prohibition is stated as what makes committing without asking safe" {
+    $homes = @($alwaysOnTemplates | Where-Object { (Get-SkillFile $_) -match '(?i)cannot undo locally' })
+    if ($homes.Count -ne 1) { throw "the prohibition has $($homes.Count) always-on homes" }
+    (Get-SkillFile $homes[0]) -match '(?i)load-bearing|only safe while'
+  }
+
+  # --- criterion 1: the prompt is gone from every shape it took -------------
+
+  # Three shapes, because it appeared as prose, as a step in the loop diagram,
+  # and as a thing `/review` ordered itself against. Deleting one and leaving
+  # the others is how a retired behaviour keeps being described.
+  Assert "no skill still describes a commit prompt" {
+    $shapes = [ordered]@{
+      'the close-out question' = '(?i)commit and resolve this ticket'
+      'a step in the loop'     = '(?im)^\s*→\s*ASK\b'
+      'an ordering landmark'   = '(?i)the commit question'
+    }
+    $found = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $c = Get-SkillText $f
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      foreach ($shape in $shapes.Keys) {
+        if ($c -match $shapes[$shape]) { $found += "$rel → $shape" }
+      }
+    }
+    if ($found) { throw ($found -join '; ') }
+    $true
+  }
+
+  # --- criterion 3: one ticket is still one commit --------------------------
+
+  Assert "further changes amend rather than adding a second commit" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)one ticket stays one commit') { throw 'the invariant is gone' }
+    $c -match '(?i)amend'
+  }
+
+  # --- criterion 2: /commit still owns the commit and the Marker ------------
+
+  # The prompt's removal moves who *triggers* the commit, not who writes it.
+  # A close-out that started committing directly would satisfy every criterion
+  # above and quietly give the Marker a second writer.
+  Assert "the close-out still routes through /commit, which stays the only Marker writer" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)close out through `?/commit') { throw 'the close-out no longer routes through /commit' }
+    if ($c -notmatch '(?i)never writes the Marker directly') { throw 'the single-writer rule is gone' }
+    # And a refusal is not routed around, which is the new failure mode: with
+    # no prompt, nothing else pauses the close-out.
+    $c -match '(?i)refuses[^.]{0,120}(stops|not worked around)'
   }
 }
 
