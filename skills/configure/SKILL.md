@@ -21,7 +21,7 @@ Which branch runs is decided by **what it finds, never by a flag.** A flag lets 
 
 ## 0 — Verification
 
-Open with the one-line verification report, exactly as every other skill does — including on a fresh repository, where it reads *"no Tenure here — nothing to verify"*. The rule is in `.claude/tenure.md`, which on a fresh repository this run is about to write.
+Open with the one-line verification report, exactly as every other skill does — including on a fresh repository, where it reads *"no Tenure here — nothing to verify"*. The rule is in `.claude/protocol.md`, which on a fresh repository this run is about to write.
 
 An audit run has Context to check and is the one case where this is real work. It still reports in one line; what it *finds* belongs to step 5.
 
@@ -70,9 +70,13 @@ The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evid
 
 **`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
 
-**`.claude/tenure.md`**, from [tenure.template.md](tenure.template.md), copied as-is — it describes Tenure, not this repository, so it has nothing to fill in. It is the other half of `CLAUDE.md`: the always-on file is read by every Claude that opens the repository, so it carries only rules that hold with or without the plugin, and the machinery serving them lives here where only Tenure's skills look. Write both or neither — a `CLAUDE.md` whose pointer leads nowhere is worse than one that never split.
+**`.claude/rules/precedence.md`** and **`.claude/rules/engineering.md`**, from [precedence.template.md](precedence.template.md) and [engineering.template.md](engineering.template.md), copied as-is — they describe the workflow's standards, not this repository, so there is nothing to fill in. Neither carries `paths:` frontmatter, which is what makes the harness load them on every turn: these are the rules `CLAUDE.md` stopped stating so that it could stay a pointer, and a rule reachable only through a pointer fires only when something follows it.
 
-**`.claude/rules/*.md`** for standards discovered in *this* repository — not Tenure's. Each is **path-scoped** where it applies to part of the tree. A standard that applies everywhere is one file; a standard about `packages/api/` says so, and is not paid for while working in `docs/`.
+**`.claude/protocol.md`**, from [protocol.template.md](protocol.template.md), copied as-is for the same reason. It is the router rather than a rule — the Marker, the drift reads, the verification report, and the table saying which guides each stage reads — so it is reached by pointer and a turn that answers a question does not pay for it.
+
+**Write the whole set or none of it.** The entrypoint is a pointer at every file above, so a run that writes it and stops leaves those pointers going nowhere — which is worse than never having split the file, because the rules are now missing rather than merely expensive.
+
+**More `.claude/rules/*.md`** for standards discovered in *this* repository. Each is **path-scoped** where it applies to part of the tree: a standard about `packages/api/` says so in `paths:` frontmatter and is not paid for while working in `docs/`. A standard with no `paths:` is a permanent cost on every turn, so adding one is a decision rather than a default — the two written above are the baseline, not the beginning of a collection.
 
 **`.claude/tracker.md`**, from [tracker.template.md](tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker Tenure drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file.
 
@@ -89,7 +93,7 @@ Take every repository-specific command from the manifest, scripts, or CI configu
 # someone else's checkout, or this repository on another machine. A file that
 # would be equally true everywhere is knowledge, and knowledge is committed.
 #
-# `.claude/tenure.md` says what depends on that being true.
+# `.claude/protocol.md` says what depends on that being true.
 #
 # The leading slash on `/prototypes/` is load-bearing. Unanchored, the pattern
 # matches at every depth, so it would also swallow `evidence/prototypes/` —
@@ -124,7 +128,7 @@ Before reporting complete:
 - Every **Source Pointer** resolves, and a broken one is handled the way `CLAUDE.md` requires.
 - Every file under `contexts/` appears in the **routing table**, exactly once.
 - No **implementation** was written into Context — no API shapes, no function names, no file inventories.
-- `CLAUDE.md` and `.claude/tenure.md` both exist, and **nothing committed depends on a file `.claude/.gitignore` matches** — read `CLAUDE.md` as a Claude without the plugin would and confirm every rule in it is followable.
+- Every file the always-on set points at exists: `CLAUDE.md`, `.claude/protocol.md`, and the two rules under `.claude/rules/`. **Nothing committed depends on a file `.claude/.gitignore` matches** — read `CLAUDE.md` as a Claude without the plugin would, follow every pointer, and confirm each rule it reaches is followable.
 - `.claude/.gitignore` exists and states the category, not a list.
 
 Report what was written, what was moved, and what was left alone.

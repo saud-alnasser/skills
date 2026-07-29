@@ -199,6 +199,7 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
     'docs/adr/'       = 'docs/adr/ (use .claude/decisions/)'
     '\.scratch/'      = '.scratch/ (use .claude/tickets/)'
     '\.claude/docs/'  = '.claude/docs/ (ADR 0018 dissolved it — use .claude/{decisions,designs,evidence}/)'
+    '\.claude/tenure\.md' = '.claude/tenure.md (streamline/02 renamed it — use .claude/protocol.md)'
   }
   foreach ($pattern in $legacy.Keys) {
     $label = $legacy[$pattern]
@@ -429,9 +430,25 @@ $subjectSections = @('layout/02', 'layout/04', 'layout/06', 'streamline/01')
 # Ticket 16 split the always-on file. `CLAUDE.md` is committed and read by every
 # Claude that opens the repository, so it keeps only rules that hold with or
 # without the plugin; the machinery serving them — the Marker, the drift reads,
-# the verification report — moved here, where only Tenure's skills look.
+# the verification report — moved here. `streamline/02` renamed it from
+# `tenure.template.md`, for its job rather than for the framework, and added the
+# stage-to-guides routing table.
 # Assertions follow the rule they are about, so the Marker ones below read this.
-$tenureTemplate = 'configure/tenure.template.md'
+$protocolTemplate = 'configure/protocol.template.md'
+
+# The always-on tier below `CLAUDE.md` (ADR 0021). These two ship without
+# `paths:` frontmatter, which is what makes the harness inject them on every
+# turn — `streamline/02` moved the standards here so the entrypoint could become
+# a pointer without any of them dropping to pointer-read, where they would fire
+# only when something followed the pointer.
+$precedenceTemplate  = 'configure/precedence.template.md'
+$engineeringTemplate = 'configure/engineering.template.md'
+
+# What a configured repository loads with no pointer followed. The order is the
+# order a reader meets them in, and the list is what `streamline/02`'s pointer
+# and placement assertions iterate — adding a template here without adding the
+# file is caught by the first of them.
+$alwaysOnTemplates = @($claudeTemplate, $precedenceTemplate, $engineeringTemplate)
 
 # A rule's *pattern* gets one home too, for the reason the rule does. Ticket 02
 # asserts each rule is stated once; ticket 13 asserts where, and which skills
@@ -516,7 +533,7 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   }
 
   Assert "the Marker rule states the trusted path — matching HEAD plus a clean tree costs no reading" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     if (-not $c) { throw 'template is missing' }
     ($c -match 'marker\.json') -and
     ($c -match '(?i)clean') -and
@@ -524,12 +541,12 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   }
 
   Assert "the clean path costs one git check and no reading" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     $c -match '(?i)(no reading|without reading|read nothing)'
   }
 
   Assert "both drift sources are named, with the command that reads each" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     $missing = @()
     if ($c -notmatch 'git diff --name-only') { $missing += 'committed drift' }
     if ($c -notmatch 'git status --porcelain') { $missing += 'uncommitted drift' }
@@ -538,7 +555,7 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   }
 
   Assert "the non-ancestor case is covered — a moved HEAD makes the diff meaningless" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     ($c -match '(?i)ancestor') -and ($c -match '(?i)rebase|branch switch|switched branch')
   }
 
@@ -559,12 +576,12 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   }
 
   Assert "only /commit advances the Marker" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     ($c -match '/commit') -and ($c -match '(?i)nothing else (moves|advances)|only `?/commit`?')
   }
 
   Assert "the Marker is machine-local — a teammate's verification is not Claude's" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     $c -match '(?i)gitignored|machine-local|per-clone|not committed'
   }
 
@@ -606,9 +623,22 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     }
   }
 
-  # ADR 0007: a rule that must hold unconditionally has to be in CLAUDE.md,
-  # because a rule inside a skill fires only when that skill runs. Misplacing
-  # one is a silent failure, so the always-on set is asserted explicitly.
+  # ADR 0007: a rule that must hold unconditionally has to be somewhere the
+  # harness injects without a pointer being followed, because a rule inside a
+  # skill fires only when that skill runs. Misplacing one is a silent failure,
+  # so the always-on set is asserted explicitly.
+  #
+  # Asserted over the *tier* rather than over `CLAUDE.md`, since `streamline/02`
+  # moved two of the three into rule templates. Naming the file would have made
+  # this fail on a move that kept every rule always-on — which is the opposite
+  # of what it exists to catch, and would have taught the next reader to relax
+  # it. ADR 0021: the tier is the mechanism, and the mechanism is what to check.
+  #
+  # Presence only, not exactly-one. These probes are deliberately loose for the
+  # reason `$rulePattern` gives, and `precedence` now matches both the ladder
+  # and the pointer at it — which is correct. The strict single-home checks are
+  # `$singleHome` above and `streamline/02`'s, where the patterns are tight
+  # enough to tell a statement of a rule from a mention of one.
   $alwaysOn = [ordered]@{
     'Claude never silently decides architecture' = '(?i)never silently decid'
     'the instruction precedence chain'           = '(?i)precedence'
@@ -616,8 +646,10 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   }
   foreach ($rule in $alwaysOn.Keys) {
     $pattern = $alwaysOn[$rule]
-    Assert "CLAUDE.md carries an always-on rule: $rule" {
-      (Get-SkillFile $claudeTemplate) -match $pattern
+    Assert "the always-on tier carries: $rule" {
+      $homes = @($alwaysOnTemplates | Where-Object { (Get-SkillFile $_) -match $pattern })
+      if ($homes.Count -eq 0) { throw 'stated in nothing that loads unconditionally' }
+      $true
     }
   }
 }
@@ -1889,7 +1921,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
 
   # Acceptance: "The issue-tracker configuration has exactly one home, and every
   # skill reading it agrees." /configure writes the file; ticket 09 places the
-  # template, exactly as ticket 02 placed CLAUDE.template.md before ticket 08.
+  # template, exactly as tenure/02 placed CLAUDE.template.md before tenure/08.
   Assert "the tracker template ships, and names .claude/tracker.md as its home" {
     $t = Get-SkillFile 'configure/tracker.template.md'
     $t -match '\.claude/tracker\.md'
@@ -2162,7 +2194,8 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     $c -match '(?i)(skip[^\r\n]{0,80}greenfield|greenfield[^\r\n]{0,40}skip)'
   }
 
-  foreach ($t in @('CLAUDE.template.md', 'tenure.template.md', 'tracker.template.md')) {
+  foreach ($t in @('CLAUDE.template.md', 'protocol.template.md', 'tracker.template.md',
+                   'precedence.template.md', 'engineering.template.md')) {
     Assert "$t is reached from the skill that installs it" {
       if (-not (Test-Path (Join-Path $skills "configure/$t"))) { throw "configure/$t is missing" }
       (Get-SkillFile $cfg) -match [regex]::Escape($t)
@@ -3021,9 +3054,12 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
     # Both halves. The obligation without "names are not proof" leaves the
     # commonest way of satisfying it dishonestly — reading a filename and
     # calling that inspection.
-    '04 verify before claiming'              = @{ file = $claudeTemplate
+    # Moved to the rules tier by `streamline/02`, still always-on. The file each
+    # names is the point of the accounting: a principle that drifts to a
+    # pointer-read guide fails here rather than going quiet.
+    '04 verify before claiming'              = @{ file = $engineeringTemplate
                                                   pattern = '(?is)before any repository-specific claim.{0,400}names are not proof' }
-    '05 never guess an API'                  = @{ file = $claudeTemplate; pattern = '(?i)never guess an API' }
+    '05 never guess an API'                  = @{ file = $engineeringTemplate; pattern = '(?i)never guess an API' }
     # All three, or the rule is decorative: "why it exists" alone is what every
     # workaround already carries, and the removal condition is the only one that
     # makes "temporary" a state something can leave.
@@ -3047,7 +3083,7 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
                                                   pattern = $rulePattern['the compression test'] }
     '15 knowledge has layers'                = @{ file = $claudeTemplate
                                                   pattern = $rulePattern['the knowledge-layer table'] }
-    '18 the user owns decisions'             = @{ file = $claudeTemplate; pattern = '(?i)never silently decid' }
+    '18 the user owns decisions'             = @{ file = $engineeringTemplate; pattern = '(?i)never silently decid' }
   }
   foreach ($principle in $placed.Keys) {
     $where = $placed[$principle]
@@ -3166,8 +3202,11 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   # repository, not to Tenure, and it is path-scoped where it applies to only
   # part of the tree — otherwise a rule about one directory is paid for on
   # every turn against every other.
+  # Reads the precedence template since `streamline/02`: the ladder is what
+  # ranks `.claude/rules/`, so the sentence placing rules in it travelled with
+  # the ranking rather than staying behind in the entrypoint.
   Assert "a standard discovered in this repository is placed in .claude/rules/, path-scoped" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $precedenceTemplate
     # Naming the path in the precedence list is not placing the rule — the
     # placement is the sentence that says what goes there and why it is the
     # repository's rather than Tenure's.
@@ -3184,7 +3223,7 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   # sentence claiming the ranking while the list encodes the opposite is worse
   # than neither.
   Assert "CONTRIBUTING.md outranks README.md in the precedence chain" {
-    $lines = (Get-SkillFile $claudeTemplate) -split '\r?\n'
+    $lines = (Get-SkillFile $precedenceTemplate) -split '\r?\n'
     $contributing = ($lines | Select-String -Pattern '^\d+\.\s.*CONTRIBUTING\.md' | Select-Object -First 1).LineNumber
     $readme       = ($lines | Select-String -Pattern '^\d+\.\s.*README\.md' | Select-Object -First 1).LineNumber
     if (-not $contributing) { throw 'CONTRIBUTING.md is not in the numbered chain' }
@@ -3241,16 +3280,22 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
   # are in and why the other exists. Two-sided, because a pointer out of
   # `CLAUDE.md` with nothing acknowledging the split at the far end leaves the
   # protocol file looking like a stray duplicate of the rules.
+  #
+  # `streamline/02` changed what the far end has to say. It used to be "only
+  # Tenure's skills read this"; ADR 0022 replaced that with the property that
+  # actually matters — the file is pointer-read rather than always-on, which is
+  # why it is cheap, and it is committed, so a reader without the plugin follows
+  # the same pointer to it.
   Assert "each half names the other and says why the split exists" {
     $claude = Get-SkillFile $claudeTemplate
-    $tenure = Get-SkillFile $tenureTemplate
-    if ($claude -notmatch '\.claude/tenure\.md') { throw 'CLAUDE.md never points at the protocol' }
+    $protocol = Get-SkillFile $protocolTemplate
+    if ($claude -notmatch '\.claude/protocol\.md') { throw 'CLAUDE.md never points at the protocol' }
     if ($claude -notmatch '(?i)with or without|plugin or not|either way') {
       throw 'CLAUDE.md never says why it is the half that holds universally'
     }
-    if ($tenure -notmatch 'CLAUDE\.md') { throw 'the protocol never names the file it split from' }
-    if ($tenure -notmatch '(?i)only[^\r\n]{0,60}Tenure.{0,20}skills read|only Tenure.{0,20}skills') {
-      throw 'the protocol never says who reads it'
+    if ($protocol -notmatch 'CLAUDE\.md') { throw 'the protocol never names the file it split from' }
+    if ($protocol -notmatch '(?i)reached by pointer|pointer-read') {
+      throw 'the protocol never says how it is reached, which is the whole reason it is not a rule'
     }
     $true
   }
@@ -3260,7 +3305,7 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
   # a silent failure for anything unconditional. `$rulePattern` is the set
   # ticket 13 placed in `CLAUDE.md` precisely because it must always hold.
   Assert "no rule that must hold on every turn moved into the protocol file" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     $leaked = $rulePattern.Keys | Where-Object { $c -match $rulePattern[$_] }
     $alwaysOn = @{
       'Claude never silently decides architecture' = '(?i)never silently decid'
@@ -3276,7 +3321,7 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
   # only safe out of the always-on file because it never *adds* an obligation:
   # with no marker at all, CLAUDE.md's verification rule applies unchanged.
   Assert "the Marker is stated as a shortcut whose absence costs nothing but the shortcut" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     if ($c -notmatch '(?i)cache-validity') { throw 'the Marker is not framed as a cache' }
     # Bounded to one line rather than one sentence: the clause names
     # `CLAUDE.md`, and `[^.]` stops dead on the dot in the filename.
@@ -3301,19 +3346,22 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
   # which carries the membership test. Stated as a deletion, because that is
   # the form that can actually be checked against a repository.
   Assert "the Position invariant is stated — nothing shared may depend on it" {
-    $c = Get-SkillFile $tenureTemplate
+    $c = Get-SkillFile $protocolTemplate
     if ($c -notmatch '(?i)nothing shared may depend on it') { throw 'the invariant is never stated' }
     $c -match '(?i)delete[^\r\n]{0,120}(no other person|no other clone)'
   }
 
-  # Criterion 5. Both files or neither: `/configure` writing only the always-on
-  # half leaves every pointer in it dangling, and writing only the protocol
-  # leaves nothing loading it.
-  Assert "/configure writes both halves, and says they go together" {
+  # Criterion 5. All of them or none: `/configure` writing only the entrypoint
+  # leaves every pointer in it dangling, and writing only what it points at
+  # leaves nothing loading any of it. `streamline/02` widened this from two
+  # files to four, which is why the phrasing it accepts had to widen too — the
+  # old `both or neither` would now be a *wrong* promise rather than a partial
+  # one, since there are no longer two halves to write.
+  Assert "/configure writes the whole always-on set, and says they go together" {
     $c = Get-SkillFile 'configure/SKILL.md'
-    if ($c -notmatch 'tenure\.template\.md') { throw 'the protocol template is never installed' }
-    if ($c -notmatch '\.claude/tenure\.md') { throw 'the destination is never named' }
-    $c -match '(?i)both or neither|write both'
+    if ($c -notmatch 'protocol\.template\.md') { throw 'the protocol template is never installed' }
+    if ($c -notmatch '\.claude/protocol\.md') { throw 'the destination is never named' }
+    $c -match '(?i)(whole set or none|all of (them|it) or none)'
   }
 
   # The pointers that moved with the rules. Cutting a rule out of `CLAUDE.md`
@@ -3330,7 +3378,7 @@ Describe-Ticket 'tenure/16' 'position, and the line between shared and local' {
   foreach ($m in $moved) {
     Assert "$($m.f) reaches $($m.what) at its new home" {
       $c = Get-SkillFile $m.f
-      if ($c -notmatch '\.claude/tenure\.md') { throw 'still pointed at the always-on file, or nowhere' }
+      if ($c -notmatch '\.claude/protocol\.md') { throw 'still pointed at the always-on file, or nowhere' }
       $true
     }
   }
@@ -4336,8 +4384,10 @@ Describe-Ticket 'layout/03' 'derive tool references per repository, and delete t
   # Criterion 5. The gap this whole ticket exists to close: the always-on file
   # used to admit that the workflow's reference existed only with the plugin,
   # in the same breath as forbidding a guessed CLI.
+  # Follows the rule rather than the file: `streamline/02` moved the never-guess
+  # standard into the rules tier, and it is still always-on there.
   Assert "the always-on template no longer conditions the tool reference on the plugin" {
-    $c = Get-SkillFile $claudeTemplate
+    $c = Get-SkillFile $engineeringTemplate
     if ($c -match '(?i)Where Tenure is installed, its ``?tools/') {
       throw 'the plugin-conditional wording survives'
     }
@@ -4854,10 +4904,14 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
 # --- ticket streamline/01 — split the rules directory ------------------------
 
 # Another section whose subject is `.claude/` rather than `./skills`, for the
-# reason `layout/02` gives. The shipped templates still describe the previous
-# placement; `streamline/08` moves them. That gap is the sequencing this effort
-# chose — the repository dogfoods the layout before the templates emit it — and
-# it is recorded here so the next reader does not file it as drift.
+# reason `layout/02` gives.
+#
+# This landed before the effort was re-cut ship-first (ADR 0025), so for one
+# commit the shipped templates described the previous placement while this tree
+# held the new one. `streamline/02` closed that gap by moving the templates, and
+# `streamline/16` adopts whatever else the templates gained. The assertions
+# below are unaffected either way: their subject is this repository's own
+# `.claude/`, which is the same tree it was.
 Describe-Ticket 'streamline/01' 'split the rules directory and make a scoped rule actually scoped' {
 
   function Get-RepoText {
@@ -4994,6 +5048,192 @@ Describe-Ticket 'streamline/01' 'split the rules directory and make a scoped rul
       if ((Get-RepoText 'CLAUDE.md') -notmatch [regex]::Escape($rule)) { throw 'not named' }
       $true
     }
+  }
+}
+
+# --- ticket streamline/02 — the protocol routes, the entrypoint points --------
+
+# `streamline/01` reached this shape in this repository first. This section is
+# about the templates that hand the same shape to everybody else, so every
+# assertion below reads `./skills` and none of them reads this tree.
+Describe-Ticket 'streamline/02' 'the protocol becomes the router, and the entrypoint becomes a pointer' {
+
+  # --- criterion 1: every pointer out of the always-on set is generated ------
+
+  # The entrypoint is only allowed to shrink because it routes. A pointer at a
+  # file `/configure` never writes is worse than the inlined prose it replaced:
+  # the prose was at least there. Checked over the whole always-on tier, not
+  # just `CLAUDE.md`, because the rules templates point outward too.
+  Assert "every .claude path the always-on set points at is one /configure writes" {
+    $cfg = Get-SkillFile 'configure/SKILL.md'
+    $dangling = @()
+    foreach ($t in $alwaysOnTemplates) {
+      foreach ($m in [regex]::Matches((Get-SkillFile $t), '`(\.claude/[^`\r\n]+)`')) {
+        # Trailing glob and slash come off so `contexts/**` and `contexts/` are
+        # the same destination. A bare `.claude` after trimming is the directory
+        # itself, which names no file and would match anything.
+        $target = $m.Groups[1].Value.TrimEnd('*', '/')
+        if ($target -eq '.claude') { continue }
+        if ($cfg -notmatch [regex]::Escape($target)) { $dangling += "$t → $target" }
+      }
+    }
+    if ($dangling) { throw ($dangling -join '; ') }
+    $true
+  }
+
+  # ADR 0022 restated plugin independence rather than dropping it: it never
+  # meant "`CLAUDE.md` contains everything", it means every rule is reachable by
+  # someone without the plugin. That is now a property of the pointers, so the
+  # entrypoint has to say it — a reader who cannot tell whether following a
+  # pointer needs the plugin will not follow it.
+  Assert "the entrypoint says its pointers are followable without the plugin" {
+    $c = Get-SkillFile $claudeTemplate
+    if ($c -notmatch '(?i)(committed|generated)[^\r\n]{0,120}without the plugin|without the plugin[^\r\n]{0,120}(committed|same file|same pointer)') {
+      throw 'nothing says a plugin-less reader reaches the same files'
+    }
+    if ($c -notmatch '(?i)only the slash commands') { throw 'the one thing that does need the plugin is not named' }
+    $true
+  }
+
+  # Criterion 1's other half, and the one a path check cannot reach: a *skill*
+  # named in an always-on file is machinery a reader without the plugin cannot
+  # follow, and it reads exactly like an ordinary pointer. This caught the
+  # `domain-modeling` delegation that had been in the entrypoint since tenure/02
+  # — inherited rather than introduced, and in scope here because this is the
+  # ticket whose criterion forbids it.
+  Assert "no always-on template routes a rule through something only the plugin has" {
+    $plugin = @{
+      'a Primitive skill' = '(?i)`?\b(grilling|tdd|codebase-design|domain-modeling)\b`?'
+      'a Spine command'   = '`/(configure|design|implement|review|research|prototype|commit)`'
+    }
+    $found = @()
+    foreach ($t in $alwaysOnTemplates) {
+      $c = Get-SkillFile $t
+      foreach ($kind in $plugin.Keys) {
+        if ($c -match $plugin[$kind]) { $found += "$t names $kind" }
+      }
+    }
+    if ($found) { throw ($found -join '; ') }
+    $true
+  }
+
+  # --- criterion 2: the protocol routes, and routes in one place ------------
+
+  # Not in `$rulePattern`, deliberately. That table feeds tenure/16's check that
+  # no always-on rule leaked into the protocol — and this one belongs there, so
+  # adding it would fail the build for the file being correct. Routing is not a
+  # rule; it is the thing a rule is reached *through*.
+  $routingHeading = '(?im)^##\s+Which guides each stage reads\s*$'
+
+  Assert "the protocol carries the stage routing table, and nothing else does" {
+    $homes = @(Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match $routingHeading } |
+      ForEach-Object { ($_.FullName.Substring($skills.Length + 1) -replace '\\', '/') })
+    if ($homes.Count -eq 0) { throw 'no shipped file routes stages to guides' }
+    if ($homes.Count -gt 1) { throw "routed in two places: $($homes -join ', ')" }
+    if ($homes[0] -ne $protocolTemplate) { throw "routed from $($homes[0]), not the protocol" }
+    $true
+  }
+
+  # Every Spine command, or the table is a partial answer that reads as a total
+  # one — and a stage missing its row is a stage that goes back to rediscovering
+  # its guides, which is the cost this table was added to remove. `/research`
+  # reading nothing is a row saying so, not an absence.
+  Assert "every Spine stage has a row in the routing table" {
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which guides each stage reads'
+    if (-not $section) { throw 'the routing section is missing' }
+    $missing = @()
+    foreach ($stage in @('/configure', '/design', '/implement', '/review', '/research', '/prototype', '/commit')) {
+      if ($section -notmatch ('(?im)^\|\s*`' + [regex]::Escape($stage) + '`\s*\|')) { $missing += $stage }
+    }
+    if ($missing) { throw "no row for: $($missing -join ', ')" }
+    $true
+  }
+
+  # The rows name a *role* for the forge because which file fills it is chosen
+  # per repository. Without that, a template shipping `github.md` in every row
+  # hands a GitLab repository a table of pointers it does not have.
+  Assert "the routing table names the forge by role, not by a fixed filename" {
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which guides each stage reads'
+    if ($section -notmatch '(?i)forge reference') { throw 'the role is never named' }
+    if ($section -notmatch '(?i)whichever[^\r\n]{0,200}this repository') { throw 'nothing says the file is chosen per repository' }
+    $true
+  }
+
+  # --- criterion 3: nothing unconditional dropped to pointer-read ------------
+
+  # The failure this criterion exists for is silent by construction: a standard
+  # moved into `protocol.md` still reads correctly and still gets followed —
+  # just only on the turns a stage happens to run. One assertion per standard,
+  # anchored to that standard, for the reason `.claude/rules/skills.md` gives.
+  $standards = [ordered]@{
+    'verify before claiming'                     = '(?i)before any repository-specific claim'
+    'never guess an API'                         = '(?i)covers every tool this repository uses'
+    'never push and never publish'               = '(?i)cannot undo locally'
+    'Claude never silently decides architecture'  = '(?i)is a silent decision'
+    'the precedence ladder'                      = '(?im)^1\.\s+What the user said'
+  }
+  foreach ($standard in $standards.Keys) {
+    $pattern = $standards[$standard]
+    Assert "'$standard' ships in the always-on tier, not behind a pointer" {
+      $homes = @($alwaysOnTemplates | Where-Object { (Get-SkillFile $_) -match $pattern })
+      if ($homes.Count -eq 0) { throw 'stated in no template the harness injects' }
+      if ($homes.Count -gt 1) { throw "two always-on homes: $($homes -join ', ')" }
+      if ((Get-SkillFile $protocolTemplate) -match $pattern) { throw 'also in the protocol, where it fires only when a stage runs' }
+      $true
+    }
+  }
+
+  # What makes the two rule templates always-on is the *absence* of `paths:`.
+  # A scope added here would look like tidying and would silently stop the
+  # standard firing on turns that open no matching file — which is most of them.
+  foreach ($t in @($precedenceTemplate, $engineeringTemplate)) {
+    Assert "$t ships unscoped, so the harness injects it every turn" {
+      $fm = Get-Frontmatter (Get-SkillFile $t)
+      if ($fm -and $fm -match '(?m)^paths:') { throw 'scoped — it would fire only when a covered file is read' }
+      $true
+    }
+  }
+
+  # And says so, because the next maintainer's instinct on seeing an unscoped
+  # rule is to scope it. ADR 0021: adding to this tier is a permanent always-on
+  # cost, which is the fact that has to travel with the files.
+  Assert "the rules templates say why they carry no scope" {
+    foreach ($t in @($precedenceTemplate, $engineeringTemplate)) {
+      if ((Get-SkillFile $t) -notmatch '(?i)no `paths:` frontmatter, deliberately') {
+        throw "$t does not say the absence is deliberate"
+      }
+    }
+    $true
+  }
+
+  # --- criterion 4: the rename is complete -----------------------------------
+
+  # `.claude/tenure.md` is covered by the `$legacy` sweep in tenure/01, which
+  # exempts the two files whose job is converting it. The *template's* filename
+  # gets no exemption: nothing detects or migrates a path inside this repository.
+  Assert "nothing shipped names the old protocol template" {
+    if (Test-Path (Join-Path $skills 'configure/tenure.template.md')) { throw 'the old template is still there' }
+    $named = @(Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match 'tenure\.template\.md' } |
+      ForEach-Object { ($_.FullName.Substring($skills.Length + 1) -replace '\\', '/') })
+    if ($named) { throw "named in: $($named -join ', ')" }
+    $true
+  }
+
+  # --- criterion 6: the entrypoint stays inside a budget it states -----------
+
+  # Read out of the template's own comment rather than hardcoded. A budget the
+  # file announces and the suite checks separately is two numbers that drift,
+  # and the one a maintainer reads is the one that is not enforced.
+  Assert "the entrypoint's stated line budget is the one enforced, and it holds" {
+    $c = Get-SkillFile $claudeTemplate
+    $stated = [regex]::Match($c, '(?i)under (\d+) lines')
+    if (-not $stated.Success) { throw 'the template states no budget' }
+    $budget = [int]$stated.Groups[1].Value
+    $n = ($c -split '\r?\n').Count
+    if ($n -ge $budget) { throw "$n lines against a stated budget of $budget" }
+    $true
   }
 }
 

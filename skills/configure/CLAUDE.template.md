@@ -1,39 +1,40 @@
 # {Repo name}
 
 <!--
-  Installed by /configure. This is the repository's sole always-on entrypoint:
-  every turn pays for it, including turns where no skill runs.
+  Installed by /configure. This is the repository's root entrypoint: every turn
+  pays for it, including turns where no skill runs.
 
   It is committed, so *every* Claude that opens this repository loads it —
-  including one with no Tenure installed. It therefore carries only what holds
-  either way. Tenure's own protocol lives in `.claude/tenure.md`, which only
-  Tenure's skills read.
+  including one with no plugin installed. It therefore carries only what holds
+  either way, and it reaches everything else by pointer. Every file it points at
+  is generated and committed too, so following a pointer never requires the
+  plugin; only the slash commands do.
 
-  What belongs here is only what must hold *unconditionally*. A rule that
-  applies to one stage belongs in the skill that enforces that stage — a rule
-  written into a skill fires only when that skill runs, which is exactly right
-  for stage rules and silently wrong for these. A standard discovered in this
-  repository belongs in `.claude/rules/`.
+  Placement is by **loading mechanism**, not by subject:
 
-  Keep it under 200 lines. Everything else is reached by pointer.
+    always-on   this file, and `.claude/rules/` with no `paths:` frontmatter
+    scoped      `.claude/rules/` with `paths:` — loads when a covered file is read
+    on demand   everything reached by a pointer, including `.claude/protocol.md`
+
+  So a rule that must fire unconditionally goes in one of the first two, and
+  never into a file a stage has to open to reach — that fires only when the
+  stage runs, which is a silent failure rather than a loud one. What stays
+  *here* rather than moving to `.claude/rules/` is what a reader needs to
+  navigate: what this repository is, and where the machinery lives.
+
+  Keep it under 200 lines.
 -->
 
 {One or two sentences: what this repository is.}
 
-## Precedence
+## Rules that always apply
 
-When instructions conflict, the later source loses:
+These files in `.claude/rules/` load unconditionally, alongside this one. They are not restated here, because a standard with two homes drifts at one of them:
 
-1. What the user said in this conversation
-2. This file
-3. `.claude/context.md` and the Domain Contexts
-4. `.claude/decisions/` — an accepted ADR
-5. `.claude/rules/` and `CONTRIBUTING.md`
-6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is
+- **`.claude/rules/precedence.md`** — which source wins when two instructions conflict.
+- **`.claude/rules/engineering.md`** — verifying before claiming, never guessing an API, never pushing or publishing, and never silently deciding architecture.
 
-A user instruction overrides everything here. Say so when it does, and follow it.
-
-`.claude/rules/` holds standards discovered in **this repository** — they belong to it, not to Tenure. A rule that applies to only part of the tree is **path-scoped** to that part; check the scope before applying one.
+Everything else in that directory is **path-scoped** and loads only when Claude reads a file it covers; the scope is in each rule's `paths:` frontmatter, not in its prose.
 
 ## Knowledge layers
 
@@ -54,17 +55,13 @@ Two committed files answer that, and both are reached by pointer rather than loa
 - **`.claude/tracker.md`** — which tracker holds the tickets, and how it is driven.
 - **`.claude/version-control.md`** — which version-control model applies, the branch convention, the commit discipline, and how a finished branch lands.
 
-Both are **policy**: what this repository does. `.claude/tools/` answers the neighbouring question of how to *type* any of it, which is why it is a third directory rather than a section in either. Neither policy file depends on Tenure being installed.
+Both are **policy**: what this repository does. `.claude/tools/` answers the neighbouring question of how to *type* any of it, which is why it is a third directory rather than a section in either. Neither policy file depends on the plugin being installed.
 
-## If you are running Tenure
+## Where the workflow's machinery lives
 
-`.claude/tenure.md` carries Tenure's protocol — how a verification may be skipped, how drift is read, and the report every skill opens with. It is **not** loaded from here, and nothing in this file depends on it. It names machinery that exists only where the plugin is installed, and this file is read by every Claude that opens the repository. Tenure's skills reach it by pointer; without them, everything here still holds on its own.
+`.claude/protocol.md` is the router: how a verification may be skipped, how drift is read, the report every stage opens with, and the table saying which guides each stage reads. It is **not** loaded from here, and nothing in this file depends on it — it is reached by pointer, so a turn that answers a question does not pay for it.
 
-## Verify before claiming
-
-**Inspect source before any repository-specific claim** — before implementing, designing, reviewing, or answering a question about this repository. Not sometimes: a claim about what is here is either checked or it is a guess wearing the same words.
-
-**Names are not proof.** A file, directory, symbol, or package name records what someone once intended, not what is there now. Neither is memory, and neither is a plausible-sounding API.
+It is committed like everything else, so a reader without the plugin follows the same pointer and reads the same file. Only the slash commands need the plugin; nothing carrying a rule does.
 
 ## Verification at use
 
@@ -89,9 +86,7 @@ A request that would **change code** takes the cold path, on every turn, whether
 1. Route, load, verify — as above.
 2. **State the classification** before touching anything: what kind of change this is, and how much process it warrants. One line.
 
-The point of stating it is that the user can disagree. A classification held silently is a decision made silently.
-
-**Claude never silently decides architecture.** Where more than one reasonable approach exists, put the options on the table — each named, with what it buys, what it costs, and what it risks — recommend one, and let the user choose. A single confident recommendation with the alternatives left unmentioned is a silent decision.
+The point of stating it is that the user can disagree. A classification held silently is a decision made silently — which is the case `.claude/rules/engineering.md` covers for architecture.
 
 ## Writing knowledge
 
@@ -99,18 +94,14 @@ CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/
 
 **The compression test, before anything is written into knowledge:** *will this improve a future engineering decision?* If not, don't write it. This applies on every turn, including the ones where a concept moves and no command was typed — capture is not a licence to accumulate.
 
-What belongs in Context and what never does is the `domain-modeling` skill's business — it is the skill that writes it.
+What belongs in Context and what never does is settled by the format the workflow's commands write to; `.claude/context.md` is that format worked out against this repository, and reading it is how the shape is learned without the plugin.
 
 ## Conventions
 
-**Tenure's conventions are defaults for when the repository is silent** (ADR 0008), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
+**The workflow's conventions are defaults for when the repository is silent** (ADR 0008), never mandates. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents or demonstrates a convention, that convention wins — detect it before asserting one. Where the repository's convention is genuinely worse, say so once, with reasoning, and then follow it.
 
 The defaults, applied when nothing else is found:
 
 Conventional Commits — `type(scope): summary` — for commit subjects, PR titles, and issue titles. The scope names an engineering domain; `misc`, `stuff`, and `update` are not domains.
 
 A **pull request description** covers the problem, the solution, the architectural impact, the testing performed, the related issues, and any breaking changes. Never a commit-by-commit account — the commits are already on the PR.
-
-**Never guess an API, and a CLI is an API.** Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers every tool this repository uses, the workflow's own included, and it is committed — so this rule is followable with or without the plugin. An operation with no entry there is a configuration gap: say so, and fall back to the tool's own documentation. Never a remembered flag.
-
-**Never push and never publish.** Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.
