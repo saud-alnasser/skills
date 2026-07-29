@@ -66,7 +66,9 @@ The two cases are different work and only one page. Converting another workflow 
 
 The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope}/`, `.claude/tickets/`, `.claude/prototypes/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
-**`.claude/context.md` and `.claude/contexts/**`.** The format, the routing table, and the test a domain has to pass before it earns a file are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line of it is in `CLAUDE.md`. What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file.
+**`.claude/contexts/**`**, as three kinds of file: `.claude/contexts/map.md` holding the routing table alone, `.claude/contexts/repository.md` holding the vocabulary and boundaries that cross domains, and one file per domain that earns one. The format, the placement rule for a term, and the test a domain has to pass are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line is in `CLAUDE.md`.
+
+What is `/configure`'s is the *sourcing*: these are generated from the repository, so every concept written down was read out of the code, and a domain that only has a folder does not get a file. **Write `map.md` last**, once it is known which domains earned a file — a routing table written first is a list of intentions, and every row it names has to exist.
 
 **`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
 
@@ -130,7 +132,8 @@ The audit branch exists because **verification at use structurally cannot reach 
 So this pass reaches what the routing table does not:
 
 - **Prune what nothing references.** A Domain Context absent from the routing table, or one whose domain no longer exists, is removed. Say what was removed and why.
-- **Validate the routing table** — every file under `contexts/` has exactly one row, and every row points at a file that exists.
+- **Validate the routing table** — every file under `contexts/` has exactly one row in `map.md`, including `repository.md`, and every row points at a file that exists.
+- **Check `map.md` carries routing and nothing else.** Orientation prose that drifted into it is charged to every session, which is the cost the split removed.
 - **Re-check Source Pointers**, including the ones no recent work touched.
 - **Re-check `.claude/tools/`.** A repository's tooling changes, and a stale command is worse than no command: no command asks, a wrong one runs.
 - **Mark specs reality already satisfies.** `/commit` marks a spec `implemented` when it lands the last criterion; a spec finished outside that path stays `accepted` forever. This pass catches those.

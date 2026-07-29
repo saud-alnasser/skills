@@ -16,7 +16,7 @@ Everything between a request and a plan `/implement` can work. Discovery, the gr
 
 Then, in this order:
 
-1. Load `.claude/context.md`.
+1. Load `.claude/contexts/map.md`.
 2. **Route** — its routing table says which Domain Contexts this request touches. Load those, and only those.
 3. **Verify** what you are about to rely on. Verification is scoped to what routing selected, which is why it comes after routing and not before: verifying everything is the startup scan the Marker exists to avoid.
 4. **Read the code.** `CLAUDE.md` has the rule; discovery is where it bites hardest, because a plan built on a guessed model of the repository is wrong before the first ticket is cut.

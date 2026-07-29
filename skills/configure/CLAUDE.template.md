@@ -41,12 +41,12 @@ Everything else in that directory is **path-scoped** and loads only when Claude 
 | Knowledge layer | Answers | Lives in |
 | --- | --- | --- |
 | Codebase | what currently exists | source |
-| Context | how this repository thinks | `.claude/context.md`, `.claude/contexts/**` |
+| Context | how this repository thinks | `.claude/contexts/**` |
 | Decisions | why this approach was selected | `.claude/decisions/` |
 
 The order is a **truth hierarchy, and it is absolute**. Where they disagree, the Codebase is right. Resolve every conflict by changing the documentation to match reality — never the reverse, and never by explaining the code away.
 
-Load `.claude/context.md` at the start of a session. Load a Domain Context only when the request touches it; the routing table at the end of `context.md` says which and when. Loading them all defeats the point.
+Load `.claude/contexts/map.md` at the start of a session. It is the routing table and nothing else, so it is cheap: it says which Domain Context a request touches, and those are loaded only when it does. Loading them all defeats the point.
 
 ## How this repository operates
 
@@ -90,11 +90,11 @@ The point of stating it is that the user can disagree. A classification held sil
 
 ## Writing knowledge
 
-CI never modifies repository knowledge. `.claude/context.md`, `.claude/contexts/**`, and `.claude/decisions/**` change through the workflow's own commands and nothing else.
+CI never modifies repository knowledge. `.claude/contexts/**` and `.claude/decisions/**` change through the workflow's own commands and nothing else.
 
 **The compression test, before anything is written into knowledge:** *will this improve a future engineering decision?* If not, don't write it. This applies on every turn, including the ones where a concept moves and no command was typed — capture is not a licence to accumulate.
 
-What belongs in Context and what never does is settled by the format the workflow's commands write to; `.claude/context.md` is that format worked out against this repository, and reading it is how the shape is learned without the plugin.
+What belongs in Context and what never does is settled by the format the workflow's commands write to; `.claude/contexts/repository.md` is that format worked out against this repository, and reading it is how the shape is learned without the plugin.
 
 ## Conventions
 

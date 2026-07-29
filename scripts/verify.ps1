@@ -558,6 +558,11 @@ $rulePattern = [ordered]@{
   # a guard written from only the new spelling passed while the old one sat two
   # files away — which is the failure the authoring standards name by example.
   'the evidence-is-not-knowledge property' = '(?i)nothing (re)?validates it afterwards'
+  # `streamline/04` placed this one. Anchored to the discriminator the rule
+  # turns on — where a term is *used* — rather than to the heading, so a
+  # restatement that reaches the same conclusion in different words is still
+  # a second home.
+  'the term-placement rule'            = '(?i)only while one workflow stage runs'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -1059,7 +1064,7 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
   Assert "knowledge writing is scoped to concepts and boundaries, never implementation detail" {
     $c = Get-SkillFile $knowledgeTemplate
     if ($c -notmatch '(?i)concept') { throw 'concepts are not named as what belongs' }
-    if ((Get-SkillFile 'implement/SKILL.md') -notmatch '\.claude/context\.md') { throw 'context.md is never written' }
+    if ((Get-SkillFile 'implement/SKILL.md') -notmatch '\.claude/contexts/repository\.md') { throw 'the vocabulary file is never written' }
     $c -match '(?i)(never|not).{0,60}implementation|implementation.{0,60}(never|does not)'
   }
 
@@ -1164,7 +1169,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # architecture block deleted — which is the one thing this must catch.
   Assert "architecture reaches ownership boundaries, read from this repo's Context" {
     $c = Get-SkillFile 'review/SKILL.md'
-    $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/context\.md'
+    $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/contexts/repository\.md'
   }
 
   Assert "architecture reaches abstraction the change did not require" {
@@ -1434,7 +1439,7 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # for why this belongs to /commit deleted from the body.
   Assert "the knowledge check is a whole-diff question no earlier stage could ask" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch '\.claude/context\.md') { throw 'context.md is never read' }
+    if ($c -notmatch '\.claude/contexts/') { throw 'Context is never read' }
     $step = [regex]::Match($c, '(?ims)^#{2,}[^\n]*knowledge.*?(?=^#{2}\s|\z)').Value
     if (-not $step) { throw 'the knowledge check is not its own step' }
     $step -match '(?i)whole[- ]diff|the change entire|one ticket at a time'
@@ -2167,7 +2172,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # Contexts the routing table points at — never everything.
   Assert "diagnosing-bugs loads Context through the routing table" {
     $c = Get-SkillFile 'diagnosing-bugs/SKILL.md'
-    if ($c -notmatch '\.claude/context\.md') { throw 'Context is never read' }
+    if ($c -notmatch '\.claude/contexts/map\.md') { throw 'the routing table is never read' }
     $c -match '(?i)routing table|\.claude/contexts/'
   }
 
@@ -2396,7 +2401,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
 
   # Each legacy path names the target it converts to.
   $conversions = [ordered]@{
-    'CONTEXT\.md'     = '\.claude/context\.md'
+    'CONTEXT\.md'     = '\.claude/contexts/repository\.md'
     'CONTEXT-MAP\.md' = '(\.claude/contexts/|deleted)'
     'docs/adr/'       = '\.claude/decisions/'
     'docs/agents/'    = '(CLAUDE\.md|\.claude/)'
@@ -5452,6 +5457,132 @@ Describe-Ticket 'streamline/03' 'one guide per workflow concern, reached by poin
       foreach ($g in $gone) { if ($c -cmatch [regex]::Escape($g)) { $hits += "$rel → $g" } }
     }
     if ($hits) { throw ($hits -join '; ') }
+    $true
+  }
+}
+
+# --- ticket streamline/04 — routing splits from vocabulary --------------------
+
+Describe-Ticket 'streamline/04' 'split routing from vocabulary, and re-home the terms' {
+
+  $ctx = 'configure/policies/context.template.md'
+
+  # --- criterion 1: routing is readable without the vocabulary ---------------
+
+  # The whole point of the split, and the one thing a reader cannot verify by
+  # looking at the format — they would have to notice an absence. Asserted as
+  # the absence: the map's own example carries no Language section, because a
+  # format that demonstrates the wrong shape teaches it.
+  # Spanned between two headings by index rather than read with Get-Section.
+  # A section ends at the next heading of the same level, so a leaked `## Language`
+  # *terminates* the region a section-scoped check would look at — the guard goes
+  # green precisely because the thing it hunts is present. Caught by mutation;
+  # the section-scoped version of this assertion missed it.
+  Assert "the routing file is specified as the table and nothing else" {
+    $c = Get-SkillFile $ctx
+    $from = [regex]::Match($c, '(?im)^##\s+`?contexts/map\.md`?\s*$')
+    $to   = [regex]::Match($c, '(?im)^##\s+`?contexts/repository\.md`?\s*$')
+    if (-not $from.Success) { throw 'the routing file has no section of its own' }
+    if (-not $to.Success -or $to.Index -le $from.Index) { throw 'the vocabulary file does not follow it' }
+    $span = $c.Substring($from.Index, $to.Index - $from.Index)
+    foreach ($leak in @('(?im)^##\s+Language', '(?im)^##\s+Boundaries', '(?im)^##\s+Constraints')) {
+      if ($span -match $leak) { throw 'the routing file is specified carrying vocabulary' }
+    }
+    $span -match '(?i)nothing else goes in this file|routing table alone|and nothing else'
+  }
+
+  Assert "the three files are named, each with what it holds and when it is read" {
+    $c = Get-SkillFile $ctx
+    foreach ($f in @('map\.md', 'repository\.md', '<domain>\.md|domain.{0,3}\.md')) {
+      if ($c -notmatch $f) { throw "the format never names $f" }
+    }
+    # A table, not prose: the reader's question is "which file", and a table is
+    # what answers it without being read end to end.
+    $c -match '(?im)^\|[^|\r\n]*`?contexts/map\.md`?[^|\r\n]*\|'
+  }
+
+  # --- criterion 2: term placement is mechanical ----------------------------
+
+  # "Mechanically enough that two people placing the same term agree." A rule
+  # that says terms go "where they belong" satisfies nothing; what makes this
+  # checkable is that it reads off a property of the term rather than asking
+  # for a judgement about it.
+  Assert "the placement rule decides from where a term is used, not from what it is about" {
+    $c = Get-SkillFile $ctx
+    $section = Get-Section $c 'Where a term belongs'
+    if (-not $section) { throw 'there is no placement rule' }
+    foreach ($row in @('(?i)one workflow stage', '(?i)one domain', '(?i)across stages|across domains')) {
+      if ($section -notmatch $row) { throw "the rule does not cover: $row" }
+    }
+    # The tie-break. Without it the rule is silent on the only case that is
+    # genuinely hard, which is the case people will actually bring to it.
+    $section -match '(?i)two senses|two rows'
+  }
+
+  # --- criterion 3: a stage's term lives with the stage ---------------------
+
+  Assert "a stage-owned term is defined in that stage's guide and not restated in the vocabulary" {
+    $section = Get-Section (Get-SkillFile $ctx) 'Where a term belongs'
+    if ($section -notmatch [regex]::Escape('.claude/policies/')) { throw 'stage-owned terms are not routed to their guide' }
+    $section -match '(?i)(and nowhere else|second home)'
+  }
+
+  # --- criterion 4: every context file has exactly one row ------------------
+
+  # Both directions, and `repository.md` explicitly — it is the row most likely
+  # to be forgotten, because it is the file the author is standing in when they
+  # write the table.
+  Assert "the routing table covers every context file, including the vocabulary itself" {
+    $c = Get-SkillFile $ctx
+    if ($c -notmatch '(?i)exactly one row') { throw 'the one-row rule is gone' }
+    if ($c -notmatch '(?i)including `?repository\.md`?') { throw 'the vocabulary file is not required to have a row' }
+    $c -match '(?i)row with no file|pointer at nothing'
+  }
+
+  # --- criterion 5: onboarding generates and recognises the split -----------
+
+  Assert "/configure generates all three, and the routing table is written last" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    foreach ($p in @('.claude/contexts/map.md', '.claude/contexts/repository.md')) {
+      if ($c -notmatch [regex]::Escape($p)) { throw "$p is never generated" }
+    }
+    # Ordering matters and is not obvious: a table written before the domains
+    # are known is a list of intentions, and every row has to resolve.
+    $c -match '(?i)write `?map\.md`? last|map\.md`? last'
+  }
+
+  Assert "the audit recognises a repository already on the split shape" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit, where Tenure is already here'
+    if (-not $s) { throw 'the audit branch is gone' }
+    if ($s -notmatch '(?i)exactly one row') { throw 'the audit does not validate the routing table' }
+    $s -match '(?i)routing and nothing else|orientation prose'
+  }
+
+  # --- criterion 6: the split admits nothing the test excluded --------------
+
+  Assert "the compression test still gates all three files" {
+    $c = Get-SkillFile $ctx
+    if ($c -notmatch '(?i)compression test') { throw 'the gate is gone' }
+    # Named because splitting a file is exactly when someone concludes the new
+    # one has different rules.
+    $c -match '(?i)split changes where a line goes|does not admit a line'
+  }
+
+  # --- the superseded path stays gone --------------------------------------
+
+  # `.claude/context.md` is now a pre-migration path. It is not in the `$legacy`
+  # sweep because that sweep matches `CONTEXT.md` case-sensitively to avoid this
+  # very file, and adding a lowercase sibling there would be two rules in one
+  # table. Asserted here instead, with the same two exemptions.
+  Assert "nothing shipped names the superseded root context file" {
+    $exempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
+    $hits = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      if ($rel -in $exempt) { continue }
+      if ((Get-Content $f.FullName -Raw) -cmatch '\.claude/context\.md') { $hits += $rel }
+    }
+    if ($hits) { throw "still named in: $($hits -join ', ')" }
     $true
   }
 }

@@ -1,6 +1,6 @@
 # refactor(knowledge): split routing from vocabulary, and re-home the terms
 
-Status: open
+Status: resolved
 Blocked by: 03
 Part of: streamline
 
@@ -29,3 +29,13 @@ The Context format separates routing from vocabulary. A configured repository is
 ## Comments
 
 The terms in this repository's own Context are not moved by this ticket. Their content is repository-specific knowledge rather than shipped structure, and ticket 16 moves them through the migration — which is the only way the migration gets tested against real vocabulary rather than a fixture.
+
+### Deviation, accepted
+
+**One line of this repository's own `.claude/tools/git.md` changed**, against the outcome's promise that this tree does not. The shipped `configure/tools/git.md` used the superseded root Context path as its example of a knowledge path to exclude from the drift diff, and `layout/04` asserts the derived copy here matches its source exactly — so changing one and not the other breaks the invariant whichever way it is done. Both now name `.claude/contexts/`, the directory rather than a file, which is true under the superseded layout as well as the new one. Derived-file maintenance rather than adoption; ticket 16 still owns the adoption.
+
+### The guard that passed while broken
+
+The assertion that the routing file carries no vocabulary read the map section with `Get-Section`. A section ends at the next heading of the same level, so injecting a `## Language` heading *terminated the region the guard was reading* — it went green because the thing it hunts was present. Rewritten to span between two headings by index.
+
+Recorded because the failure is not specific to this assertion: **any section-scoped guard against unwanted content is vulnerable the same way**, and several exist. Worth a sweep during ticket 09's coverage audit rather than one fix here.

@@ -13,8 +13,9 @@ The three knowledge layers and the truth hierarchy between them are in `CLAUDE.m
 
 ```
 .claude/
-├── context.md                 the repo's own vocabulary + the routing table
 ├── contexts/
+│   ├── map.md                 the routing table, and nothing else
+│   ├── repository.md          vocabulary that crosses domains
 │   ├── auth.md                repo-wide domains stay flat
 │   ├── database.md
 │   └── web/                   a project earns a directory on the same test
@@ -29,7 +30,7 @@ Decisions sit beside Context rather than below it because `CLAUDE.md` presents t
 
 A single-package repo simply has no directories under `contexts/`. The flat case is not a special mode — it is the same model with nothing to group.
 
-Create files lazily, only when you have something to write. If no Context exists, create `.claude/context.md` when the first term resolves. If no decisions directory exists, create it when the first Decision needs recording.
+Create files lazily, only when you have something to write. If no Context exists, create `.claude/contexts/repository.md` when the first term resolves. If no decisions directory exists, create it when the first Decision needs recording.
 
 ## During the session
 

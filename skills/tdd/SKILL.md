@@ -7,7 +7,7 @@ description: Test-driven development. Use when the user wants to build features 
 
 TDD is the red → green loop. This skill is the reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle — consult them before and during the loop, not after.
 
-Test names and interface vocabulary come from the project's Context — `.claude/context.md` and any Domain Context the work touches. Respect the Decisions in `.claude/decisions/` covering the area you're touching.
+Test names and interface vocabulary come from the project's Context — `.claude/contexts/repository.md` and any Domain Context the work touches. Respect the Decisions in `.claude/decisions/` covering the area you're touching.
 
 **The command for running one test file is in `.claude/tools/`,** written by `/configure` from this repo's actual tooling. Read it — the loop runs a single file many times and the whole suite once, and guessing that command is how the loop turns into a full-suite run per cycle. If there is no entry, say so rather than trying `npm test`.
 

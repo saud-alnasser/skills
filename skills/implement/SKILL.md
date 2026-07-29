@@ -199,7 +199,7 @@ Each amend produces a new SHA, so the Marker re-advances on **every amend**, not
 
 ## 5 — Record what moved
 
-Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/context.md` and the Domain Contexts under `.claude/contexts/`.
+Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts under `.claude/contexts/`.
 
 `.claude/policies/knowledge.md` says which layers this stage may write and which it may not, and `.claude/policies/context.md` says what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
 

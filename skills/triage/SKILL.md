@@ -74,7 +74,7 @@ Counts, and one line each. Let the maintainer choose.
 
 ## Triage one item
 
-**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through `.claude/context.md` and the Domain Contexts its routing table points at, and read the ADRs in `.claude/decisions/` covering the area — those are not to be re-litigated here.
+**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through `.claude/contexts/repository.md` and the Domain Contexts its routing table points at, and read the ADRs in `.claude/decisions/` covering the area — those are not to be re-litigated here.
 
 Then two checks the maintainer should not have to do from memory:
 

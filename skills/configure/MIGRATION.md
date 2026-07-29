@@ -24,7 +24,7 @@ The case this will meet most often, since Tenure is derived from those skills. E
 
 | From | To |
 | --- | --- |
-| `CONTEXT.md` | `.claude/context.md`, reshaped to orientation plus a routing table |
+| `CONTEXT.md` | `.claude/contexts/repository.md`, reshaped to orientation; its routing table becomes `.claude/contexts/map.md` |
 | `CONTEXT-MAP.md` | deleted — structure is carried by directories under `.claude/contexts/` |
 | `docs/adr/*` | `.claude/decisions/`, unchanged in content |
 | `docs/agents/*` | folded into `CLAUDE.md` and `.claude/policies/tracker.md`; the originals are removed |
@@ -49,7 +49,7 @@ Tenure once grouped decisions, designs, research, and prototype write-ups under 
 
 **ADRs keep their filenames.** The rule is in the numbering section of `.claude/policies/decisions.md`, and it governs this move exactly as it governs a migration in from somebody else's layout.
 
-Then repair what pointed at the old paths. `CLAUDE.md`, `.claude/context.md`, the Domain Contexts, tickets, and specs all name these locations, and a Source Pointer to `.claude/docs/decisions/` is broken the moment the directory is gone. **Do not leave a pointer stub** — the section below applies to references from outside Tenure's reach, and every reference here is inside it, so the fix is to update the reference.
+Then repair what pointed at the old paths. `CLAUDE.md`, `.claude/contexts/`, the Domain Contexts, tickets, and specs all name these locations, and a Source Pointer to `.claude/docs/decisions/` is broken the moment the directory is gone. **Do not leave a pointer stub** — the section below applies to references from outside Tenure's reach, and every reference here is inside it, so the fix is to update the reference.
 
 A repository that has never had `.claude/docs/` needs none of this. Say so and skip it; there is nothing to report but its absence.
 
@@ -74,7 +74,7 @@ Apply that test — it is in `CLAUDE.md` — to everything before it is written.
 Where a converted file is still referenced from `README.md`, `CONTRIBUTING.md`, a CI job, or a source comment, leave a **pointer at the old path** rather than a broken link:
 
 ```markdown
-Moved to `.claude/context.md`.
+Moved to `.claude/contexts/repository.md`.
 ```
 
 Two things this is not. It is not a copy — the content lives at the destination and only there. And it is not permanent: it exists because something outside Tenure's reach still points at the old location, so name those references in the plan, and where the user is willing to update them, delete the pointer instead of writing one.

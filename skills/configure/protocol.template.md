@@ -72,7 +72,7 @@ That report is the only evidence the discipline ran. Verification is never best-
 
 ## Which guides each stage reads
 
-Every stage also loads `.claude/context.md` and routes from its table to the Domain Contexts the request touches. That is knowledge rather than a guide, and it is the same for all seven, so it is stated once here instead of once per row.
+Every stage also loads `.claude/contexts/repository.md` and routes from its table to the Domain Contexts the request touches. That is knowledge rather than a guide, and it is the same for all seven, so it is stated once here instead of once per row.
 
 | Stage | Guides it reads |
 | --- | --- |

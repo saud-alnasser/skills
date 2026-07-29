@@ -60,7 +60,7 @@ If none of these answers, ask. If the user says there is no spec, the Spec axis 
 This repository's own standards, always first:
 
 - `.claude/rules/` — the standards `/configure` discovered here, path-scoped where they apply to part of the tree
-- `.claude/context.md` and the Domain Contexts it routes to — boundaries and ownership
+- `.claude/contexts/map.md` and the Domain Contexts it routes to — boundaries and ownership
 - `.claude/decisions/` — the ADRs
 - `CONTRIBUTING.md` and whatever else this repository documents about how code is written
 
@@ -84,7 +84,7 @@ Brief: report where the diff breaches a documented standard, citing the file and
 
 Architecture is part of this axis, not a third one, because boundaries and ownership are *this repository's* documented rules and not general engineering advice. Three questions it must reach:
 
-- Are the ownership boundaries in `.claude/context.md` still respected?
+- Are the ownership boundaries in `.claude/contexts/repository.md` still respected?
 - Was an abstraction introduced that the change did not require?
 - Does the diff **contradict an ADR**? Say so explicitly — name the ADR and the line of the diff that contradicts it. A contradiction the reviewer notices and lets pass silently is worse than one it never saw, because the record now shows the decision was reviewed and upheld.
 

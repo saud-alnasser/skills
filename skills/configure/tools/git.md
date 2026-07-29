@@ -29,7 +29,7 @@ git diff --name-only <marker>..HEAD -- . ":(exclude).claude/"
 
 Two dots, not three. `<marker>..HEAD` is "what HEAD has that the Marker doesn't"; three dots would fold the Marker's own side back in.
 
-Exclude the knowledge paths. A commit that only edited `.claude/context.md` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
+Exclude the knowledge paths. A commit that only edited `.claude/contexts/` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
 
 ## Read uncommitted drift
 

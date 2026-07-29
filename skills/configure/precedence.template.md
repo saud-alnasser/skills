@@ -18,7 +18,7 @@ When instructions conflict, the later source loses:
 
 1. What the user said in this conversation
 2. `CLAUDE.md` and the unconditionally-loaded rules beside this file
-3. `.claude/context.md` and the Domain Contexts
+3. `.claude/contexts/repository.md` and the Domain Contexts
 4. `.claude/decisions/` — an accepted ADR
 5. Path-scoped rules in `.claude/rules/` and `CONTRIBUTING.md`
 6. `README.md` and the rest of the repository's documentation — CONTRIBUTING outranks it because CONTRIBUTING says how this repository is worked on and README says what it is

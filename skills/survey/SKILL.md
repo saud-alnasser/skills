@@ -13,7 +13,7 @@ This is a **survey**. It finds candidates and it stops; the chosen one goes to `
 Built on a shared vocabulary:
 
 - `codebase-design` owns the architecture terms — **module**, **interface**, **depth**, **seam**, **adapter**, **leverage**, **locality** — and the principles behind them, including the deletion test and *the interface is the test surface*. Use those words **exactly**. Do not drift into *component*, *service*, *API*, or *boundary*.
-- `.claude/context.md` and its Domain Contexts give the **domain** names, which are what a good seam gets named after. If Context defines *Order*, the card says *the Order intake module* — not *the FooBarHandler*, and not *the Order service*.
+- `.claude/contexts/repository.md` and its Domain Contexts give the **domain** names, which are what a good seam gets named after. If Context defines *Order*, the card says *the Order intake module* — not *the FooBarHandler*, and not *the Order service*.
 - `.claude/decisions/` records what has already been settled and is not to be re-litigated here.
 
 ## 1 — Scope, then explore
@@ -23,7 +23,7 @@ Built on a shared vocabulary:
 - If the user named a direction — a module, a subsystem, a pain point — take it and skip the inference.
 - Otherwise walk back a good stretch of history to find the hot spots, the files that keep coming up, and let those pull first. The invocation is in `.claude/tools/git.md`. Scattered changes with no hot spot mean widening the net, not guessing.
 
-Read the routing table in `.claude/context.md` and load the Domain Contexts for the area, plus the ADRs covering it, before exploring.
+Read the routing table in `.claude/contexts/map.md` and load the Domain Contexts for the area, plus the ADRs covering it, before exploring.
 
 Then walk the codebase with the `Explore` subagent — this is a survey, and reading every candidate file into the parent's context spends it on the ones that will not make the report. Note where you feel friction:
 

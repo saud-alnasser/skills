@@ -40,7 +40,7 @@ A failure here is **reported, not fixed**. Say which stage is incomplete — *th
 
 The one question no earlier stage could ask. `/implement` sees one ticket at a time; `/commit` sees the change entire, which is what makes this whole-diff check its own and nobody else's.
 
-Read the diff and ask: did this move a boundary, retire a concept, or relocate something a Source Pointer names — and does `.claude/context.md` still say so?
+Read the diff and ask: did this move a boundary, retire a concept, or relocate something a Source Pointer names — and does `.claude/contexts/repository.md` still say so?
 
 Where the diff contradicts Context, the commit is **blocked until Context is corrected**, and that correction goes into this commit rather than the next one, so the change and the thing it falsified never land apart.
 

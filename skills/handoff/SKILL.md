@@ -15,7 +15,7 @@ A bridge between context windows. Write a document that lets a fresh agent conti
 | --- | --- |
 | What is being built, and why | the ticket, and the spec it references |
 | Why the approach was chosen | `.claude/decisions/` |
-| How this repository thinks | `.claude/context.md` and its Domain Contexts |
+| How this repository thinks | `.claude/contexts/repository.md` and its Domain Contexts |
 | What has landed | the commits |
 | What was verified, and against what | `.claude/marker.json` |
 
