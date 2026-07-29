@@ -35,10 +35,16 @@ Nothing is generated before the repository has been looked at. Search for an exi
 .claude/            CLAUDE.md            AGENTS.md
 CONTEXT.md          CONTEXT-MAP.md       docs/agents/
 docs/adr/           .scratch/            .ai/
-.claude/docs/       — Tenure's own superseded layout
 .cursor/ .cursorrules                    .windsurfrules
 .clinerules         .github/copilot-instructions.md
+
+— Tenure's own superseded layouts:
+.claude/docs/       .claude/tenure.md    .claude/context.md
+.claude/tracker.md  .claude/version-control.md
+.claude/marker.json .claude/prototypes/
 ```
+
+The second group is what a repository configured by an **earlier version of this workflow** looks like. Finding any of them selects the layout migration rather than the conversion one — the file formats are already correct and only their locations are wrong, which makes it mechanical work with a mechanical risk: a reference left pointing where a file no longer is.
 
 Then read the repository itself: languages, package manager, build, test, deploy, CI, source layout, **architectural style**, module boundaries, domains, and the conventions it already follows. **Read `CONTRIBUTING.md` and the recent `git log`** — those are how the repository documents and demonstrates its own conventions, and `CLAUDE.md`'s detect-before-asserting rule is what makes that a step rather than a courtesy.
 

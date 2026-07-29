@@ -53,6 +53,48 @@ Then repair what pointed at the old paths. `CLAUDE.md`, `.claude/contexts/`, the
 
 A repository that has never had `.claude/docs/` needs none of this. Say so and skip it; there is nothing to report but its absence.
 
+## The guides-and-position migration
+
+The second migration whose source is Tenure. A repository configured before the workflow directory was reorganised has its guides loose at the root, its per-clone state beside them, and its entrypoint carrying rules that now load from `.claude/rules/`.
+
+Every row is **mechanical except one**, and the exception is called out because treating it as a move loses half the file.
+
+| From | To |
+| --- | --- |
+| `.claude/tenure.md` | `.claude/protocol.md` — renamed, and gains the routing table |
+| `.claude/tracker.md` | `.claude/policies/tracker.md` |
+| `.claude/version-control.md` | `.claude/policies/version-control.md` |
+| `.claude/context.md` | **split** — see below |
+| `.claude/marker.json` | `.claude/position/marker.json` |
+| `.claude/prototypes/` | `.claude/position/prototypes/` |
+| — | `.claude/rules/{precedence,engineering}.md`, written from their templates |
+| — | the seven copied guides, written into `.claude/policies/` |
+| `.claude/.gitignore` | rewritten: `/position/` and `settings.local.json` |
+
+**`.claude/context.md` is the one that splits.** Its routing table becomes `.claude/contexts/map.md`; everything else — the vocabulary, the boundaries, the constraints — becomes `.claude/contexts/repository.md`. The Domain Contexts under `.claude/contexts/` do not move and do not change. Add a row for `repository.md` to the new map, because the file that is being created is the one nobody remembers to route to.
+
+**The entrypoint loses what now loads from elsewhere.** The precedence ladder and the engineering standards move into `.claude/rules/`, where the harness injects them unconditionally — so they are still always-on, and the tier changed rather than their availability. What is left in `CLAUDE.md` is what this repository is, and pointers. **Preserve anything the user wrote**, exactly as a first-time run does: a section somebody added deliberately is not part of this move.
+
+**A term that belongs to one workflow stage moves out of the vocabulary** and into that stage's guide — `.claude/policies/context.md` has the rule that decides which. This is the only row that is judgement rather than mechanics, and it is judgement about the repository's own terms, so it is worth showing in the plan term by term rather than as a count.
+
+Then repair the references, as above and for the same reason. These paths are named from `CLAUDE.md`, from the Domain Contexts, from tickets and specs, and from `.claude/tools/` entries — a tool reference that names the old Marker location is as broken as a Source Pointer that names a deleted directory.
+
+**Including inside the files that just moved.** This is the half that gets missed, because a file that has been carried across looks handled. The vocabulary defines the Marker by naming its path; the version-control guide names its neighbour by the old one; and the protocol file's own comment says where it was installed, which is now where it is not. Sweep the destinations as well as the untouched files, or the migration repairs everything except what it touched.
+
+**Frozen records are history, not pointers.** A Decision's reasoning is frozen once committed, and a resolved ticket is a record of what happened. Both will go on naming paths that no longer exist, and that is correct — the alternative is editing a decision to say something it did not say. Repair live pointers; leave the record alone, and say in the plan that you are.
+
+### Recognising a repository already on it
+
+**By content, not by presence.** `.claude/policies/tracker.md` existing proves nothing: a repository half-way through a previous run has the file and an entrypoint still carrying the rules. Check three things, and report a repository as converted only when all three hold:
+
+- the superseded paths are **gone**, not merely duplicated — a `tracker.md` at both locations is a run that copied instead of moving
+- `CLAUDE.md` states no rule that `.claude/rules/` now carries, and `.claude/contexts/map.md` carries routing and nothing else
+- every row in the map resolves, and every file under `contexts/` has one
+
+The second of those is the one worth running even when the moves obviously succeeded. Reshaping the entrypoint is the only row with no file to move, so it is the row a run completes without noticing it has not — every other row announces itself by leaving something behind.
+
+A repository that fails any of these is **converted, not re-converted**: finish what is missing and leave what is already right. Re-running is the intended way to maintain a repository, so a run that appends instead of recognising makes it worse every time it is maintained.
+
 ## Classify, never copy
 
 Existing documentation is **sorted**, not duplicated. Copying is how a repository ends up with the same fact in three places, drifting independently.

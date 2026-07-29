@@ -80,6 +80,13 @@ function Get-SkillFiles {
   Get-ChildItem $skills -Recurse -File -Filter *.md
 }
 
+# The two files that may name a superseded path, because naming one is the whole
+# of their job: `SKILL.md` detects them and `MIGRATION.md` converts them. Hoisted
+# to one home by `streamline/08` — it was declared inside the first sweep that
+# needed it, so a later sweep silently exempted nothing and reported the two
+# files it was supposed to spare.
+$legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
+
 # The sweeps iterate `Get-SkillFiles` and read each one. `-Raw` yields $null for
 # an empty file, and the regex call that follows then throws a null-reference —
 # which reports as an exception rather than as the assertion that failed, so the
@@ -207,7 +214,6 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   # layout, not another workflow's — but the guard is identical and the
   # exemption it needs is the same two files, so a second table would be two
   # places to add the next one.
-  $legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
   $legacy = @{
     'CONTEXT\.md'     = 'CONTEXT.md (use .claude/context.md)'
     'CONTEXT-MAP\.md' = 'CONTEXT-MAP.md (use the routing table)'
@@ -5665,12 +5671,18 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
   # The superseded locations, swept rather than spot-checked. `/prototypes/` at
   # the workflow root and `marker.json` beside it are the two the move retires,
   # and either surviving anywhere means a reader is sent to a file that is not
-  # written. `configure/MIGRATION.md` is exempt: converting them is its job.
+  # written.
+  #
+  # Both `configure/` files are exempt, which is the same pair `$legacyExempt`
+  # carries and for the same reason: one detects these paths and the other
+  # converts them, and neither can do its job without naming them. This guard
+  # exempted only the migration until `streamline/08` added the detection
+  # entries — a narrower exemption than the rule it was copying.
   Assert "nothing shipped still puts per-clone state at the workflow root" {
     $hits = @()
     foreach ($f in (Get-SkillFiles)) {
       $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
-      if ($rel -eq 'configure/MIGRATION.md') { continue }
+      if ($rel -in $legacyExempt) { continue }
       $c = Get-SkillText $f
       foreach ($old in @('\.claude/marker\.json', '\.claude/prototypes/')) {
         if ($c -match $old) { $hits += "$rel → $old" }
@@ -5943,6 +5955,125 @@ Describe-Ticket 'streamline/07' 'commit follows review without asking' {
     # And a refusal is not routed around, which is the new failure mode: with
     # no prompt, nothing else pauses the close-out.
     $c -match '(?i)refuses[^.]{0,120}(stops|not worked around)'
+  }
+}
+
+# --- ticket streamline/08 — the migration converts the superseded layout ------
+
+Describe-Ticket 'streamline/08' 'the migration converts the superseded layout' {
+
+  $mig = { Get-SkillFile 'configure/MIGRATION.md' }
+  $section = { Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'The guides-and-position migration' }
+
+  # --- criterion 1: every superseded path has a destination -----------------
+
+  # Read out of the conversion table itself. Several of these paths also appear
+  # in the prose around it — the split is discussed, the entrypoint is discussed
+  # — so a file-wide search passes with a row deleted, which is the row going
+  # missing rather than the path being handled.
+  $conversions = [ordered]@{
+    '\.claude/tenure\.md'          = '\.claude/protocol\.md'
+    '\.claude/tracker\.md'         = '\.claude/policies/tracker\.md'
+    '\.claude/version-control\.md' = '\.claude/policies/version-control\.md'
+    '\.claude/marker\.json'        = '\.claude/position/marker\.json'
+    '\.claude/prototypes/'         = '\.claude/position/prototypes/'
+    '\.claude/context\.md'         = '(split|contexts/)'
+  }
+  foreach ($from in $conversions.Keys) {
+    $to = $conversions[$from]
+    Assert "the conversion table sends $($from -replace '\\','') somewhere" {
+      $rows = @((& $section) -split '\r?\n' | Where-Object { $_ -match '^\|' -and $_ -match $from })
+      if (-not $rows) { throw 'no row converts it' }
+      if (-not ($rows | Where-Object { $_ -match $to })) { throw 'the row names the source without its target' }
+      $true
+    }
+  }
+
+  Assert "the two files that are written rather than moved are in the table" {
+    $s = & $section
+    foreach ($written in @('rules/\{?precedence', 'policies/')) {
+      if ($s -notmatch $written) { throw "nothing says what fills $written" }
+    }
+    $true
+  }
+
+  # --- criterion 2: references inside the moved files too -------------------
+
+  # The half a fixture run found missing: a file that has been carried across
+  # looks handled, and its own prose still names where it used to be. Asserted
+  # because the sweep that catches it is the one nobody thinks to run.
+  Assert "the repair covers references inside the files that moved" {
+    $s = & $section
+    if ($s -notmatch '(?i)inside the files that (just )?moved|sweep the destinations') {
+      throw 'only untouched files are swept'
+    }
+    $s -match '(?i)own comment|where it was installed|repairs everything except what it touched'
+  }
+
+  Assert "frozen records are named as history rather than left ambiguous" {
+    $s = & $section
+    if ($s -notmatch '(?i)frozen') { throw 'nothing distinguishes a record from a pointer' }
+    $s -match '(?i)leave the record alone|history, not pointers'
+  }
+
+  # --- criteria 3 and 4: recognition, by content ---------------------------
+
+  Assert "recognition is by content, and states every condition it checks" {
+    $s = & $section
+    foreach ($cond in @('(?i)gone, not merely duplicated|are \*\*gone\*\*',
+                        '(?i)states no rule that',
+                        '(?i)every row in the map resolves')) {
+      if ($s -notmatch $cond) { throw "a recognition condition is missing: $cond" }
+    }
+    $true
+  }
+
+  # The row with no file to move is the one a run finishes without doing, and
+  # nothing is left behind to say so. Named in the page for that reason.
+  #
+  # Both halves, separately. Written first as one alternation, which passed with
+  # the consequence deleted because the observation survived — the "a guard
+  # covering two claims passes when either holds" failure the authoring
+  # standards name. The observation without the consequence is a curiosity.
+  Assert "the entrypoint reshape is called out as the row with no leftover" {
+    $s = & $section
+    if ($s -notmatch '(?i)no file to move') { throw 'the row is not identified' }
+    if ($s -notmatch '(?i)without noticing it has not') { throw 'the consequence is not stated' }
+    $true
+  }
+
+  Assert "an unconverted repository is finished rather than re-converted" {
+    $s = & $section
+    if ($s -notmatch '(?i)converted, not re-converted') { throw 'a partial run is not distinguished from a fresh one' }
+    $s -match '(?i)appends instead of recognising'
+  }
+
+  # --- criterion 5: detection names them, and only here --------------------
+
+  Assert "the detection list names every superseded path the table converts" {
+    $detect = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Detect'
+    $missing = @('\.claude/tenure\.md', '\.claude/tracker\.md', '\.claude/version-control\.md',
+                 '\.claude/context\.md', '\.claude/marker\.json', '\.claude/prototypes/') |
+      Where-Object { $detect -notmatch $_ }
+    if ($missing) { throw "undetectable: $(($missing -replace '\\','') -join ', ')" }
+    $true
+  }
+
+  # The exemption that lets the two `configure/` files name these paths is not a
+  # hole only while every such mention is doing one of those two jobs.
+  Assert "every superseded path named in an exempt file is a detection entry or a conversion row" {
+    $stray = @()
+    foreach ($rel in $legacyExempt) {
+      $c = Get-SkillFile $rel
+      $allowed = if ($rel -eq 'configure/SKILL.md') { Get-Section $c 'Detect' } else { $c }
+      foreach ($p in @('\.claude/tenure\.md', '\.claude/marker\.json', '\.claude/prototypes/')) {
+        $total = ([regex]::Matches($c, $p)).Count
+        $inside = ([regex]::Matches($allowed, $p)).Count
+        if ($total -gt $inside) { $stray += "$rel names $($p -replace '\\','') outside its job" }
+      }
+    }
+    if ($stray) { throw ($stray -join '; ') }
+    $true
   }
 }
 
