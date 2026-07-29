@@ -5,6 +5,8 @@ description: Shared vocabulary for designing deep modules. Use when the user wan
 
 # Codebase Design
 
+Mode: design
+
 Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
 
 ## Glossary
@@ -96,7 +98,7 @@ Good interfaces make testing natural:
 
 ## Files and names
 
-Where a module lands and what it is called is part of designing it, not clean-up afterwards. These are Tenure's defaults; a layout or naming style the repository already has wins over all of them, and the precedence rule is in `CLAUDE.md`.
+Where a module lands and what it is called is part of designing it, not clean-up afterwards. These are AEP's defaults; a layout or naming style the repository already has wins over all of them, and the precedence rule is in `CLAUDE.md`.
 
 - **One concept per file.** A file has one primary responsibility. Two unrelated concepts sharing a file means neither can be found by name, and every change to one puts the other in the diff.
 - **Directories over verbose filenames.** Structure carries the qualifiers a name would otherwise have to. `users/service.ts` and `users/repository.ts`, not `user-authentication-permission-management-service.ts` — the path already says `users`, so the filename does not have to.
@@ -125,4 +127,4 @@ A file that resists being named honestly is usually a shape problem, not a namin
 
 ---
 
-Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

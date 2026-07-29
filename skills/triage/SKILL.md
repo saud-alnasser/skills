@@ -6,6 +6,7 @@ disable-model-invocation: true
 
 # Triage
 
+Mode: review
 Policies: `.claude/policies/tracker.md`
 
 The on-ramp for work **Claude did not create**. `/design` cuts tickets that are agent-ready by construction; this is for everything that arrives from outside and has to be made agent-ready first.
@@ -48,8 +49,8 @@ Every triaged item carries **exactly one category role and one state role**. Con
 The canonical names above are what this skill says; the strings the tracker actually holds are in `.claude/policies/tracker.md`. When a role has no string recorded, or a new label is genuinely wanted:
 
 1. **List what exists** — `gh label list`, or the repository's own label file.
-2. **Map onto an existing label.** This is the expected outcome. A repository that has been triaged by humans usually already has a word for every role, and inventing a parallel one leaves the maintainer with two.
-3. **Create only when nothing fits**, and match the style already there: the prefix convention (`type:`, `kind/`, or bare), the casing, the separator, the colour family. A label that looks foreign is one a maintainer has to think about every time they see it.
+2. **Map onto an existing label.** The expected outcome — a repository triaged by humans usually already has a word for every role, and inventing a parallel one leaves the maintainer with two.
+3. **Create only when nothing fits**, matching the style already there: the prefix convention (`type:`, `kind/`, or bare), the casing, the separator, the colour family.
 4. **Never create a label for workflow state a `Status:` already carries.** That is a second answer to the same question, and the two will disagree.
 
 Record whatever is created back into `.claude/policies/tracker.md`, or the next session creates it again.
@@ -85,7 +86,7 @@ Then two checks the maintainer should not have to do from memory:
 
 **2 — Recommend.** State the category and state you would apply, with reasoning, plus what the codebase already does about it. Then wait. This is a recommendation to a maintainer, not a decision.
 
-**3 — Verify the claim.** Before any grilling, check the claim holds. Reproduce a bug from the reporter's steps; for a PR, check it out and confirm the diff does what it says. Report what happened — confirmed, with the code path; failed; or not enough detail, which is a strong `needs-info` signal. **A verified claim makes a far stronger brief**, and an unverified one makes a brief that sends an agent after a bug that was never there.
+**3 — Verify the claim.** Before any grilling, check the claim holds. Reproduce a bug from the reporter's steps; for a PR, check it out and confirm the diff does what it says. Report what happened — confirmed, with the code path; failed; or not enough detail, a strong `needs-info` signal. **A verified claim makes a far stronger brief**; an unverified one sends an agent after a bug that was never there.
 
 **4 — Grill, if it needs shape.** Run `grilling` and `domain-modeling` together, one question at a time, sharpening terms as they resolve.
 
@@ -128,4 +129,4 @@ Prior triage notes mean prior work. Read them, check what the reporter has answe
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

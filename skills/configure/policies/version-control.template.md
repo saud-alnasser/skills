@@ -10,7 +10,7 @@
   Both are policy — what this repository *does*. How to type any of it is
   `.claude/tools/`, which is invocation and a different question.
 
-  It is committed and carries no Tenure machinery, so a teammate with no plugin
+  It is committed and carries no AEP machinery, so a teammate with no plugin
   reads it and learns how this repository works. `CLAUDE.md` names it for
   exactly that reason.
 
@@ -59,9 +59,13 @@ disagree about the name disagree about whether the ticket is taken.
 vocabulary, whether bodies are expected, how a ticket is referenced. Read it
 off `CONTRIBUTING.md` and the recent `git log`, not off what is usual.
 
-`CLAUDE.md` carries the defaults that apply when a repository is silent. This
-section is where the answer goes once the repository has been read, so a later
-run does not have to detect it again.}
+This section is where the answer goes once the repository has been read, so a
+later run does not have to detect it again.}
+
+AEP's defaults, applying only where the repository is silent: **Conventional
+Commits — `type(scope): summary`** — for commits, PR titles, and issue titles.
+The scope names an engineering domain, and `misc`, `stuff`, and `update` are
+not domains.
 
 ## How work lands
 
@@ -69,7 +73,11 @@ run does not have to detect it again.}
 request, submitted as a stack, fast-forwarded by the maintainer — and who does
 it.}
 
-Publishing is the human's call: `CLAUDE.md` carries that as a standing rule and
-this section does not repeat it. What belongs here is what actually happens in
-this repository once the work is ready, which is a fact about the repository
-rather than a rule about Claude.
+Where work lands by pull request, the default description covers **problem,
+solution, architectural impact, testing, related issues, breaking changes** —
+never a commit-by-commit account.
+
+Publishing is the human's call: `.claude/rules/engineering.md` carries that as
+a standing rule and this section does not repeat it. What belongs here is what
+actually happens in this repository once the work is ready, which is a fact
+about the repository rather than a rule about Claude.

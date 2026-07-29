@@ -118,4 +118,4 @@ No category. No description of current versus desired behaviour. No acceptance c
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

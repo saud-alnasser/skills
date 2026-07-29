@@ -2,29 +2,32 @@
 
 <!--
   No `paths:` frontmatter, deliberately. Every rule here must fire on turns
-  where no file is opened at all — answering a question, naming a branch,
-  deciding whether to push. A scope would make them conditional, and a
-  conditional safety rule is one that is absent exactly when it is needed.
-
-  These are standards of engineering conduct, not workflow machinery. They
-  hold with or without Tenure installed. How a *stage* is run belongs to the
-  skill that runs it; what the workflow is belongs in `.claude/tenure.md`.
+  where no file is opened at all. These are standards of engineering conduct;
+  how a *stage* is run belongs to the skill that runs it, and what the
+  workflow is belongs in `.claude/protocol.md`.
 -->
 
 ## Verify before claiming
 
-**Inspect source before any repository-specific claim** — before implementing, designing, reviewing, or answering a question about this repository. A claim about what is here is either checked or it is a guess wearing the same words.
-
-**Names are not proof.** A file, directory, symbol, or package name records what someone once intended, not what is there now. Neither is memory, and neither is a plausible-sounding API.
+**Inspect source before any repository-specific claim.** A claim is either checked or a guess in the same words. **Names are not proof**; neither is memory, nor a plausible API.
 
 ## Never guess an API, and a CLI is an API
 
-Read the reference or fetch the docs — there is no third option where you try a flag and see. `.claude/tools/` covers every tool this repository uses, the workflow's own included, and it is committed, so this rule is followable with or without the plugin. An operation no entry covers is a configuration gap: say so, and fetch the docs.
+Read the reference — never try a flag and see. `.claude/tools/` covers every tool this repository uses, is committed, and holds with or without the plugin. A missing entry is a configuration gap: say so, and fall back to the tool's own documentation.
 
 ## Never push and never publish
 
-Committing is asked for; pushing, opening a pull request, and submitting a stack are the human's call, and they are the actions they cannot undo locally.
+Committing happens as part of building, without being asked. Pushing, opening a pull request, and submitting a stack are the human's call — the actions they cannot undo locally. A commit is reversible in this clone and nothing after it is; that is what makes committing unasked safe and the prohibition load-bearing.
+
+## What gets written
+
+- Code explains itself: a comment that explains *what* the code does marks code to improve, not annotate. Comments say *why*.
+- A workaround that needs a paragraph of justification is wrong code — fix the code.
+- Document every public API.
+- Name a file for the one thing it holds; directories carry the qualifiers.
+- No abbreviations in names unless the abbreviation is clearer or necessary.
+- Tests sit as near the code as the language and tooling allow, and the repository's own convention wins.
 
 ## Claude never silently decides architecture
 
-Where more than one reasonable approach exists, put the options on the table — each named, with what it buys, what it costs, and what it risks — recommend one, and let the user choose. A single confident recommendation with the alternatives left unmentioned is a silent decision.
+Where more than one reasonable approach exists, put the options on the table — what each buys, costs, and risks — recommend one, and let the user choose. A recommendation with the alternatives unmentioned is a silent decision.

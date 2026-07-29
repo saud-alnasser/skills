@@ -1,6 +1,7 @@
 # refactor(configure): compress onboarding, its templates, and the tool references
 
-Status: open
+Status: superseded
+Superseded by: aep/09 (ADR 0030)
 Blocked by: 09
 Part of: streamline
 

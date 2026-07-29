@@ -5,13 +5,15 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 # Diagnosing Bugs
 
+Mode: research
+
 A discipline for hard bugs. Skip a phase only with a stated reason.
 
 Load `.claude/contexts/map.md`, then the Domain Contexts it routes to for the area the bug is in — plus `.claude/contexts/repository.md` for the vocabulary the bug will be described in. Read the ADRs in `.claude/decisions/` covering that area before proposing anything that would contradict one.
 
 ## Phase 1 — Build a feedback loop
 
-**This is the skill.** Everything after it is mechanical. With a **tight** pass/fail signal that goes red on *this* bug, you will find the cause — bisection, hypothesis-testing, and instrumentation all just consume it. Without one, no amount of reading code will save you.
+**This is the skill.** Everything after it is mechanical: with a **tight** pass/fail signal that goes red on *this* bug, bisection, hypothesis-testing, and instrumentation just consume it; without one, no amount of reading code will save you.
 
 Spend disproportionate effort here. Be aggressive, be creative, refuse to give up.
 
@@ -71,7 +73,7 @@ Run the loop and watch it go red. Confirm:
 
 Then **minimise**: shrink to the smallest scenario that still goes red. Cut inputs, callers, config, data, and steps **one at a time**, re-running after each cut.
 
-This is not tidiness. A minimal repro shrinks the hypothesis space in Phase 3, and it becomes the regression test in Phase 5. Done when **every remaining element is load-bearing** — removing any one turns the loop green.
+This is not tidiness: a minimal repro shrinks the hypothesis space in Phase 3 and becomes the regression test in Phase 5. Done when **every remaining element is load-bearing** — removing any one turns the loop green.
 
 ## Phase 3 — Hypothesise
 
@@ -83,7 +85,7 @@ Each must be **falsifiable** — state the prediction:
 
 A hypothesis with no prediction is a vibe. Sharpen it or drop it.
 
-**Show the ranked list before testing.** Domain knowledge re-ranks it instantly — *we deployed a change to #3 yesterday* — and rules out what has already been checked. Cheap, and it saves hours. Do not block on it; proceed with your ranking if nobody is there.
+**Show the ranked list before testing.** Domain knowledge re-ranks it instantly — *we deployed a change to #3 yesterday* — and rules out what has already been checked. Do not block on it; proceed with your ranking if nobody is there.
 
 ## Phase 4 — Instrument
 
@@ -101,7 +103,7 @@ Every probe maps to a specific prediction from Phase 3, and **one variable chang
 
 Write the regression test **before the fix**, but only if there is a **correct seam** for it.
 
-A correct seam exercises the **real bug pattern as it occurs at the call site**. A seam that is too shallow — a single-caller test for a bug that needs several, a unit test that cannot reproduce the chain that triggered it — gives false confidence, which is worse than no test.
+A correct seam exercises the **real bug pattern as it occurs at the call site**. Too shallow — a single-caller test for a bug that needs several — gives false confidence, which is worse than no test.
 
 **If no correct seam exists, that is itself the finding.** Record it: the architecture is preventing this bug from being locked down.
 
@@ -117,8 +119,8 @@ Before declaring it done:
 - Any throwaway harness is deleted. `prototype` has the rule if one grew into a real experiment.
 - **The hypothesis that turned out to be right is in the commit message**, so the next person to debug this area learns something.
 
-**Then ask what would have prevented this bug.** If the answer is architectural — no good seam, tangled callers, hidden coupling — hand it to `survey` with the specifics. Make that recommendation **after** the fix lands, not before: you know more now than you did at the start, and a recommendation made early is a recommendation made from the theory you began with.
+**Then ask what would have prevented this bug.** If the answer is architectural — no good seam, tangled callers, hidden coupling — hand it to `survey` with the specifics, **after** the fix lands: you know more now than you did at the start.
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

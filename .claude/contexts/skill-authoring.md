@@ -6,6 +6,18 @@ How a skill in this repository is shaped, named, and placed. This is the domain 
 
 ## Language
 
+**Spine**:
+The seven commands that own the workflow's stages — `/configure`, `/design`, `/implement`, `/review`, `/research`, `/prototype`, `/commit`. Distinguished from Primitives, which the Spine composes.
+_Avoid_: core, pipeline, main flow
+
+**Primitive**:
+A model-invoked skill with no stage of its own, existing to be composed by the Spine — `grilling`, `tdd`, `codebase-design`, `domain-modeling`. Four: `tools` was one until ADR 0019 replaced it with a directory `/configure` derives, on the ground that a reference reachable only through the plugin is unreachable to a teammate without it.
+_Avoid_: helper, sub-skill, utility
+
+**Vendored Skill**:
+A skill copied from mattpocock/skills into this repository and altered to fit AEP, rather than invoked in place.
+_Avoid_: forked, imported, borrowed
+
 **Model-Invoked Skill**:
 A skill Claude selects on its own, recorded by the absence of `disable-model-invocation` in its frontmatter. Its `description` is load-bearing — it is the whole basis on which the skill gets selected.
 _Avoid_: automatic skill, implicit skill

@@ -1,6 +1,7 @@
 # feat(layout): move this repository onto the new layout, through the migration
 
-Status: open
+Status: superseded
+Superseded by: aep/07 (ADR 0030)
 Blocked by: 08
 Part of: streamline
 

@@ -43,7 +43,7 @@ Every skill derived from mattpocock/skills says so, in the skill. This is a lice
 
 ## Short names are for the keyboard; descriptive names are for the model
 
-User-invoked (`disable-model-invocation: true`): one word. The `/tenure:` namespace is already in front of it, so the name only has to be typeable.
+User-invoked (`disable-model-invocation: true`): one word. The `/aep:` namespace is already in front of it, so the name only has to be typeable.
 
 Model-invoked: an expressive name, and a `description` that states when to use it. That description is the entire basis on which the skill gets selected, so shortening the name for consistency costs selection accuracy and buys brevity nobody types.
 
@@ -53,4 +53,4 @@ This bans shortening **for brevity**, not every short name. `review` is model-in
 
 ## Nothing shipped names a pre-migration path
 
-`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what Tenure migrates *away from*, and `.claude/docs/` is Tenure's own superseded layout (ADR 0018) — the same guard covers both kinds. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.
+`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what AEP migrates *away from*, and `.claude/docs/` is AEP's own superseded layout (ADR 0018) — the same guard covers both kinds. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.

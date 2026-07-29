@@ -215,7 +215,7 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   # exemption it needs is the same two files, so a second table would be two
   # places to add the next one.
   $legacy = @{
-    'CONTEXT\.md'     = 'CONTEXT.md (use .claude/context.md)'
+    'CONTEXT\.md'     = 'CONTEXT.md (use .claude/contexts/)'
     'CONTEXT-MAP\.md' = 'CONTEXT-MAP.md (use the routing table)'
     'docs/adr/'       = 'docs/adr/ (use .claude/decisions/)'
     '\.scratch/'      = '.scratch/ (use .claude/tickets/)'
@@ -523,6 +523,9 @@ $rulePattern = [ordered]@{
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
   'the stale-command rule'             = '(?i)stale command is worse than no command'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
+  # aep/11. The always-on tier owns the workaround-comment test; design's
+  # root-cause section is about the *plan* and carries its own anchor.
+  'the workaround-comment test'        = '(?i)workaround[^\r\n]{0,80}fix the code'
   # TICKETS.md owns the ticket format, so it owns which tracker expresses
   # a state which way. /implement claims tickets and pointed at the config,
   # but restated the mapping too.
@@ -2357,9 +2360,9 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     if (-not $table.Success) { throw 'there is no branch table' }
     $rows = $table.Groups[1].Value -split '\r?\n' | Where-Object { $_ -match '\S' }
     $branches = @{
-      'greenfield'          = '(?i)no Tenure[^|]*no (AI )?workflow'
-      'another AI workflow' = '(?i)no Tenure[^|]*another'
-      'Tenure already here' = '(?i)Tenure already'
+      'greenfield'          = '(?i)no AEP[^|]*no (AI )?workflow'
+      'another AI workflow' = '(?i)no AEP[^|]*another'
+      'AEP already here'    = '(?i)AEP already'
     }
     foreach ($b in $branches.Keys) {
       $row = @($rows | Where-Object { $_ -match $branches[$b] })
@@ -3103,13 +3106,19 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
 
   # --- titles and PRs --------------------------------------------------------
 
-  # ADR 0007: Conventional Commits and the scope vocabulary are CLAUDE.md's.
-  # What is left here is the *PR body shape*, which has no other home — and
-  # `gh pr create` is where someone drafting one is standing.
-  Assert "a PR description covers the six things, and never a commit-by-commit account" {
-    $c = Get-Section (Get-SkillFile $claudeTemplate) 'Conventions'
-    $covers = @('problem', 'solution', 'architectur', 'testing', 'related issue', 'breaking change')
-    $missing = $covers | Where-Object { $c -notmatch "(?i)$_" }
+  # ADR 0007 placed the conventions in CLAUDE.md; aep/09 slice 2 moved the
+  # defaults themselves into the version-control policy, leaving the entrypoint
+  # the defaults-not-mandates umbrella. The PR body shape moved with them, and
+  # the covers list is read from spec section 23 rather than hard-coded, per
+  # aep/10 — amending the spec's list fails this until the policy follows.
+  Assert "a PR description covers what section 23 lists, and never a commit-by-commit account" {
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    $m = [regex]::Match($spec, '(?i)PR descriptions cover ([^—]+)—')
+    if (-not $m.Success) { throw 'spec section 23 no longer states the PR description defaults' }
+    $covers = @($m.Groups[1].Value -split ',| and ' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($covers.Count -lt 4) { throw "section 23 lists only $($covers.Count) items" }
+    $c = Get-SkillFile 'configure/policies/version-control.template.md'
+    $missing = $covers | Where-Object { $c -notmatch "(?i)$([regex]::Escape($_))" }
     if ($missing) { throw "the PR body omits: $($missing -join ', ')" }
     $c -match '(?i)(never|not)[^\r\n]{0,40}commit-by-commit'
   }
@@ -3301,22 +3310,22 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   $pointers = @(
     @{ f = 'design/SKILL.md';    rule = 'verify before claiming'
        restatement = $rulePattern['verify before claiming']
-       route       = '(?i)\*\*Read the code\.\*\*[^\r\n]{0,80}`CLAUDE\.md`' }
+       route       = '(?i)\*\*Read the code\.\*\*[^\r\n]{0,80}`\.claude/rules/engineering\.md`' }
     @{ f = 'research/SKILL.md';  rule = 'never guess an API'
        restatement = $rulePattern['the tools routing rule']
-       route       = '(?i)a CLI counts[^\r\n]{0,80}`CLAUDE\.md`' }
+       route       = '(?i)a CLI counts[^\r\n]{0,80}`\.claude/rules/engineering\.md`' }
     @{ f = 'implement/SKILL.md'; rule = 'never guess an API'
        restatement = $rulePattern['the tools routing rule']
-       route       = '(?is)guessing an API is in `CLAUDE\.md`.{0,200}version.{0,40}signature.{0,40}limits' }
+       route       = '(?is)guessing an API is in `\.claude/rules/engineering\.md`.{0,200}version.{0,40}signature.{0,40}limits' }
     @{ f = 'implement/SKILL.md'; rule = 'files and names'
        restatement = $rulePattern['one concept per file']
        route       = '(?i)`codebase-design`[^\r\n]{0,120}Files and names' }
     @{ f = 'configure/TOOLS.md'; rule = 'never guess an API'
        restatement = $rulePattern['never guess an API']
-       route       = '(?i)never-guess rule in `CLAUDE\.md`' }
+       route       = '(?i)never-guess rule in `\.claude/rules/engineering\.md`' }
     @{ f = 'commit/SKILL.md';    rule = 'conventions are defaults'
        restatement = $rulePattern['conventions are defaults']
-       route       = '(?i)`CLAUDE\.md` carries the convention' }
+       route       = '(?i)`\.claude/policies/version-control\.md` carries the convention' }
   )
   foreach ($p in $pointers) {
     Assert "$($p.f) reaches '$($p.rule)' by pointer, at the site it was cut from" {
@@ -3716,7 +3725,7 @@ Describe-Ticket 'tenure/18' 'what tenure may write to a tracker other people rea
   # shared ticket asserts an outcome it does not control.
   Assert "the merge resolves a shared ticket, and /implement never closes one" {
     $c = Get-SkillFile $tix
-    if ($c -notmatch '(?i)merge resolves the ticket, not Tenure') { throw 'the rule is not stated' }
+    if ($c -notmatch '(?i)merge resolves the ticket, not AEP') { throw 'the rule is not stated' }
     # The reason, not just the rule: a closed issue whose PR is rejected is a
     # lie the tracker tells everyone, and that is what stops it being reversed.
     if ($c -notmatch '(?i)later rejected|is a lie') { throw 'the reason is missing' }
@@ -3811,7 +3820,7 @@ Describe-Ticket 'tenure/19' 'on a stack, blocked means stacked' {
     # Ticket 17's convention has to survive: gt generates a name from the
     # commit message if it is not given one, and two naming schemes for one
     # ticket means neither tool sees the other's claim.
-    $s -match "(?i)name is still Tenure'?s"
+    $s -match "(?i)name is still AEP'?s"
   }
 
   # Criterion 2. Both readings exist, and which applies is read rather than
@@ -3919,8 +3928,8 @@ Describe-Ticket 'tenure/20' 'ship tenure as a plugin, and shorten the names peop
       if (-not $m.$f) { throw "marketplace.json has no $f" }
     }
     if (-not $m.owner.name) { throw 'owner.name is required and absent' }
-    $entry = @($m.plugins | Where-Object { $_.name -eq 'tenure' })
-    if ($entry.Count -ne 1) { throw 'the marketplace does not publish exactly one tenure plugin' }
+    $entry = @($m.plugins | Where-Object { $_.name -eq 'aep' })
+    if ($entry.Count -ne 1) { throw 'the marketplace does not publish exactly one aep plugin' }
     if (-not $entry[0].source) { throw 'the plugin entry has no source' }
     $true
   }
@@ -3931,8 +3940,8 @@ Describe-Ticket 'tenure/20' 'ship tenure as a plugin, and shorten the names peop
   Assert "the plugin manifest names the namespace every command is typed through" {
     $p = & $readJson '.claude-plugin/plugin.json'
     # Case-sensitive: `-ne` is not, and the namespace is a literal string that
-    # ends up in every command the user types. `Tenure` is a different plugin.
-    if ($p.name -cne 'tenure') { throw "the namespace is '$($p.name)', not 'tenure'" }
+    # ends up in every command the user types. `AEP` is a different plugin.
+    if ($p.name -cne 'aep') { throw "the namespace is '$($p.name)', not 'aep'" }
     if (-not $p.description) { throw 'plugin.json has no description' }
     # The marketplace entry keys `enabledPlugins`, so the two names must agree
     # or an install enables nothing.
@@ -3945,7 +3954,7 @@ Describe-Ticket 'tenure/20' 'ship tenure as a plugin, and shorten the names peop
   # or the manifest describes a plugin with nothing in it.
   Assert "the plugin's source resolves to the directory the skills are actually in" {
     $m = & $readJson '.claude-plugin/marketplace.json'
-    $src = @($m.plugins | Where-Object { $_.name -eq 'tenure' })[0].source
+    $src = @($m.plugins | Where-Object { $_.name -eq 'aep' })[0].source
     if ($src -isnot [string]) { throw 'the source is not a repository-relative path' }
     $root = Join-Path $repo ($src -replace '^\./', '')
     if (-not (Test-Path (Join-Path $root 'skills'))) { throw "no skills/ under the plugin source '$src'" }
@@ -4023,7 +4032,7 @@ Describe-Ticket 'tenure/20' 'ship tenure as a plugin, and shorten the names peop
   Assert "no renamed skill's old name survives anywhere" {
     $old = @('code-review', 'improve-codebase-architecture')
     $files = @(Get-SkillFiles) +
-             @('CLAUDE.md', '.claude/context.md', 'README.md' | ForEach-Object { Get-Item (Join-Path $repo $_) })
+             @('CLAUDE.md', '.claude/contexts/repository.md', 'README.md' | ForEach-Object { Get-Item (Join-Path $repo $_) })
     $hits = @()
     foreach ($file in $files) {
       $lines = (Get-Content $file.FullName -Raw) -split '\r?\n'
@@ -4320,7 +4329,7 @@ Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
   # the build record — rewriting a resolved ticket makes it describe a decision
   # nobody made. The ticket's criterion allows exactly this: "except where it
   # is deliberately recording the migration."
-  $navigational = @('CLAUDE.md', 'README.md', '.claude/context.md', '.claude/contexts/skill-authoring.md')
+  $navigational = @('CLAUDE.md', 'README.md', '.claude/contexts/map.md', '.claude/contexts/repository.md', '.claude/contexts/skill-authoring.md')
   foreach ($file in $navigational) {
     Assert "$file names no pre-change path" {
       $c = Get-RepoFile $file
@@ -4332,8 +4341,7 @@ Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
   # A pointer is verified before use, always — so the ones Context ships with
   # are verified here rather than at the moment something trips over them.
   Assert "every Source Pointer in Context and the Domain Contexts resolves" {
-    $files = @(Join-Path $repo '.claude/context.md') +
-             (Get-ChildItem (Join-Path $repo '.claude/contexts') -Recurse -Filter '*.md' | ForEach-Object FullName)
+    $files = Get-ChildItem (Join-Path $repo '.claude/contexts') -Recurse -Filter '*.md' | ForEach-Object FullName
     $broken = @()
     foreach ($f in $files) {
       foreach ($m in [regex]::Matches((Get-Content $f -Raw), '`(\.claude/[^`\r\n]+|skills/[^`\r\n]*)`')) {
@@ -4351,8 +4359,9 @@ Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
   # branch of /configure owns this for a configured repository; here it is the
   # one thing that catches a context file nothing loads.
   Assert "the routing table and contexts/ agree, one row per file" {
-    $table = Get-RepoFile '.claude/context.md'
+    $table = Get-RepoFile '.claude/contexts/map.md'
     $files = Get-ChildItem (Join-Path $repo '.claude/contexts') -Recurse -Filter '*.md' |
+      Where-Object { $_.Name -ne 'map.md' } |
       ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_.Name) }
     $missing = $files | Where-Object { $table -notmatch "\[$([regex]::Escape($_))\]" }
     if ($missing) { throw "no routing-table row for: $($missing -join ', ')" }
@@ -4597,7 +4606,7 @@ Parse the status columns carefully.
     $problems = @()
     foreach ($f in (Get-ChildItem $dir -Filter '*.md')) {
       $c = Get-SkillText $f
-      if ($c -notmatch '(?m)^Derived from:\s*tenure/(\S+\.md)\s*$') { continue }
+      if ($c -notmatch '(?m)^Derived from:\s*aep/(\S+\.md)\s*$') { continue }
       $srcName = $Matches[1]
       $srcPath = Join-Path $skills "configure/tools/$srcName"
       if (-not (Test-Path $srcPath)) { $problems += "$($f.Name) names a source that does not exist: $srcName"; continue }
@@ -4658,7 +4667,7 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
   foreach ($derived in @('git.md', 'github.md')) {
     Assert "$derived names the shipped entry it was derived from" {
       $c = Get-RepoText ".claude/tools/$derived"
-      if ($c -notmatch "(?m)^Derived from:\s*tenure/$([regex]::Escape($derived))\s*$") {
+      if ($c -notmatch "(?m)^Derived from:\s*aep/$([regex]::Escape($derived))\s*$") {
         throw 'no provenance line — the divergence check skips this file'
       }
       $true
@@ -4826,8 +4835,8 @@ Describe-Ticket 'layout/05' 'give version control its own policy file' {
   # quietly relax back into a copy.
   Assert "the landing section reaches the standing rule rather than restating it" {
     $s = Get-Section (Get-SkillFile $vcTemplate) 'How work lands'
-    if ($s -notmatch 'CLAUDE\.md') { throw 'does not reach the standing rule at all' }
-    if ($s -match '(?i)cannot undo locally') { throw "restates CLAUDE.md's never-push rule verbatim" }
+    if ($s -notmatch '`\.claude/rules/engineering\.md`') { throw 'does not reach the standing rule at all' }
+    if ($s -match '(?i)cannot undo locally') { throw "restates the never-push rule verbatim" }
     $true
   }
 
@@ -4937,7 +4946,7 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
   }
 
   Assert "this repository has its own version-control policy file" {
-    Get-RepoText '.claude/version-control.md' | Out-Null
+    Get-RepoText '.claude/policies/version-control.md' | Out-Null
     $true
   }
 
@@ -4946,7 +4955,7 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
   # reaches is restored.
   foreach ($section in @('Which model', 'Branch naming', 'Commit discipline', 'How work lands')) {
     Assert "the policy file answers: $section" {
-      Get-Section (Get-RepoText '.claude/version-control.md') $section | Out-Null
+      Get-Section (Get-RepoText '.claude/policies/version-control.md') $section | Out-Null
       $true
     }
   }
@@ -4955,7 +4964,7 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
   # read the file itself prescribes. A repository that adopted a stacking tool
   # and did not heal the file fails here rather than misleading the next run.
   Assert "the stated model still matches the repository" {
-    $stated = Get-Section (Get-RepoText '.claude/version-control.md') 'Which model'
+    $stated = Get-Section (Get-RepoText '.claude/policies/version-control.md') 'Which model'
     $stacked = Test-Path (Join-Path $repo '.git/.graphite_repo_config')
     if ($stacked -and $stated -notmatch '(?im)^\*\*Stacked changes\.\*\*') { throw 'a stack is initialised here and the file says otherwise' }
     if (-not $stacked -and $stated -notmatch '(?im)^\*\*Plain git\.\*\*') { throw 'no stack is initialised here and the file does not say plain git' }
@@ -4972,7 +4981,7 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
   # This resolves the pointer instead — the named file must exist and must
   # actually state the rule.
   Assert "the landing section reaches the standing rule rather than restating it" {
-    $s = Get-Section (Get-RepoText '.claude/version-control.md') 'How work lands'
+    $s = Get-Section (Get-RepoText '.claude/policies/version-control.md') 'How work lands'
     if ($s -match '(?i)cannot undo locally') { throw 'restates the never-push rule verbatim' }
     $named = [regex]::Matches($s, '`((?:\.claude/)?[A-Za-z0-9_./-]+\.md)`') | ForEach-Object { $_.Groups[1].Value }
     if (-not $named) { throw 'does not reach the standing rule at all' }
@@ -4984,20 +4993,20 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
   }
 
   Assert "the branch convention is stated with an example a reader can copy" {
-    $s = Get-Section (Get-RepoText '.claude/version-control.md') 'Branch naming'
+    $s = Get-Section (Get-RepoText '.claude/policies/version-control.md') 'Branch naming'
     if ($s -notmatch '(?i)ticket') { throw 'does not tie the name to the ticket' }
     if ($s -notmatch '(?m)^\d{2}-[a-z0-9-]+$|\s\d{2}-[a-z0-9-]+') { throw 'no worked example of the form' }
     $true
   }
 
   Assert "the tracker configuration carries no branch naming" {
-    if ((Get-RepoText '.claude/tracker.md') -match '(?im)^##\s+Branch naming') { throw 'the section is here' }
+    if ((Get-RepoText '.claude/policies/tracker.md') -match '(?im)^##\s+Branch naming') { throw 'the section is here' }
     $true
   }
 
   # --- criteria 3 and 4: the always-on file is a complete starting point -----
 
-  foreach ($policy in @('.claude/tracker.md', '.claude/version-control.md')) {
+  foreach ($policy in @('.claude/policies/tracker.md', '.claude/policies/version-control.md')) {
     Assert "the root always-on file names $policy" {
       if ((Get-RepoText 'CLAUDE.md') -notmatch [regex]::Escape($policy)) { throw 'not named' }
       $true
@@ -5592,7 +5601,7 @@ Describe-Ticket 'streamline/04' 'split routing from vocabulary, and re-home the 
   }
 
   Assert "the audit recognises a repository already on the split shape" {
-    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit, where Tenure is already here'
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit, where AEP is already here'
     if (-not $s) { throw 'the audit branch is gone' }
     if ($s -notmatch '(?i)exactly one row') { throw 'the audit does not validate the routing table' }
     $s -match '(?i)routing and nothing else|orientation prose'
@@ -6074,6 +6083,375 @@ Describe-Ticket 'streamline/08' 'the migration converts the superseded layout' {
     }
     if ($stray) { throw ($stray -join '; ') }
     $true
+  }
+}
+
+# --- ticket aep/02 — rename the framework from Tenure to AEP ------------------
+
+Describe-Ticket 'aep/02' 'rename the framework from Tenure to AEP' {
+
+  # The reintroduction guard, same shape as the $legacy sweep: the two exempt
+  # files are the ones whose job is detecting and converting the old name.
+  Assert "nothing shipped names the old framework except the files that detect and convert it" {
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      $rel = $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      if ($legacyExempt -contains $rel) { continue }
+      if ((Get-SkillText $f) -match '(?i)tenure') { $offenders += $rel }
+    }
+    if ($offenders) { throw "the old name survives in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The exemption is for the job, not the file: SKILL.md may name the old
+  # framework only as the lowercase detection path. A capitalised Tenure in its
+  # prose would be a rename miss hiding behind the exemption.
+  Assert "the detection file names the old framework only as a path" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -cmatch 'Tenure') { throw 'configure/SKILL.md still says Tenure in prose' }
+    $c -match '\.claude/tenure\.md'
+  }
+
+  Assert "the migration carries the rename, and splits live files from frozen records" {
+    $c = Get-SkillFile 'configure/MIGRATION.md'
+    $section = [regex]::Match($c, '(?ms)^## The Tenure[^\r\n]*AEP rename\s*(.+?)(?=^## |\z)')
+    if (-not $section.Success) { throw 'the rename section is missing' }
+    $s = $section.Groups[1].Value
+    if ($s -notmatch '/tenure:[^\r\n]*/aep:') { throw 'the namespace conversion is not stated' }
+    if ($s -notmatch '(?i)frozen') { throw 'frozen records are not spared' }
+    $s -match '(?i)by content'
+  }
+
+  Assert "the plugin installs under the new name end to end" {
+    $readme = Get-Content (Join-Path $repo 'README.md') -Raw
+    if ($readme -notmatch 'aep@aep-marketplace') { throw 'the README install line does not use the new namespace' }
+    if ($readme -cmatch '/tenure:') { throw 'the README still types the old namespace' }
+    $readme -match '/aep:configure'
+  }
+}
+
+# --- ticket aep/03 — the modes ship, and every skill declares exactly one -----
+
+$modeSet = @('discussion', 'research', 'prototype', 'design', 'implementation', 'review', 'maintenance')
+
+Describe-Ticket 'aep/03' 'the modes ship, and every skill declares exactly one' {
+
+  # A skill added later without a mode fails here, which is the acceptance
+  # criterion that it cannot ship with its tradeoffs implied.
+  Assert "every skill declares exactly one mode, and the mode exists" {
+    $problems = @()
+    foreach ($d in (Get-ChildItem $skills -Directory)) {
+      $f = Join-Path $d.FullName 'SKILL.md'
+      if (-not (Test-Path $f)) { $problems += "$($d.Name) has no SKILL.md"; continue }
+      $decls = @([regex]::Matches((Get-Content $f -Raw), '(?m)^Mode:\s*(\S+)\s*$'))
+      if ($decls.Count -ne 1) { $problems += "$($d.Name) declares $($decls.Count) modes"; continue }
+      if ($modeSet -notcontains $decls[0].Groups[1].Value) { $problems += "$($d.Name) declares unknown mode '$($decls[0].Groups[1].Value)'" }
+    }
+    if ($problems) { throw ($problems -join '; ') }
+    $true
+  }
+
+  # ADR 0032 moved the definitions out of the router: one file per posture,
+  # so a stage loads exactly the mode it declared.
+  Assert "each of the seven modes ships as its own template, with its tradeoff and its finish line" {
+    foreach ($m in $modeSet) {
+      $c = Get-SkillFile "configure/modes/$m.template.md"
+      if ($c -notmatch "(?m)^# Mode: $m\s*$") { throw "mode '$m' does not name itself" }
+      # A posture that gives up nothing is not one, and the build enforces it.
+      if ($c -notmatch '(?m)^Gives up:') { throw "mode '$m' gives up nothing" }
+      if ($c -notmatch '(?m)^Done:') { throw "mode '$m' does not say what finished means" }
+    }
+    $true
+  }
+
+  Assert "the routing table names each stage's mode, and every named mode is real" {
+    $c = Get-SkillFile 'configure/protocol.template.md'
+    foreach ($stage in @('configure', 'design', 'implement', 'review', 'research', 'prototype', 'commit')) {
+      $row = [regex]::Match($c, "(?m)^\|\s*``/$stage``\s*\|\s*(\S+)\s*\|")
+      if (-not $row.Success) { throw "the table has no mode column for /$stage" }
+      if ($modeSet -notcontains $row.Groups[1].Value) { throw "/$stage runs under unknown mode '$($row.Groups[1].Value)'" }
+    }
+    $true
+  }
+
+  # Single home. The definition format is the anchor: a `Mode:` heading at any
+  # level, or a `Gives up:` line, outside `configure/modes/` is a mode restated
+  # elsewhere — including one left behind in the protocol template (ADR 0032).
+  Assert "no skill restates a mode's definition" {
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      $rel = $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      if ($rel -like 'configure/modes/*') { continue }
+      if ((Get-SkillText $f) -match '(?m)^#+ Mode:|^Gives up:') { $offenders += $rel }
+    }
+    if ($offenders) { throw "a mode definition survives outside configure/modes/, in: $($offenders -join ', ')" }
+    $true
+  }
+}
+
+# --- ticket aep/04 — a discussion is a fourth kind of evidence ----------------
+
+Describe-Ticket 'aep/04' 'a discussion is a fourth kind of evidence' {
+
+  Assert "the evidence guide carries the fourth kind, written by the stage that plans" {
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    if ($c -notmatch '(?i)four kinds') { throw 'the count did not move' }
+    if ($c -notmatch '(?m)^\|\s*discussions\s*\|\s*`\.claude/evidence/discussions/`\s*\|\s*`/design`\s*\|') { throw 'the discussions row is missing or names another writer' }
+    $true
+  }
+
+  Assert "the open half is required, and a discussion with nothing open is redirected" {
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    if ($c -notmatch '(?i)stayed open') { throw 'the record does not carry what stayed open' }
+    if ($c -notmatch '(?i)required, not optional') { throw 'the open half reads as optional' }
+    $c -match '(?i)nothing open is a decision'
+  }
+
+  Assert "a discussion is a record, never a maintained document" {
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    if ($c -notmatch '(?i)never maintained') { throw 'nothing forbids maintaining one' }
+    # The reason it is forbidden, because this rule reads as arbitrary without it.
+    $c -match '(?i)fourth knowledge layer'
+  }
+
+  Assert "graduation is stated once, and the planning stage points rather than restates" {
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    if ($c -notmatch '(?i)discussion graduates the same way') { throw 'the guide does not say how one graduates' }
+    $d = Get-SkillFile 'design/SKILL.md'
+    if ($d -notmatch '(?i)recorded as a discussion') { throw 'the planning stage does not say it may write one' }
+    # The format phrase is the single-home anchor: outside the guide it is a
+    # restatement.
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      $rel = $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      if ($rel -eq 'configure/policies/evidence.template.md') { continue }
+      if ((Get-SkillText $f) -match '(?i)what was asked, what was assumed') { $offenders += $rel }
+    }
+    if ($offenders) { throw "the discussion format is restated in: $($offenders -join ', ')" }
+    $true
+  }
+
+  Assert "onboarding recognises the directory without pre-creating it" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch 'out-of-scope, discussions') { throw 'the generated tree does not show the directory' }
+    if ($c -notmatch '\{research,prototypes,out-of-scope,discussions\}') { throw 'the lazy-creation list does not include it' }
+    $true
+  }
+}
+
+# --- ticket aep/05 — the protocol file and the entrypoint speak the spec ------
+
+Describe-Ticket 'aep/05' 'the protocol file and the entrypoint speak the spec' {
+
+  Assert "the protocol file names the protocol it implements" {
+    (Get-SkillFile 'configure/protocol.template.md') -match 'AI Engineering Protocol'
+  }
+
+  Assert "the entrypoint places by the specification's tiers" {
+    $c = Get-SkillFile 'configure/CLAUDE.template.md'
+    foreach ($tier in @('boot tier', 'scoped tier', 'pointer tier')) {
+      if ($c -notmatch [regex]::Escape($tier)) { throw "the entrypoint does not name the $tier" }
+    }
+    $true
+  }
+
+  # The routing table and the skills each declare a mode; conformance is that
+  # they agree. A stage rerouted in one place and not the other fails here.
+  Assert "the routing table's mode for each spine stage matches the skill's own declaration" {
+    $c = Get-SkillFile 'configure/protocol.template.md'
+    $problems = @()
+    foreach ($stage in @('configure', 'design', 'implement', 'review', 'research', 'prototype', 'commit')) {
+      $row = [regex]::Match($c, "(?m)^\|\s*``/$stage``\s*\|\s*(\S+)\s*\|")
+      if (-not $row.Success) { $problems += "/$stage has no row"; continue }
+      $skill = Get-SkillFile "$stage/SKILL.md"
+      $decl = [regex]::Match($skill, '(?m)^Mode:\s*(\S+)\s*$')
+      if (-not $decl.Success) { $problems += "/$stage declares no mode"; continue }
+      if ($row.Groups[1].Value -ne $decl.Groups[1].Value) {
+        $problems += "/$stage runs under '$($row.Groups[1].Value)' in the table and '$($decl.Groups[1].Value)' in the skill"
+      }
+    }
+    if ($problems) { throw ($problems -join '; ') }
+    $true
+  }
+}
+
+# --- ticket aep/06 — the templates and the specification's layout agree -------
+
+Describe-Ticket 'aep/06' 'the templates generate the AEP shape, and the migration converts onto it' {
+
+  # Both documents draw the tree; conformance is that they draw the same one.
+  # This is the assertion that found the divergence ADR 0031 records.
+  Assert "the generated layout and the specification's canonical layout agree, entry for entry" {
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    $block = [regex]::Match($spec, '(?ms)^```\r?\nCLAUDE\.md.*?^```')
+    if (-not $block.Success) { throw 'spec section 21 has no layout block' }
+    $specDirs = @([regex]::Matches($block.Value, '(?m)^  (\S+)') | ForEach-Object {
+      ($_.Groups[1].Value -replace '/<effort>.*', '') -replace '/$', ''
+    })
+    $treeDirs = @([regex]::Matches((Get-SkillFile 'configure/SKILL.md'), '(?m)^[├└]── (\S+)') | ForEach-Object {
+      $_.Groups[1].Value -replace '/$', ''
+    })
+    if ($specDirs.Count -eq 0 -or $treeDirs.Count -eq 0) { throw 'one of the two layouts could not be read' }
+    foreach ($d in $specDirs) { if ($treeDirs -notcontains $d) { throw "the spec names $d and the generated tree does not" } }
+    foreach ($d in $treeDirs) { if ($specDirs -notcontains $d) { throw "the tree generates $d and the spec does not name it" } }
+    $true
+  }
+
+  Assert "the migration recognises the pre-modes protocol file by content, converts, and re-runs clean" {
+    $c = Get-SkillFile 'configure/MIGRATION.md'
+    $s = [regex]::Match($c, '(?ms)^## The pre-modes protocol file\s*(.+?)(?=^## |\z)')
+    if (-not $s.Success) { throw 'the pre-modes section is missing' }
+    if ($s.Groups[1].Value -notmatch '### Mode:') { throw 'detection is not anchored to content' }
+    if ($s.Groups[1].Value -notmatch '(?i)re-run changes nothing') { throw 'idempotence is not stated' }
+    $s.Groups[1].Value -match '(?i)preserved'
+  }
+}
+
+# --- ticket aep/08 — the suite holds the budget, and the boot tier stays small -
+
+Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the boot budget' {
+
+  # The boot tier is measured as loaded: block-level HTML comments are stripped
+  # by the harness before injection, so they cost nothing and are excluded.
+  function Get-LoadedLength {
+    param([string]$RelativePath)
+    $c = Get-Content (Join-Path $repo $RelativePath) -Raw
+    ([regex]::Replace($c, '(?ms)^<!--.*?-->\r?\n?', '')).Length
+  }
+
+  # The ratchet. Started at 9,500 over a measured 9,206; slice one of aep/09
+  # brought the tier to 7,729 and the ceiling to 7,800; slice two moved the
+  # conventions defaults and the pointer-recovery machinery out of the boot
+  # tier and landed the ceiling at 5,000. aep/11 raised it to 5,600 when the
+  # user placed the what-gets-written directives in the always-on tier —
+  # which is the deliberate act with a diff this comment requires, never drift.
+  Assert "the always-on load is under the stated ceiling, measured rather than described" {
+    $ceiling = 5600
+    $total = 0
+    $unscoped = @('CLAUDE.md')
+    foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?ms)\A---\r?\n.*?^paths:') { $unscoped += ".claude/rules/$($f.Name)" }
+    }
+    foreach ($f in $unscoped) { $total += Get-LoadedLength $f }
+    if ($total -gt $ceiling) { throw "the boot tier loads $total chars against a ceiling of $ceiling" }
+    $true
+  }
+
+  # Adding a rules/ file without paths: frontmatter is a permanent per-turn
+  # tax; the two named here are the only ones that earn it.
+  Assert "every rule beyond the two unconditional ones is path-scoped" {
+    $offenders = @()
+    foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
+      if (@('precedence.md', 'engineering.md') -contains $f.Name) { continue }
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?ms)\A---\r?\n.*?^paths:') { $offenders += $f.Name }
+    }
+    if ($offenders) { throw "unconditionally loaded without earning it: $($offenders -join ', ')" }
+    $true
+  }
+
+  # Closed by the coverage audit: the report-when-clean rule had no assertion,
+  # so compression could have dropped the one sentence that makes a lapse
+  # visible. Anchored to the concept, not the wording.
+  Assert "the verification report is required even when there is nothing to verify" {
+    $c = Get-SkillFile 'configure/protocol.template.md'
+    if ($c -notmatch '(?i)including when there was nothing to verify|nothing to verify still') { throw 'the clean path no longer reports' }
+    $c -match '(?i)silence is indistinguishable'
+  }
+}
+
+# --- ticket aep/10 — the suite derives its general assertions from the spec ---
+
+# `specs.md` is normative (ADR 0029). Where it states an enumerable fact about
+# what ships, the suite reads the fact from the specification rather than
+# hard-coding a copy — amending the spec then fails the build until the skills
+# follow, which is the evolution rule with teeth in both directions. The layout
+# agreement in aep/06 established the pattern; prose principles keep their
+# hand-anchored assertions, because parsing prose for meaning is a guess
+# wearing a regex.
+
+Describe-Ticket 'aep/10' 'the suite derives its general assertions from specs.md' {
+
+  function Get-SpecSection {
+    param([int]$Number)
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    $m = [regex]::Match($spec, "(?ms)^## $Number\.\s[^\r\n]*\r?\n(.+?)(?=^## |\z)")
+    if (-not $m.Success) { throw "spec has no section $Number" }
+    $m.Groups[1].Value
+  }
+
+  Assert "the mode set ships exactly as section 9 enumerates it, in both directions" {
+    $s = Get-SpecSection 9
+    $specModes = @([regex]::Matches($s, '(?m)^- \*\*(\w+)\*\*') | ForEach-Object { $_.Groups[1].Value.ToLower() })
+    if ($specModes.Count -eq 0) { throw 'section 9 enumerates no modes' }
+    foreach ($m in $specModes) {
+      if (-not (Test-Path (Join-Path $skills "configure/modes/$m.template.md"))) { throw "the spec names mode '$m' and no template ships it" }
+    }
+    foreach ($f in (Get-ChildItem (Join-Path $skills 'configure/modes') -Filter '*.template.md')) {
+      $name = $f.Name -replace '\.template\.md$', ''
+      if ($specModes -notcontains $name) { throw "mode '$name' ships and section 9 does not name it" }
+    }
+    $true
+  }
+
+  Assert "every workflow section 10 names ships as a skill" {
+    $s = Get-SpecSection 10
+    $named = @([regex]::Matches($s, '\*\*(\w[\w-]*)\*\*') | ForEach-Object { $_.Groups[1].Value })
+    if ($named.Count -lt 7) { throw "section 10 names only $($named.Count) workflows" }
+    foreach ($w in $named) {
+      if (-not (Test-Path (Join-Path $skills "$w/SKILL.md"))) { throw "the spec names workflow '$w' and no skill ships it" }
+    }
+    $true
+  }
+
+  Assert "each evidence kind in the section 21 layout is a row in the evidence policy" {
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    $line = [regex]::Match($spec, '(?m)^.*out-of-scope/.*$')
+    if (-not $line.Success) { throw 'section 21 no longer lists the evidence kinds' }
+    $kinds = @([regex]::Matches($line.Value, '([\w-]+)/') | ForEach-Object { $_.Groups[1].Value })
+    if ($kinds.Count -lt 4) { throw "the layout lists only $($kinds.Count) evidence kinds" }
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    foreach ($k in $kinds) {
+      # The kind column is descriptive prose; the directory column is the
+      # invariant the layout shares, so the row is found by its directory.
+      if ($c -notmatch "(?m)^\|[^|\r\n]+\|\s*``\.claude/evidence/$([regex]::Escape($k))/``\s*\|") { throw "the spec lists evidence kind '$k' and the policy has no row writing to its directory" }
+    }
+    $true
+  }
+}
+
+# --- ticket aep/11 — always-on standards for what gets written ----------------
+
+Describe-Ticket 'aep/11' 'the always-on tier covers what gets written, and close-out invokes the commit skill' {
+
+  # Terse directives in the always-on tier; the elaborations keep their single
+  # homes in the skills, which the $placed accounting and the single-home sweep
+  # continue to pin. Checked in both copies — the template that ships and the
+  # rules file this repository runs on.
+  $directives = [ordered]@{
+    'comments say why, never what'   = '(?i)comments say \*?why\*?'
+    'the workaround-comment test'    = '(?i)workaround[^\r\n]{0,80}fix the code'
+    'every public API is documented' = '(?i)document every public API'
+    'files named for one thing'      = '(?i)directories carry the qualifiers'
+    'no needless abbreviations'      = '(?i)abbreviations? in names'
+    'tests near the code'            = '(?i)near the code as the (language|tooling)'
+  }
+  foreach ($d in $directives.Keys) {
+    $pattern = $directives[$d]
+    Assert "the always-on standards carry: $d" {
+      if ((Get-SkillFile 'configure/engineering.template.md') -notmatch $pattern) { throw 'missing from the template' }
+      if ((Get-Content (Join-Path $repo '.claude/rules/engineering.md') -Raw) -notmatch $pattern) { throw "missing from this repository's copy" }
+      $true
+    }
+  }
+
+  # The close-out names the skill invocation, so "through /commit" cannot be
+  # satisfied by a hand-rolled git commit that mentions the word.
+  Assert "/implement's close-out invokes the commit skill, and rules out the hand-rolled commit" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)invok\w+ the `commit` skill') { throw 'the invocation is not named' }
+    $c -match '(?i)never a hand-rolled `git commit`'
   }
 }
 

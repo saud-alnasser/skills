@@ -5,6 +5,7 @@ description: Build throwaway code to answer a design question by feel, then reco
 
 # Prototype
 
+Mode: prototype
 Policies: `.claude/policies/evidence.md`
 
 A prototype is **throwaway code that answers a question**. Its sibling `/research` answers questions about **facts**; this one answers questions about **feel** — does this state model hold up, does this layout read right. The question decides the shape.
@@ -24,7 +25,7 @@ Identify the question — from the request, from the surrounding code, or by ask
 - **"Does this logic or state model feel right?"** → [LOGIC.md](LOGIC.md). A small interactive terminal app that pushes the model through cases that are hard to reason about on paper.
 - **"What should this look like?"** → [UI.md](UI.md). Several radically different variations on one route, switchable as you look at them.
 
-The two produce very different things, and getting it wrong wastes the whole prototype. If the question is genuinely ambiguous and nobody is reachable, follow the surrounding code — a backend module is a logic question, a page or component is a UI one — and state the assumption at the top of the write-up.
+Getting the branch wrong wastes the whole prototype. If the question is genuinely ambiguous and nobody is reachable, follow the surrounding code — a backend module is a logic question, a page or component a UI one — and state the assumption at the top of the write-up.
 
 ## 2 — Where things live
 
@@ -37,7 +38,7 @@ The two are deliberately **apart**, because the write-up outlives the code and a
 
 `.claude/position/prototypes/` is **gitignored scratch**, carried by `.claude/.gitignore` so the whole workflow stays one removable directory.
 
-**One exception, and it is the dangerous one.** A UI variant mounted inside the running application cannot live in a scratch directory — the whole reason sub-shape A in [UI.md](UI.md) works is that the variant renders against the real header, real data, real density. That code sits where it renders and is **not** gitignored, which makes it the prototype code most likely to be committed by accident. Deletion applies harder there, not softer: it comes out in the same change that records the answer, along with the switcher.
+**One exception, and it is the dangerous one.** A UI variant mounted inside the running application sits where it renders — sub-shape A in [UI.md](UI.md) only works against the real header, real data, real density — and is **not** gitignored, which makes it the prototype code most likely to be committed by accident. Deletion applies harder there, not softer: it comes out in the same change that records the answer, along with the switcher.
 
 Rules that hold on both branches:
 
@@ -57,7 +58,7 @@ The interesting feedback is the moment they say *wait, that shouldn't be possibl
 
 ## 4 — Write the write-up
 
-**Before deleting anything.** A prototype is not finished until its conclusion is recorded, and that ordering is the whole mechanism — deleting code that took real effort is uncomfortable, and a write-up deferred until after the deletion is a write-up that never gets written.
+**Before deleting anything.** A prototype is not finished until its conclusion is recorded — a write-up deferred until after the deletion is a write-up that never gets written.
 
 `.claude/evidence/prototypes/<name>.md`:
 
@@ -108,4 +109,4 @@ The write-up is **Evidence**: the trail showing how a claim was earned, recordin
 
 ---
 
-Branch structure and the throwaway discipline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Branch structure and the throwaway discipline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

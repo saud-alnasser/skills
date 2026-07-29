@@ -1,6 +1,7 @@
 # refactor(skills): compress the primitives and the on-ramps
 
-Status: open
+Status: superseded
+Superseded by: aep/09 (ADR 0030)
 Blocked by: 09
 Part of: streamline
 

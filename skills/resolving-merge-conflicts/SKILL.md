@@ -5,6 +5,8 @@ description: Resolve an in-progress merge or rebase conflict by recovering what 
 
 # Resolving merge conflicts
 
+Mode: maintenance
+
 A conflict is two intents that a text diff could not reconcile. Recovering both intents is the work; editing the markers out is not.
 
 1. **See the state.** Which operation is in progress, which files conflict, and what history each side carries. The invocations are in `.claude/tools/git.md`.
@@ -23,4 +25,4 @@ A conflict is two intents that a text diff could not reconcile. Recovering both 
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

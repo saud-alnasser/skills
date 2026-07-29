@@ -2,7 +2,7 @@
 
 One directory, one format, one place to look for how to type any command — the workflow's tools and this repository's, together and committed (ADR 0019).
 
-Committed is the point. The reference used to ship inside the plugin, so a teammate who cloned without Tenure had none of it while still being bound by the rule against guessing a CLI. Deriving into the repository is what closes that, and it only closes if the result is a file git tracks.
+Committed is the point: the reference used to ship inside the plugin, so a teammate who cloned without AEP had none of it while still bound by the rule against guessing a CLI. Deriving into a file git tracks is what closes that.
 
 ## Write a file only for a tool the repository uses
 
@@ -24,7 +24,7 @@ A tool the repository does not use gets no file. A stacking reference in a repos
 
 This is the load-bearing rule of the whole file.
 
-A tool reference's value is concentrated in gotchas — the exact column layout of a porcelain read, a verb whose name lies about what it does, a flag that does not exist. Those are precisely what a rewrite smooths away, because they read as noise until the day they don't.
+A tool reference's value is concentrated in gotchas — the exact column layout of a porcelain read, a verb whose name lies about what it does, a flag that does not exist — precisely what a rewrite smooths away, because they read as noise until the day they don't.
 
 So:
 
@@ -45,7 +45,7 @@ A derived file names its source directly under the title:
 ```markdown
 # git — version control
 
-Derived from: tenure/git.md
+Derived from: aep/git.md
 ```
 
 Every section kept from that source **keeps its heading exactly**, and its body byte-for-byte. That is what makes the rule checkable rather than a promise: the verifier pairs sections by heading and compares bodies, so a filtered entry passes by being absent and a summarized one fails by differing.
@@ -71,12 +71,12 @@ Leave out what is already certain. An entry for `git log` earns nothing; an entr
 
 When an operation is needed and no file has an entry for it, that is a gap in the configuration — **not licence to guess**.
 
-Say so, naming `/configure` as what fills it, and re-run it to derive the entry. That remedy is all this file carries, because it is the half that means nothing without Tenure installed.
+Say so, naming `/configure` as what fills it, and re-run it to derive the entry. That remedy is all this file carries, because it is the half that means nothing without AEP installed.
 
-What to do when the entry still is not there is the never-guess rule in `CLAUDE.md`. It lives there rather than here because it has to hold for someone working in this repository with no plugin at all.
+What to do when the entry still is not there is the never-guess rule in `.claude/rules/engineering.md`. It lives there rather than here because it has to hold for someone working in this repository with no plugin at all.
 
 ## Refreshing a derived file
 
-The relationship is a vendoring one: a fix Tenure makes to its own reference does not reach an already-configured repository on its own.
+The relationship is a vendoring one: a fix AEP makes to its own reference does not reach an already-configured repository on its own.
 
-`/configure`'s audit branch re-checks `.claude/tools/` against the repository, and that is the only path by which a derived file is refreshed. This is deliberate — the audit checks the file against the repository it describes, which is the check that matters, and a repository whose tooling has not changed does not need the shipped text's changes.
+`/configure`'s audit branch re-checks `.claude/tools/` against the repository, and that is the only refresh path — the audit checks the file against the repository it describes, which is the check that matters; a repository whose tooling has not changed does not need the shipped text's changes.

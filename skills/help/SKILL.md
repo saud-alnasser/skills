@@ -1,14 +1,16 @@
 ---
 name: help
-description: Ask which command fits the situation you are in. A router over Tenure's skills, organised by how work arrives.
+description: Ask which command fits the situation you are in. A router over AEP's skills, organised by how work arrives.
 disable-model-invocation: true
 ---
 
 # Help
 
-Ask the tenured engineer. Say what you are trying to do; this says where to start. Everything is grouped by **how the work arrived**, because that is what you know at the moment you need to choose.
+Mode: discussion
 
-Tenure ships as a plugin, so every command below is namespaced to it — `/tenure:design`, `/tenure:implement`, and this one as `/tenure:help`. The short forms are used throughout for readability.
+Say what you are trying to do; this says where to start. Everything is grouped by **how the work arrived**, because that is what you know at the moment you need to choose.
+
+AEP ships as a plugin, so every command below is namespaced to it — `/aep:design`, `/aep:implement`, and this one as `/aep:help`. The short forms are used throughout for readability.
 
 **First, once: `/configure`.** Nothing below works properly until it has run — it writes the tracker configuration, this repository's own tool commands, and the knowledge everything else reads. See **Knowledge** for what a later run does.
 
@@ -54,7 +56,7 @@ It is chosen **after the grill**, never before: sizing a change before you under
 
 ## Knowledge
 
-- **`/configure`** — once per repository, to join it to Tenure; and **again** whenever you want the audit pass over what is already written down.
+- **`/configure`** — once per repository, to join it to AEP; and **again** whenever you want the audit pass over what is already written down.
 
 **Verifying what is written down, and repairing it where it is wrong, has no command at all.** It happens continuously, at the moment a statement is about to be relied on, inside whatever command is running. There is nothing to schedule. If you are looking for the command that reconciles everything, it does not exist, and that is deliberate.
 
@@ -67,7 +69,7 @@ Vocabulary and discipline the commands above pull in. Reach for one directly whe
 - **`codebase-design`** — when you are deciding a module's *shape*: where the seam goes, how much sits behind the interface.
 - **`domain-modeling`** — when the problem's *words* are the trouble: a fuzzy term, one word doing three jobs, or a choice you are unsure is worth recording.
 
-**How to type a command is not a skill.** `.claude/tools/` holds one file per tool this repository uses — the workflow's own and yours — written by `/configure` and committed, so it is there with or without Tenure installed. `CLAUDE.md` has the rule about reading it, and what to do when an entry is missing.
+**How to type a command is not a skill.** `.claude/tools/` holds one file per tool this repository uses — the workflow's own and yours — written by `/configure` and committed, so it is there with or without AEP installed. `.claude/rules/engineering.md` has the rule about reading it, and what to do when an entry is missing.
 
 ## Crossing sessions
 
@@ -77,3 +79,4 @@ A thread that has run too long stops reasoning well before it stops working, and
 - **`/compact`** (built-in) — when you want to **stay here** and can afford to lose the verbatim history. **It continues.**
 
 Compact at a deliberate break between phases, never mid-phase. Hand off when the next thing is genuinely new work, or when you are near the end of the zone with a phase still open.
+

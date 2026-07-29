@@ -1,12 +1,12 @@
 # git — version control
 
-Derived from: tenure/git.md
+Derived from: aep/git.md
 
 Docs: https://git-scm.com/docs
 Fetch the docs when: a subcommand or flag you need is not listed below.
 Never guess a flag. An unlisted flag is a docs fetch, not an assumption.
 
-Everyday git — `add`, `commit`, `log`, `diff`, `checkout` — needs no entry here. This file covers what git does *for Tenure*: the drift reads the workflow depends on, the parsing that quietly goes wrong, and the standing rules about writing history.
+Everyday git — `add`, `commit`, `log`, `diff`, `checkout` — needs no entry here. This file covers what git does *for AEP*: the drift reads the workflow depends on, the parsing that quietly goes wrong, and the standing rules about writing history.
 
 Every entry below is carried over intact, cross-references included. One of them — the Graphite note under **Never push** — links to a reference this repository has no reason to derive, so it points at nothing. That is the derivation showing through rather than a pointer to chase: the sentence is conditional on a repository this one is not.
 
@@ -124,7 +124,7 @@ That is exit 128 and it is the mechanism, not an error to work around. Report th
 
 ## Recover a broken Source Pointer
 
-`CLAUDE.md` has the rule. These are the two commands that find where the concept went:
+`.claude/protocol.md` has the rule. These are the two commands that find where the concept went:
 
 ```
 git log --diff-filter=D --name-only -- <path>     # which commit deleted it
@@ -160,6 +160,6 @@ git push --force / --force-with-lease
 git push --set-upstream <remote>    # pushes as a side effect
 ```
 
-Tenure does not push. Publishing is the human's call, and it is the one action here they cannot undo locally.
+AEP does not push. Publishing is the human's call, and it is the one action here they cannot undo locally.
 
 If a workflow appears to require a push, stop and say so. (On a Graphite repo, `gt submit` pushes too — the same rule applies; see [graphite.md](graphite.md).)

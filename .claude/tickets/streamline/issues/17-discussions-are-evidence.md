@@ -1,6 +1,7 @@
 # feat(configure): record the grill that produced no decision
 
-Status: open
+Status: superseded
+Superseded by: aep/04 (ADR 0030)
 Blocked by: 03
 Part of: streamline
 

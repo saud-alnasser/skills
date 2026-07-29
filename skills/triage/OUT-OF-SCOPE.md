@@ -66,4 +66,4 @@ Delete the file. Old issues are historical records and are not reopened; the new
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

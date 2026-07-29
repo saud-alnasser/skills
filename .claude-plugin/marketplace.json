@@ -1,14 +1,14 @@
 {
-  "name": "tenure-marketplace",
-  "description": "Publishes Tenure from the repository that builds it.",
+  "name": "aep-marketplace",
+  "description": "Publishes the AI Engineering Protocol from the repository that builds it.",
   "owner": {
     "name": "SAUD ALNASSER"
   },
   "plugins": [
     {
-      "name": "tenure",
+      "name": "aep",
       "source": "./",
-      "description": "A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
+      "description": "The AI Engineering Protocol — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
     }
   ]
 }

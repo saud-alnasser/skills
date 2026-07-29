@@ -124,4 +124,4 @@ No hedging, no throat-clearing, no "it's worth noting that…". If a sentence co
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

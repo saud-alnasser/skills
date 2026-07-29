@@ -31,7 +31,7 @@ glab mr create
 glab mr view <id>
 ```
 
-Tenure does not open merge requests unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
+AEP does not open merge requests unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
 
 ## Blocking relationships
 

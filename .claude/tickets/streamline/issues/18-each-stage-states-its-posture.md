@@ -1,6 +1,7 @@
 # feat(skills): each stage states the tradeoffs it accepts
 
-Status: open
+Status: superseded
+Superseded by: aep/03 (ADR 0030)
 Blocked by: 06
 Part of: streamline
 

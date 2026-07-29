@@ -5,6 +5,8 @@ description: Test-driven development. Use when the user wants to build features 
 
 # Test-Driven Development
 
+Mode: implementation
+
 TDD is the red → green loop. This skill is the reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle — consult them before and during the loop, not after.
 
 Test names and interface vocabulary come from the project's Context — `.claude/contexts/repository.md` and any Domain Context the work touches. Respect the Decisions in `.claude/decisions/` covering the area you're touching.
@@ -27,7 +29,7 @@ Ask: "What's the public interface, and which seams should we test?"
 
 ## Test layout — read it off the repository
 
-Where test files go is the repository's decision, not Tenure's. Look at what is already there and match it; the precedence rule is in `CLAUDE.md`. Two layouts are common, and both are fine:
+Where test files go is the repository's decision, not AEP's. Look at what is already there and match it; the precedence rule is in `CLAUDE.md`. Two layouts are common, and both are fine:
 
 ```text
 adjacent                separated
@@ -55,4 +57,4 @@ Adjacent is the default for a repository with no established pattern. Move to a 
 
 ---
 
-Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

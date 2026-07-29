@@ -39,7 +39,7 @@ docs fetch, not an assumption.
 {How this repository records which human owns delivering a ticket — GitHub
 assignees, a name in the ticket body, a project board column. Say it once.}
 
-Tenure reads Assignment and never writes it unasked.
+AEP reads Assignment and never writes it unasked.
 
 ## Roles
 

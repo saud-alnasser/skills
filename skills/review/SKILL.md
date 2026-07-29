@@ -5,6 +5,7 @@ description: Review a diff on two axes — does it implement what was asked, and
 
 # Review
 
+Mode: review
 Policies: `.claude/policies/decisions.md`
 
 Two questions about one diff, asked independently:
@@ -12,7 +13,7 @@ Two questions about one diff, asked independently:
 - **Spec** — does this implement what the ticket or spec asked for?
 - **Standards** — does it follow this repository's own documented standards, boundaries, and Decisions?
 
-They are separate because a change can pass either one while failing the other. Code that follows every convention and builds the wrong thing passes Standards and fails Spec. Code that does exactly what was asked in a style this repository rejected passes Spec and fails Standards. Report them together and the stronger axis hides the weaker one.
+They are separate because a change can pass either one while failing the other — every convention followed on the wrong thing, or exactly what was asked in a style this repository rejected. Report them together and the stronger axis hides the weaker one.
 
 **Two axes. There is no third** — architecture folds into Standards, below.
 
@@ -42,7 +43,7 @@ Then prove it, here, in the parent:
 - the ref resolves
 - the subject is **non-empty** — an empty diff *and* a clean tree
 
-A bad ref or an empty subject fails at this step, before two subagents are spawned to review nothing. Inside a subagent that failure is invisible: it comes back as a confident report on no content.
+A bad ref or an empty subject fails at this step, before two subagents are spawned to review nothing — inside a subagent that failure comes back as a confident report on no content.
 
 The committed side compares against the **merge-base**, not the raw ref, so commits that landed on the base branch since this work started are not attributed to it. Every invocation — the diff, the commit list, and the working-tree read — is in `.claude/tools/git.md`.
 
@@ -66,13 +67,13 @@ This repository's own standards, always first:
 - `.claude/decisions/` — the ADRs
 - `CONTRIBUTING.md` and whatever else this repository documents about how code is written
 
-Under those sits a fallback vocabulary of design smells, in [SMELLS.md](SMELLS.md). It exists so that a repository documenting nothing still gets a review with something to say. **The repository always overrides it.** Where a documented standard endorses something the baseline would flag, the standard wins and the smell is suppressed — silently, without a note explaining that Tenure would have preferred otherwise.
+Under those sits a fallback vocabulary of design smells, in [SMELLS.md](SMELLS.md). It exists so that a repository documenting nothing still gets a review with something to say. **The repository always overrides it.** Where a documented standard endorses something the baseline would flag, the standard wins and the smell is suppressed — silently, without a note explaining that AEP would have preferred otherwise.
 
-Skip anything a linter, formatter, or type-checker already enforces. A finding a machine will make thirty seconds later is noise, and noise is what teaches a reader to skim reviews.
+Skip anything a linter, formatter, or type-checker already enforces. A finding a machine will make thirty seconds later is noise.
 
 ## 4 — Run both axes
 
-**In parallel, as two subagents**, spawned in a single message. Parallel is for latency; separate subagents are for correctness. An axis that can see the other's findings starts agreeing with them — the second reviewer to read "this looks fine" is measurably less likely to disagree, and pollution in that direction is invisible in the output. Two contexts that never touch cannot converge.
+**In parallel, as two subagents**, spawned in a single message. Parallel is for latency; separate subagents are for correctness — an axis that can see the other's findings starts agreeing with them, and that pollution is invisible in the output. Two contexts that never touch cannot converge.
 
 Give each one the diff invocation and the commit list. Give each one **paths, not pasted content**, wherever the source is a file in the repository — a subagent can read, and pasting spends the parent's context on material only the child needs.
 
@@ -90,7 +91,7 @@ Architecture is part of this axis, not a third one, because boundaries and owner
 - Was an abstraction introduced that the change did not require?
 - Does the diff **contradict an ADR**? Say so explicitly — name the ADR and the line of the diff that contradicts it. A contradiction the reviewer notices and lets pass silently is worse than one it never saw, because the record now shows the decision was reviewed and upheld.
 
-Two rules are Tenure's own and apply even where the repository documents neither (ADR 0007). `/implement` writes to them; this axis is where a breach is caught:
+Two rules are AEP's own and apply even where the repository documents neither (ADR 0007). `/implement` writes to them; this axis is where a breach is caught:
 
 - **Comments explain *why*, not *what*.** Flag a comment that would be unnecessary if the code named things honestly — the finding is the naming, not the comment.
 - **A public interface is documented; private implementation is not.** Flag an undocumented contract callers depend on, and documentation of internals that now has to be kept true for no caller.
@@ -113,7 +114,7 @@ A finding with no outcome is a finding that will be raised again next review.
 | **Ticketed** | a new ticket — real, but out of scope for this diff |
 | **Accepted** | recorded — see below |
 
-The third is the one that gets skipped. *"That's fine, leave it"* is a deliberate trade-off and it needs a home, because a trade-off nobody wrote down is re-discovered on every future review, argued again, and accepted again. That is how reviews become noise, and a reader who has learned to skim one review skims the one that mattered.
+The third is the one that gets skipped. *"That's fine, leave it"* is a deliberate trade-off and it needs a home — a trade-off nobody wrote down is re-discovered, re-argued, and re-accepted on every future review.
 
 Record an acceptance as an **ADR** when it clears the 3-of-3 test in `.claude/policies/decisions.md` — most do not clear it. Otherwise it is a note on the ticket. Either way the next review reads it and does not re-raise it.
 
@@ -127,4 +128,4 @@ Everything durable graduates out instead: a fix is in the code, a boundary rule 
 
 ---
 
-Two-axis structure and the smell baseline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Two-axis structure and the smell baseline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

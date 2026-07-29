@@ -91,4 +91,4 @@ Folding the winner into the real page is a **fresh implementation effort**, not 
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

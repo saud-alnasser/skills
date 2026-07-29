@@ -1,6 +1,7 @@
 # test(verify): re-anchor the suite to the new layout and close its coverage gaps
 
-Status: open
+Status: superseded
+Superseded by: aep/08 (ADR 0030)
 Blocked by: 16
 Part of: streamline
 

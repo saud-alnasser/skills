@@ -5,6 +5,7 @@ description: Investigate a question against primary sources and write the findin
 
 # Research
 
+Mode: research
 Policies: `.claude/policies/evidence.md`
 
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
@@ -19,7 +20,7 @@ Check its **verified-against line** first. A finding recorded against a version 
 
 ## 1 — Dispatch a subagent
 
-The research runs in a **subagent**. The reason is **context isolation**: reading twenty pages of documentation to extract four facts would otherwise spend the parent's window on nineteen pages nobody needs again. The subagent burns its own window and returns one small cited file.
+The research runs in a **subagent**, for **context isolation**: twenty pages of documentation read to extract four facts would otherwise spend the parent's window on nineteen pages nobody needs again. The subagent burns its own window and returns one small cited file.
 
 **Isolation is not the same as not waiting.** Whether the caller blocks on the answer is a separate axis, and it is the caller's — `/design` decides it at the gate, and the rule is in `/design`. Conflating the two is what turns a load-bearing question into a background one.
 
@@ -33,7 +34,7 @@ Follow **every claim back to the source that owns it.** A claim that cannot be t
 
 Where a secondary source is the only thing available, say so explicitly in the finding. That is a limitation of the research, not a detail to smooth over.
 
-The rule against guessing an API — and a CLI counts — is in `CLAUDE.md`. It applies with full force here: research that establishes a fact by trying flags until something works has established what that build does today, not what the tool guarantees.
+The rule against guessing an API — and a CLI counts — is in `.claude/rules/engineering.md`. It applies with full force here: research that establishes a fact by trying flags until something works has established what that build does today, not what the tool guarantees.
 
 ## 3 — Write one cited file
 
@@ -62,7 +63,7 @@ resting on a secondary source.
 
 **Every claim carries its citation on the same line.** A findings list with a sources section at the bottom loses the mapping, and the mapping is the part that makes it checkable.
 
-**Record what it was verified against — version and date.** A fact about an external API is true at a version, not forever, and an undated finding cannot be aged out later because nobody can tell how old it is.
+**Record what it was verified against — version and date.** A fact about an external API is true at a version, not forever, and an undated finding cannot be aged out.
 
 ## 4 — Evidence is not knowledge
 
@@ -72,4 +73,4 @@ The file stays as the trail showing how a claim was earned. `/research` writes t
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

@@ -59,4 +59,4 @@ What is specific here is what promotion means: the thing worth promoting is the 
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

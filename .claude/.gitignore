@@ -2,8 +2,9 @@
 # someone else's checkout, or this repository on another machine. A file that
 # would be equally true everywhere is knowledge, and knowledge is committed.
 #
-# `.claude/tenure.md` says what depends on that being true.
+# `.claude/protocol.md` says what depends on that being true. Position has a
+# directory; the one file outside it belongs to the harness, which would not
+# find it anywhere else.
 
-marker.json
-/prototypes/
+/position/
 settings.local.json

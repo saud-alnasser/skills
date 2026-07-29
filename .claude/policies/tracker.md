@@ -27,7 +27,7 @@ The GitHub remote (`saud-alnasser/skills`) is a code remote only. Issues are ena
 
 Not recorded. Single maintainer, no assignee field, no board. Where a ticket needs a human rather than an agent it says so in `Status:`, which is about the *work*, not about who owns it.
 
-Tenure reads Assignment and never writes it unasked.
+AEP reads Assignment and never writes it unasked.
 
 ## Roles
 

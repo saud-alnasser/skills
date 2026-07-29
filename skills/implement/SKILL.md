@@ -5,6 +5,7 @@ description: Build one ticket end to end — verify, claim, drive tdd at the agr
 
 # Implement
 
+Mode: implementation
 Policies: `.claude/policies/context.md`, `.claude/policies/knowledge.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
 
 One ticket, built and closed out. `/design` always leaves at least one ticket on disk, so there is always something to read — and `/implement` reads the ticket, not the conversation.
@@ -13,7 +14,7 @@ One ticket, built and closed out. `/design` always leaves at least one ticket on
 
 ## 0 — Verification. Every invocation. No exceptions.
 
-Open with the verification report. Not conditional on tier, on size, or on the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit.
+Open with the verification report. Not conditional on tier, size, or the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit.
 
 The rule and both drift reads live in `.claude/protocol.md`; `.claude/tools/git.md` has the invocations.
 
@@ -36,11 +37,11 @@ Verification
   → context trusted as-is
 ```
 
-The report **is** the enforcement. A rule that produces visible output is one whose absence is noticeable; a rule that produces nothing is one that quietly stops running.
+The report **is** the enforcement: a rule that produces visible output is one whose absence is noticeable.
 
-**Completion criterion:** no source is read through a Source Pointer that has not been verified this session, and no Context statement is acted on before it has been checked against source. A pointer that cannot be recovered by searching is reported — the recovery rule is in `CLAUDE.md`.
+**Completion criterion:** no source is read through a Source Pointer that has not been verified this session, and no Context statement is acted on before it has been checked against source. A pointer that cannot be recovered by searching is reported — the recovery rule is in `.claude/protocol.md`.
 
-**Never infer an API from a filename**, and never trust what a pointer's path implies about what is behind it. `src/auth/` is where to start reading; it is not a claim that an auth module exists there, still less that it exposes the function you were about to call.
+**Never infer an API from a filename**, and never trust what a pointer's path implies. `src/auth/` is where to start reading — not a claim that an auth module exists there, still less that it exposes the function you were about to call.
 
 ## 1 — Take one ticket
 
@@ -60,11 +61,11 @@ frontier = tickets open, unblocked, unclaimed
   further changes amend that commit. nothing is pushed.
 ```
 
-**Where the tickets are comes from `.claude/policies/tracker.md`** — it is the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and the lifecycle, and `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
+**Where the tickets are comes from `.claude/policies/tracker.md`** — the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and lifecycle; `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
 
 If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
 
-**The frontier is build tickets only.** On a shared tracker the triage queue and the frontier are the same list, so an issue somebody filed and triaged to `ready-for-agent` sits right beside a ticket `/design` cut. It is not one: it has no outcome, no acceptance criteria, and no edges, and there is nothing to build from. Say which is missing and route it to `/design`, which is what turns an incoming issue into a root ticket. **Do not fill the gaps in yourself** — inventing an outcome for someone else's issue is designing without the grill, on a surface a team reads.
+**The frontier is build tickets only.** On a shared tracker an issue triaged to `ready-for-agent` sits right beside a ticket `/design` cut, and it is not one: no outcome, no acceptance criteria, no edges. Say which is missing and route it to `/design`. **Do not fill the gaps in yourself** — inventing an outcome for someone else's issue is designing without the grill, on a surface a team reads.
 
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.
 
@@ -74,9 +75,9 @@ Work with no ticket at all — hand-written edits, a change made outside this fl
 
 **Claiming is creating the ticket's branch, and it is the first act of the run** — before the first read of source, and long before the first edit. A claim made after the first edit is not a claim; it is a report of a race already lost.
 
-Nothing about the Claim is written to the tracker. A tracker carries human-level facts, and which instance is building something right now is not one — see `.claude/policies/tickets.md` for what the tracker does hold.
+Nothing about the Claim is written to the tracker: a tracker carries human-level facts, and which instance is building something right now is not one — see `.claude/policies/tickets.md`.
 
-The branch name is **Tenure's own convention**, not the default of whichever tool created the branch, because two tools must produce the same name for the same ticket or the claim stops being a claim:
+The branch name is **AEP's own convention**, not the default of whichever tool created the branch, because two tools must produce the same name for the same ticket or the claim stops being a claim:
 
 ```
 <ticket-id>-<slug-of-the-summary>       17-assignment-and-claim
@@ -93,7 +94,7 @@ claimed elsewhere the remote has one — fetch first, or the answer is stale
 free              neither
 ```
 
-**A claim held elsewhere is never taken.** Not renamed around, not branched from, not force-created over. Report which ticket, which branch, and where the claim was seen, then move to the next ticket on the frontier. Git enforces this at the last line of defence — it refuses to check one branch out in two worktrees — but arriving there means the check was skipped, so treat that `fatal:` as a bug in the run, not a result.
+**A claim held elsewhere is never taken.** Not renamed around, not branched from, not force-created over. Report which ticket, which branch, and where the claim was seen, then move to the next ticket on the frontier. Git refuses to check one branch out in two worktrees, but arriving at that `fatal:` means the check was skipped — treat it as a bug in the run, not a result.
 
 A claim **this clone's own branch identifies** is not someone else's: resume it, or release it by deleting the branch, freely.
 
@@ -101,9 +102,9 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 `Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
-**`.claude/policies/version-control.md` states which one applies**, and states how to confirm it. Read it and do what it says — it is one line of fact and one read, and the check is beside the claim because the claim is what goes stale. Getting the model wrong in either direction is expensive: assume plain git on a stacking repository and the frontier empties, because Tenure commits and never merges, so every blocker sits committed-and-unmerged forever and the tool makes the framework slower than not having it; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+**`.claude/policies/version-control.md` states which one applies**, and how to confirm it. Read it and do what it says. Getting the model wrong is expensive in both directions: assume plain git on a stacking repository and the frontier empties — every blocker sits committed-and-unmerged forever; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
 
-**Never substitute a probe for the read.** Discovering the model afresh on every run was the previous design, and it was replaced because a fact rediscovered silently is a fact nobody can review — the file makes it visible, and verifying it costs the same command the probe was already running.
+**Never substitute a probe for the read** — a fact rediscovered silently is a fact nobody can review, and verifying the file costs the same command the probe was already running.
 
 So, on a stacking repository only:
 
@@ -113,28 +114,28 @@ a ticket joins the frontier once its blockers are COMMITTED
 
   → check out the blocker's branch
   → create this ticket's branch on top of it
-     the name is still Tenure's, not the one the tool would generate
+     the name is still AEP's, not the one the tool would generate
 ```
 
-**The Claim's unit becomes the whole stack, not one branch.** Restacking rewrites every descendant, so an instance working a branch low in the stack rewrites the branches above it — which are other tickets' Claims. **A stack belongs to one instance.** Claiming any branch in it claims everything upstack, and parallel instances need separate stacks off trunk. Say this when the stack is created, not when it breaks.
+**The Claim's unit becomes the whole stack.** Restacking rewrites every descendant — other tickets' Claims — so **a stack belongs to one instance**: claiming any branch in it claims everything upstack, and parallel instances need separate stacks off trunk. Say this when the stack is created, not when it breaks.
 
-Say the cost too, in the same breath, because it is being accepted on the user's behalf: **a rejected review low in the stack invalidates every branch above it.** That is the trade for not waiting.
+Say the cost too, because it is being accepted on the user's behalf: **a rejected review low in the stack invalidates every branch above it.** That is the trade for not waiting.
 
 Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. `.claude/tools/graphite.md` has the invocation and what it restacks.
 
-The closing keyword also moves, into the commit body, reversing the split that applies to plain git. `/commit` has the rule and the reason — `/implement` only has to know that stacking is what selects it.
+The closing keyword also moves, into the commit body, reversing the split that applies to plain git. `/commit` has the rule and the reason.
 
 ### Resuming after losing context
 
-An instance that has lost its context reads the branch it is standing on. That is the whole recovery: the current branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got.
+An instance that has lost its context reads the branch it is standing on: the branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got.
 
-A detached HEAD names no branch and therefore holds no Claim. Do not guess from the diff what was being built — claim a ticket properly or hand back.
+A detached HEAD names no branch and holds no Claim. Do not guess from the diff — claim a ticket properly or hand back.
 
 ### Assignment is not this
 
 **Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `.claude/tools/github.md` has the invocation.
 
-It matters here for one reason: Assignment already separates humans, so the Claim only ever has to arbitrate between one person's own instances. That is why a branch is enough, and why nothing heavier is needed.
+Assignment already separates humans, so the Claim only arbitrates between one person's own instances — which is why a branch is enough.
 
 ## 2 — Build
 
@@ -146,13 +147,13 @@ Typecheck often, and run the single test file often. Run the **full suite once**
 
 Three rules about what gets written, applied even where the repository documents none of them (ADR 0007). `/review` checks them; this is where they are obeyed:
 
-- **Prefer self-explanatory code.** The code itself is what the next reader has to understand, and prose beside it is a second thing to keep true. Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
-- **Comments explain *why*, not *what*.** Constraints, tradeoffs, and the reasoning behind a shape are worth writing down — they are not recoverable from the code. A comment that restates the line below it goes stale on its own schedule and is worth less than the naming it is compensating for.
-- **A public interface is documented; private implementation is not.** Anything callers depend on states its contract — what it does, what it requires, how it fails. Documenting the inside as well doubles what has to be kept true.
+- **Prefer self-explanatory code.** Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
+- **Comments explain *why*, not *what*.** Constraints, tradeoffs, and reasoning are not recoverable from the code; a comment that restates the line below it goes stale on its own schedule.
+- **A public interface is documented; private implementation is not.** Anything callers depend on states its contract — what it does, what it requires, how it fails.
 
 Where the new code lands and what it is called is `codebase-design`'s. Read its **Files and names** section and apply it here, while the file is being created — a layout decision is cheap now and a rename touching every caller later.
 
-The rule against guessing an API is in `CLAUDE.md`, and building is where it costs the most: confirm the **version, signature, and limits** of anything you call before calling it. Code compiles against what is installed, not against what you remember being true.
+The rule against guessing an API is in `.claude/rules/engineering.md`, and building is where it costs the most: confirm the **version, signature, and limits** of anything you call before calling it. Code compiles against what is installed, not against what you remember being true.
 
 ## 3 — When the plan turns out wrong
 
@@ -172,40 +173,40 @@ A plan is wrong when the ticket cannot be built as written: the architecture it 
 → hand back: this needs /design
 ```
 
-`blocked`, not `open` — an open ticket with no blocker is back on the frontier, and the next `/implement` claims it and walks into the same wall.
+`blocked`, not `open` — an open ticket with no blocker is back on the frontier, and the next `/implement` walks into the same wall.
 
-Release the claim *and* set `blocked`. The status is what keeps the ticket off the frontier; deleting the branch is what stops this clone reporting a Claim on work nobody is doing. Neither alone is enough, and the branch goes only because there is nothing on it — where a partial commit exists, keep the branch and say so.
+Release the claim *and* set `blocked`: the status keeps the ticket off the frontier, and deleting the branch stops this clone reporting a Claim on work nobody is doing. Neither alone is enough. The branch goes only because there is nothing on it — where a partial commit exists, keep the branch and say so.
 
-Leave the tree untouched because the partial work is usually the sharper evidence of *why* the plan was wrong — it shows where the plan met reality — and it is the user's to keep or discard.
+Leave the tree untouched: the partial work is usually the sharper evidence of *why* the plan was wrong, and it is the user's to keep or discard.
 
 A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 ## 4 — Close out
 
-`/review` runs **both axes**, and its fixes are applied, **before** anything is committed. Reviewing afterwards inverts the order: what lands would be work about to be reviewed rather than work that has been.
+`/review` runs **both axes**, and its fixes are applied, **before** anything is committed — reviewing afterwards would land work about to be reviewed rather than work that has been.
 
-Then **commit — without asking.** Close out through `/commit`, then set `Status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
+Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `Status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
 
-There is no prompt because there was never a choice. One ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree — the question asked which of two routes to the same place, once per ticket. What makes that safe is the push prohibition below, not the prompt: nothing is published, and every effect is locally reversible.
+There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree. What makes that safe is the push prohibition below — nothing is published, and every effect is locally reversible.
 
 Further changes are requested the same way they always were, in the same context and on the same ticket. They amend.
 
-`/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against. A `/commit` that refuses — because a stage did not run, or the diff contradicts Context — stops the close-out; it is not worked around, and the ticket stays open.
+`/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against. A `/commit` that refuses stops the close-out; it is not worked around, and the ticket stays open.
 
 ### Never push. Amend instead.
 
-`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `CLAUDE.md`; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect.
+`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `.claude/rules/engineering.md`; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect.
 
-That guard is what makes the rest safe. Once a commit exists and further changes are asked for, `/implement` **amends** rather than stacking `fix typo` commits, so **one ticket stays one commit**. Amending rewrites history, which is only safe while nothing has been pushed: keep the amend without the push guard and you rewrite published history.
+That guard is what makes the rest safe: `/implement` **amends** rather than stacking `fix typo` commits, so **one ticket stays one commit** — and amending rewrites history, which is only safe while nothing has been pushed.
 
-Each amend produces a new SHA, so the Marker re-advances on **every amend**, not only on the first commit — through `/commit`, exactly as the first commit did.
+Each amend produces a new SHA, so the Marker re-advances on **every amend** — through `/commit`, exactly as the first commit did.
 
 ## 5 — Record what moved
 
 Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts under `.claude/contexts/`.
 
-`.claude/policies/knowledge.md` says which layers this stage may write and which it may not, and `.claude/policies/context.md` says what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
+`.claude/policies/knowledge.md` says which layers this stage may write, and `.claude/policies/context.md` what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
 
 ---
 
-Core loop derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Core loop derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

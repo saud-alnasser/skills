@@ -50,7 +50,7 @@ gh label create "<name>" --color <hex> --description "<text>"
 
 ## Read and set Assignment
 
-Assignment is which human owns delivering the issue. Tenure reads it; it writes it only when asked (`/implement` has the rule).
+Assignment is which human owns delivering the issue. AEP reads it; it writes it only when asked (`/implement` has the rule).
 
 ```
 gh issue view <number> --json assignees,state,labels
@@ -67,7 +67,7 @@ gh issue develop <number> --name <branch>         # creates the branch ON THE RE
 gh issue develop <number> --list                  # read-only: branches linked this way
 ```
 
-`develop` creates the branch in the repository rather than locally, so it publishes — the same standing rule as pushing. It also names the branch by GitHub's convention rather than Tenure's, and `--list` sees only branches created through it, so it is not the read that answers whether a ticket is claimed. That read is `git ls-remote` (see [git.md](git.md)).
+`develop` creates the branch in the repository rather than locally, so it publishes — the same standing rule as pushing. It also names the branch by GitHub's convention rather than AEP's, and `--list` sees only branches created through it, so it is not the read that answers whether a ticket is claimed. That read is `git ls-remote` (see [git.md](git.md)).
 
 ## Link a parent and its sub-issues
 
@@ -104,9 +104,9 @@ Where the API is unavailable or refused, a **task list in the parent body** (`- 
 gh pr create --title "<conventional title>" --body-file - --base main
 ```
 
-Tenure does not open PRs unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
+AEP does not open PRs unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
 
-What the body covers is a convention, not an invocation: `CLAUDE.md` has it.
+What the body covers is a convention, not an invocation: `.claude/policies/version-control.md` has it.
 
 ## Close an issue by merging
 

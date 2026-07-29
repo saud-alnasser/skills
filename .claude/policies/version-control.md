@@ -1,6 +1,6 @@
 # Version control
 
-How work moves from a ticket to a landed change here. `.claude/tracker.md` is the other half of the pair — it says where the tickets are; this says what happens to one once somebody starts building it. How to *type* any of it is `.claude/tools/`.
+How work moves from a ticket to a landed change here. `.claude/policies/tracker.md` is the other half of the pair — it says where the tickets are; this says what happens to one once somebody starts building it. How to *type* any of it is `.claude/tools/`.
 
 ## Which model
 
@@ -33,17 +33,17 @@ A branch is deleted once it has landed.
 
 **One ticket is one commit.** Further changes amend it rather than stacking a `fix typo` on top. That is only safe while nothing is pushed, which is what makes the standing prohibition below load-bearing rather than fussy.
 
-Conventional Commits — `type(scope): summary` — which is also Tenure's default, so the parts worth recording are the ones this repository does that the default does not say:
+Conventional Commits — `type(scope): summary` — which is also AEP's default; the scope names an engineering domain, and `misc`, `stuff`, and `update` are not domains. The parts worth recording are the ones this repository does that the default does not say:
 
 - **A two-clause subject is normal**, joined by `, and`, when one commit genuinely did two things: `refactor(configure): derive tool references, and delete the tools skill`.
 - **The scope names an engineering domain**, and the vocabulary in use is `knowledge`, `configure`, `layout`, `implement`, `tracker`, `coordination`, `skills`, `rules`, `verify`, `dist`.
 - **The body is prose, and it is expected.** What changed and why, including what was rejected and what was found by running something. Never a file-by-file account — the diff already lists the files.
 - **`Refs:` carries the path to the ticket file**, from the repository root, as its own trailer line. Earlier commits used a bare number and a `.scratch/` path; both predate the current layout and neither is the convention now.
-- **`Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`** closes the message.
+- **`Co-Authored-By: <the model that authored the commit> <noreply@anthropic.com>`** closes the message — the model's own name, because the trailer is attribution rather than style.
 
 ## How work lands
 
-The maintainer fast-forwards `main` from each ticket branch, in ticket order. There are no merge commits in this repository's history and no pull requests; `.claude/tracker.md` records why, under external pull requests.
+The maintainer fast-forwards `main` from each ticket branch, in ticket order. There are no merge commits in this repository's history and no pull requests; `.claude/policies/tracker.md` records why, under external pull requests.
 
 Where tickets stack — one built on another's branch before either has landed — they land in the same order they were built, each still producing one commit on `main`.
 

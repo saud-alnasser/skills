@@ -25,4 +25,4 @@ Each reads *what it is* → *how to fix*. Match against the diff, not against th
 
 ---
 
-Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

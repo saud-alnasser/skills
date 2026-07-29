@@ -7,9 +7,11 @@ disable-model-invocation: true
 
 # Handoff
 
+Mode: maintenance
+
 A bridge between context windows. Write a document that lets a fresh agent continue this work, and save it to the **operating system's temporary directory — never into the workspace**. A handoff is scaffolding for one session; committed, it becomes a stale account of a repository that has since moved.
 
-**Do not duplicate anything already captured elsewhere.** Reference it by path or URL instead. In a Tenure repository most of what a next session needs is already on disk and already current:
+**Do not duplicate anything already captured elsewhere.** Reference it by path or URL instead. In a AEP repository most of what a next session needs is already on disk and already current:
 
 | What the next session needs | Where it already is |
 | --- | --- |
@@ -36,4 +38,4 @@ If arguments were passed, treat them as what the next session is for, and write 
 
 ---
 
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for Tenure.
+Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

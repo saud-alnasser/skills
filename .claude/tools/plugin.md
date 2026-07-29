@@ -1,14 +1,14 @@
-# claude plugin — Tenure's own distribution
+# claude plugin — AEP's own distribution
 
-This repository *is* the plugin: `.claude-plugin/plugin.json` sits at the root and `marketplace.json` publishes it with `"source": "./"`. So the tree you are editing and the Tenure that is running are two different things, and the whole point of this file is the gap between them.
+This repository *is* the plugin: `.claude-plugin/plugin.json` sits at the root and `marketplace.json` publishes it with `"source": "./"`. So the tree you are editing and the AEP that is running are two different things, and the whole point of this file is the gap between them.
 
 Docs: https://code.claude.com/docs/en/plugin-marketplaces and https://code.claude.com/docs/en/plugins. **Fetch them when an operation below is missing**, not to re-read what is here — the CLI's own `--help` is faster and is what the entries below were taken from.
 
-## Editing `skills/` does not change the running Tenure
+## Editing `skills/` does not change the running AEP
 
-An installed Tenure runs from a **cache pinned to a commit**, never from this working directory — whichever source the marketplace was added from. So a fix written into `skills/` here does not reach the running plugin until it is committed, published to that source, and the installed copy updated. `.claude/rules/engineering.md` makes publishing the human's call. Expect the edit to appear to do nothing until then; that is the design, not a fault.
+An installed AEP runs from a **cache pinned to a commit**, never from this working directory — whichever source the marketplace was added from. So a fix written into `skills/` here does not reach the running plugin until it is committed, published to that source, and the installed copy updated. `.claude/rules/engineering.md` makes publishing the human's call. Expect the edit to appear to do nothing until then; that is the design, not a fault.
 
-Where a given clone's Tenure came from is **Position** — per-machine, and recorded in the gitignored `settings.local.json` rather than here. Read it with:
+Where a given clone's AEP came from is **Position** — per-machine, and recorded in the gitignored `settings.local.json` rather than here. Read it with:
 
 ```
 claude plugin list
@@ -23,7 +23,7 @@ claude plugin marketplace list
 claude --plugin-dir .
 ```
 
-Loads this directory as the plugin for that session. A `--plugin-dir` plugin **takes precedence over an installed marketplace plugin of the same name**, so this overrides the installed Tenure rather than colliding with it — which is what makes it the working loop for fixing a framework bug found mid-ticket, with nothing published and nothing to undo.
+Loads this directory as the plugin for that session. A `--plugin-dir` plugin **takes precedence over an installed marketplace plugin of the same name**, so this overrides the installed AEP rather than colliding with it — which is what makes it the working loop for fixing a framework bug found mid-ticket, with nothing published and nothing to undo.
 
 ```
 /reload-plugins
@@ -36,13 +36,13 @@ Picks up further edits in the same session, without a restart.
 Two commands, and the first alone does nothing visible:
 
 ```
-claude plugin marketplace update tenure-marketplace
-claude plugin update tenure@tenure-marketplace --scope local
+claude plugin marketplace update aep-marketplace
+claude plugin update aep@aep-marketplace --scope local
 ```
 
 The marketplace update refreshes the **catalog**; the installed plugin stays pinned to its old commit until the second command runs. `claude plugin list` reports the pin, so it is how you tell the two apart. A restart applies the change.
 
-**The second command needs both the qualified id and the scope, and lies when it does not get them.** `claude plugin update tenure` fails with `Plugin "tenure" not found` — not because it is missing, but because the bare name misses and `--scope` defaults to `user` while Tenure is installed at `local`. Adding only the scope fails identically. Read that error as *wrong id or wrong scope*, never as *not installed*; check `claude plugin list` before believing it.
+**The second command needs both the qualified id and the scope, and lies when it does not get them.** `claude plugin update aep` fails with `Plugin "aep" not found` — not because it is missing, but because the bare name misses and `--scope` defaults to `user` while AEP is installed at `local`. Adding only the scope fails identically. Read that error as *wrong id or wrong scope*, never as *not installed*; check `claude plugin list` before believing it.
 
 The marketplace name is optional — omitting it updates every configured marketplace.
 
