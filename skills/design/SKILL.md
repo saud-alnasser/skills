@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Design
 
+Policies: `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/maps.md`, `.claude/policies/specs.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`
+
 Everything between a request and a plan `/implement` can work. Discovery, the grill, evidence, scope, and the deliverable — one skill, because splitting them lets the grill be skipped.
 
 `/design` **plans; it never builds.** It stops at its deliverable and hands back. It does not invoke `/implement` — that invocation is the user's approval, and taking it away is how a wrong plan gets built before anyone notices it was wrong.
@@ -119,6 +121,8 @@ Read a format file when the tier selects it, not before. Knowing what the delive
 ```
 
 The set lives in the design document until step 3, which is what makes it survivable: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal.
+
+**Which kind this repository has is in `.claude/policies/tracker.md`**, and it is read rather than inferred. The whole step above is conditional on the answer, so guessing it either publishes an unapproved set or gates a set nobody else can see.
 
 **One run creates exactly one top-level issue.** Every other ticket goes underneath it as a sub-issue; a design that yields a single ticket makes *that* ticket the root rather than wrapping one child in a parent. The tracker's top level therefore grows by one per design, so booming is visible at a glance instead of needing a count. `.claude/policies/tickets.md` has the hierarchy and the edges; `.claude/tools/github.md` has the invocations, including which id the sub-issues API actually wants.
 

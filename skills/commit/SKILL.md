@@ -5,6 +5,8 @@ description: Turn finished work into a commit — confirm the earlier stages ran
 
 # Commit
 
+Policies: `.claude/policies/knowledge.md`, `.claude/policies/specs.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
+
 The transaction boundary. Everything before it produced a change in the working tree; this is where that change becomes history.
 
 Two callers, one implementation:
@@ -64,7 +66,7 @@ Where the repository documents or demonstrates another convention, follow it **s
 
 Say what capability changed, and why it changed. **Never a file-by-file account**: the diff already lists the files, and a message that re-lists them spends the reader's attention on the one thing they could have got for free.
 
-Reference the ticket. On a shared tracker, **which form** depends on how this commit will reach the default branch — which `.claude/policies/version-control.md` states, so it is read rather than inferred from the shape of the branch. There are exactly two cases:
+Reference the ticket. Whether this repository has a shared tracker at all is in `.claude/policies/tracker.md` — read it, because the two cases below only differ on a shared one. On a shared tracker, **which form** depends on how this commit will reach the default branch — which `.claude/policies/version-control.md` states, so it is read rather than inferred from the shape of the branch. There are exactly two cases:
 
 | How the work lands | The commit carries | Because |
 | --- | --- | --- |

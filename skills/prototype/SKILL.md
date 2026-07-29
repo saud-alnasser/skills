@@ -5,6 +5,8 @@ description: Build throwaway code to answer a design question by feel, then reco
 
 # Prototype
 
+Policies: `.claude/policies/evidence.md`
+
 A prototype is **throwaway code that answers a question**. Its sibling `/research` answers questions about **facts**; this one answers questions about **feel** — does this state model hold up, does this layout read right. The question decides the shape.
 
 The durable output is not the code. It is a **write-up**, and the code is deleted.

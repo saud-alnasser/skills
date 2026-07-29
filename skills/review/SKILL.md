@@ -5,6 +5,8 @@ description: Review a diff on two axes — does it implement what was asked, and
 
 # Review
 
+Policies: `.claude/policies/decisions.md`
+
 Two questions about one diff, asked independently:
 
 - **Spec** — does this implement what the ticket or spec asked for?

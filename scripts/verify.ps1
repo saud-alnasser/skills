@@ -80,13 +80,28 @@ function Get-SkillFiles {
   Get-ChildItem $skills -Recurse -File -Filter *.md
 }
 
+# The sweeps iterate `Get-SkillFiles` and read each one. `-Raw` yields $null for
+# an empty file, and the regex call that follows then throws a null-reference —
+# which reports as an exception rather than as the assertion that failed, so the
+# one file that is catastrophically wrong is the one whose failure is unreadable.
+function Get-SkillText {
+  param([System.IO.FileInfo]$File)
+  $c = Get-Content $File.FullName -Raw
+  if ($null -eq $c) { '' } else { $c }
+}
+
 # Throws rather than returning $null, so an assertion about a file's *content*
 # fails loudly when the file is absent instead of passing on an empty string.
 function Get-SkillFile {
   param([string]$RelativePath)
   $p = Join-Path $skills $RelativePath
   if (-not (Test-Path $p)) { throw "skills/$RelativePath is missing" }
-  Get-Content $p -Raw
+  # `-Raw` yields $null for an empty file, and every caller then throws a
+  # null-reference from inside a regex call — which reports as an exception
+  # rather than as the assertion that failed. An empty file is a real failure
+  # and should read like one.
+  $c = Get-Content $p -Raw
+  if ($null -eq $c) { '' } else { $c }
 }
 
 function Get-Frontmatter {
@@ -1218,7 +1233,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     # Flag only a mention that reads as somewhere to write.
     $offenders = @()
     foreach ($f in Get-SkillFiles) {
-      foreach ($line in ((Get-Content $f.FullName -Raw) -split '\r?\n')) {
+      foreach ($line in ((Get-SkillText $f) -split '\r?\n')) {
         if ($line -match 'docs/reviews' -and $line -notmatch '(?i)\b(no|never|not|dropped|without)\b') {
           $offenders += "$($f.Name): $($line.Trim())"
         }
@@ -1926,7 +1941,7 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
   Assert "no prototype file keeps the code on a branch — ADR 0009 supersedes that" {
     $offenders = @()
     foreach ($f in (Get-ChildItem (Join-Path $skills 'prototype') -File -Filter *.md)) {
-      foreach ($line in ((Get-Content $f.FullName -Raw) -split '\r?\n')) {
+      foreach ($line in ((Get-SkillText $f) -split '\r?\n')) {
         if ($line -match '(?i)(throwaway|prototype) branch|branch.{0,40}primary source') {
           $offenders += "$($f.Name): $($line.Trim())"
         }
@@ -1994,7 +2009,7 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
     $missing = @()
     foreach ($s in $onramps) {
       foreach ($f in (Get-ChildItem (Join-Path $skills $s) -File -Filter *.md -ErrorAction SilentlyContinue)) {
-        if ((Get-Content $f.FullName -Raw) -notmatch '(?i)mattpocock/skills') { $missing += "$s/$($f.Name)" }
+        if ((Get-SkillText $f) -notmatch '(?i)mattpocock/skills') { $missing += "$s/$($f.Name)" }
       }
     }
     if ($missing) { throw ($missing -join ', ') }
@@ -4556,7 +4571,7 @@ Parse the status columns carefully.
     if (-not (Test-Path $dir)) { return $true }
     $problems = @()
     foreach ($f in (Get-ChildItem $dir -Filter '*.md')) {
-      $c = Get-Content $f.FullName -Raw
+      $c = Get-SkillText $f
       if ($c -notmatch '(?m)^Derived from:\s*tenure/(\S+\.md)\s*$') { continue }
       $srcName = $Matches[1]
       $srcPath = Join-Path $skills "configure/tools/$srcName"
@@ -4669,7 +4684,7 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
   Assert "graphite.md is the only unresolvable sibling link, and the file carrying it says so" {
     $dangling = @()
     foreach ($f in (Get-ChildItem $toolDir -Filter '*.md')) {
-      foreach ($m in [regex]::Matches((Get-Content $f.FullName -Raw), '\]\((?!https?:|#)([a-z0-9.-]+\.md)\)')) {
+      foreach ($m in [regex]::Matches((Get-SkillText $f), '\]\((?!https?:|#)([a-z0-9.-]+\.md)\)')) {
         if (-not (Test-Path (Join-Path $toolDir $m.Groups[1].Value))) {
           $dangling += "$($f.Name) → $($m.Groups[1].Value)"
         }
@@ -5453,7 +5468,7 @@ Describe-Ticket 'streamline/03' 'one guide per workflow concern, reached by poin
     foreach ($f in (Get-SkillFiles)) {
       $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
       if ($rel -like 'configure/policies/*') { continue }
-      $c = Get-Content $f.FullName -Raw
+      $c = Get-SkillText $f
       foreach ($g in $gone) { if ($c -cmatch [regex]::Escape($g)) { $hits += "$rel → $g" } }
     }
     if ($hits) { throw ($hits -join '; ') }
@@ -5580,7 +5595,7 @@ Describe-Ticket 'streamline/04' 'split routing from vocabulary, and re-home the 
     foreach ($f in (Get-SkillFiles)) {
       $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
       if ($rel -in $exempt) { continue }
-      if ((Get-Content $f.FullName -Raw) -cmatch '\.claude/context\.md') { $hits += $rel }
+      if ((Get-SkillText $f) -cmatch '\.claude/context\.md') { $hits += $rel }
     }
     if ($hits) { throw "still named in: $($hits -join ', ')" }
     $true
@@ -5637,7 +5652,7 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
     foreach ($f in (Get-SkillFiles)) {
       $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
       if ($rel -eq 'configure/MIGRATION.md') { continue }
-      $c = Get-Content $f.FullName -Raw
+      $c = Get-SkillText $f
       foreach ($old in @('\.claude/marker\.json', '\.claude/prototypes/')) {
         if ($c -match $old) { $hits += "$rel → $old" }
       }
@@ -5709,6 +5724,122 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
 
   Assert "the root ignore file is still left alone" {
     (Get-SkillFile 'configure/SKILL.md') -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root'
+  }
+}
+
+# --- ticket streamline/06 — skills declare the guides they read ---------------
+
+Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
+
+  # Body text, not frontmatter (ADR 0021's Load-Bearing Frontmatter rule, and
+  # the reason `tags` was deleted): nothing in the harness would act on a
+  # frontmatter field, so it would be a second place to keep true and no reader
+  # would be obliged to read it. A `Policies:` line mirrors the `Sources:` line
+  # a Domain Context already carries.
+  function Get-Declared {
+    param([string]$Relative)
+    $line = [regex]::Match((Get-SkillFile $Relative), '(?m)^Policies:(.*)$')
+    if (-not $line.Success) { return $null }
+    ,@([regex]::Matches($line.Groups[1].Value, '`\.claude/policies/([a-z-]+)\.md`') |
+       ForEach-Object { $_.Groups[1].Value })
+  }
+
+  function Get-RoutedFor {
+    param([string]$Stage)
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which guides each stage reads'
+    $row = [regex]::Match($section, '(?im)^\|\s*`?/' + [regex]::Escape($Stage) + '`?\s*\|([^\r\n]*)\|\s*$')
+    if (-not $row.Success) { return $null }
+    ,@([regex]::Matches($row.Groups[1].Value, '`\.claude/policies/([a-z-]+)\.md`') |
+       ForEach-Object { $_.Groups[1].Value })
+  }
+
+  # --- criterion 1: every declaration resolves ------------------------------
+
+  Assert "every skill that reads a guide declares it, near the top" {
+    $expected = @('commit', 'configure', 'design', 'domain-modeling', 'implement',
+                  'prototype', 'research', 'review', 'triage')
+    $missing = @($expected | Where-Object { (Get-SkillFile "$_/SKILL.md") -notmatch '(?m)^Policies:' })
+    if ($missing) { throw "no declaration: $($missing -join ', ')" }
+    $true
+  }
+
+  # One declaration per skill. The insertion that produced these matched every
+  # `# ` heading in the file, including the ones inside fenced examples, and put
+  # a second `Policies:` line into two write-up templates — where it read as
+  # part of the template a user is meant to copy.
+  Assert "no skill declares twice" {
+    $twice = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $n = ([regex]::Matches((Get-SkillText $f), '(?m)^Policies:')).Count
+      if ($n -gt 1) { $twice += ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/') }
+    }
+    if ($twice) { throw "declared more than once in: $($twice -join ', ')" }
+    $true
+  }
+
+  Assert "every guide any skill declares exists as a shipped template" {
+    $broken = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      foreach ($g in (Get-Declared $rel)) {
+        if (-not (Test-Path (Join-Path $skills "configure/policies/$g.template.md"))) { $broken += "$rel → $g" }
+      }
+    }
+    if ($broken) { throw ($broken -join '; ') }
+    $true
+  }
+
+  # --- criterion 2: a skill declares only what it reads ---------------------
+
+  # The cross-check the routing table has needed since it was written. The table
+  # and the declarations are two expressions of one mapping, and nothing stopped
+  # them drifting — they already had, in three places, before this assertion
+  # existed. Both directions, because each catches a different mistake: a stage
+  # that quietly stopped reading a guide, and one that started without saying so.
+  #
+  # `/configure` is exempt and says why in its own declaration: it reads every
+  # guide, so listing them would be a tenth thing to update when a tenth guide
+  # is written.
+  foreach ($stage in @('design', 'implement', 'review', 'research', 'prototype', 'commit')) {
+    Assert "/$stage declares exactly what the routing table routes to it" {
+      $declared = Get-Declared "$stage/SKILL.md"
+      $routed = Get-RoutedFor $stage
+      if ($null -eq $declared) { throw 'the skill declares nothing' }
+      if ($null -eq $routed) { throw 'the routing table has no row for it' }
+      $undeclared = @($routed | Where-Object { $_ -notin $declared })
+      $unrouted   = @($declared | Where-Object { $_ -notin $routed })
+      if ($undeclared) { throw "routed but not declared: $($undeclared -join ', ')" }
+      if ($unrouted) { throw "declared but not routed: $($unrouted -join ', ')" }
+      $true
+    }
+  }
+
+  Assert "/configure declares the whole directory rather than a list, and says why" {
+    $line = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?m)^Policies:(.*)$')
+    if (-not $line.Success) { throw 'no declaration' }
+    if ($line.Groups[1].Value -notmatch '\.claude/policies/') { throw 'the directory is not named' }
+    $line.Groups[1].Value -match '(?i)writes them|audit'
+  }
+
+  # --- criterion 3: declaring is not restating ------------------------------
+
+  # `$rulePattern`'s single-home sweep already proves each guide's rules are
+  # stated once. What it cannot see is a declaration that has quietly grown into
+  # a summary of the guide — which reads as helpful and is a second home.
+  Assert "a declaration points and does not summarise" {
+    $long = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $line = [regex]::Match((Get-SkillText $f), '(?m)^Policies:(.*)$')
+      if (-not $line.Success) { continue }
+      # Everything outside the backticked paths. A pointer needs almost none;
+      # a sentence explaining what each guide says is the failure.
+      $prose = ($line.Groups[1].Value -replace '`\.claude/policies/[a-z-]+\.md`', '').Trim(' ', ',')
+      if ($prose.Length -gt 120) {
+        $long += ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      }
+    }
+    if ($long) { throw "the declaration summarises rather than points: $($long -join ', ')" }
+    $true
   }
 }
 

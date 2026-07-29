@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Configure
 
+Policies: every guide in `.claude/policies/` — this is the command that writes them, and an audit run reads each one back.
+
 `/configure` has **one job: make repository knowledge correct and complete.** Onboarding and auditing are not two responsibilities bolted together — they are the same job against different starting states, and a repository with no knowledge is the degenerate case of one whose knowledge is incomplete.
 
 Which branch runs is decided by **what it finds, never by a flag.** A flag lets the caller assert a starting state; detection discovers one, and the caller is usually wrong about which repository they are standing in.

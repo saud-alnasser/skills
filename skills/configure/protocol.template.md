@@ -78,8 +78,8 @@ Every stage also loads `.claude/contexts/repository.md` and routes from its tabl
 
 | Stage | Guides it reads |
 | --- | --- |
-| `/configure` | `.claude/policies/context.md`; writes them all, and on an audit run reads each one back against the repository |
-| `/design` | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
+| `/configure` | every guide in `.claude/policies/` — it writes them all, and an audit run reads each one back against the repository |
+| `/design` | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
 | `/implement` | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/tools/git.md`, the forge reference |
 | `/review` | `.claude/policies/decisions.md`, `.claude/rules/`, `.claude/decisions/`, `.claude/tools/git.md`, the forge reference |
 | `/research` | `.claude/policies/evidence.md` |

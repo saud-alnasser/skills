@@ -5,6 +5,8 @@ description: Investigate a question against primary sources and write the findin
 
 # Research
 
+Policies: `.claude/policies/evidence.md`
+
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
 
 What it produces is **Evidence**: a record of what was checked and when, filed apart from Context and never inside it. `.claude/policies/evidence.md` says why that separation holds.

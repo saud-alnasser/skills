@@ -5,6 +5,8 @@ description: Build one ticket end to end — verify, claim, drive tdd at the agr
 
 # Implement
 
+Policies: `.claude/policies/context.md`, `.claude/policies/knowledge.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
+
 One ticket, built and closed out. `/design` always leaves at least one ticket on disk, so there is always something to read — and `/implement` reads the ticket, not the conversation.
 
 `/implement` **builds what was planned, or it stops.** It never redesigns.

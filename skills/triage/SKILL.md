@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Triage
 
+Policies: `.claude/policies/tracker.md`
+
 The on-ramp for work **Claude did not create**. `/design` cuts tickets that are agent-ready by construction; this is for everything that arrives from outside and has to be made agent-ready first.
 
 Which tracker this repository uses, the label string behind each role, who counts as an external contributor, and what a bare `#42` resolves to are all in `.claude/policies/tracker.md`. Read it first — it is the only place any of that is recorded.
