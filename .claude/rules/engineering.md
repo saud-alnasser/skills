@@ -21,12 +21,13 @@ Committing happens as part of building, without being asked. Pushing, opening a 
 
 ## What gets written
 
-- Code explains itself: a comment that explains *what* the code does marks code to improve, not annotate. Comments say *why*.
+- Code explains itself: a comment that explains _what_ the code does marks code to improve, not annotate. Comments say _why_.
 - A workaround that needs a paragraph of justification is wrong code — fix the code.
 - Document every public API.
 - Name a file for the one thing it holds; directories carry the qualifiers.
 - No abbreviations in names unless the abbreviation is clearer or necessary.
 - Tests sit as near the code as the language and tooling allow, and the repository's own convention wins.
+- Treat `.claude/` as internal protocol implementation. Never reference its files from code comments or repository documentation.
 
 ## Claude never silently decides architecture
 
