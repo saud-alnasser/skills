@@ -90,7 +90,12 @@ Every structural ticket changes `skills/` only. This repository moves onto the n
 09  re-anchor the suite, close coverage      → asserts against a tree that exists
 10–13  compress, sliced one per context window
 14  confirm the budget
+
+17  discussions are evidence                 → after 03, independent of the rest
+18  each stage states its posture            → after 06, so skills are rewritten once
 ```
+
+Tickets 17 and 18 were added after the effort was under way, from a proposed "v2" reframing of the whole repository. Most of that proposal was already built or already scheduled here; what it contributed that was new is these two, and the rejected list below records the rest so the same ideas are not re-argued from scratch. They are appended rather than renumbered, because the branch convention encodes the ticket number and two of these branches are already committed.
 
 Two placements carry the risk and both are deliberate. **Ticket 09 sits before every compression ticket**, because compressing first would leave the suite red across four tickets with no way to distinguish an intended rewrite from a lost claim. **Ticket 16 sits before ticket 09**, so the layout the suite is re-anchored to is one that exists rather than one that is planned.
 
@@ -99,6 +104,14 @@ Ticket 01 landed under the earlier ordering and is left where it is. It reached 
 **Rejected: repository-first, with the templates catching up at the end.** This is how the effort was originally cut, and ticket 01 was built that way. It reverse-engineers the templates from wherever this tree happened to land, and defers every error to somebody else's repository. Reversed by ADR 0025.
 
 **Rejected: reverting ticket 01 to give the migration a clean before-state.** Cut as ticket 15 and dropped. The premise — that this repository is the only tree the migration can be proven against — is false, because the pre-effort tree is recoverable from history. A fixture beats it on repeatability, on coverage, and on not writing a revert-then-redo pair into a history that is this framework's build record. See ADR 0026.
+
+**Rejected: a protocol kernel that mediates all loading.** Proposed as the centre of an "operating system" reframing — `CLAUDE.md` boots a `protocol/` directory, and no component loads anything except through it. There is no mechanism that can enforce it. The harness auto-loads `CLAUDE.md` and `.claude/rules/**` and nothing else, so "do not load until directed" is an honour system, and this repository has already paid for exactly that: `.claude/rules/skills.md` announced `Scope: skills/**` in prose and was charged on every turn until ticket 01 made the scope `paths:` frontmatter. ADR 0021 is the generalisation — placement is by loading mechanism because a mechanism is observable and a discipline is not. A resolver layer is a discipline with a directory.
+
+**Rejected: `modes/` and `workflows/` as separate directories.** Seven of the ten proposed modes had identically-named workflows, which is the signal that the split is nominal rather than real. Rejected for the reason subject-based placement was rejected above: it is a judgement call at every edge, and two directories holding one concept means every future instruction needs an argument about which it is. The useful half — that a stage has a posture nobody has written down — is kept, as ticket 18 (ADR 0028).
+
+**Rejected: a `dependencies.yaml` per skill.** The same rejection as the `policies:` frontmatter field below, arrived at from a different direction. Nothing in any harness reads it, so it would be a second manifest of the pointers already in the prose, free to drift from them. Ticket 06's `Policies:` line is read by the only reader there is and `verify.ps1` asserts every path it names.
+
+**Rejected: designing for vendor portability now.** Conditional loading here rests on `paths:` frontmatter, which other tools either implement differently or not at all. Portable means lowest-common-denominator — "read this file" — which discards the one property ADR 0021 was built on. The committed guides are already readable by any tool that can open a markdown file; what is not portable is the *cheapness*, and paying for portability by giving up the mechanism inverts the trade.
 
 **Rejected: compress first, then restructure.** Every compressed line may land in a different file afterwards, so the same content is reviewed twice and the compression has no settled structure to compress toward.
 
