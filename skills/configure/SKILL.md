@@ -181,6 +181,7 @@ So this pass reaches what the routing table does not:
 - **Re-check Source Pointers**, including the ones no recent work touched.
 - **Re-check `.claude/tools/`.** A repository's tooling changes, and a stale command is worse than no command: no command asks, a wrong one runs.
 - **Mark specs reality already satisfies.** `/commit` marks a spec `implemented` when it lands the last criterion; a spec finished outside that path stays `accepted` forever. This pass catches those.
+- **Heal the framework's name.** A protocol file expanding AEP as the *AI* Engineering Protocol was installed before the rename to *Agentic*. The acronym never moved, so nothing is broken and nothing routes on the sentence — which is why only this pass reaches it. One sentence, not a migration.
 
 Pruning deletes, so it goes through step 2's plan like everything else.
 

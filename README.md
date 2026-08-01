@@ -1,6 +1,6 @@
-# AEP — the AI Engineering Protocol
+# AEP — the Agentic Engineering Protocol
 
-A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering) and adds a persistent repository-knowledge layer on top. The framework's canonical definition is [`specs.md`](specs.md); it was previously named **Tenure**.
+A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering) and adds a persistent repository-knowledge layer on top. The framework's canonical definition is [`specs.md`](specs.md); it was named **Tenure** first and the **AI Engineering Protocol** after that, so records written under either name still say so.
 
 ## Install
 
