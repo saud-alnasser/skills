@@ -6244,7 +6244,7 @@ Describe-Ticket 'aep/04' 'a discussion is a fourth kind of evidence' {
 Describe-Ticket 'aep/05' 'the protocol file and the entrypoint speak the spec' {
 
   Assert "the protocol file names the protocol it implements" {
-    (Get-SkillFile 'configure/protocol.template.md') -match 'AI Engineering Protocol'
+    (Get-SkillFile 'configure/protocol.template.md') -match 'Agentic Engineering Protocol'
   }
 
   Assert "the entrypoint places by the specification's tiers" {
@@ -6540,6 +6540,125 @@ Describe-Ticket 'aep/12' 'whatever formats a repository is made to skip .claude/
   # ticket because this is the change that would have overturned it.
   Assert "ADR 0006's root-ignore rule still stands beside the exception" {
     (Get-SkillFile 'configure/SKILL.md') -match '(?i)root `?\.gitignore`? is left alone'
+  }
+}
+
+# --- ticket agentic/01 — the expansion is Agentic, and it stops at records ----
+
+Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at frozen records' {
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  $old = 'AI Engineering Protocol'
+  $new = 'Agentic Engineering Protocol'
+
+  # The three frozen records the rename deliberately did not touch: a committed
+  # ADR's prose does not move and history is not repaired (ADR 0034).
+  $frozenRecords = @(
+    '.claude/decisions/0029-specs-md-is-the-normative-specification.md'
+    '.claude/tickets/aep/spec.md'
+    '.claude/tickets/aep/issues/02-rename-tenure-to-aep.md'
+  )
+
+  # Everything else that may hold the string, each for a reason that is not "it
+  # was missed". The two effort records cannot describe the rename without
+  # naming what it renamed; README and NOTICE carry the old name deliberately,
+  # as a former name, and are pinned positively below instead; and this file is
+  # the guard's own home.
+  $namesItLegitimately = $frozenRecords + @(
+    '.claude/decisions/0034-the-rename-to-agentic-stops-at-frozen-records.md'
+    '.claude/tickets/agentic/issues/01-rename-the-expansion-to-agentic.md'
+    'README.md'
+    'NOTICE'
+    'scripts/verify.ps1'
+  )
+
+  # Anchored to the live surface rather than to a list of known sites: any file
+  # outside the exemptions above. A file added later is covered the moment it
+  # exists, which is the half a named-sites guard cannot do. The extensions are
+  # the documentation surface — the only place an expansion can be written.
+  Assert "no live file expands AEP as the AI Engineering Protocol" {
+    $exempt = $namesItLegitimately | ForEach-Object { (Join-Path $repo $_) }
+    $hits = Get-ChildItem $repo -Recurse -File -Include *.md, *.json, *.ps1 |
+      Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' } |
+      Where-Object { $exempt -notcontains $_.FullName } |
+      Where-Object { (Get-Content $_.FullName -Raw) -match [regex]::Escape($old) }
+    if ($hits) {
+      $names = ($hits | ForEach-Object { $_.FullName.Substring($repo.Length + 1) }) -join ', '
+      throw "the old expansion is live in: $names"
+    }
+    $true
+  }
+
+  # The other half, and deliberately a second assertion. One guard covering both
+  # directions passes while either holds, so deleting the residue would leave it
+  # green — which is the failure this pair exists to make impossible.
+  Assert "every frozen record still carries the expansion it was written under" {
+    foreach ($f in $frozenRecords) {
+      if ((Get-RepoText $f) -notmatch [regex]::Escape($old)) {
+        throw "$f lost the name it was written under — history is not repaired"
+      }
+    }
+    $true
+  }
+
+  Assert "the entrypoint, the router, and this repository's Context all say Agentic" {
+    foreach ($f in @('CLAUDE.md', '.claude/protocol.md', '.claude/contexts/repository.md')) {
+      if ((Get-RepoText $f) -notmatch [regex]::Escape($new)) { throw "$f does not name the protocol" }
+    }
+    $true
+  }
+
+  # The residue is only defensible if a reader can tell it from an unfinished
+  # rename without opening the history, which is what the trail buys. These two
+  # are exempt from the sweep, so the current name is asserted here too —
+  # without it a regression to the old expansion as the *current* name would sit
+  # in the one place the sweep cannot see.
+  Assert "the README and the NOTICE carry the current name and both former ones" {
+    foreach ($f in @('README.md', 'NOTICE')) {
+      $c = Get-RepoText $f
+      if ($c -notmatch [regex]::Escape($new)) { throw "$f does not name the framework" }
+      if ($c -notmatch 'Tenure') { throw "$f does not name the first former name" }
+      if ($c -notmatch [regex]::Escape($old)) { throw "$f does not name the second former name" }
+    }
+    $true
+  }
+
+  Assert "the acronym did not move" {
+    $plugin = Get-RepoText '.claude-plugin/plugin.json' | ConvertFrom-Json
+    if ($plugin.name -ne 'aep') { throw "the plugin id moved to '$($plugin.name)'" }
+    $true
+  }
+
+  # Pinned to the literal deliberately: specs.md makes every version bump a
+  # deliberate amendment recorded as a Decision, so a guard that has to be
+  # edited alongside one is doing its job rather than getting in the way.
+  Assert "the specification is released at 1.2.0, not a draft" {
+    $c = Get-RepoText 'specs.md'
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.2\.0\s*$') { throw 'the specification is not at a released 1.2.0' }
+    $true
+  }
+
+  # Read off the specification rather than pinned to a literal, so the next
+  # amendment cannot bump one of the two and leave this passing.
+  Assert "the plugin manifest states the specification's version" {
+    $spec = Get-RepoText 'specs.md'
+    if ($spec -notmatch '(?m)^\*\*Version:\*\*\s*(\S+)\s*$') { throw 'the specification states no version' }
+    $specVersion = $Matches[1]
+    $plugin = Get-RepoText '.claude-plugin/plugin.json' | ConvertFrom-Json
+    if ($plugin.version -ne $specVersion) {
+      throw "the plugin is $($plugin.version) and the specification is $specVersion"
+    }
+    $true
+  }
+
+  Assert "the audit branch heals an installed protocol file that predates the rename" {
+    (Get-SkillFile 'configure/SKILL.md') -match "(?s)## 5 — Audit.*Heal the framework's name"
   }
 }
 

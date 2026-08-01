@@ -103,7 +103,7 @@ The conversion brings either to the current layout: `.claude/modes/` is installe
 
 ## The Tenure → AEP rename
 
-The framework was called **Tenure** before it was rethought as the AI Engineering Protocol, and a repository configured under that name carries it in prose: the entrypoint, the protocol file, the policies, and the tool references say Tenure and name `/tenure:` commands. The layout may already be current — the name is a conversion of its own, and it applies on top of whichever layout migration the repository also needs.
+The framework was called **Tenure** before it became AEP, and a repository configured under that name carries it in prose: the entrypoint, the protocol file, the policies, and the tool references say Tenure and name `/tenure:` commands. The layout may already be current — the name is a conversion of its own, and it applies on top of whichever layout migration the repository also needs.
 
 The conversion is textual and complete: in every **live** file under `.claude/` and in the entrypoint, `Tenure` becomes `AEP` and `/tenure:` becomes `/aep:`, including possessives and the namespaced command list the entrypoint or help text may carry. Frozen records — Decisions, resolved tickets — keep the old name, under the same rule as old paths: history is not repaired, and a Decision that argued about Tenure argued about Tenure.
 

@@ -1,6 +1,6 @@
-# AI Engineering Protocol (AEP) — Specification
+# Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.2.0-draft
+**Version:** 1.2.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 

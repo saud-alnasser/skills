@@ -1,6 +1,6 @@
 # AEP
 
-This repository builds the **AI Engineering Protocol** — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering), and its canonical definition is `specs.md` at the root.
+This repository builds the **Agentic Engineering Protocol** — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering), and its canonical definition is `specs.md` at the root.
 
 It is also configured *by* AEP. Those are two different things, and the boundary below is the one to keep straight.
 

@@ -1,6 +1,6 @@
 {
   "name": "aep-marketplace",
-  "description": "Publishes the AI Engineering Protocol from the repository that builds it.",
+  "description": "Publishes the Agentic Engineering Protocol from the repository that builds it.",
   "owner": {
     "name": "SAUD ALNASSER"
   },
@@ -8,7 +8,7 @@
     {
       "name": "aep",
       "source": "./",
-      "description": "The AI Engineering Protocol — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
+      "description": "The Agentic Engineering Protocol — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
     }
   ]
 }

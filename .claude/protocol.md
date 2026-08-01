@@ -1,6 +1,6 @@
 # Workflow protocol
 
-This repository runs the **AI Engineering Protocol**; this file is its per-repository router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted.
+This repository runs the **Agentic Engineering Protocol**; this file is its per-repository router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted.
 
 <!--
   Installed by /configure at `.claude/protocol.md`.
