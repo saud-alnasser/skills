@@ -528,8 +528,10 @@ $rulePattern = [ordered]@{
   'the workaround-comment test'        = '(?i)workaround[^\r\n]{0,80}fix the code'
   # TICKETS.md owns the ticket format, so it owns which tracker expresses
   # a state which way. /implement claims tickets and pointed at the config,
-  # but restated the mapping too.
-  'the local-markdown status form'    = '(?i)the same states are labels'
+  # but restated the mapping too. fieldwork/03 rewrote the mapping — labels
+  # out, native issue state in — so the guard tracks the subject: any
+  # restatement needs the term, whatever verb carries it there.
+  'the local-markdown status form'    = '(?i)native (issue )?state'
   # ADR 0008 classes the PR description shape as a Tenure convention, so it
   # lives with the others in CLAUDE.md rather than as prose inside one
   # CLI's task-to-command reference.
@@ -587,6 +589,31 @@ $rulePattern = [ordered]@{
   # restatement that reaches the same conclusion in different words is still
   # a second home.
   'the term-placement rule'            = '(?i)only while one workflow stage runs'
+  # fieldwork/01. The tracker template owns the detect test for what a ticket
+  # is — the maps policy and /configure reach it by pointer. Anchored to the
+  # subject's verbs — tying, binding, mapping a ticket to a branch — rather
+  # than to one file's wording; ADR 0035's own phrasing ("binds every ticket
+  # to one branch") is the likeliest restatement and has to match too.
+  'the ticket-branch detect test'      = '(?i)(tie|bind|map)s? (one|a|every) ticket to (one|a) branch'
+  # fieldwork/02. The maps policy owns both: what a decision edge means, and
+  # what happens to local numbering when the tracker assigns ids. The first is
+  # anchored to the term the rule coins — any restatement needs the vocabulary
+  # to mean the same thing; the second to the subject, dropping the NN prefix.
+  'the answer-gating edge rule'        = '(?i)answer.gating'
+  'the tracker-assigned-id rule'       = '(?i)(no|drop(s|ping)?) (the )?`?<?NN>?`? prefix'
+  # fieldwork/03. The tickets template owns what `obsolete` becomes on GitHub;
+  # the forge reference carries only the invocation, and stays free of the
+  # state's name so a restatement there is caught rather than blessed.
+  # Anchored to the mapping itself — the state to its closure reason.
+  'the obsolete-closure form'          = '(?i)obsolete[^\r\n]{0,80}not[ -]planned'
+  # fieldwork/06. Four placed rules, one home each: the declaration and its
+  # timing in the tickets template; what reaching an increment does — the hold
+  # and the guardrail — in the implement stage; the relaxed exit in the maps
+  # template. Each anchored to the phrase any faithful restatement needs.
+  'the increment-declaration timing rule' = '(?i)design time only|never added during the build|build never (adds|writes) one'
+  'the increment hold rule'               = '(?i)hold(ing|s)? the claim'
+  'the increment never-invented guardrail' = '(?i)never invents? an increment'
+  'the map settled-or-declared exit'      = '(?i)settled,? or declared'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -1615,10 +1642,10 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   }
 
   # /commit is the Marker's only writer, so the file's shape is /commit's to
-  # define. Nowhere else in Tenure says what is in it.
+  # define. The *path* is not: fieldwork/05 moved its single home to the git
+  # reference, and the writer reaches it by pointer while keeping the payload.
   Assert "the Marker's shape is defined, since /commit is its only writer" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch '\.claude/position/marker\.json') { throw 'the Marker path is never named' }
     $c -match '(?ms)^```\s*json\s*$.*?commit.*?^```\s*$'
   }
 
@@ -4664,7 +4691,7 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
   # losing the line silently exempts that file from the only check that catches
   # a summarized entry. One assertion per file, because an aggregate one passes
   # while a single file drops out.
-  foreach ($derived in @('git.md', 'github.md')) {
+  foreach ($derived in @('git.md', 'github.md', 'graphite.md')) {
     Assert "$derived names the shipped entry it was derived from" {
       $c = Get-RepoText ".claude/tools/$derived"
       if ($c -notmatch "(?m)^Derived from:\s*aep/$([regex]::Escape($derived))\s*$") {
@@ -4729,6 +4756,13 @@ Describe-Ticket 'layout/04' "derive this repository's own tool references" {
     if ($dangling -contains 'git.md → graphite.md') {
       $preamble = ((Get-RepoText '.claude/tools/git.md') -split '(?m)^##\s')[0]
       if ($preamble -notmatch '(?i)graphite') { throw 'git.md links graphite.md without saying so above its first entry' }
+    } else {
+      # The exemption note dies with the exemption — a preamble still claiming
+      # the link dangles is drift from the moment graphite.md is derived.
+      $preamble = ((Get-RepoText '.claude/tools/git.md') -split '(?m)^##\s')[0]
+      if ($preamble -match '(?i)points at nothing|no reason to derive') {
+        throw 'git.md still documents a dangling link that now resolves'
+      }
     }
     $true
   }
@@ -6638,9 +6672,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.2.0, not a draft" {
+  Assert "the specification is released at 1.3.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.2\.0\s*$') { throw 'the specification is not at a released 1.2.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.3\.0\s*$') { throw 'the specification is not at a released 1.3.0' }
     $true
   }
 
@@ -6659,6 +6693,292 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
 
   Assert "the audit branch heals an installed protocol file that predates the rename" {
     (Get-SkillFile 'configure/SKILL.md') -match "(?s)## 5 — Audit.*Heal the framework's name"
+  }
+}
+
+# --- ticket fieldwork/01 — the tracker declares what a ticket is --------------
+
+Describe-Ticket 'fieldwork/01' 'the tracker declares what a ticket is, and the map reads it' {
+
+  $trackerTemplate = 'configure/policies/tracker.template.md'
+  $mapsTemplate    = 'configure/policies/maps.template.md'
+
+  Assert "the tracker template declares what a ticket is, and carries the detect test" {
+    $s = Get-Section (Get-SkillFile $trackerTemplate) 'What a ticket is'
+    ($s -match '(?i)branch-bound') -and
+    ($s -match '(?i)tracked intent') -and
+    ($s -match $rulePattern['the ticket-branch detect test'])
+  }
+
+  Assert "the maps template places decision work by reading the declaration" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Where decision work lives'
+    ($s -match '(?i)what a ticket is') -and
+    ($s -match '(?i)design document')
+  }
+
+  # The defect that produced the field damage: an unconditional claim that
+  # decision work goes on the tracker. The declaration branch replaces it, so
+  # its return is a regression even beside a correct branch.
+  Assert "the maps template no longer asserts decision tickets unconditionally" {
+    $c = Get-SkillFile $mapsTemplate
+    if ($c -match '(?i)artifact of \**decision tickets') { throw 'the unconditional claim is back' }
+    $true
+  }
+
+  Assert "a tracker policy that predates the declaration is a stated configuration gap, not a guess" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Where decision work lives'
+    ($s -match '(?i)predates') -and ($s -match '(?i)configuration gap')
+  }
+
+  Assert "/configure derives the declaration at generate time" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate'
+    $s -match '(?i)what a ticket is'
+  }
+
+  Assert "/configure's audit re-checks the declaration against the version-control policy" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit'
+    $s -match '(?i)what a ticket is'
+  }
+}
+
+# --- ticket fieldwork/02 — the map template stops contradicting the format ----
+
+Describe-Ticket 'fieldwork/02' 'the map template stops contradicting the ticket format' {
+
+  $mapsTemplate = 'configure/policies/maps.template.md'
+
+  # The prose said two differences while the template silently made a third —
+  # a bare-question title where tickets.md demands a Conventional subject.
+  Assert "the decision-ticket template's example title is a Conventional Commit subject" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Decision tickets'
+    if ($s -match '<the question, as a title>') { throw 'the bare-question title is back' }
+    $s -match '(?m)^# <NN> — type\(scope\)'
+  }
+
+  Assert "the prose counts three differences, and gives the title its rationale" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Decision tickets'
+    ($s -match '(?i)three differences') -and
+    ($s -match '(?i)records? the answer')
+  }
+
+  Assert "numbering defers to the tracker where the tracker assigns ids" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Decision tickets'
+    ($s -match '(?i)tracker[^\r\n]{0,60}assigns') -and
+    ($s -match '(?i)only (number|id)')
+  }
+
+  Assert "a decision edge is answer-gating, never a stacking instruction" {
+    $s = Get-SkillFile $mapsTemplate
+    ($s -match $rulePattern['the answer-gating edge rule']) -and
+    ($s -match '(?i)never a stacking')
+  }
+
+  Assert "the design document's fate after the map exists is stated" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'The map file'
+    $s -match '(?i)supersede'
+  }
+
+  # ADR 0036: the lifecycle rides native issue state — a decision resolved by
+  # label was this file's own contradiction of it.
+  Assert "resolving a decision on GitHub closes the issue, not a label" {
+    if ((Get-SkillFile $mapsTemplate) -match '(?i)a label on GitHub') { throw 'the label form is back' }
+    $true
+  }
+}
+
+# --- ticket fieldwork/03 — the build lifecycle has a GitHub form --------------
+
+Describe-Ticket 'fieldwork/03' 'the build lifecycle has a GitHub form' {
+
+  $ticketsTemplate = 'configure/policies/tickets.template.md'
+  $forge           = 'configure/tools/github.md'
+
+  # ADR 0036: the four states ride the issue's native state. Every mapping
+  # clause below is conjoined, so deleting any one of them goes red.
+  Assert "open and resolved ride the issue's native state" {
+    $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
+    ($s -match '(?i)`open`[^\r\n]{0,40}open issue') -and
+    ($s -match '(?i)closed as completed')
+  }
+
+  Assert "blocked stays open, its reason in the body beside the edges" {
+    $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
+    ($s -match '(?i)`blocked`[^\r\n]{0,40}stays open') -and
+    ($s -match '## Blocked')
+  }
+
+  Assert "obsolete closes as not planned, and the reason comment is mandatory" {
+    $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
+    ($s -match $rulePattern['the obsolete-closure form']) -and
+    ($s -match '(?i)not[ -]planned[^\r\n]{0,120}mandatory')
+  }
+
+  Assert "the GitHub form needs no label the repository does not already have" {
+    $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
+    $s -match '(?i)zero (new )?labels'
+  }
+
+  # The claim this ticket removes. Matched by subject — states represented as
+  # labels — and over every shipped file, not the one sentence that carried it.
+  Assert "the claim that lifecycle states are labels is gone" {
+    $back = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match '(?i)states? (are|is|become|map(s|ped)? (on)?to|correspond to|as) (a |the )?labels?' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) }
+    if ($back) { throw "the labels claim is back in: $($back -join ', ')" }
+    $true
+  }
+
+  Assert "the forge reference has the close-as-not-planned invocation, reason flag included" {
+    $s = Get-SkillFile $forge
+    ($s -match 'gh issue close') -and
+    ($s -match '--reason "not planned"') -and
+    ($s -match '--comment')
+  }
+}
+
+# --- ticket fieldwork/04 — the forge covers pinning and sub-issue removal -----
+
+Describe-Ticket 'fieldwork/04' 'the forge reference covers pinning and sub-issue removal' {
+
+  $forge = 'configure/tools/github.md'
+
+  Assert "pinning and unpinning are documented invocations" {
+    $s = Get-SkillFile $forge
+    ($s -match 'gh issue pin') -and
+    ($s -match 'gh issue unpin')
+  }
+
+  # GitHub's docs cap pinned issues at three, and neither they nor the help
+  # text say whether pinning at cap refuses or evicts — so neither may the
+  # reference.
+  Assert "the at-cap behaviour is marked untested, not guessed" {
+    $s = Get-Section (Get-SkillFile $forge) 'Pin'
+    ($s -match '(?i)cap') -and
+    ($s -match '(?i)untested')
+  }
+
+  # `sub_issue\b` cannot match the plural, so this only passes on the
+  # singular removal path the API actually has.
+  Assert "sub-issue removal is an invocable entry on the singular path" {
+    $s = Get-SkillFile $forge
+    $s -match '(?i)--method DELETE[^\r\n]*/sub_issue\b'
+  }
+
+  # `-cmatch`: the whole point is the case of the flag, which `-match` erases.
+  # The flag is bound to the DELETE invocation itself — matched anywhere in the
+  # section, the attach call's own `-F` would satisfy it.
+  Assert "the removal entry types its id as an integer, with the trap named" {
+    $s = Get-Section (Get-SkillFile $forge) 'sub-issues'
+    ($s -cmatch '(?s)--method DELETE[^\r\n]*sub_issue\b.{0,40}-F sub_issue_id=') -and
+    ($s -match '(?i)integer')
+  }
+
+  # The field run recorded the typing trap as shared with the attach call —
+  # a string-typed `-f` id is the failure the entry exists to prevent, so it
+  # may not survive anywhere in the file.
+  Assert "no sub-issue invocation sends a string-typed id" {
+    if ((Get-SkillFile $forge) -cmatch '(?m)-f sub_issue_id=') { throw 'a string-typed sub_issue_id is back' }
+    $true
+  }
+}
+
+# --- ticket fieldwork/05 — the git reference names where the Marker is read ---
+
+Describe-Ticket 'fieldwork/05' 'the git reference names where the Marker is read' {
+
+  $gitRef = 'configure/tools/git.md'
+
+  # The field failure: the check's placeholder rode on a recalled path, and a
+  # wrong recall produced a confident false verification report.
+  Assert "the Marker check opens with the read — the path, and the field that yields the commit" {
+    $s = Get-Section (Get-SkillFile $gitRef) 'Check the Marker'
+    ($s -match [regex]::Escape('.claude/position/marker.json')) -and
+    ($s -match '"commit"')
+  }
+
+  Assert "a missing marker file is an answer — unverified — never a path to re-guess" {
+    $s = Get-Section (Get-SkillFile $gitRef) 'Check the Marker'
+    ($s -match '(?i)missing') -and
+    ($s -match '(?i)unverified')
+  }
+
+  # The single home is the invocation home. The migration table is the one
+  # exemption — a rename row cannot point at itself.
+  Assert "the marker path has exactly one live home, and no skill restates it" {
+    $homes = Get-SkillFiles |
+      Where-Object { (Get-Content $_.FullName -Raw) -match 'position/marker' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
+    $allowed = @('configure/tools/git.md', 'configure/MIGRATION.md')
+    $stray = @($homes | Where-Object { $allowed -notcontains $_ })
+    if ($stray) { throw "the marker path is restated in: $($stray -join ', ')" }
+    if ($homes -notcontains 'configure/tools/git.md') { throw 'named nowhere live' }
+    $true
+  }
+
+  # The writer still has to find the path — by pointer, from its own section.
+  Assert "/commit's Marker section reaches the path through the git reference" {
+    $s = Get-Section (Get-SkillFile 'commit/SKILL.md') 'Advance the Marker'
+    $s -match 'git\.md'
+  }
+
+  Assert "/handoff reaches the path through the git reference" {
+    (Get-SkillFile 'handoff/SKILL.md') -match 'tools/git\.md'
+  }
+}
+
+# --- ticket fieldwork/06 — a build ticket may declare a design increment ------
+
+Describe-Ticket 'fieldwork/06' 'a build ticket may declare a design increment' {
+
+  $ticketsTemplate = 'configure/policies/tickets.template.md'
+  $mapsTemplate    = 'configure/policies/maps.template.md'
+
+  Assert "the ticket format declares increments: step, question, and type, at design time only" {
+    $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Declared increments'
+    ($s -match '(?i)<step>') -and
+    ($s -match '(?i)question') -and
+    ($s -match '(?i)type') -and
+    ($s -match $rulePattern['the increment-declaration timing rule'])
+  }
+
+  # The gate conjunct is anchored to the smell sentence itself — 'tier' alone
+  # travels with pre-existing §5 text and would survive the clause's deletion.
+  Assert "the design stage writes them, and the scope assessment gates the declaration" {
+    $s = Get-Section (Get-SkillFile 'design/SKILL.md') 'Plan'
+    ($s -match '(?i)declared increments?') -and
+    ($s -match '(?i)answerable up front')
+  }
+
+  # ADR 0037: AFK resolves inline in the same commit; HITL stops at a point
+  # the human could schedule, and that stop is not `blocked`.
+  Assert "/implement resolves AFK inline and stops at HITL holding the claim, apart from blocked" {
+    $s = Get-Section (Get-SkillFile 'implement/SKILL.md') 'Build'
+    ($s -match '(?i)inline') -and
+    ($s -match '(?i)same commit') -and
+    ($s -match $rulePattern['the increment hold rule']) -and
+    ($s -match '(?i)not `?blocked`?')
+  }
+
+  # The load-bearing half, shipped in the same edit as the mechanism —
+  # without it, declared increments are a scope-creep vector.
+  Assert "the guardrail: never invented, and an undeclared decision still blocks" {
+    $s = Get-Section (Get-SkillFile 'implement/SKILL.md') 'Build'
+    ($s -match $rulePattern['the increment never-invented guardrail']) -and
+    ($s -match '(?i)undeclared[^\r\n]{0,120}`?blocked`?')
+  }
+
+  Assert "the map exits on settled-or-declared, naming the tickets that carry increments" {
+    $s = Get-Section (Get-SkillFile $mapsTemplate) 'Leaving the map'
+    ($s -match $rulePattern['the map settled-or-declared exit']) -and
+    ($s -match '(?i)which tickets|names[^\r\n]{0,60}tickets')
+  }
+
+  # ADR 0029: conform or amend in the same change. The amendment shipped at
+  # design capture; this asserts the built behaviour matches its words.
+  Assert "the specification's workflow section carries the amendment this conforms to" {
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    ($spec -match '(?i)design increment') -and
+    ($spec -match 'NEVER invents an increment')
   }
 }
 

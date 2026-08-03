@@ -12,7 +12,9 @@ The GitHub remote (`saud-alnasser/skills`) is a code remote only. Issues are ena
 
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a docs fetch, not an assumption.
 
-## Layout
+## What a ticket is
+
+**Tracked intent.** A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The version-control policy ties one ticket to one branch and one commit, but work lands by fast-forward with no pull requests (`.claude/policies/version-control.md`, "How work lands"), so the one-ticket-one-pull-request test fails: a ticket exists and resolves as a file — the Claim is still its branch, per `.claude/policies/tickets.md` — and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.
 
 - One effort per directory: `.claude/tickets/<effort>/`
 - The spec is `.claude/tickets/<effort>/spec.md`

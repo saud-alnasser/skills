@@ -4,7 +4,7 @@ How work moves from a ticket to a landed change here. `.claude/policies/tracker.
 
 ## Which model
 
-**Plain git.** `Blocked by: 03` in a ticket means *wait until 03 is resolved* — not *stack on top of it*.
+**Stacked changes.** `Blocked by: 03` in a ticket means *stack on top of 03* — not *wait until it is resolved*.
 
 Confirm before relying on it. It is one read:
 
@@ -14,7 +14,7 @@ ls .git/.graphite_repo_config     # exists → stacked changes. absent → plain
 
 Where the read disagrees with the line above, **the read is right** — correct this file where you are standing and carry on with the true answer. Deferring it means the next reader gets the same wrong fact.
 
-Confirm by reading the filesystem, never by asking a stacking tool. Several of their commands initialise the repository as a side effect, so a probe that shells out to one can make its own answer true. No stacking-tool reference is derived into `.claude/tools/` here, and that absence is a consequence of the line above rather than an omission.
+Confirm by reading the filesystem, never by asking a stacking tool. Several of their commands initialise the repository as a side effect, so a probe that shells out to one can make its own answer true. The stacking-tool reference is `.claude/tools/graphite.md` — an operation with no entry there is a docs fetch, never a guessed flag.
 
 ## Branch naming
 

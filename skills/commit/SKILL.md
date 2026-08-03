@@ -86,7 +86,7 @@ What belongs to `/commit` is only the consequence: an amend rewrites the commit,
 
 Last, once the commit exists. **A commit cannot contain its own SHA** (ADR 0005) — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
 
-Write the new `HEAD` to `.claude/position/marker.json`:
+Write the new `HEAD` to the marker file — `.claude/tools/git.md` names its path, and it is the only file that does:
 
 ```json
 { "commit": "8b2d417c9e1f4a6b0d3e2c5a7f9b1d4e6a8c0f2b" }
@@ -94,7 +94,7 @@ Write the new `HEAD` to `.claude/position/marker.json`:
 
 That is the whole file. The Marker answers one question — what Context was last verified against — and a second field is a second answer nobody asked for.
 
-Confirm `.claude/position/marker.json` is gitignored **before** writing it. `/configure` puts the entry in `.claude/.gitignore`; a committed Marker always names the parent of the commit it describes, so every session afterwards opens by verifying drift that is not there.
+Confirm the marker file is gitignored **before** writing it. `/configure` puts the entry in `.claude/.gitignore`; a committed Marker always names the parent of the commit it describes, so every session afterwards opens by verifying drift that is not there.
 
 After this the **Marker equals `HEAD`** and the tree is clean. That postcondition is what every step above exists to leave true; what `.claude/protocol.md` does with it is that file's.
 

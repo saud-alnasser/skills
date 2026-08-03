@@ -155,6 +155,15 @@ Where the new code lands and what it is called is `codebase-design`'s. Read its 
 
 The rule against guessing an API is in `.claude/rules/engineering.md`, and building is where it costs the most: confirm the **version, signature, and limits** of anything you call before calling it. Code compiles against what is installed, not against what you remember being true.
 
+### A declared increment is reached
+
+A build ticket may carry design increments — decisions only partial code can answer, each declared with its step, question, and type; the declaration lives in `.claude/policies/tickets.md`. Reaching one invokes the design activity **scoped to that increment alone**, never widening:
+
+- **AFK types** (`research`, `task`) resolve inline: answer the question where the build just made it measurable, record the resolution where any design decision lands, and keep building. The answer and the code ship in the same commit.
+- **HITL types** (`grilling`, `prototype`) stop the build at the declared step, **holding the claim** — the branch stays, the ticket stays open, and the session hands back naming the increment it stopped at. This is not `blocked`: the plan is right and only the human is absent. A declared stop is a session the human can schedule; a discovered one loses the run.
+
+**`/implement` never invents an increment.** The declaration is the licence, and only `/design` writes one. A decision discovered mid-build undeclared is what it always was — `blocked`, through the hand-back below.
+
 ## 3 — When the plan turns out wrong
 
 A plan is wrong when the ticket cannot be built as written: the architecture it assumes is not there, an approach it depends on does not work, or the change crosses a boundary nobody costed.

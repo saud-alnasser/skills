@@ -8,7 +8,15 @@ Everyday git — `add`, `commit`, `log`, `diff`, `checkout` — needs no entry h
 
 ## Check the Marker
 
-The Marker is the commit Context was last verified against. Two questions, in order.
+The Marker is the commit Context was last verified against. `<marker>` below has exactly one source — the marker file, read fresh every time:
+
+```
+.claude/position/marker.json                   # { "commit": "<marker>" } — the whole file
+```
+
+**Read the path from here, never from memory.** A recalled path that is wrong reads as a missing file — and a missing file is itself an answer, not a prompt to try another path: no marker file means nothing was ever verified in this clone, so treat everything the request touches as unverified and say so.
+
+Two questions about the value, in order.
 
 ```
 git cat-file -e "<marker>^{commit}"            # exit 1 → the Marker commit is gone

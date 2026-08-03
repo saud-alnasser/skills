@@ -39,7 +39,7 @@ The invariant that keeps Position from becoming a fourth knowledge layer: **noth
 
 ## Trusting Context — the Marker
 
-`.claude/position/marker.json` holds the commit Context was last verified against. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
+The marker file holds the commit Context was last verified against — `.claude/tools/git.md` names its path and the read, and is the only file that does. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
 
 ```
 marker.json commit == HEAD  AND  working tree clean
@@ -49,7 +49,7 @@ otherwise
   → verify the statements you are about to rely on, and only those
 ```
 
-The clean path is one `git` check and no reading. That is the whole point of the Marker — it is a cache-validity check, not a task. It never *adds* an obligation: with no marker file at all, the verification-at-use rule applies unchanged and nothing is lost but the shortcut.
+The clean path is one `git` check and no reading. That is the whole point of the Marker — it is a cache-validity check, not a task. It never *adds* an obligation: with no marker file at all, the verification-at-use rule applies unchanged and nothing is lost but the shortcut. What a missing file means at check time — and what it does not license — is `.claude/tools/git.md`'s.
 
 Only `/commit` advances the Marker, to the new `HEAD` after committing. Nothing else moves it.
 

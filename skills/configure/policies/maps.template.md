@@ -2,11 +2,20 @@
 
 Reached only when the fog gate fired: the effort cannot be scoped yet. The way from here to the end is not visible, so there is nothing to write a spec about — and writing one anyway produces a spec built on guesses.
 
-A map finds the way. It is a shared artifact of **decision tickets**, worked one at a time until nothing is left to decide, and only then does a spec exist to write.
+A map finds the way. It is a shared artifact of **decisions**, worked one at a time until nothing is left to decide, and only then does a spec exist to write. Whether a decision may be a *ticket* is the tracker's to say — the next section is read before anything is created.
+
+## Where decision work lives
+
+**Read `What a ticket is` in `.claude/policies/tracker.md` first.** Nothing below is created until it has been.
+
+- **Branch-bound** — a ticket here becomes a branch, and a decision produces none, so decision work does **not** go on the tracker. Each decision is a section of the design document, same content as the ticket form below, resolved in place; each resolution lands as its own `docs:` commit. Only the map itself goes on the tracker, because only the map survives into build tickets. **Everything below that says *ticket* reads as *section* here**: claiming and `Status:` lines fall away — the document is one shared surface — and the map's links point at sections of the design document rather than at ticket files or issues.
+- **Tracked intent** — decision tickets are tickets, and the rest of this file applies as written.
+
+A tracker policy with no such declaration predates it. That is a configuration gap: say so and have `/configure` backfill the declaration — never guess the placement the gap was created to settle.
 
 ## Plan, don't do
 
-Every ticket on a map resolves a **decision**, not a slice of a build. The map is done when the way is clear — when someone could go and do the thing without another question.
+Every ticket on a map resolves a **decision**, not a slice of a build. The map is done when the way is clear — **Leaving the map**, below, states the test.
 
 The pull to just start building is usually the signal that the map is finished and it is time to hand back. Resist it earlier than that: a map that starts executing stops charting, and the unexplored part never gets explored.
 
@@ -19,6 +28,8 @@ Every session orients to it before choosing a ticket.
 ## The map file
 
 The map lives beside the tickets, wherever `.claude/policies/tracker.md` says those are: `.claude/tickets/map.md` on a local-markdown tracker, a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
+
+Until the map exists in that form, the design document holds the proposal and *is* the map; once created, the created map supersedes it. The proposal is not mirrored onto the map afterwards — that would be the second copy the rule below exists to prevent.
 
 ```markdown
 # map: <effort name>
@@ -48,10 +59,10 @@ Open tickets are **not** listed. They carry `Part of: map` and are found by quer
 
 ## Decision tickets
 
-Same file and format as any other ticket (see `.claude/policies/tickets.md`), with two differences: the body is a question, and the ticket carries a type.
+Same file and format as any other ticket (see `.claude/policies/tickets.md`), with three differences: the body is a question, the ticket carries a type, and the title's commit is not code. The title rule in `.claude/policies/tickets.md` holds unchanged, because a decision ticket is not commitless — it records the answer as an ADR or a design-document change, usually `docs:`, and that is the commit the title writes.
 
 ```markdown
-# <NN> — <the question, as a title>
+# <NN> — type(scope): summary — e.g. docs(checkout): settle the retry flow
 
 Status: open
 Part of: map
@@ -64,6 +75,10 @@ Blocked by: 03
 ```
 
 Each is sized to one fresh context window. The answer is not part of the body — it is written on resolution.
+
+Where the tracker assigns ids, its id is the ticket's only number: no `<NN>` prefix in the title, and edges use the tracker's ids. Two numbering systems for one set of tickets forces a lookup on every edge, and dependency order is already readable from the edges themselves.
+
+A decision ticket's `Blocked by:` is **answer-gating, never a stacking instruction** — it waits on the blocker's *answer*, whatever the version-control policy makes the same edge mean for build tickets. A decision produces no branch, so there is nothing to stack.
 
 ### Types
 
@@ -104,11 +119,13 @@ One ticket per session. Research tickets are the exception — they run in paral
 1. Load the map. The low-resolution view, not every ticket body.
 2. Choose a ticket: the one the user named, or the first on the **frontier** as `/implement` defines it. **Claim it first**, before any work.
 3. Resolve it. Zoom as needed: read the full body of a related or resolved ticket on demand. Invoke the skills the `## Notes` block names; `grilling` and `domain-modeling` by default.
-4. Record it: write the answer into the ticket under `## Answer`, resolve it in whatever form `.claude/policies/tracker.md` says — a `Status:` line on a local tracker, a label on GitHub — and append one line to **Decisions so far**.
+4. Record it: write the answer into the ticket under `## Answer`, resolve it in whatever form `.claude/policies/tracker.md` says — a `Status:` line on a local tracker, closing the issue on GitHub — and append one line to **Decisions so far**.
 5. Update the map — add newly surfaced tickets, graduate the fog the answer made specifiable (clearing each graduated patch from **Not yet specified**, so it lives only as its ticket), and mark obsolete anything the decision invalidated.
 
 Expect other sessions to be editing the map concurrently — unblocked tickets can be worked in parallel.
 
 ## Leaving the map
 
-When nothing is left to decide, the map is done. Hand back to step 5 of `/design`: the tier's normal deliverable — a spec, then tickets — now has something solid to stand on.
+The map is done when every remaining decision is either settled, or declared as a scoped increment on the build ticket that can answer it (`.claude/policies/tickets.md` has the declaration). A map exiting with declared increments says, in the hand-back, which tickets carry them.
+
+Hand back to step 5 of `/design`: the tier's normal deliverable — a spec, then tickets — now has something solid to stand on.

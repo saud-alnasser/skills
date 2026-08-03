@@ -109,6 +109,8 @@ Formats are guides in the configured repository; `.claude/protocol.md`'s routing
 
 Read a format file when the tier selects it, not before.
 
+A ticket may carry **declared increments** — decisions only partial code can answer. `.claude/policies/tickets.md` has the declaration and its timing, and `/implement` what reaching one does. Declare one only where the answer genuinely needs the partial build to exist: increments on questions answerable up front are the scope assessment being dodged, and the smell that the phase split is hollowing.
+
 ### On a shared tracker, the set is approved before it is created
 
 **Creating an issue publishes.** It lands in other people's workspace, so it is gated exactly as opening a pull request is.

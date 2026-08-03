@@ -48,6 +48,19 @@ gh label create "<name>" --color <hex> --description "<text>"
 
 `gh label list` is the read that comes before `gh label create`, always — `/triage` has the reuse rule. `create` fails on a name that already exists rather than editing it, so the list is what tells you whether you are adding or colliding. `--color` takes a bare hex with no leading `#`.
 
+## Pin and unpin an issue
+
+The map lives as a pinned issue — `.claude/policies/maps.md` has that rule; these are the invocations. Both take a number or a URL.
+
+```
+gh issue pin <number>
+gh issue unpin <number>
+```
+
+GitHub caps pinned issues at three per repository. What `pin` does at the cap — refuse, or evict an existing pin — is **untested**, and neither the help text nor the docs say; do not rely on either behaviour. Where the cap could be in play, unpin first.
+
+Docs: https://docs.github.com/en/issues/tracking-your-work-with-issues/administering-issues/pinning-an-issue-to-your-repository — the cap's source, and silent on the at-cap behaviour.
+
 ## Read and set Assignment
 
 Assignment is which human owns delivering the issue. AEP reads it; it writes it only when asked (`/implement` has the rule).
@@ -75,20 +88,29 @@ gh issue develop <number> --list                  # read-only: branches linked t
 
 ```
 gh api repos/{owner}/{repo}/issues/<parent>/sub_issues \
-  -f sub_issue_id=<id>                            # attach a child to the parent
+  -F sub_issue_id=<id>                            # attach a child to the parent
 gh api repos/{owner}/{repo}/issues/<parent>/sub_issues
                                                   # list the children
 ```
 
-**`sub_issue_id` is the issue's `id`, not its number**, and that is the mistake this entry exists to stop — passing `#42`'s number succeeds against some other issue entirely. Read the id first:
+Two traps, either of which fails against the wrong target or not at all:
+
+- **`sub_issue_id` is the issue's `id`, not its number** — passing `#42`'s number succeeds against some other issue entirely. Read the id first:
+
+  ```
+  gh api repos/{owner}/{repo}/issues/<number> --jq .id
+  ```
+
+- **`-F`, never `-f`.** The API types `sub_issue_id` as an integer, and `-f` sends every value as a string; `-F` is the typed form that sends a number as one.
+
+Removing a child is its own invocation, needed the moment a ticket turns out not to belong under its parent. **The removal path is singular** — `sub_issue`, not `sub_issues` — and both traps above apply to it unchanged:
 
 ```
-gh api repos/{owner}/{repo}/issues/<number> --jq .id
+gh api --method DELETE repos/{owner}/{repo}/issues/<parent>/sub_issue \
+  -F sub_issue_id=<id>                            # detach a child from the parent
 ```
 
-Note the removal path is singular — `DELETE .../sub_issue`, not `sub_issues`.
-
-Docs: https://docs.github.com/en/rest/issues/sub-issues. Fetch them before anything beyond the two calls above; the payload shape is not stable knowledge.
+Docs: https://docs.github.com/en/rest/issues/sub-issues. Fetch them before anything beyond the calls above; the payload shape is not stable knowledge.
 
 Where the API is unavailable or refused, a **task list in the parent body** (`- [ ] #42`) is the fallback GitHub renders as a real relationship.
 
@@ -125,3 +147,11 @@ Two constraints, both easy to get wrong:
 - **A closing keyword in a *commit* message still closes the issue** once that commit reaches the default branch, and it does so without listing the PR as linked. That is why the commit carries `Refs` — a cherry-pick or a rebase onto the default branch would otherwise close an issue nobody merged.
 
 Docs: https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue
+
+## Close an issue as not planned
+
+```
+gh issue close <number> --reason "not planned" --comment "<one-line reason>"
+```
+
+`--reason` takes `completed`, `not planned`, or `duplicate` — the flag's full set, per `gh issue close --help`. `--comment` posts the closing comment in the same invocation, so the closure and its reason land together rather than as two calls with a failure window between them. Which lifecycle state takes this form, and what the comment must carry, is `.claude/policies/tickets.md`'s.
