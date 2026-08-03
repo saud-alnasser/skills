@@ -23,6 +23,7 @@ Then, in order:
 2. **Route** — its table says which Domain Contexts this request touches. Load those, and only those.
 3. **Verify** what you are about to rely on — scoped to what routing selected, which is why it comes after routing: verifying everything is the startup scan the Marker exists to avoid.
 4. **Read the code.** `.claude/rules/engineering.md` has the rule; discovery is where it bites hardest.
+5. **Read the waiting drift.** `.claude/evidence/drift/` holds findings nobody has consumed — read the ones touching what this request plans, and fold their healing into this run's deliverable. Skipping this read is how a finding stays unread. What one is, and why it may be waiting: `.claude/policies/evidence.md`.
 
 Open with the one-line verification report, including when there was nothing to verify.
 
@@ -100,6 +101,8 @@ Report the classification, the gates that fired, and the resulting tier. The use
 | + fog gate | a map, worked before any spec exists |
 
 **Nothing lives only in the conversation.** The deliverable is a file, so `/implement` always has something to read and context can be cleared between any two steps.
+
+**No ticket in the set is protocol-only.** `.claude/policies/tickets.md` says what counts as protocol-only and where that work rides instead. A set still containing one is a set-cutting error, caught here while nothing has been created.
 
 Formats are guides in the configured repository; `.claude/protocol.md`'s routing table is the index:
 

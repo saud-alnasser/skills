@@ -614,6 +614,30 @@ $rulePattern = [ordered]@{
   'the increment hold rule'               = '(?i)hold(ing|s)? the claim'
   'the increment never-invented guardrail' = '(?i)never invents? an increment'
   'the map settled-or-declared exit'      = '(?i)settled,? or declared'
+  # scaffolding/01. The tickets template owns the tracker-side rule (ADR 0038):
+  # a workflow-created ticket on a shared tracker states an outcome outside the
+  # protocol directory. Two alternations, because a restatement arrives in one
+  # of two subjects: the outcome's side of the directory, with slack for the
+  # words that may sit between; or the ADR's own phrasing — work whose whole
+  # effect sits under it — which has to match too.
+  'the protocol-only tracker rule'        = '(?i)outcome[^\r\n]{0,30}(outside|beyond)[^\r\n]{0,60}(protocol directory|`?\.claude`?)|(entire|whole) effect[^\r\n]{0,40}(under|inside)[^\r\n]{0,30}(protocol directory|`?\.claude`?)'
+  # scaffolding/02. The version-control template owns the PR-side exception
+  # (ADR 0038): a pull request whose entire diff sits under the protocol
+  # directory is a design PR, one per design run. Anchored to both subjects a
+  # restatement needs — the diff's side of the directory, or the one-per-run
+  # bound tied to the term. The maps policy names the term and points, which
+  # matches neither. Dotall with bounded gaps, because the template hard-wraps
+  # its lines and a rule may break anywhere in the sentence.
+  'the design-PR exception'               = '(?is)entire\s+diff.{0,50}under.{0,40}(protocol\s+directory|`?\.claude`?)|design\s+PR.{0,60}one\s+per\s+(design\s+)?run|design\s+PR\s+per\s+session'
+  # scaffolding/03. Three placed rules, one home each (ADR 0039): what a drift
+  # finding holds, in the evidence template; the map's index line, in the maps
+  # template; the never-inline exception for a falsified Decision, in the
+  # knowledge template. Each anchored to the subject a restatement needs —
+  # the commit the check ran against, the checked-off line, and a Decision
+  # spoken of beside inline healing.
+  'the drift-finding contents'            = '(?is)against\s+which\s+commit'
+  'the drift-finding index line'          = '(?is)task.list\s+line|checked\s+off\s+when\s+the\s+healing'
+  'the decision-drift never-inline rule'  = '(?is)(decision|adr)s?\b.{0,60}heal(ed|s|ing)?\s+inline|heal(ed|s|ing)?\s+inline.{0,60}\b(decision|adr)s?\b'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -6229,7 +6253,10 @@ Describe-Ticket 'aep/04' 'a discussion is a fourth kind of evidence' {
 
   Assert "the evidence guide carries the fourth kind, written by the stage that plans" {
     $c = Get-SkillFile 'configure/policies/evidence.template.md'
-    if ($c -notmatch '(?i)four kinds') { throw 'the count did not move' }
+    # This ticket's claim is that discussions moved the count off three — not
+    # that it stopped there. Pinning the new value broke when scaffolding/03
+    # added the fifth kind, so the probe now rejects only the pre-ticket count.
+    if ($c -match '(?i)three kinds') { throw 'the count did not move' }
     if ($c -notmatch '(?m)^\|\s*discussions\s*\|\s*`\.claude/evidence/discussions/`\s*\|\s*`/design`\s*\|') { throw 'the discussions row is missing or names another writer' }
     $true
   }
@@ -6979,6 +7006,192 @@ Describe-Ticket 'fieldwork/06' 'a build ticket may declare a design increment' {
     $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
     ($spec -match '(?i)design increment') -and
     ($spec -match 'NEVER invents an increment')
+  }
+}
+
+# --- ticket scaffolding/01 — a shared tracker never carries protocol-only work ----
+
+Describe-Ticket 'scaffolding/01' 'a shared tracker never carries protocol-only work' {
+
+  $ticketsTemplate = 'configure/policies/tickets.template.md'
+  $protocolOnly = Get-Section (Get-SkillFile $ticketsTemplate) 'A shared tracker never carries protocol-only work'
+
+  Assert "the rule: a workflow-created ticket on a shared tracker states an outcome outside the protocol directory" {
+    ($protocolOnly -match $rulePattern['the protocol-only tracker rule']) -and
+    ($protocolOnly -match '(?i)shared tracker')
+  }
+
+  Assert "protocol-only work routes by its consumer: a map session, or a declared increment" {
+    ($protocolOnly -match '(?i)map session') -and
+    ($protocolOnly -match '(?i)declared increment')
+  }
+
+  # Both bounds shipped in the same edit as the rule — without them it reads
+  # as banning `docs:` work outright, or as binding what humans may file.
+  Assert "both bounds: the diff never the commit type, and workflow-created on a shared tracker only" {
+    ($protocolOnly -match '(?i)diff, never the commit type') -and
+    ($protocolOnly -match '(?i)humans file what they like') -and
+    ($protocolOnly -match '(?i)local-markdown tracker[^\r\n]{0,60}nothing to bind')
+  }
+}
+
+# --- ticket scaffolding/02 — the design PR is the only protocol-only landing ------
+
+Describe-Ticket 'scaffolding/02' 'the design PR is the only protocol-only landing' {
+
+  $vcTemplate   = 'configure/policies/version-control.template.md'
+  $mapsTemplate = 'configure/policies/maps.template.md'
+  $lands = Get-Section (Get-SkillFile $vcTemplate) 'How work lands'
+
+  Assert "the exception: a design PR's entire diff sits under the protocol directory, one per design run" {
+    ($lands -match $rulePattern['the design-PR exception']) -and
+    ($lands -match '(?is)one\s+per\s+(design\s+)?run')
+  }
+
+  Assert "it is the only protocol-only pull request — everything else rides its consuming build PR" {
+    ($lands -match '(?i)the only one') -and
+    ($lands -match '(?i)rides the build pull request')
+  }
+
+  Assert "the mechanical test is the diff, not a label or commit type" {
+    $lands -match '(?is)diff,\s+never\s+a\s+label\s+or\s+commit\s+type'
+  }
+
+  # The maps policy names the term and points at the exception's home — the
+  # single-home sweep proves it restates nothing; this proves the landing
+  # path itself moved off the bare docs: commit.
+  Assert "the branch-bound landing path names the per-session design PR" {
+    $s = Get-SkillFile $mapsTemplate
+    ($s -match '(?i)land as that session.s design PR') -and
+    ($s -notmatch '(?i)lands as its own `?docs:`? commit')
+  }
+}
+
+# --- ticket scaffolding/03 — a drift finding is evidence, indexed on the live map -
+
+Describe-Ticket 'scaffolding/03' 'a drift finding is evidence, indexed on the live map' {
+
+  $evidenceTemplate  = 'configure/policies/evidence.template.md'
+  $mapsTemplate      = 'configure/policies/maps.template.md'
+  $knowledgeTemplate = 'configure/policies/knowledge.template.md'
+
+  # The count probe follows aep/04's repaired shape: reject the pre-ticket
+  # count rather than pin the new one, so kind six breaks nothing here.
+  Assert "the kind: directory row, producer, and what one holds" {
+    $c = Get-SkillFile $evidenceTemplate
+    if ($c -match '(?i)four kinds') { throw 'the count did not move' }
+    ($c -match '(?m)^\|[^|\r\n]+\|\s*`\.claude/evidence/drift/`\s*\|') -and
+    ($c -match '(?i)whoever finds the drift') -and
+    ($c -match $rulePattern['the drift-finding contents']) -and
+    ($c -match '(?is)what\s+it\s+falsifies')
+  }
+
+  # The task-list form is conjoined on its own, not left to the sweep pattern's
+  # alternation — an OR-shaped probe would stay green if the form were dropped
+  # while the check-off timing survived.
+  Assert "the index line: task-list form under Drift found, checked when the healing lands" {
+    $c = Get-SkillFile $mapsTemplate
+    ($c -match '(?is)task.list\s+line') -and
+    ($c -match $rulePattern['the drift-finding index line']) -and
+    ($c -match '(?is)checked\s+off\s+when\s+the\s+healing\s+lands') -and
+    ($c -match '(?im)^\#\#\s+Drift\s+found')
+  }
+
+  Assert "on GitHub the line rides the body, never a comment" {
+    $c = Get-SkillFile $mapsTemplate
+    ($c -match '(?is)body,?\s+never\s+a\s+comment') -and
+    ($c -match '(?is)paginated\s+fetch')
+  }
+
+  Assert "the knowledge policy: a falsified Decision is never healed inline, and the finder is pointed at the form" {
+    $c = Get-SkillFile $knowledgeTemplate
+    ($c -match $rulePattern['the decision-drift never-inline rule']) -and
+    ($c -match '(?is)drift\s+finding') -and
+    ($c -match 'evidence\.md')
+  }
+
+  # Points, not restates: the knowledge template names the form's home and
+  # carries none of the kind's contents.
+  Assert "the knowledge template points rather than restates the kind" {
+    $c = Get-SkillFile $knowledgeTemplate
+    ($c -notmatch $rulePattern['the drift-finding contents']) -and
+    ($c -notmatch '`\.claude/evidence/drift/`')
+  }
+
+  # ADR 0029: the layout row and the policy row land in the same change; the
+  # aep/10 conformance sweep walks the layout line, so drift/ is checked there
+  # from now on.
+  Assert "the specification's layout lists drift/ beside the other evidence kinds" {
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    $spec -match '(?m)^.*out-of-scope/\s+drift/.*$'
+  }
+}
+
+# --- ticket scaffolding/04 — discovery surfaces drift, the set routes it ----------
+
+Describe-Ticket 'scaffolding/04' 'design discovery surfaces drift, and the set routes protocol-only work' {
+
+  $design = 'design/SKILL.md'
+
+  Assert "discovery names the drift-finding read, scoped to what the request plans" {
+    $s = Get-Section (Get-SkillFile $design) 'Discover'
+    ($s -match 'evidence/drift') -and
+    ($s -match '(?i)touching what this request plans')
+  }
+
+  Assert "set-cutting: no protocol-only ticket, routed by the tickets policy" {
+    $s = Get-Section (Get-SkillFile $design) 'Plan'
+    ($s -match '(?i)protocol-only') -and
+    ($s -match 'tickets\.md')
+  }
+
+  # This ticket places no rule — it wires pointers. The three rules it
+  # enforces stay in their policy homes; the sweep proves that globally, and
+  # this anchors the claim to the one file most likely to restate them.
+  Assert "the stage points; the rules stay in the policies from 01 and 03" {
+    $c = Get-SkillFile $design
+    ($c -notmatch $rulePattern['the protocol-only tracker rule']) -and
+    ($c -notmatch $rulePattern['the drift-finding contents']) -and
+    ($c -notmatch $rulePattern['the decision-drift never-inline rule'])
+  }
+}
+
+# --- ticket scaffolding/05 — adopt the changed templates here ---------------------
+
+Describe-Ticket 'scaffolding/05' 'adopt the changed templates here' {
+
+  # The installed comment headers say who installed the file and why; they are
+  # not part of the guide, so a copied file is compared on its body alone.
+  $stripComments = { param($t) ($t -replace '(?s)<!--.*?-->', '').Trim() -replace '\r\n', "`n" }
+
+  # ADR 0025: ship first, adopt second. The three copied policies this effort
+  # touched are asserted body-identical to their templates — a copied guide
+  # that merely *mentions* the new rule is the drift the copied/derived line
+  # (ADR 0019) exists to prevent. `tickets` is checked by rule instead: two
+  # wording divergences predate this effort and are not its to close.
+  foreach ($p in @('knowledge', 'evidence', 'maps')) {
+    Assert "the installed $p policy matches the template it was copied from" {
+      $t = & $stripComments (Get-SkillFile "configure/policies/$p.template.md")
+      $i = & $stripComments (Get-Content (Join-Path $repo ".claude/policies/$p.md") -Raw)
+      if ($t -ne $i) { throw 'the installed copy has diverged from its template' }
+      $true
+    }
+  }
+
+  Assert "the installed tickets policy carries the protocol-only rule and its local-markdown bound" {
+    $c = Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw
+    ($c -match $rulePattern['the protocol-only tracker rule']) -and
+    ($c -match '(?is)local-markdown tracker[^\r\n]{0,60}nothing to bind')
+  }
+
+  # Derived, not copied — so this asserts the rule is present, never that the
+  # text matches. The diff-not-label test is deliberately not conjoined here:
+  # it is stated on both the tracker and PR sides by design (recorded on
+  # ticket 02), and a third assertion would entrench what was merely accepted.
+  Assert "the installed version-control policy carries the design-PR exception" {
+    $c = Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw
+    ($c -match $rulePattern['the design-PR exception']) -and
+    ($c -match '(?is)every other protocol-only change rides')
   }
 }
 

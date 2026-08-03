@@ -77,6 +77,17 @@ Where work lands by pull request, the default description covers **problem,
 solution, architectural impact, testing, related issues, breaking changes** —
 never a commit-by-commit account.
 
+One pull request kind is allowed to change nothing outside `.claude/`: the
+**design PR** — a single design run's deliverable, its entire diff under the
+protocol directory, one per run. Approving it is approving the plan before
+anyone builds, which is what makes it reviewable where other protocol-only
+pull requests are not. It is the only one: every other protocol-only
+change rides the build pull request that consumes it, and a multi-session
+design effort lands one small design PR per session rather than holding an
+effort-long branch. The test is the **diff, never a
+label or commit type** — nothing mechanical marks a design PR except what
+its diff touches.
+
 Publishing is the human's call: `.claude/rules/engineering.md` carries that as
 a standing rule and this section does not repeat it. What belongs here is what
 actually happens in this repository once the work is ready, which is a fact

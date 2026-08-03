@@ -36,6 +36,12 @@ Which stage may write which knowledge layer, and when. The layers themselves, an
 
 **`/commit` heals; it does not author.** It sees the change entire, which is what makes the whole-diff check against knowledge its own and nobody else's. Where the diff contradicts a Context statement, the correction goes into the same commit as the change that falsified it, so the two never land apart. Anything *new* belongs to the two stages above, which had the conversation.
 
+## The one drift nobody heals inline
+
+Context drift heals where it is found — the always-on tier carries that rule. **A falsified Decision is the exception: it is never healed inline.** An ADR's reasoning is frozen, and correcting or superseding one is `/design`'s pen, not the finder's — a build session rewriting a Decision mid-diff skips the grill that froze it.
+
+The finder writes a **drift finding** instead — `.claude/policies/evidence.md` has the form, and `.claude/policies/maps.md` where a live effort indexes it — and carries on with the work that surfaced it. The healing lands with a later design run.
+
 ## What never gets written
 
 **A change that moves no concept updates no knowledge.** Silence is the correct output. Writing something anyway to look thorough is how a knowledge layer turns into sediment, and sediment is the failure this whole layer exists to avoid.

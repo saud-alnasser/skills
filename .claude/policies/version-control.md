@@ -43,8 +43,10 @@ Conventional Commits — `type(scope): summary` — which is also AEP's default;
 
 ## How work lands
 
-The maintainer fast-forwards `main` from each ticket branch, in ticket order. There are no merge commits in this repository's history and no pull requests; `.claude/policies/tracker.md` records why, under external pull requests.
+The maintainer lands work by pull request, squash-merged — `main`'s recent history is squash commits carrying the PR number (`#1`, `#2`). Earlier history was fast-forwarded from ticket branches without pull requests; that is what predates, not the convention now. `.claude/policies/tracker.md` covers how external pull requests are treated.
 
 Where tickets stack — one built on another's branch before either has landed — they land in the same order they were built, each still producing one commit on `main`.
+
+One pull request kind is allowed to change nothing outside `.claude/`: the **design PR** — a single design run's deliverable, its entire diff under the protocol directory, one per run. Approving it is approving the plan before anyone builds, which is what makes it reviewable where other protocol-only pull requests are not. It is the only one: every other protocol-only change rides the build pull request that consumes it, and a multi-session design effort lands one small design PR per session rather than holding an effort-long branch. The test is the **diff, never a label or commit type**.
 
 Publishing is the human's call. `.claude/rules/engineering.md` carries that as a standing rule and this section does not repeat it; what is recorded here is only what happens once the work is ready.
