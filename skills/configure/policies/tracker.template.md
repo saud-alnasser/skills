@@ -34,6 +34,26 @@ On GitLab, the same shape holds with `glab`; see `.claude/tools/gitlab.md`.
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a
 docs fetch, not an assumption.
 
+## What a ticket is
+
+<!--
+  The detect test lives here and nowhere else: does the version-control policy
+  tie one ticket to one branch — one commit, one pull request? If it does, a
+  ticket is branch-bound; if not, a ticket is tracked intent. /configure
+  answers it from `.claude/policies/version-control.md` when this file is
+  derived, and its audit re-reads that policy against the answer on every run.
+-->
+
+{Declare one of the two, and cite the version-control line the answer came
+from. Keep the paragraph that applies; delete the other.}
+
+**Branch-bound.** One ticket becomes one branch, which lands as one unit of
+review. Work that produces no branch — a decision, an investigation — is not
+a ticket here; `.claude/policies/maps.md` says where decision work lives.
+
+**Tracked intent.** A ticket is a unit of tracked work, branch or none.
+Decision tickets are tickets.
+
 ## Assignment
 
 {How this repository records which human owns delivering a ticket — GitHub

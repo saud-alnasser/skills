@@ -54,6 +54,10 @@ _Avoid_: sync, reconciliation, refresh, drift repair
 The interrogation of a proposal before it is built. Where most durable understanding is produced, which is why `/design` captures vocabulary and Decisions as they resolve rather than afterwards — and files what did not resolve as a discussion, in evidence.
 _Avoid_: interview, review, questioning
 
+**Design Increment**:
+A decision a build ticket declares at design time because only partial code can answer it — typed HITL or AFK, resolved by the design activity scoped to that increment alone, and never invented mid-build (ADR 0037).
+_Avoid_: deferred decision, mid-build design, inline redesign
+
 ## Boundaries
 
 - **`skills/` is what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in `skills/`. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.

@@ -38,7 +38,7 @@ implementation list — the ticket says what "done" looks like, and
 
 The title is a Conventional Commit subject, so the ticket's commit writes itself. The id and the summary are also what `/implement` builds the branch name from, so write a summary that reads as one.
 
-`Status:` and the edge lines are the **local-markdown form**. On GitHub the same states are labels and the edges live in the issue body; `.claude/policies/tracker.md` says which applies, and `.claude/tools/github.md` has the invocations.
+`Status:` and the edge lines are the **local-markdown form**. On GitHub the lifecycle rides the issue's native state — the mapping is under Lifecycle, below — and the edges live in the issue body; `.claude/policies/tracker.md` says which applies, and `.claude/tools/github.md` has the invocations.
 
 ### Lifecycle
 
@@ -49,6 +49,8 @@ resolved   the work is delivered. Who sets it depends on the tracker —
            /implement on a local one, the merge on a shared one
 obsolete   no longer needed. Requires a one-line reason. Never deleted
 ```
+
+**On GitHub the four states ride the issue's native state — zero new labels.** `open` is an open issue. `blocked` stays open, its reason under a `## Blocked` heading in the body, beside the edges that already live there — closing it would read as delivered, and a label would be a second home for what the body already says. `resolved` is the issue closed as completed, by the merge, as below. `obsolete` is the issue closed as not planned, with a comment carrying the one-line reason; the comment is mandatory, because closed-as-not-planned alone is a verdict with the reasoning withheld. `.claude/tools/github.md` has the invocation. The mapping is GitHub's; no other forge's is in evidence.
 
 **On a shared tracker the merge resolves the ticket, not AEP.** AEP commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. Which text carries the closing keyword, and which carries a reference that closes nothing, depends on how the work reaches the default branch — `/commit` decides it and `.claude/tools/github.md` has the forms. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
 
@@ -77,6 +79,18 @@ Never create a ticket to rename a variable, move a file, or update a comment. Th
 A criterion is checkable by someone who did not write the code. "Users can retry a failed payment without re-entering the card" is checkable; "the retry handler is refactored" is not — it names an implementation and can be satisfied by any change at all.
 
 Write what becomes true, not what gets edited.
+
+## Declared increments
+
+Some decisions are answerable only once partial code exists — whether a surface reads as raised needs real rows; how a table behaves in another locale needs a populated table. A build ticket MAY carry those decisions as **declared increments**, written at design time only — never added during the build:
+
+```markdown
+## Declared increments
+
+- after <step>: <the question> — type: <grilling|research|prototype|task>
+```
+
+The step names where in the build the question becomes answerable; the question is stated as sharply as a decision ticket's; the type is the map vocabulary's (`.claude/policies/maps.md`). What `/implement` does on reaching one — which types resolve inline, which stop for the human, and the guardrail on what it may never do — is that skill's to state. An increment's resolution is recorded where any design decision lands: an ADR when it clears the bar in `.claude/policies/decisions.md`, the design document otherwise.
 
 ## Above Express — slicing
 

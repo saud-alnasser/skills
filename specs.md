@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -142,7 +142,9 @@ A mode is shared across many activities — review mode applies equally to code,
 
 A workflow is procedural: what happens, when, and in what order. Workflows are deterministic and contain no engineering philosophy — that is the mode's job. Where a mode and a workflow would be the same text, the workflow is the one that exists and the mode it declares carries the thinking; a nominal split maintained in two files is drift by construction.
 
-The spine's workflows, in landing order: **configure** (a repository joins the protocol), **design** (the whole planning surface: tickets, specs, decisions, discussions), **implement** (build one ticket end to end), **review** (two axes: does it implement what was asked, and does it follow this repository's standards), **commit** (turn finished work into a commit and advance the marker), with **research** and **prototype** available wherever evidence is missing. Additional workflows (release, incident, migration) MAY be added under the same contract: declare a mode, declare dependencies, produce artifacts.
+The spine's workflows, in landing order: **configure** (a repository joins the protocol), **design** (the whole planning surface: tickets, specs, decisions, discussions), **implement** (build one ticket end to end), **review** (two axes: does it implement what was asked, and does it follow this repository's standards), **commit** (turn finished work into a commit and advance the marker), with **research** and **prototype** available wherever evidence is missing.
+
+A design MAY declare, on a build ticket and at design time only, a **design increment**: a scoped decision that only partial code can answer, typed by whether it needs the human present. Implementation resolves a declared increment by invoking the design activity scoped to that increment alone — inline where no human is needed, stopping for the human where one is. Implementation NEVER invents an increment; a decision discovered undeclared blocks the ticket, exactly as before. (ADR 0037.) Additional workflows (release, incident, migration) MAY be added under the same contract: declare a mode, declare dependencies, produce artifacts.
 
 ## 11. Skills
 

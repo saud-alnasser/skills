@@ -1,6 +1,6 @@
 {
   "name": "aep",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "The Agentic Engineering Protocol — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline.",
   "author": {
     "name": "SAUD ALNASSER"
