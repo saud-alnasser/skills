@@ -6699,9 +6699,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.3.0, not a draft" {
+  Assert "the specification is released at 1.4.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.3\.0\s*$') { throw 'the specification is not at a released 1.3.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.4\.0\s*$') { throw 'the specification is not at a released 1.4.0' }
     $true
   }
 
