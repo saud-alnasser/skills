@@ -8,7 +8,7 @@ A map finds the way. It is a shared artifact of **decisions**, worked one at a t
 
 **Read `What a ticket is` in `.claude/policies/tracker.md` first.** Nothing below is created until it has been.
 
-- **Branch-bound** — a ticket here becomes a branch, and a decision produces none, so decision work does **not** go on the tracker. Each decision is a section of the design document, same content as the ticket form below, resolved in place; each resolution lands as its own `docs:` commit. Only the map itself goes on the tracker, because only the map survives into build tickets. **Everything below that says *ticket* reads as *section* here**: claiming and `Status:` lines fall away — the document is one shared surface — and the map's links point at sections of the design document rather than at ticket files or issues.
+- **Branch-bound** — a ticket here becomes a branch, and a decision produces none, so decision work does **not** go on the tracker. Each decision is a section of the design document, same content as the ticket form below, resolved in place; each session's resolutions land as that session's design PR — `.claude/policies/version-control.md` names the exception this rides on. Only the map itself goes on the tracker, because only the map survives into build tickets. **Everything below that says *ticket* reads as *section* here**: claiming and `Status:` lines fall away — the document is one shared surface — and the map's links point at sections of the design document rather than at ticket files or issues.
 - **Tracked intent** — decision tickets are tickets, and the rest of this file applies as written.
 
 A tracker policy with no such declaration predates it. That is a configuration gap: say so and have `/configure` backfill the declaration — never guess the placement the gap was created to settle.
@@ -53,6 +53,10 @@ Until the map exists in that form, the design document holds the proposal and *i
 ## Out of scope
 
 <work ruled beyond the destination; closed, never graduates>
+
+## Drift found
+
+- [ ] [<what it falsifies>](<evidence file>) — <one-line gist>
 ```
 
 Open tickets are **not** listed. They carry `Part of: map` and are found by querying the tracker — a list of them on the map is a second copy that goes stale.
@@ -111,6 +115,12 @@ Fog gathers only *toward* the destination. Work beyond the destination is not fo
 Ruling something out of scope is a scoping act, not a step on the route, so it stays out of **Decisions so far** — that section records the route actually walked. When a ticket that already exists turns out to sit past the destination, mark it `obsolete` and add the line.
 
 Out-of-scope work never graduates. It returns only if the destination is redrawn, and then as a fresh effort.
+
+## Drift found
+
+A drift finding in the effort's area — `.claude/policies/evidence.md` says what one is and where it lives — gets one task-list line under **Drift found**, linking to the evidence file, checked off when the healing lands. The line is an index entry like every other line on the map: the gist and the link, never the finding's content.
+
+On GitHub the line goes in the map's issue **body, never a comment**. The body comes back with the one call every session already makes; a comment is a separate paginated fetch each session would have to remember, which is how a finding stays unread.
 
 ## Working the map
 

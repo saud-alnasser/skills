@@ -197,7 +197,7 @@ Question → Discussion → Research → Prototype (optional) → Design
         → Repository knowledge
 ```
 
-Evidence — discussions, research, prototype write-ups, and out-of-scope records — shares one property nothing else has: it records what was verified and when, and nothing revalidates it afterwards. Knowledge that proves durable **graduates out of evidence into context**, and that graduation is stated once, in the evidence policy. This is what makes the lifecycle traceable from the original question to the final implementation.
+Evidence — discussions, research, prototype write-ups, out-of-scope records, and drift findings — shares one property nothing else has: it records what was verified and when, and nothing revalidates it afterwards. A **drift finding** records a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies — written by whoever finds it; a falsified decision is the one drift never healed inline, and the finding waits in evidence until a design run heals it. (ADR 0039.) Knowledge that proves durable **graduates out of evidence into context**, and that graduation is stated once, in the evidence policy. This is what makes the lifecycle traceable from the original question to the final implementation.
 
 Maintenance is incremental, never repository-wide: when knowledge changes, only affected artifacts are updated. There is no synchronization pass (§19).
 
@@ -237,6 +237,8 @@ AEP assumes engineering may involve multiple agents — human or AI. Every agent
 
 Coordination is by **assignment and claim, with the branch as the lock**: a ticket is claimed by the clone working it, the claim is visible in the tracker, and shared state never depends on any clone's position files. What may be written to a tracker other people read is bounded by the tracker policy.
 
+Protocol scaffolding is never its own unit of work on a shared surface: no tracker item and no pull request the workflow creates has its entire effect under the protocol directory, except the **design PR** — one per design run, whose entire diff is protocol-only and whose approval is approval of the plan. Everything else rides its consumer: evidence gating a map decision lands in that session's design PR, evidence gating a build ships as a declared increment with the code it unblocked, and drift found in passing is filed as evidence and indexed on the live effort's map, never as a tracker item. The rule reads the diff, never the commit type, and does not bind what humans file. (ADRs 0038, 0039.)
+
 ## 21. Repository layout
 
 A conforming repository:
@@ -256,7 +258,7 @@ specs.md                     this specification (framework repository only)
   decisions/                 append-only decision records
   designs/                   specs written by the planning stage
   evidence/
-    discussions/  research/  prototypes/  out-of-scope/
+    discussions/  research/  prototypes/  out-of-scope/  drift/
   tools/                     tool guides, derived per repository
   tickets/<effort>/          spec.md + issues/NN-*.md per effort
   position/                  per-clone state — gitignored, never depended on

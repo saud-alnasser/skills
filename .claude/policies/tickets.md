@@ -74,6 +74,17 @@ The checkable rule against a tracker filling with hundreds of AI-generated micro
 
 Never create a ticket to rename a variable, move a file, or update a comment. Those happen inside a ticket that has an outcome.
 
+## A shared tracker never carries protocol-only work
+
+A ticket this workflow creates on a shared tracker states an outcome **outside the protocol directory**. Work whose whole effect sits under `.claude/` is scaffolding — an input to some deliverable, not a thing a tracker item can deliver — and a tracker item for it publishes the workflow's own bookkeeping onto a surface teammates read, whether or not they run the protocol.
+
+Protocol-only work rides its consumer instead:
+
+- **Evidence gating a map decision** is produced by the map session that needs it — how design output then reaches the default branch is `.claude/policies/version-control.md`'s.
+- **Evidence gating a build** is a declared increment on the consuming build ticket (below): the answer and the code ship in the same commit.
+
+Two bounds, both deliberate. The rule reads the **diff, never the commit type** — `docs:` also carries real documentation, and a type is a label where the diff is a fact. And it binds only **what the workflow creates, on a shared tracker**: humans file what they like and triage routes it; on a local-markdown tracker there is nothing to bind, because the tickets are `.claude/` files and nothing publishes.
+
 ## Acceptance criteria state observable outcomes
 
 A criterion is checkable by someone who did not write the code. "Users can retry a failed payment without re-entering the card" is checkable; "the retry handler is refactored" is not — it names an implementation and can be satisfied by any change at all.

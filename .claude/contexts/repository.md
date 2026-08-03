@@ -39,7 +39,7 @@ Why an approach was selected, preserved as an ADR at `.claude/decisions/`. A dra
 _Avoid_: rationale doc, design doc
 
 **Evidence**:
-The trail showing how a claim was earned — research findings, prototype write-ups, the record of a rejected request, and the discussion that produced no decision. Distinct from knowledge: evidence records what was verified and when, and nothing validates it afterwards. That shared property is what earns the four of them one grouping directory. Durable findings graduate out of evidence into Context or a Decision.
+The trail showing how a claim was earned — research findings, prototype write-ups, the record of a rejected request, the discussion that produced no decision, and the drift finding. Distinct from knowledge: evidence records what was verified and when, and nothing validates it afterwards. That shared property is what earns the five of them one grouping directory. Durable findings graduate out of evidence into Context or a Decision.
 _Avoid_: notes, artifacts, output
 
 **Drift**:
@@ -57,6 +57,14 @@ _Avoid_: interview, review, questioning
 **Design Increment**:
 A decision a build ticket declares at design time because only partial code can answer it — typed HITL or AFK, resolved by the design activity scoped to that increment alone, and never invented mid-build (ADR 0037).
 _Avoid_: deferred decision, mid-build design, inline redesign
+
+**Design PR**:
+The one pull request whose entire diff may sit under the protocol directory — a single design run's deliverable, one per run, reviewable because approving it is approving the plan. No other protocol-only pull request or tracker item exists; everything else rides its consumer (ADR 0038).
+_Avoid_: docs PR, knowledge PR
+
+**Drift Finding**:
+The evidence record of a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies. Written by whoever finds it, indexed as a task-list line on the live effort's map, healed by design, never a tracker item (ADR 0039).
+_Avoid_: drift report, drift issue
 
 ## Boundaries
 

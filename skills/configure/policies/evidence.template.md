@@ -12,11 +12,11 @@
   Reached by pointer from `.claude/protocol.md`'s routing table.
 -->
 
-**Evidence is the trail showing how a claim was earned** — research findings, prototype write-ups, the record of a rejected request, and the discussion that produced no decision.
+**Evidence is the trail showing how a claim was earned** — research findings, prototype write-ups, the record of a rejected request, the discussion that produced no decision, and the drift finding.
 
-It is not a knowledge layer, and the difference is the whole reason it has its own directory: **evidence records what was verified and when, and nothing revalidates it afterwards.** Context is maintained against the Codebase; a finding is true of the moment it was taken. That shared property is what earns the four kinds one grouping directory rather than four scattered ones.
+It is not a knowledge layer, and the difference is the whole reason it has its own directory: **evidence records what was verified and when, and nothing revalidates it afterwards.** Context is maintained against the Codebase; a finding is true of the moment it was taken. That shared property is what earns the five kinds one grouping directory rather than five scattered ones.
 
-## The four kinds
+## The five kinds
 
 | Kind | Written to | Produced by |
 | --- | --- | --- |
@@ -24,12 +24,19 @@ It is not a knowledge layer, and the difference is the whole reason it has its o
 | prototype write-ups | `.claude/evidence/prototypes/` | `/prototype` |
 | rejected requests | `.claude/evidence/out-of-scope/` | `/triage` |
 | discussions | `.claude/evidence/discussions/` | `/design` |
+| drift findings | `.claude/evidence/drift/` | whoever finds the drift |
 
 ## Discussions
 
 A discussion records the grill that ended without a decision: what was asked, what was assumed, what was weighed, and what stayed open. **The open half is required, not optional** — a discussion with nothing open is a decision that has not been written down yet, and says so instead of being filed here.
 
 It is a record, dated, never maintained. What was weighed on a Tuesday stays true of that Tuesday; a discussion kept current would be a fourth knowledge layer with no rank in the truth hierarchy, which is exactly what the property above exists to prevent. Alternatives that *did* produce a decision need no discussion — the Decision already carries its considered options.
+
+## Drift findings
+
+A drift finding records a knowledge statement checked in passing and found false: **what was checked, against which commit, and what it falsifies** — enough that a later reader can re-run the check without reconstructing it. It is written by whoever finds the drift, on whatever branch they stand on, and rides that branch; finding it does not interrupt the work that surfaced it.
+
+Where a live design effort owns the area, the finding is indexed on that effort's map — the form is `.claude/policies/maps.md`'s. With no live effort it waits here, and the next design run over the area reads it. Which drift becomes a finding at all, rather than being healed on the spot, is `.claude/policies/knowledge.md`'s to say.
 
 **Throwaway prototype code is not evidence.** The code goes to `.claude/position/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent — ignoring the record of what it proved is silent data loss, and the two sit under different parents so that no ignore pattern can reach one while aiming at the other.
 
