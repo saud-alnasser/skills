@@ -1,7 +1,8 @@
-# feat(knowledge): state this repository's version-control policy
-
-Status: resolved
-Blocked by: 04, 05
+---
+title: feat(knowledge): state this repository's version-control policy
+status: resolved
+blocked-by: [04, 05]
+---
 
 ## Problem
 

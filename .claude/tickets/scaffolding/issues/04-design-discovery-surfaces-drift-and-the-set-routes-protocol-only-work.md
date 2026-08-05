@@ -1,8 +1,9 @@
-# 04 — feat(design): discovery surfaces drift, and the set routes protocol-only work
-
-Status: resolved
-Blocked by: 01, 03
-Part of: scaffolding
+---
+title: feat(design): discovery surfaces drift, and the set routes protocol-only work
+status: resolved
+blocked-by: [01, 03]
+part-of: scaffolding
+---
 
 ## Problem
 

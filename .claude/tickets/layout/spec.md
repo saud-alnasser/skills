@@ -1,7 +1,14 @@
-# refactor(layout): one lookup path for knowledge, tools, and version control
+---
+status: implemented
+sources:
+  - skills/configure/
+  - skills/tools/
+  - .claude/context.md
+  - .claude/tracker.md
+  - scripts/verify.ps1
+---
 
-Status: implemented
-Sources: `skills/configure/`, `skills/tools/`, `.claude/context.md`, `.claude/tracker.md`, `scripts/verify.ps1`
+# refactor(layout): one lookup path for knowledge, tools, and version control
 
 **On paths in this spec.** `SPEC-FORMAT.md` bans file paths outside `Sources:`, because a path in prose goes stale and reads as a commitment. Here the paths *are* the decision — the whole change is where a file lives and who owns it — so the trees below are inlined for the same reason a prototype's state machine is: prose cannot encode them more precisely. Everything else obeys the rule.
 

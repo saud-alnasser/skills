@@ -1,8 +1,9 @@
-# feat(tools): the forge reference covers pinning and sub-issue removal
-
-Status: resolved
-Blocked by: —
-Part of: fieldwork
+---
+title: feat(tools): the forge reference covers pinning and sub-issue removal
+status: resolved
+blocked-by: []
+part-of: fieldwork
+---
 
 ## Problem
 

@@ -1,3 +1,8 @@
+---
+kind: research
+falsifies: []
+---
+
 # AEP improvement brief
 
 Date: 2026-08-03

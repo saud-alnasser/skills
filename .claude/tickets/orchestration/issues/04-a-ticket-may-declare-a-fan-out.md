@@ -1,8 +1,9 @@
-# feat(skills): a ticket may declare a fan-out
-
-Status: resolved
-Blocked by: 02
-Part of: orchestration
+---
+title: feat(skills): a ticket may declare a fan-out
+status: resolved
+blocked-by: [02]
+part-of: orchestration
+---
 
 ## Problem
 

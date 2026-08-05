@@ -1,12 +1,12 @@
 ---
 name: implement
 description: Build one ticket end to end — verify, claim, drive tdd at the agreed seams, review, and record what moved. Use when a plan already exists and the work is to build it.
+metadata:
+  mode: implementation
+  policies: [context, knowledge, sub-agents, tickets, tracker, version-control]
 ---
 
 # Implement
-
-Mode: implementation
-Policies: `.claude/policies/context.md`, `.claude/policies/knowledge.md`, `.claude/policies/sub-agents.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
 
 One ticket, built and closed out. `/design` always leaves at least one ticket on disk, so there is always something to read — and `/implement` reads the ticket, not the conversation.
 
@@ -122,7 +122,7 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 ### On a stacking repository, blocked means stacked
 
-`Blocked by: 01` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
+`blocked-by: [01]` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
 **`.claude/policies/version-control.md` states which one applies**, and how to confirm it. Read it and do what it says. Getting the model wrong is expensive in both directions: assume plain git on a stacking repository and the frontier empties — every blocker sits committed-and-unmerged forever; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
 
@@ -277,7 +277,7 @@ A plan is wrong when the ticket cannot be built as written: the architecture it 
 
 ```
 → stop. do not build past the discovery.
-→ mark it               Status: blocked
+→ mark it               status: blocked
 → append ## Blocked     what was found, and why the plan
                         cannot proceed as written
 → release the claim     delete the branch, so the tree is
@@ -299,7 +299,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 `/review` runs **both axes**, and its fixes are applied, **before** anything is committed — reviewing afterwards would land work about to be reviewed rather than work that has been.
 
-Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `Status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
+Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
 
 There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree. What makes that safe is the push prohibition below — nothing is published, and every effect is locally reversible.
 

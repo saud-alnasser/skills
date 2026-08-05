@@ -1,7 +1,8 @@
-# feat(implement): on a stack, blocked means stacked
-
-Status: resolved
-Blocked by: 18
+---
+title: feat(implement): on a stack, blocked means stacked
+status: resolved
+blocked-by: [18]
+---
 
 ## Problem
 

@@ -1,7 +1,8 @@
-# refactor(configure): derive tool references per repository, and delete the tools skill
-
-Status: resolved
-Blocked by: —
+---
+title: refactor(configure): derive tool references per repository, and delete the tools skill
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

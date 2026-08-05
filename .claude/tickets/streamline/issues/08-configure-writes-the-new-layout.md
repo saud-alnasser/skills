@@ -1,8 +1,9 @@
-# feat(configure): the migration converts the superseded layout
-
-Status: open
-Blocked by: 05, 06, 07
-Part of: streamline
+---
+title: feat(configure): the migration converts the superseded layout
+status: open
+blocked-by: [05, 06, 07]
+part-of: streamline
+---
 
 ## Problem
 

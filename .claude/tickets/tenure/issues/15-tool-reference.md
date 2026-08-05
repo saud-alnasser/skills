@@ -1,7 +1,8 @@
-# feat(tools): tool reference — how to drive every tool the workflow touches
-
-Status: resolved
-Blocked by: —
+---
+title: feat(tools): tool reference — how to drive every tool the workflow touches
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

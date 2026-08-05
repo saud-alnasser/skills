@@ -1,9 +1,10 @@
-# refactor(skills): compress the build spine
-
-Status: superseded
-Superseded by: aep/09 (ADR 0030)
-Blocked by: 09
-Part of: streamline
+---
+title: refactor(skills): compress the build spine
+status: superseded
+blocked-by: [09]
+part-of: streamline
+superseded-by: aep/09 (ADR 0030)
+---
 
 ## Problem
 

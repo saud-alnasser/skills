@@ -1,9 +1,10 @@
-# feat(layout): move this repository onto the new layout, through the migration
-
-Status: superseded
-Superseded by: aep/07 (ADR 0030)
-Blocked by: 08
-Part of: streamline
+---
+title: feat(layout): move this repository onto the new layout, through the migration
+status: superseded
+blocked-by: [08]
+part-of: streamline
+superseded-by: aep/07 (ADR 0030)
+---
 
 ## Problem
 

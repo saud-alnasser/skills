@@ -1,7 +1,8 @@
-# feat(knowledge): position, and the line between shared and local
-
-Status: resolved
-Blocked by: —
+---
+title: feat(knowledge): position, and the line between shared and local
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

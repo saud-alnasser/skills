@@ -21,15 +21,15 @@ The reasoning here was previously the *absence* of pull requests, which `.claude
 - One effort per directory: `.claude/tickets/<effort>/`
 - The spec is `.claude/tickets/<effort>/spec.md`
 - Tickets are one file each at `<effort>/issues/NN-<slug>.md`, numbered from `01` — never a combined file
-- The title is the `# ` heading, in Conventional Commits form: `chore(skills): vendor the primitives and rewrite their paths`
-- `Status:` and `Blocked by:` are lines near the top
+- Every lifecycle fact is a **declared field**. `title`, `status` and `blocked-by` are on every ticket; `part-of` and `superseded-by` are on the tickets they apply to. The format is `.claude/policies/tickets.md`'s
+- The title is the `title` field, in Conventional Commits form: `chore(skills): vendor the primitives and rewrite their paths`. There is no `# ` heading — the id is the filename, so a ticket opens at its first section (ADR 0058)
 - Conversation appends at the bottom under `## Comments`, and is where a deviation from the ticket is recorded
 
-`Blocked by: —` means nothing blocks it. Blockers are bare two-digit ids within the same effort.
+`blocked-by: []` means nothing blocks it. Blockers are bare two-digit ids within the same effort.
 
 ## Assignment
 
-Not recorded. Single maintainer, no assignee field, no board. Where a ticket needs a human rather than an agent it says so in `Status:`, which is about the *work*, not about who owns it.
+Not recorded. Single maintainer, no assignee field, no board. Where a ticket needs a human rather than an agent it says so in `status`, which is about the *work*, not about who owns it.
 
 AEP reads Assignment and never writes it unasked.
 
@@ -47,7 +47,7 @@ The canonical roles and the strings this repository actually uses:
 
 Category roles are not recorded separately — the Conventional Commits type in the ticket title carries it: `fix(...)` is a bug, `feat(...)` is an enhancement.
 
-**One deviation from the standard shape, recorded rather than tidied away.** The tracker template holds that triage roles and the build lifecycle are separate vocabularies and that nothing carries both. Here, one `Status:` line carries both: `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from the `Blocked by:` line rather than written.
+**One deviation from the standard shape, recorded rather than tidied away.** The tracker template holds that triage roles and the build lifecycle are separate vocabularies and that nothing carries both. Here, one `status` field carries both: `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from `blocked-by` rather than written.
 
 Treat the union above as the vocabulary and the split as a known wrinkle in this repository — not as licence to introduce a second field. Which of those strings are in the tree at any moment is a census rather than a convention: read it off the tickets, and do not record it here, where it is wrong again the next time one closes.
 
@@ -57,4 +57,4 @@ The repository is public with no collaborators and no PR history. Nothing is tre
 
 ## Resolving a bare reference
 
-A bare two-digit number is a **ticket** in the current effort — `Blocked by: 09`, "ticket 12". It is never a PR or a GitHub issue, because neither exists here.
+A bare two-digit number is a **ticket** in the current effort — `blocked-by: [09]`, "ticket 12". It is never a PR or a GitHub issue, because neither exists here.

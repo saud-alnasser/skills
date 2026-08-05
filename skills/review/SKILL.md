@@ -1,12 +1,12 @@
 ---
 name: review
 description: Review a diff on two axes — does it implement what was asked, and does it follow this repository's own standards. Use when work is finished and about to be committed, or when the user asks for a review.
+metadata:
+  mode: review
+  policies: [decisions, sub-agents]
 ---
 
 # Review
-
-Mode: review
-Policies: `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`
 
 Two questions about one diff, asked independently:
 

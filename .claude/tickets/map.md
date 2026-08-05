@@ -1,0 +1,15 @@
+# Design map
+
+| Design | Status | Sources |
+| --- | --- | --- |
+| [aep](aep/spec.md) | draft | `specs.md`, `.claude/tickets/streamline/spec.md`, `skills/`, `.claude/`, `scripts/verify.ps1` |
+| [declared-fields](declared-fields/spec.md) | accepted | `skills/`, `agents/`, `scripts/verify.ps1`, `.claude/protocol.md`, `.claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md` |
+| [fieldwork](fieldwork/spec.md) | accepted | `.claude/evidence/research/2026-08-03-rentable-field-run.md`, `skills/configure/policies/maps.template.md`, `skills/configure/policies/tickets.template.md`, `skills/configure/policies/tracker.template.md`, `skills/configure/tools/github.md`, `skills/configure/tools/git.md`, `skills/design/SKILL.md`, `skills/implement/SKILL.md` |
+| [layout](layout/spec.md) | implemented | `skills/configure/`, `skills/tools/`, `.claude/context.md`, `.claude/tracker.md`, `scripts/verify.ps1` |
+| [mechanics](mechanics/spec.md) | implemented | `specs.md §5, §8, §9, §11, §19, §22, §24`, `.claude/protocol.md`, `.claude/position/marker.json`, `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `skills/configure/protocol.template.md`, `skills/configure/tools/git.md`, `skills/configure/policies/context.template.md`, `skills/configure/policies/decisions.template.md`, `skills/configure/policies/evidence.template.md`, `agents/`, `scripts/verify.ps1`, `.claude/decisions/0002, 0021, 0025, 0051` |
+| [orchestration](orchestration/spec.md) | implemented | `specs.md`, `skills/review/SKILL.md`, `skills/research/SKILL.md`, `skills/codebase-design/DESIGN-IT-TWICE.md`, `skills/implement/SKILL.md`, `.claude/policies/tickets.md`, `.claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md`, `.claude/evidence/research/2026-08-05-anthropic-first-party-orchestration-surfaces.md`, `.claude/evidence/research/2026-08-05-market-orchestration-patterns.md` |
+| [parallel-tickets](parallel-tickets/spec.md) | implemented | `specs.md §20`, `skills/implement/SKILL.md`, `skills/configure/policies/sub-agents.template.md`, `skills/configure/policies/tickets.template.md`, `.claude/policies/version-control.md`, `agents/portion-builder.md`, `.claude/decisions/0040–0048`, `.claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md` |
+| [scaffolding](scaffolding/spec.md) | implemented | `skills/configure/policies/tickets.template.md`, `skills/configure/policies/version-control.template.md`, `skills/configure/policies/maps.template.md`, `skills/configure/policies/evidence.template.md`, `skills/configure/policies/knowledge.template.md`, `skills/design/SKILL.md`, `specs.md` |
+| [streamline](streamline/spec.md) | draft | `CLAUDE.md`, `.claude/`, `skills/`, `scripts/verify.ps1` |
+| [tenure](tenure/spec.md) | implemented | — |
+| [worktrees](worktrees/spec.md) | implemented | `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `specs.md §21`, `.claude/.gitignore`, `.claude/policies/sub-agents.md`, `.claude/decisions/0006`, `.claude/decisions/0012`, `.claude/decisions/0045`, `scripts/verify.ps1` |

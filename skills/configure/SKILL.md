@@ -2,14 +2,16 @@
 name: configure
 description: Make this repository's knowledge correct and complete — detect what is already here, generate what is missing, migrate another AI workflow onto AEP, and prune what nothing loads. Use when onboarding a repository, or to audit one already running AEP.
 disable-model-invocation: true
+metadata:
+  mode: maintenance
+  policies: ["*"]
 ---
 
 # Configure
 
-Mode: maintenance
-Policies: every guide in `.claude/policies/` — this is the command that writes them, and an audit run reads each one back.
-
 `/configure` has **one job: make repository knowledge correct and complete.** Onboarding and auditing are the same job against different starting states.
+
+It reads **every guide in `.claude/policies/`** — this is the command that writes them, and an audit run reads each one back — which is why its declared guides are the whole directory rather than a list that would need updating whenever a guide is added.
 
 Which branch runs is decided by **what it finds, never by a flag.** A flag lets the caller assert a starting state; detection discovers one.
 
@@ -88,6 +90,7 @@ The shape being generated, so the tree reads as its own map — every category i
 ├── evidence/            research, prototypes, out-of-scope, discussions
 ├── tickets/             one directory per effort
 ├── tools/               one file per tool this repository uses
+├── scripts/             scripts serving this workflow's own process
 ├── position/            per-clone state — never committed
 ├── worktrees/           the harness's isolated child checkouts (ADR 0050)
 └── .gitignore           what per-clone means, and the test for it
@@ -99,7 +102,11 @@ The two `settings` files are the harness's, not this workflow's: it reads them f
 
 `worktrees/` is the harness's too, and it is a third case rather than a repeat of either — which is why being per-clone is not on its own what keeps something out of the layout. It is per-clone like `settings.local.json`, and named in both the tree and the canonical layout like `settings.json`. What separates it is that it is a **directory**: the layout names every category, and a category nothing names is one the ignore file is free to forget (ADR 0050).
 
-The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope,discussions}/`, `.claude/tickets/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
+**`.claude/scripts/regenerate-indexes.<ext>`**, in the language this repository already uses — the one script that produces every generated index. [SCRIPTS.md](SCRIPTS.md) is the behavioural specification it is derived from, and it carries a fixture with exact expected output: run the derived script against that fixture and report the result **before** running it against the repository, because a freshly configured repository has no committed index for a first regeneration to be compared against.
+
+Nothing ships a copy of AEP's own script, and nothing points into the plugin for one (ADR 0060). `MIGRATION.md` carries no row for it: no earlier version of this workflow installed one, so there is nothing anywhere to convert.
+
+The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope,discussions}/`, `.claude/tickets/`, `.claude/scripts/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
 `worktrees/` is lazy in a stronger sense: **no command of this workflow ever creates it.** The harness does, the first time a stage dispatches an isolated child. It is in the tree because the tree is the shape of a conforming repository rather than a manifest of what this run writes — and because a directory the layout does not name is one the ignore file is free to forget, which is exactly what happened.
 
@@ -113,7 +120,7 @@ What is `/configure`'s is the *sourcing*: these are generated from the repositor
 
 **`.claude/protocol.md`**, from [protocol.template.md](protocol.template.md), copied as-is. The router rather than a rule — the Marker, the drift reads, the verification report, and the table saying which guides each stage reads — so it is reached by pointer and a question turn does not pay for it.
 
-**`.claude/modes/`**, from [modes/](modes/), copied as-is — one file per reasoning posture, seven in all. A stage reads exactly the one its `Mode:` line declares, which is why they are files rather than sections of the router.
+**`.claude/modes/`**, from [modes/](modes/), copied as-is — one file per reasoning posture, seven in all. A stage reads exactly the one its `metadata.mode` field declares, which is why they are files rather than sections of the router.
 
 **`.claude/policies/`**, one guide per workflow concern or repository aspect. Eight describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are (ADR 0019) — a copied guide would hand this repository somebody else's facts.
 

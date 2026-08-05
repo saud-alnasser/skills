@@ -1,8 +1,9 @@
-# feat(configure): the tracker declares what a ticket is, and the map reads it
-
-Status: resolved
-Blocked by: —
-Part of: fieldwork
+---
+title: feat(configure): the tracker declares what a ticket is, and the map reads it
+status: resolved
+blocked-by: []
+part-of: fieldwork
+---
 
 ## Problem
 

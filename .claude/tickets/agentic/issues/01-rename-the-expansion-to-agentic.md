@@ -1,7 +1,8 @@
-# 01 — docs(skills): rename the expansion to the Agentic Engineering Protocol, and release the specification at 1.2.0
-
-Status: resolved
-Blocked by: —
+---
+title: docs(skills): rename the expansion to the Agentic Engineering Protocol, and release the specification at 1.2.0
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

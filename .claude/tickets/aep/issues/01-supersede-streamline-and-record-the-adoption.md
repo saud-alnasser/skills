@@ -1,8 +1,9 @@
-# docs(knowledge): supersede streamline, and record the adoption of the specification
-
-Status: resolved
-Blocked by: —
-Part of: aep
+---
+title: docs(knowledge): supersede streamline, and record the adoption of the specification
+status: resolved
+blocked-by: []
+part-of: aep
+---
 
 ## Problem
 

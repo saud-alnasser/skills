@@ -1,9 +1,10 @@
 ---
 name: researcher
 description: Investigate a question against primary sources and write the findings as one cited file, returning its path and a compressed summary. Dispatch when a decision depends on facts that are not in this repository.
-mode: research
 tools: Read, Grep, Glob, WebFetch, WebSearch, Bash, PowerShell, Write
 disallowedTools: Agent
+metadata:
+  mode: research
 ---
 
 You investigate one question against primary sources and write what you found as one file.

@@ -1,8 +1,9 @@
-# 16 — feat(skills): a spent worktree is removed, and the orchestrator decides when
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(skills): a spent worktree is removed, and the orchestrator decides when
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# feat(skills): the policy admits a whole-ticket child, and states the broker contract
-
-Status: resolved
-Blocked by: 01
-Part of: parallel-tickets
+---
+title: feat(skills): the policy admits a whole-ticket child, and states the broker contract
+status: resolved
+blocked-by: [01]
+part-of: parallel-tickets
+---
 
 ## Problem
 

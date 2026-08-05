@@ -1,9 +1,10 @@
-# refactor(skills): compress the review and evidence stages
-
-Status: superseded
-Superseded by: aep/09 (ADR 0030)
-Blocked by: 09
-Part of: streamline
+---
+title: refactor(skills): compress the review and evidence stages
+status: superseded
+blocked-by: [09]
+part-of: streamline
+superseded-by: aep/09 (ADR 0030)
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# chore(skills): adopt the second axis here
-
-Status: resolved
-Blocked by: 06
-Part of: parallel-tickets
+---
+title: chore(skills): adopt the second axis here
+status: resolved
+blocked-by: [06]
+part-of: parallel-tickets
+---
 
 ## Problem
 

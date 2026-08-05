@@ -1,8 +1,9 @@
-# feat(skills): roles ship as named definitions
-
-Status: resolved
-Blocked by: 02
-Part of: orchestration
+---
+title: feat(skills): roles ship as named definitions
+status: resolved
+blocked-by: [02]
+part-of: orchestration
+---
 
 ## Problem
 

@@ -111,9 +111,16 @@ function Get-SkillFile {
   if ($null -eq $c) { '' } else { $c }
 }
 
+# Carriage returns are stripped here, at the one place frontmatter is extracted,
+# rather than tolerated pattern by pattern. `$` sits before the `\n` and so
+# *after* the `\r`, which means every trailing-whitespace class in every caller
+# would need `\r?` and the one that forgot would fail only on a CRLF file. That
+# is not hypothetical twice over: a formatter normalised a skill and its mode
+# read as absent, and a spec sweep later reported eight files as missing a field
+# they declared.
 function Get-Frontmatter {
   param([string]$Content)
-  if ($Content -match '(?s)\A---\r?\n(.*?)\r?\n---\r?\n') { return $Matches[1] }
+  if ($Content -match '(?s)\A---\r?\n(.*?)\r?\n---\r?\n') { return ($Matches[1] -replace "`r", '') }
   return $null
 }
 
@@ -181,6 +188,56 @@ function Test-UserInvoked {
   [bool]($fm -match '(?m)^disable-model-invocation:\s*true\s*$')
 }
 
+# ADR 0055 puts AEP's fields *inside* the harness's `metadata:` map, and that
+# containment is the decision — a `mode:` indented under any other key is not
+# declared where the ADR says it is. One reader for the block, because the first
+# version of this asked only whether some indented `mode:` existed: renaming
+# `metadata:` to `aep:` left every assertion green, which is the guard-that-
+# cannot-fire failure `.claude/rules/skills.md` says to assume you have written.
+function Get-MetadataBlock {
+  param([string]$Content)
+  $fm = Get-Frontmatter $Content
+  if (-not $fm) { return $null }
+  $m = [regex]::Match($fm, '(?ms)^metadata:[ \t]*$(.*?)(?=^\S|\z)')
+  if (-not $m.Success) { return $null }
+  $m.Groups[1].Value
+}
+
+# The guides a skill declares, as bare names — `tickets`, not the path. The
+# wildcard `*` is /configure's, which reads the whole directory; a caller that
+# cares about the difference tests for it rather than being handed a list that
+# quietly means "all of them".
+function Get-DeclaredPolicies {
+  param([string]$Content)
+  $block = Get-MetadataBlock $Content
+  if ($null -eq $block) { return $null }
+  $line = [regex]::Match($block, '(?m)^[ \t]+policies:[ \t]*\[(.*?)\][ \t]*$')
+  if (-not $line.Success) { return $null }
+  ,@([regex]::Matches($line.Groups[1].Value, '[a-z*-]+') | ForEach-Object { $_.Value })
+}
+
+# The posture, read only from inside that map. `$null` when absent, so a caller
+# distinguishes "no metadata" from "metadata without a mode" by asking again.
+function Get-DeclaredMode {
+  param([string]$Content)
+  $block = Get-MetadataBlock $Content
+  if ($null -eq $block) { return $null }
+  $m = [regex]::Matches($block, '(?m)^[ \t]+mode:[ \t]*(\S+)[ \t]*$')
+  if ($m.Count -ne 1) { return $null }
+  $m[0].Groups[1].Value
+}
+
+# `/commit`'s step 3, from its heading to the next. Scoped rather than file-wide
+# because `/commit` also sets a *ticket* status, which answers to the build
+# lifecycle and not to the spec format. One home because two assertions read this
+# step, and a copied matcher is one rewording away from a check that stops
+# finding its subject and reports nothing.
+function Get-SpecStep {
+  $m = [regex]::Match((Get-SkillFile 'commit/SKILL.md'), '(?ims)^#{2,}[^\n]*mark the spec.*?(?=^#{2}\s|\z)')
+  if (-not $m.Success) { throw 'marking the spec is not its own step' }
+  $m.Value
+}
+
 # --- ticket tenure/01 — vendor the primitives ---------------------------------------
 
 Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
@@ -227,6 +284,14 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
     '\.claude/tracker\.md'         = '.claude/tracker.md (streamline/03 — use .claude/policies/tracker.md)'
     '\.claude/version-control\.md' = '.claude/version-control.md (streamline/03 — use .claude/policies/version-control.md)'
   }
+  # `.claude/tickets/map.md` deliberately does *not* join this table. Every path
+  # here was **retired** — nothing may name it again — and that one was
+  # **reassigned**: ADR 0059 gives it to the design index in the same breath as
+  # it takes it from the map. A blanket ban would forbid the new tenant from
+  # being named anywhere shipped, and the label would offer the wrong
+  # replacement to whoever tripped it. The map's own move is guarded where the
+  # claim actually is, in `declared-fields/10`, and its conversion row is in
+  # `$conversions` below, which asks a question this table cannot.
   foreach ($pattern in $legacy.Keys) {
     $label = $legacy[$pattern]
     Assert "no file under ./skills references $label" {
@@ -525,6 +590,10 @@ $rulePattern = [ordered]@{
   'self-explanatory code'              = '(?i)self-explanatory'
   'the compression test'               = '(?i)will this improve (a )?future engineering decision'
   'the knowledge-layer table'          = '(?im)^\|\s*Codebase\s*\|'
+  # The context format owns what a generated row may contain. `declared-fields/05`
+  # had this reasoning in the regenerator's own doc-comment as well, which is a
+  # home no reader of the format would think to check for a contradiction.
+  'the label-row rule'                 = '(?i)a claim its directory never made'
   # `tdd` owns the loop, so it owns why a guessed test command wrecks it. This
   # reasoning had reached four files before the guard existed.
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
@@ -1899,11 +1968,14 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
 
   # --- the spec status -------------------------------------------------------
 
-  # Decision 23: a document's reasoning is frozen; only its status moves.
-  Assert "a completed spec is marked implemented, and only the status line moves" {
+  # Decision 23: a document's reasoning is frozen; only its status moves. The
+  # status became a declared field in `declared-fields/04`, so the wording moved
+  # with it — and deliberately does not also accept the retired `status line`,
+  # which would leave this green against the very reversion it now guards.
+  Assert "a completed spec is marked implemented, and only the status field moves" {
     $c = Get-SkillFile 'commit/SKILL.md'
     if ($c -notmatch '(?i)implemented') { throw 'the spec is never marked implemented' }
-    $c -match '(?i)only the status line|content is never rewritten|reasoning is frozen'
+    $c -match '(?i)only the status field|content is never rewritten|reasoning is frozen'
   }
 
   # Cross-file: /commit writes a status SPEC-FORMAT has to recognise, and the
@@ -1918,15 +1990,14 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
     # section-wide check survives the term being cut from the vocabulary itself.
     $vocab = (($fmt -split '\r?\n') | Where-Object { $_ -match '`draft`' }) -join ' '
     if (-not $vocab) { throw 'SPEC-FORMAT has no status vocabulary line' }
-    # Only the spec step. `Status: resolved` elsewhere in the file is a
-    # *ticket* status and answers to the build lifecycle, not to this format.
-    $specStep = [regex]::Match($c, '(?ims)^#{2,}[^\n]*mark the spec.*?(?=^#{2}\s|\z)').Value
-    if (-not $specStep) { throw 'marking the spec is not its own step' }
+    # Only the spec step — `Status: resolved` elsewhere in the file is a
+    # *ticket* status. The scoping and its reason live in `Get-SpecStep`.
+    $specStep = Get-SpecStep
     foreach ($written in [regex]::Matches($specStep, '(?i)Status:\s*([a-z-]+)')) {
       $s = $written.Groups[1].Value
       if ($vocab -notmatch "``$s``") { throw "/commit writes Status: $s, which SPEC-FORMAT does not define" }
     }
-    if ($fmt -notmatch '(?i)only the status line') { throw 'the freeze rule is not in SPEC-FORMAT' }
+    if ($fmt -notmatch '(?i)only the status field') { throw 'the freeze rule is not in SPEC-FORMAT' }
     if ($c -notmatch '\.claude/policies/specs\.md') { throw '/commit does not point at the format' }
     # The rationale belongs to the format file. /commit carries the imperative.
     $c -notmatch '(?i)stops being evidence'
@@ -2806,6 +2877,10 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
     # this table, and a legacy path the exempt files name without converting
     # is exactly what that sweep exists to catch.
     '\.claude/docs/'  = '(\.claude/(decisions|designs|evidence)/|deleted)'
+    # ADR 0059. Same kind as the row above — this workflow's own superseded
+    # layout — and the target carries an effort segment, so neither pattern can
+    # match the other and the row cannot satisfy itself.
+    '\.claude/tickets/map\.md' = '<effort>/map\.md'
   }
   foreach ($from in $conversions.Keys) {
     $to = $conversions[$from]
@@ -3374,11 +3449,16 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
   # Ticket 09: `.claude/tracker.md` is the one home for which tracker a
   # repository uses, "read by every skill that touches the tracker — /design,
   # /implement, /triage". /design was the last of the three with nothing.
-  # Named *and* used to branch. A single mention passed while every `Status:`
+  # Named *and* used to branch. A single mention passed while every lifecycle
   # instruction below it stayed local-markdown-only, which is the half that
   # actually makes GitHub a second-class tracker.
+  #
+  # `declared-fields/08` turned the local form into frontmatter, so the anchor
+  # moved off the retired `Status:` token and onto the property: the format says
+  # which form is local-markdown's, and says what the forge does instead. The
+  # window crosses sentences because those two facts are two sentences.
   $trackerReaders = [ordered]@{
-    $tickets = '(?is)`Status:`[^.]{0,160}(local[- ]markdown|on GitHub)'
+    $tickets = '(?is)local[- ]markdown form.{0,400}on GitHub'
     $map     = '(?i)Record it:[^\r\n]{0,240}(tracker\.md|on GitHub|label)'
   }
   foreach ($f in $trackerReaders.Keys) {
@@ -6158,17 +6238,14 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
 
 Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
 
-  # Body text, not frontmatter (ADR 0021's Load-Bearing Frontmatter rule, and
-  # the reason `tags` was deleted): nothing in the harness would act on a
-  # frontmatter field, so it would be a second place to keep true and no reader
-  # would be obliged to read it. A `Policies:` line mirrors the `Sources:` line
-  # a Domain Context already carries.
+  # This was a body line until ADR 0055, on the ground that nothing in the
+  # harness would act on a frontmatter field. That premise was checked and found
+  # false: the skills reference documents a `metadata:` map for exactly this, so
+  # the field is load-bearing in the sense `contexts/skill-authoring.md` requires
+  # — the configuration stage's derivation and this suite both read it.
   function Get-Declared {
     param([string]$Relative)
-    $line = [regex]::Match((Get-SkillFile $Relative), '(?m)^Policies:(.*)$')
-    if (-not $line.Success) { return $null }
-    ,@([regex]::Matches($line.Groups[1].Value, '`\.claude/policies/([a-z-]+)\.md`') |
-       ForEach-Object { $_.Groups[1].Value })
+    Get-DeclaredPolicies (Get-SkillFile $Relative)
   }
 
   function Get-RoutedFor {
@@ -6185,7 +6262,7 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
   Assert "every skill that reads a guide declares it, near the top" {
     $expected = @('commit', 'configure', 'design', 'domain-modeling', 'implement',
                   'prototype', 'research', 'review', 'triage')
-    $missing = @($expected | Where-Object { (Get-SkillFile "$_/SKILL.md") -notmatch '(?m)^Policies:' })
+    $missing = @($expected | Where-Object { $null -eq (Get-DeclaredPolicies (Get-SkillFile "$_/SKILL.md")) })
     if ($missing) { throw "no declaration: $($missing -join ', ')" }
     $true
   }
@@ -6197,7 +6274,9 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
   Assert "no skill declares twice" {
     $twice = @()
     foreach ($f in (Get-SkillFiles)) {
-      $n = ([regex]::Matches((Get-SkillText $f), '(?m)^Policies:')).Count
+      $block = Get-MetadataBlock (Get-SkillText $f)
+      if ($null -eq $block) { continue }
+      $n = ([regex]::Matches($block, '(?m)^[ \t]+policies:')).Count
       if ($n -gt 1) { $twice += ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/') }
     }
     if ($twice) { throw "declared more than once in: $($twice -join ', ')" }
@@ -6209,6 +6288,10 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
     foreach ($f in (Get-SkillFiles)) {
       $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
       foreach ($g in (Get-Declared $rel)) {
+        # `*` is the whole directory, not a guide name — resolving it would let
+        # `Test-Path`'s own wildcard matching answer yes for a skill that named
+        # nothing checkable.
+        if ($g -eq '*') { continue }
         if (-not (Test-Path (Join-Path $skills "configure/policies/$g.template.md"))) { $broken += "$rel → $g" }
       }
     }
@@ -6241,11 +6324,19 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
     }
   }
 
+  # The exception moved house when the declaration became a field. The machine
+  # half is the wildcard; the reason is prose and stays prose, in the body —
+  # a field carries what something acts on and nothing acts on a justification.
   Assert "/configure declares the whole directory rather than a list, and says why" {
-    $line = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?m)^Policies:(.*)$')
-    if (-not $line.Success) { throw 'no declaration' }
-    if ($line.Groups[1].Value -notmatch '\.claude/policies/') { throw 'the directory is not named' }
-    $line.Groups[1].Value -match '(?i)writes them|audit'
+    $c = Get-SkillFile 'configure/SKILL.md'
+    $declared = Get-DeclaredPolicies $c
+    if ($null -eq $declared) { throw 'no declaration' }
+    if ($declared -notcontains '*') { throw 'the whole directory is not declared' }
+    # Crossing newlines deliberately. A single-line window would forbid the
+    # reason ever wrapping — reintroducing, for the half that stayed prose, the
+    # exact reflow fragility ADR 0055 moved the machine-read half to escape.
+    if ($c -notmatch '(?is)every guide.{0,200}(writes them|audit)') { throw 'the reason is not stated in the body' }
+    $true
   }
 
   # --- criterion 3: declaring is not restating ------------------------------
@@ -6253,19 +6344,25 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
   # `$rulePattern`'s single-home sweep already proves each guide's rules are
   # stated once. What it cannot see is a declaration that has quietly grown into
   # a summary of the guide — which reads as helpful and is a second home.
+  # The length check this replaces measured prose left over beside the paths.
+  # A list of bare names has nowhere for prose to sit, so the successor property
+  # is that the field stayed a list of bare names — a path or a sentence smuggled
+  # into it is the same failure arriving in the new format.
   Assert "a declaration points and does not summarise" {
-    $long = @()
+    $bad = @()
     foreach ($f in (Get-SkillFiles)) {
-      $line = [regex]::Match((Get-SkillText $f), '(?m)^Policies:(.*)$')
+      $block = Get-MetadataBlock (Get-SkillText $f)
+      if ($null -eq $block) { continue }
+      $line = [regex]::Match($block, '(?m)^[ \t]+policies:[ \t]*(.*)$')
       if (-not $line.Success) { continue }
-      # Everything outside the backticked paths. A pointer needs almost none;
-      # a sentence explaining what each guide says is the failure.
-      $prose = ($line.Groups[1].Value -replace '`\.claude/policies/[a-z-]+\.md`', '').Trim(' ', ',')
-      if ($prose.Length -gt 120) {
-        $long += ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      # Quotes are permitted because the wildcard needs them: a bare `*` opens a
+      # YAML alias, so `["*"]` is the only spelling of "the whole directory" that
+      # survives a parser.
+      if ($line.Groups[1].Value -notmatch '^\[["a-z*, -]*\]$') {
+        $bad += ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
       }
     }
-    if ($long) { throw "the declaration summarises rather than points: $($long -join ', ')" }
+    if ($bad) { throw "the declaration is not a bare-name list: $($bad -join ', ')" }
     $true
   }
 }
@@ -6525,14 +6622,23 @@ Describe-Ticket 'aep/03' 'the modes ship, and every skill declares exactly one' 
 
   # A skill added later without a mode fails here, which is the acceptance
   # criterion that it cannot ship with its tradeoffs implied.
-  Assert "every skill declares exactly one mode, and the mode exists" {
+  #
+  # ADR 0055 moved the declaration off a prose body line and under the harness's
+  # documented `metadata:` map. The parse is anchored inside the frontmatter
+  # block rather than to running text, which is the whole point of the move: the
+  # old `^Mode:` match sat in prose and survived only until someone reflowed the
+  # paragraph around it.
+  Assert "every skill declares exactly one mode, as a field, and the mode exists" {
     $problems = @()
     foreach ($d in (Get-ChildItem $skills -Directory)) {
       $f = Join-Path $d.FullName 'SKILL.md'
       if (-not (Test-Path $f)) { $problems += "$($d.Name) has no SKILL.md"; continue }
-      $decls = @([regex]::Matches((Get-Content $f -Raw), '(?m)^Mode:\s*(\S+)\s*$'))
-      if ($decls.Count -ne 1) { $problems += "$($d.Name) declares $($decls.Count) modes"; continue }
-      if ($modeSet -notcontains $decls[0].Groups[1].Value) { $problems += "$($d.Name) declares unknown mode '$($decls[0].Groups[1].Value)'" }
+      $c = Get-Content $f -Raw
+      if (-not (Get-Frontmatter $c)) { $problems += "$($d.Name) has no frontmatter"; continue }
+      if ($null -eq (Get-MetadataBlock $c)) { $problems += "$($d.Name) declares no metadata map"; continue }
+      $mode = Get-DeclaredMode $c
+      if (-not $mode) { $problems += "$($d.Name) does not declare exactly one mode inside metadata"; continue }
+      if ($modeSet -notcontains $mode) { $problems += "$($d.Name) declares unknown mode '$mode'" }
     }
     if ($problems) { throw ($problems -join '; ') }
     $true
@@ -6654,10 +6760,14 @@ Describe-Ticket 'aep/05' 'the protocol file and the entrypoint speak the spec' {
       $row = [regex]::Match($c, "(?m)^\|\s*``/$stage``\s*\|\s*(\S+)\s*\|")
       if (-not $row.Success) { $problems += "/$stage has no row"; continue }
       $skill = Get-SkillFile "$stage/SKILL.md"
-      $decl = [regex]::Match($skill, '(?m)^Mode:\s*(\S+)\s*$')
-      if (-not $decl.Success) { $problems += "/$stage declares no mode"; continue }
-      if ($row.Groups[1].Value -ne $decl.Groups[1].Value) {
-        $problems += "/$stage runs under '$($row.Groups[1].Value)' in the table and '$($decl.Groups[1].Value)' in the skill"
+      # ADR 0054 keeps this table as this repository's actual set and the skill's
+      # declaration as the workflow's default; ADR 0055 changed only the form the
+      # default is written in. The precedence is untouched — this still compares
+      # two homes rather than deriving one from the other.
+      $decl = Get-DeclaredMode $skill
+      if (-not $decl) { $problems += "/$stage declares no mode inside metadata"; continue }
+      if ($row.Groups[1].Value -ne $decl) {
+        $problems += "/$stage runs under '$($row.Groups[1].Value)' in the table and '$decl' in the skill"
       }
     }
     if ($problems) { throw ($problems -join '; ') }
@@ -7462,10 +7572,15 @@ Describe-Ticket 'scaffolding/04' 'design discovery surfaces drift, and the set r
 
   $design = 'design/SKILL.md'
 
+  # `declared-fields/06` moved the read from the directory to the index, so the
+  # path moved with it. The scoping half is what this assertion is about, and it
+  # is anchored on the durable half of the phrase rather than on either
+  # ticket's wording — an unscoped read is the whole-directory cost the index
+  # was built to remove.
   Assert "discovery names the drift-finding read, scoped to what the request plans" {
     $s = Get-Section (Get-SkillFile $design) 'Discover'
-    ($s -match 'evidence/drift') -and
-    ($s -match '(?i)touching what this request plans')
+    ($s -match 'evidence/map\.md') -and
+    ($s -match '(?i)this request plans')
   }
 
   Assert "set-cutting: no protocol-only ticket, routed by the tickets policy" {
@@ -8434,7 +8549,7 @@ Describe-Ticket 'orchestration/07' 'the existing spawners conform to the policy'
   Assert "no spawner changed what it does" {
     $modes = @{ 'review/SKILL.md' = 'review'; 'research/SKILL.md' = 'research'; 'survey/SKILL.md' = 'research' }
     foreach ($f in $modes.Keys) {
-      if ((Get-SkillFile $f) -notmatch "(?m)^Mode:\s*$($modes[$f])\s*$") { throw "$f changed its mode" }
+      if ((Get-DeclaredMode (Get-SkillFile $f)) -ne $modes[$f]) { throw "$f changed its mode" }
     }
     # Each spawner names the thing it dispatches. A bare `sub-?agent` probe
     # passed on the pointer this ticket just added — `sub-agents.md` contains
@@ -10006,20 +10121,22 @@ Describe-Ticket 'mechanics/10' 'every shipped role declares its mode' {
     if ($roles.Count -lt 1) { throw 'no roles ship' }
     foreach ($r in $roles) {
       $c = Get-Content $r.FullName -Raw
-      $fm = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
-      if (-not $fm.Success) { throw "$($r.Name) has no frontmatter" }
-      $hits = [regex]::Matches($fm.Groups[1].Value, '(?m)^mode:\s*(\S+)')
-      if ($hits.Count -ne 1) { throw "$($r.Name) declares $($hits.Count) modes, not one" }
+      if (-not (Get-Frontmatter $c)) { throw "$($r.Name) has no frontmatter" }
+      # ADR 0055 puts the same map on both shipped surfaces. Containment is
+      # checked rather than mere presence, because a `mode:` indented under any
+      # other key is not declared where the decision says — which is the failure
+      # this same assertion shipped with on the skills surface and did not catch.
+      if ($null -eq (Get-DeclaredMode $c)) { throw "$($r.Name) does not declare exactly one mode inside metadata" }
     }
     $true
   }
 
   Assert "every declared mode names a mode that ships" {
     foreach ($r in $roles) {
-      $c = Get-Content $r.FullName -Raw
-      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
-      $p = Join-Path $modeDir "$($m.Groups[1].Value).template.md"
-      if (-not (Test-Path $p)) { throw "$($r.Name) declares mode '$($m.Groups[1].Value)', which ships no file" }
+      $mode = Get-DeclaredMode (Get-Content $r.FullName -Raw)
+      if ($null -eq $mode) { throw "$($r.Name) declares no mode inside metadata" }
+      $p = Join-Path $modeDir "$mode.template.md"
+      if (-not (Test-Path $p)) { throw "$($r.Name) declares mode '$mode', which ships no file" }
     }
     $true
   }
@@ -10029,8 +10146,12 @@ Describe-Ticket 'mechanics/10' 'every shipped role declares its mode' {
       $c = Get-Content $r.FullName -Raw
       $body = $c -replace '(?s)\A---\r?\n.*?\r?\n---', ''
       if ($body -notmatch '(?is)\.claude/modes/') { throw "$($r.Name) never points at the mode directory" }
-      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
-      if ($body -match "(?i)\bmode:\s*$($m.Groups[1].Value)\b") {
+      $mode = Get-DeclaredMode $c
+      # An empty `$mode` would turn the search below into a different question
+      # and pass quietly. Assertions run independently, so the one above having
+      # already caught this is not something this one may lean on.
+      if ($null -eq $mode) { throw "$($r.Name) declares no mode inside metadata" }
+      if ($body -match "(?i)\bmode:\s*$mode\b") {
         throw "$($r.Name) names its mode a second time in the body"
       }
     }
@@ -10045,15 +10166,19 @@ Describe-Ticket 'mechanics/10' 'every shipped role declares its mode' {
   Assert "no role restates its mode's tradeoff, in the mode's words or its own" {
     foreach ($r in $roles) {
       $c = Get-Content $r.FullName -Raw
-      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
-      $modeText = Get-Content (Join-Path $modeDir "$($m.Groups[1].Value).template.md") -Raw
+      $mode = Get-DeclaredMode $c
+      # Without this, an absent mode reaches `Join-Path` and the assertion fails
+      # with a path error naming a file nobody wrote — the reader is sent looking
+      # for a missing template instead of a role missing its declaration.
+      if ($null -eq $mode) { throw "$($r.Name) declares no mode inside metadata" }
+      $modeText = Get-Content (Join-Path $modeDir "$mode.template.md") -Raw
       $t = [regex]::Match($modeText, '(?im)^Gives up:\s*(\w+)')
-      if (-not $t.Success) { throw "the $($m.Groups[1].Value) mode states no tradeoff to check against" }
+      if (-not $t.Success) { throw "the $mode mode states no tradeoff to check against" }
       $noun = $t.Groups[1].Value
       if ($c -match '(?im)^Gives up:') { throw "$($r.Name) carries a tradeoff line of its own" }
       if ($c -match "(?i)(gives? up|give up|trade[sd]?|sacrific\w*|forgo\w*)[^.]{0,60}\b$noun\b" -or
           $c -match "(?i)\b$noun\b[^.]{0,60}(is given up|is traded|is sacrificed)") {
-        throw "$($r.Name) restates the $($m.Groups[1].Value) mode's tradeoff ('$noun')"
+        throw "$($r.Name) restates the $mode mode's tradeoff ('$noun')"
       }
     }
     $true
@@ -10470,11 +10595,16 @@ Describe-Ticket 'mechanics/03' 'the protocol template compares both marker facts
 
 # --- ticket mechanics/08 — the index is generated, and review routes through it -
 
-# The regenerator lives here because the suite is what checks it, and it is
-# proved against a fixture directory rather than against `.claude/decisions/`:
-# this repository's ADRs gain their fields in `mechanics/12`, so a check written
-# against real data would pass vacuously until then — which is the shape of every
-# broken guard this file records.
+# What remains here is the supersession graph, which is a property of the
+# decisions *format* rather than of indexing, and is still proved against a
+# fixture because a symmetric tree cannot demonstrate the asymmetry it catches.
+#
+# The renderer this block used to carry is gone: `declared-fields/05` moved
+# index generation into `scripts/regenerate-indexes.ps1`, and ADR 0057 says a
+# single deterministic script produces every index. A second renderer here,
+# with its own copy of the header row, the ordering and the em-dash rule, was
+# the shape that decision rejected — and its assertions were checking a
+# renderer nothing ships.
 Describe-Ticket 'mechanics/08' 'the decisions index is generated, and review routes through it' {
 
   $readFields = {
@@ -10494,20 +10624,6 @@ Describe-Ticket 'mechanics/08' 'the decisions index is generated, and review rou
       Supersedes   = & $list 'supersedes'
       SupersededBy = & $list 'superseded-by'
     }
-  }
-
-  # One row per file in numeric order — the order is part of the output, or two
-  # regenerations of one directory would differ and "byte-identical" would mean
-  # nothing.
-  $render = {
-    param([hashtable]$Docs)
-    $lines = @('# Decision map', '', '| ADR | Load when | Status | Sources |', '| --- | --- | --- | --- |')
-    foreach ($k in ($Docs.Keys | Sort-Object)) {
-      $d = $Docs[$k]
-      $src = if ($d.Sources.Count) { ($d.Sources | ForEach-Object { "``$_``" }) -join ', ' } else { '—' }
-      $lines += "| [$k]($($d.File)) | $($d.LoadWhen) | $($d.Status) | $src |"
-    }
-    ($lines -join "`n") + "`n"
   }
 
   # A fixture directory, built and torn down per run. Two ADRs, one superseding
@@ -10552,42 +10668,6 @@ superseded-by: []
       $docs[$n] = $d
     }
     $docs
-  }
-
-  Assert "regenerating over an unchanged directory produces a byte-identical file" {
-    $dir = & $mkFixture
-    try {
-      $first = & $render (& $load $dir)
-      Set-Content (Join-Path $dir 'map.md') $first -NoNewline
-      $second = & $render (& $load $dir)
-      $onDisk = Get-Content (Join-Path $dir 'map.md') -Raw
-      if ($second -ne $onDisk) { throw 'a regeneration differed from the file it had just written' }
-    } finally { Remove-Item $dir -Recurse -Force }
-    $true
-  }
-
-  Assert "a hand edit to a generated index is caught, and the file is named" {
-    $dir = & $mkFixture
-    try {
-      $gen = & $render (& $load $dir)
-      $map = Join-Path $dir 'map.md'
-      Set-Content $map ($gen -replace 'the new approach is in question', 'hand-written note') -NoNewline
-      $onDisk = Get-Content $map -Raw
-      if ($onDisk -eq (& $render (& $load $dir))) { throw 'a hand edit was not detected' }
-    } finally { Remove-Item $dir -Recurse -Force }
-    $true
-  }
-
-  Assert "a file carrying no declared fields is caught, and named" {
-    $dir = & $mkFixture
-    try {
-      Set-Content (Join-Path $dir '0003-bare.md') "# Bare`n`nNo frontmatter.`n"
-      $caught = $null
-      try { & $load $dir | Out-Null } catch { $caught = $_.Exception.Message }
-      if (-not $caught) { throw 'a fieldless ADR was accepted into the index' }
-      if ($caught -notmatch '0003-bare\.md') { throw "the failure does not name the file: $caught" }
-    } finally { Remove-Item $dir -Recurse -Force }
-    $true
   }
 
   # Symmetry, both directions. Checking only one leaves the other half of the
@@ -11086,6 +11166,1172 @@ Describe-Ticket 'mechanics/16' 'a spent worktree is removed, and the orchestrato
     $i = Get-Content (Join-Path $repo '.claude/tools/git.md') -Raw
     if ($i -notmatch '(?im)^##\s+Remove a spent worktree') { throw 'the entry did not carry over' }
     if ($i -notmatch '(?is)deletes no working directory') { throw 'the prune distinction did not carry over' }
+    $true
+  }
+}
+
+# --- ticket declared-fields/01 — the posture is a field, under the sanctioned map -
+
+# The nineteen names Claude Code accepts in SKILL.md frontmatter, read from the
+# skills reference on 2026-08-05 and recorded in
+# `.claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md`.
+# The harness's own instruction is "don't reuse frontmatter field names such as
+# `paths` as keys" — and `paths` is live here, on `.claude/rules/`, so the
+# collision this guards is the documented one rather than a hypothetical.
+$reservedFrontmatterKeys = @(
+  'name', 'description', 'when_to_use', 'argument-hint', 'arguments',
+  'disable-model-invocation', 'user-invocable', 'allowed-tools', 'disallowed-tools',
+  'model', 'effort', 'context', 'agent', 'background', 'hooks', 'paths', 'shell',
+  'metadata', 'license', 'compatibility'
+)
+
+Describe-Ticket 'declared-fields/01' 'every skill declares its mode as a field, not a body line' {
+
+  # Matched by its subject rather than by the wording introduced here —
+  # `.claude/rules/skills.md` names a guard written from one's own new phrasing
+  # as the recurring failure, because an older restatement elsewhere goes unseen.
+  # No directory is exempted: `# Mode:` in the mode templates is a heading and
+  # cannot match this anchor, so an exemption for it would be a branch that
+  # never fires and therefore one no mutation could ever confirm.
+  Assert "no skill states its mode as a prose line" {
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      if ((Get-SkillText $f) -match '(?m)^Mode:[ \t]*\S') {
+        $offenders += $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      }
+    }
+    if ($offenders) { throw "a mode is declared as prose in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The harness "drops a value that isn't a map" silently, taking every field on
+  # that skill with it. Nothing downstream would notice, which is why the shape
+  # is asserted rather than trusted — silence is the failure mode.
+  Assert "no skill's metadata is a scalar — the harness drops a non-map without saying so" {
+    $offenders = @()
+    foreach ($d in (Get-ChildItem $skills -Directory)) {
+      $f = Join-Path $d.FullName 'SKILL.md'
+      if (-not (Test-Path $f)) { continue }
+      $fm = Get-Frontmatter (Get-Content $f -Raw)
+      if (-not $fm) { continue }
+      if ($fm -match '(?m)^metadata:[ \t]*\S') { $offenders += $d.Name }
+    }
+    if ($offenders) { throw "metadata carries a scalar in: $($offenders -join ', ')" }
+    $true
+  }
+
+  Assert "no key inside metadata collides with a name the harness reserves" {
+    $offenders = @()
+    foreach ($d in (Get-ChildItem $skills -Directory)) {
+      $f = Join-Path $d.FullName 'SKILL.md'
+      if (-not (Test-Path $f)) { continue }
+      $fm = Get-Frontmatter (Get-Content $f -Raw)
+      if (-not $fm) { continue }
+      $block = [regex]::Match($fm, '(?ms)^metadata:[ \t]*\r?$(.*?)(?=^\S|\z)')
+      if (-not $block.Success) { continue }
+      foreach ($k in [regex]::Matches($block.Groups[1].Value, '(?m)^[ \t]+([A-Za-z0-9_-]+):')) {
+        if ($reservedFrontmatterKeys -contains $k.Groups[1].Value) {
+          $offenders += "$($d.Name)/$($k.Groups[1].Value)"
+        }
+      }
+    }
+    if ($offenders) { throw "a reserved harness field name is reused as a metadata key: $($offenders -join ', ')" }
+    $true
+  }
+}
+
+Describe-Ticket 'declared-fields/03' 'dispatched roles declare their mode under the same map' {
+
+  $roleFiles = @(Get-ChildItem (Join-Path $repo 'agents') -File -Filter *.md -ErrorAction SilentlyContinue)
+
+  # The old form was a bare top-level key the subagent reference does not list.
+  # Anchored at column zero so it cannot match the indented key that replaced it.
+  Assert "no role declares its mode as a bare top-level key" {
+    $offenders = @()
+    foreach ($r in $roleFiles) {
+      $fm = Get-Frontmatter (Get-Content $r.FullName -Raw)
+      if (-not $fm) { continue }
+      if ($fm -match '(?m)^mode:[ \t]*\S') { $offenders += $r.Name }
+    }
+    if ($offenders) { throw "mode sits at the top level in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # Same silent failure as on skills, and its own assertion rather than a widened
+  # one for a reason that needs no claim about the harness: a sweep over
+  # `skills/` never opens `agents/`, so passing there says nothing here.
+  Assert "no role's metadata is a scalar" {
+    $offenders = @()
+    foreach ($r in $roleFiles) {
+      $fm = Get-Frontmatter (Get-Content $r.FullName -Raw)
+      if (-not $fm) { continue }
+      if ($fm -match '(?m)^metadata:[ \t]*\S') { $offenders += $r.Name }
+    }
+    if ($offenders) { throw "metadata carries a scalar in: $($offenders -join ', ')" }
+    $true
+  }
+}
+
+Describe-Ticket 'declared-fields/02' 'every skill declares its guides as a field, not a body line' {
+
+  # Anchored to the old form itself rather than to anything this ticket wrote,
+  # for the reason `.claude/rules/skills.md` gives: a guard built from your own
+  # new phrasing cannot see a restatement that predates it.
+  Assert "no skill states its guides as a prose line" {
+    $offenders = @()
+    foreach ($f in Get-SkillFiles) {
+      if ((Get-SkillText $f) -match '(?m)^Policies:[ \t]*\S') {
+        $offenders += $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      }
+    }
+    if ($offenders) { throw "guides are declared as prose in: $($offenders -join ', ')" }
+    $true
+  }
+
+}
+
+# --- ticket declared-fields/04 — a spec declares its status and its sources ---
+
+# `.claude/policies/tracker.md` owns where a spec lives here: one under each
+# effort, rather than the flat designs directory a configured repository gets.
+# Read from that path alone — a sweep that tried both would find the empty one
+# and report a clean pass over nothing.
+function Get-SpecFiles {
+  $efforts = Join-Path $repo '.claude/tickets'
+  if (-not (Test-Path $efforts)) { return @() }
+  @(Get-ChildItem $efforts -Directory |
+      ForEach-Object { Join-Path $_.FullName 'spec.md' } |
+      Where-Object { Test-Path $_ })
+}
+
+# Everything below the frontmatter. The prose form and the field form are the
+# same word at the same column, so the two are told apart by position and not by
+# capitalisation. Fenced regions are swept along with the rest, unlike
+# `Get-Section`: a `Status:` line inside a fence is a spec displaying the retired
+# form, and failing on one is the answer wanted here rather than the false
+# positive it would be for a heading.
+function Get-BodyBelowFrontmatter {
+  param([string]$Content)
+  if ($Content -match '(?s)\A---\r?\n.*?\r?\n---\r?\n(.*)\z') { return $Matches[1] }
+  $Content
+}
+
+Describe-Ticket 'declared-fields/04' 'a spec declares its status and its sources as fields' {
+
+  # Both copies of the spec format: the one AEP ships and the one this
+  # repository runs on. Read as a pair so a template that moved without its
+  # installed copy fails — the *template block* is what is compared, and the
+  # prose around it diverges legitimately, since where a spec lives is this
+  # repository's own fact and not one the shipped default can carry.
+  $specFormatCopies = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/policies/specs.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/specs.md') -Raw }
+  }
+
+  # The fenced example under `## Template` is what an author copies, so it is
+  # where the format states its shape. A rule in prose beside a template still
+  # showing the old form is a rule that loses to the thing people paste.
+  $templateBlock = {
+    param([string]$Content)
+    $m = [regex]::Match((Get-Section $Content 'Template'), '(?ms)^```markdown\r?\n(.*?)^```')
+    if (-not $m.Success) { throw 'the format carries no template block' }
+    $m.Groups[1].Value
+  }
+
+  Assert "the spec format's template declares status and sources as frontmatter fields" {
+    foreach ($name in $specFormatCopies.Keys) {
+      $fm = Get-Frontmatter (& $templateBlock (& $specFormatCopies[$name]))
+      if (-not $fm) { throw "$name`: the spec template opens with no frontmatter" }
+      foreach ($k in 'status', 'sources') {
+        if ($fm -notmatch "(?m)^${k}:") { throw "$name`: the template declares no ${k} field" }
+      }
+    }
+    $true
+  }
+
+  Assert "the spec format's template states neither status nor sources in the body" {
+    foreach ($name in $specFormatCopies.Keys) {
+      $body = Get-BodyBelowFrontmatter (& $templateBlock (& $specFormatCopies[$name]))
+      $m = [regex]::Match($body, '(?im)^(Status|Sources):')
+      if ($m.Success) { throw "$name`: the template still shows $($m.Groups[1].Value) as a body line" }
+    }
+    $true
+  }
+
+  Assert "no spec states its status or its sources as a prose line" {
+    $offenders = @()
+    foreach ($s in Get-SpecFiles) {
+      $m = [regex]::Match((Get-BodyBelowFrontmatter (Get-Content $s -Raw)), '(?im)^(Status|Sources):')
+      if ($m.Success) {
+        $offenders += "$(Split-Path (Split-Path $s -Parent) -Leaf)/$($m.Groups[1].Value)"
+      }
+    }
+    if ($offenders) { throw "declared as prose in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The vocabulary is derived from the format's own enumeration line, never
+  # listed here: a status set with two homes drifts at one of them, and the
+  # format is the home. This repository's copy, because these are its specs.
+  Assert "every spec declares a status the format defines" {
+    $fmt = Get-Content (Join-Path $repo '.claude/policies/specs.md') -Raw
+    $line = (($fmt -split '\r?\n') | Where-Object { $_ -match '`draft`' }) -join ' '
+    if (-not $line) { throw 'the format carries no status vocabulary line' }
+    $vocab = @([regex]::Matches($line, '`([a-z]+)') | ForEach-Object { $_.Groups[1].Value })
+    $offenders = @()
+    foreach ($s in Get-SpecFiles) {
+      $effort = Split-Path (Split-Path $s -Parent) -Leaf
+      $fm = Get-Frontmatter (Get-Content $s -Raw)
+      if (-not $fm) { $offenders += "${effort}: no frontmatter"; continue }
+      $m = [regex]::Match($fm, '(?m)^status:[ \t]*(\S+)')
+      if (-not $m.Success) { $offenders += "${effort}: no status field"; continue }
+      if ($vocab -notcontains $m.Groups[1].Value) { $offenders += "${effort}: $($m.Groups[1].Value)" }
+    }
+    if ($offenders) { throw "a status the format does not define: $($offenders -join ', ')" }
+    $true
+  }
+
+  # Deleting a spec's whole `sources` block left the suite green until review
+  # found it: only the *format* was checked, so a conversion that dropped every
+  # list on its way through would have passed. The shape is asserted with the
+  # presence, because `sources:` followed by nothing is YAML null rather than
+  # the empty list a spec with nothing to point at is supposed to declare.
+  Assert "every spec declares its sources, empty or not" {
+    $offenders = @()
+    foreach ($s in Get-SpecFiles) {
+      $effort = Split-Path (Split-Path $s -Parent) -Leaf
+      $fm = Get-Frontmatter (Get-Content $s -Raw)
+      if (-not $fm) { $offenders += "${effort}: no frontmatter"; continue }
+      $m = [regex]::Match($fm, '(?m)^sources:[ \t]*(\[\])?[ \t]*$')
+      if (-not $m.Success) { $offenders += "${effort}: no sources field, or an inline list"; continue }
+      if (-not $m.Groups[1].Success -and $fm -notmatch '(?ms)^sources:[ \t]*$\r?\n[ \t]+-[ \t]*\S') {
+        $offenders += "${effort}: sources declares nothing and does not say so"
+      }
+    }
+    if ($offenders) { throw ($offenders -join ', ') }
+    $true
+  }
+
+  # Scoped to the *sentence that performs the write*, never the step. Both review
+  # axes broke the first version of this, which asked only whether the word
+  # `field` appeared somewhere in the step: reverting the imperative to the prose
+  # form while leaving the neighbouring "Only the status field moves" untouched
+  # kept every assertion green. A guard has to match its subject, and the subject
+  # is the instruction, not the prose standing next to it.
+  Assert "/commit sets the spec's status field, and no longer edits a line" {
+    # The heading is dropped first — it says "Mark the spec implemented" and
+    # would otherwise be read as an instruction with no mechanism named.
+    $body = ((Get-SpecStep) -split '\r?\n', 2)[1]
+    # Sentences end at a period followed by whitespace, so `.claude/policies/`
+    # and `specs.md` do not split one.
+    $writes = @(($body -split '(?<=\.)\s+') | Where-Object { $_ -match '\bimplemented\b' })
+    if (-not $writes) { throw 'the step never says the spec is marked implemented' }
+    foreach ($w in $writes) {
+      $s = ($w -replace '\s+', ' ').Trim()
+      if ($w -notmatch '(?i)frontmatter') { throw "the write does not name the frontmatter: $s" }
+      if ($w -match '(?i)\bline\b') { throw "the write still describes a line: $s" }
+    }
+    $true
+  }
+}
+
+# --- ticket declared-fields/05 — one regenerator, checked by comparison -------
+
+$regenerator = Join-Path $repo 'scripts/regenerate-indexes.ps1'
+
+# A tree with just enough shape for the script: `.claude/<family>/` and nothing
+# else. Built and torn down per assertion, because several of these deliberately
+# corrupt what they are given and a shared one would leak that into its
+# neighbours — which is how a suite starts depending on the order it runs in.
+$mkIndexTree = {
+  param([hashtable]$Files)
+  $root = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+  foreach ($rel in $Files.Keys) {
+    $path = Join-Path $root $rel
+    New-Item -ItemType Directory -Path (Split-Path $path -Parent) -Force | Out-Null
+    [System.IO.File]::WriteAllText($path, $Files[$rel])
+  }
+  $root
+}
+
+$runRegenerator = {
+  param([string]$Root)
+  $out = & pwsh -NoProfile -File $regenerator -Repo $Root 2>&1
+  [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($out | Out-String) }
+}
+
+Describe-Ticket 'declared-fields/05' 'one regenerator produces every index, and the suite compares' {
+
+  Assert "the regenerator ships as a committed script" {
+    if (-not (Test-Path $regenerator)) { throw 'scripts/regenerate-indexes.ps1 is missing' }
+    $true
+  }
+
+  # Run from a copy of the script alone, in a tree holding nothing but the two
+  # indexed directories: no `skills/`, no repository, no git. The first version
+  # of this grepped the source for three spellings the author had thought of,
+  # which `.claude/rules/skills.md` names exactly — a guard matching your own
+  # wording rather than its subject, and the subject here is reachability.
+  Assert "the regenerator runs where the plugin and the repository are absent" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+    }
+    try {
+      $alone = Join-Path $root 'regenerate-indexes.ps1'
+      Copy-Item $regenerator $alone
+      $out = & pwsh -NoProfile -File $alone -Repo $root 2>&1
+      if ($LASTEXITCODE -ne 0) { throw "failed in isolation: $($out | Out-String)" }
+      foreach ($family in 'contexts', 'decisions') {
+        if (-not (Test-Path (Join-Path $root ".claude/$family/map.md"))) { throw "$family/map.md was not written" }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The block form specs use is refused, not read as empty. Read as empty it
+  # renders a row saying the file points at nothing, which is a wrong answer
+  # wearing a right one's shape — and no reader of the index could tell.
+  Assert "a sources field the index cannot read is refused, and named" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/contexts/blocklist.md'  = "---`nload-when: the request touches auth`nsources:`n  - src/auth/`n  - src/session/`n---`n`n# Auth`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a block list was silently read as no sources at all' }
+      if ($r.Output -notmatch 'blocklist\.md') { throw "the failure does not name the file: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  Assert "a file declaring no sources at all is refused, and named" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/contexts/nosources.md'  = "---`nload-when: the request touches auth`n---`n`n# Auth`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a context with no sources field was indexed anyway' }
+      if ($r.Output -notmatch 'nosources\.md') { throw "the failure does not name the file: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The acceptance test and the de-risking together: these two indexes are the
+  # only ones with an answer already known to be right, and everything later in
+  # this effort is generated by the same code path.
+  Assert "regenerating reproduces both committed indexes byte for byte" {
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      foreach ($family in 'contexts', 'decisions') {
+        $committed = [System.IO.File]::ReadAllBytes((Join-Path $repo ".claude/$family/map.md"))
+        $produced = [System.IO.File]::ReadAllBytes((Join-Path $root ".claude/$family/map.md"))
+        if ($committed.Length -ne $produced.Length) {
+          throw "$family/map.md differs in length: committed $($committed.Length) B, regenerated $($produced.Length) B"
+        }
+        for ($i = 0; $i -lt $committed.Length; $i++) {
+          if ($committed[$i] -ne $produced[$i]) { throw "$family/map.md differs at byte $i" }
+        }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The writer's half. The *check* that a hand edit fails the build is the
+  # byte-for-byte assertion above, confirmed by editing this repository's own
+  # committed index and watching it fail; this one asserts the other direction,
+  # that regenerating actually replaces what somebody typed rather than
+  # appending to it or leaving it alone.
+  Assert "regeneration replaces a hand edit rather than preserving it" {
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      $map = Join-Path $root '.claude/decisions/map.md'
+      $edited = (Get-Content $map -Raw) -replace 'accepted', 'accepted (still true)'
+      [System.IO.File]::WriteAllText($map, $edited)
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      if ((Get-Content $map -Raw) -eq $edited) { throw 'a hand edit survived regeneration' }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # Not "is quietly left out": a context or decision missing from the index is
+  # unreachable, and the silent version of that is found by whoever needed the
+  # file rather than by the build.
+  Assert "a file declaring no fields stops the regeneration, and is named" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/contexts/bare.md'       = "# Bare`n`nNo frontmatter at all.`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a fieldless context was accepted into the index' }
+      if ($r.Output -notmatch 'bare\.md') { throw "the failure does not name the file: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The branch no repository in this tree exercises. The label row carries the
+  # directory name and two empty cells because nothing declares a value for
+  # them — the format states that, and this is the only place it is executed.
+  Assert "a Project Context renders as a labelled group with an empty label row" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md'      = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/contexts/web/routing.md'     = "---`nload-when: navigation or URL shape`nsources: [apps/web/src/routes/]`n---`n`n# Routing`n"
+      '.claude/decisions/0001-x.md'         = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      # Carriage returns dropped before matching, for the reason `Get-Frontmatter`
+      # gives: the script emits the checkout's own line ending, so `$` would sit
+      # after a `\r` here and every anchored pattern below would fail on Windows
+      # alone.
+      $map = (Get-Content (Join-Path $root '.claude/contexts/map.md') -Raw) -replace "`r", ''
+      if ($map -notmatch '(?m)^\| \*\*web\*\* \| \| \|$') { throw "no empty label row for the group: $map" }
+      if ($map -notmatch '(?m)^\| \[web/routing\]\(web/routing\.md\) \| navigation or URL shape \| `apps/web/src/routes/` \|$') {
+        throw "the member row is wrong: $map"
+      }
+      # The group follows the flat rows rather than sorting among them.
+      if ([regex]::Match($map, '(?m)^\| \[repository\]').Index -gt [regex]::Match($map, '(?m)^\| \*\*web\*\*').Index) {
+        throw 'the group precedes the flat contexts'
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  Assert "two runs over an unchanged tree produce identical output" {
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      & $runRegenerator $root | Out-Null
+      $first = foreach ($f in 'contexts', 'decisions') { Get-Content (Join-Path $root ".claude/$f/map.md") -Raw }
+      & $runRegenerator $root | Out-Null
+      $second = foreach ($f in 'contexts', 'decisions') { Get-Content (Join-Path $root ".claude/$f/map.md") -Raw }
+      if (($first -join '') -cne ($second -join '')) { throw 'a second regeneration differed from the first' }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # Named for what it checks: the step's position against the one that makes the
+  # commit. Staging has no heading of its own, so "before staging" is prose the
+  # step carries and this is the orderable fact underneath it.
+  Assert "/commit regenerates the indexes, and does it before the commit is made" {
+    $c = Get-SkillFile 'commit/SKILL.md'
+    if ($c -notmatch [regex]::Escape('scripts/regenerate-indexes.ps1')) {
+      throw '/commit never invokes the regenerator'
+    }
+    $regen = [regex]::Match($c, '(?im)^#{2,}\s.*regenerate')
+    $make = [regex]::Match($c, '(?im)^#{2,}\s.*make the commit')
+    if (-not $regen.Success) { throw 'regenerating is not its own step' }
+    if (-not $make.Success) { throw 'making the commit is not its own step' }
+    if ($regen.Index -ge $make.Index) { throw 'the indexes are regenerated after the commit is made' }
+    $true
+  }
+}
+
+# --- ticket declared-fields/10 — a per-effort map moves into its effort -------
+
+Describe-Ticket 'declared-fields/10' 'a per-effort map moves into its effort directory' {
+
+  $mapFormats = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/policies/maps.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/maps.md') -Raw }
+  }
+
+  # Both copies, because ADR 0025 orders them. Asserted here rather than through
+  # the `$legacy` sweep, which bans a path outright: this path was reassigned,
+  # not retired, so the claim is about where the *map* goes and not about the
+  # string appearing anywhere.
+  Assert "neither map format puts the map at the shared path" {
+    foreach ($name in $mapFormats.Keys) {
+      $c = & $mapFormats[$name]
+      if ($c -match '\.claude/tickets/map\.md') { throw "$name`: still names the shared path for the map" }
+      if ($c -notmatch '\.claude/tickets/<effort>/map\.md') { throw "$name`: does not name the effort directory" }
+    }
+    $true
+  }
+
+  # The migration derives a map's destination from its own title, so the title
+  # is load-bearing rather than decorative. Review changed it to `# Fog map` in
+  # both copies and the whole suite stayed green, leaving the migration row's
+  # destination underivable with nothing to say so.
+  Assert "both map formats show a title that names the effort the map charts" {
+    foreach ($name in $mapFormats.Keys) {
+      if ((& $mapFormats[$name]) -notmatch '(?m)^#\s+map:\s*<effort name>') {
+        throw "$name`: the template's title no longer names the effort"
+      }
+    }
+    $true
+  }
+
+  # The layout is where the collision became possible: it named the spec and the
+  # issues under each effort and named neither the map nor a repository-wide
+  # index, so two artefacts could arrive at one path with nothing to contradict.
+  # The subtree is bounded by indentation, not by the closing fence. Two earlier
+  # versions of this failed differently and both passed: the first matched
+  # `contexts/map.md`, and the second ran from `tickets/` to the fence and so
+  # swallowed `position/` — review filed the shared index under the directory
+  # `specs.md` itself calls never depended on, and all four assertions stayed
+  # green. Ordering luck is not scope.
+  Assert "the specification's layout names both the per-effort map and the shared index" {
+    $layout = Get-Section (Get-Content (Join-Path $repo 'specs.md') -Raw) 'Repository layout'
+    $lines = @(($layout -replace "`r", '') -split "`n")
+    $start = ($lines | Select-String -Pattern '^(\s*)tickets/\s*$' | Select-Object -First 1)
+    if (-not $start) { throw 'the layout has no tickets subtree' }
+    $indent = $start.Matches[0].Groups[1].Value.Length
+    $from = $lines.IndexOf($start.Line)
+    $subtree = @()
+    for ($i = $from + 1; $i -lt $lines.Count; $i++) {
+      if ($lines[$i] -match '^\s*$') { continue }
+      $thisIndent = ([regex]::Match($lines[$i], '^\s*')).Value.Length
+      if ($thisIndent -le $indent) { break }
+      $subtree += $lines[$i]
+    }
+    $joined = $subtree -join "`n"
+    if ($joined -notmatch '(?m)^\s+map\.md\s') { throw 'the tickets subtree does not name the shared index' }
+    if ($joined -notmatch '(?m)^\s+<effort>/\s+.*map\.md') { throw 'the tickets subtree does not name the per-effort map' }
+    $true
+  }
+
+  # Written while the path was empty, to prove there was nothing to migrate. It
+  # is not empty now — `declared-fields/07` put the design index there, which is
+  # what vacating it was for — so the claim is the one that still matters: no
+  # *fog map* sits there. The two are told apart by their titles, which is also
+  # what the migration row reads to find a map's effort.
+  #
+  # What this does *not* claim is that the migration row is exercised. There is
+  # no migration fixture anywhere in this suite; the only enforcement any row has
+  # is the prose regex in `$conversions`. That half of the ticket's acceptance is
+  # unmet and recorded on the ticket rather than papered over here.
+  Assert "no fog map sits at the vacated path — only the index it was vacated for" {
+    $at = Join-Path $repo '.claude/tickets/map.md'
+    if (-not (Test-Path $at)) { throw 'nothing is at the path — the design index that vacating it was for is missing' }
+    $title = ((Get-Content $at -TotalCount 1) -replace "`r", '').Trim()
+    if ($title -match '(?i)^#\s+map:') { throw "a fog map still sits at the vacated path: $title" }
+    if ($title -ne '# Design map') { throw "an unexpected file sits at the vacated path: $title" }
+    $true
+  }
+}
+
+# --- ticket declared-fields/06 — five kinds, one index ------------------------
+
+Describe-Ticket 'declared-fields/06' 'the five evidence kinds declare fields and share one index' {
+
+  $evidenceMap = Join-Path $repo '.claude/evidence/map.md'
+
+  $evidenceFormats = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/policies/evidence.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/evidence.md') -Raw }
+  }
+
+  # The fields are declared for the family, not for the kinds that happen to
+  # have a directory today — a kind gains a directory when it gains a file, so
+  # a format written only for the kinds present would be wrong on the next one.
+  Assert "both evidence formats declare kind and falsifies as the family's fields" {
+    foreach ($name in $evidenceFormats.Keys) {
+      $c = & $evidenceFormats[$name]
+      foreach ($field in 'kind', 'falsifies') {
+        if ($c -notmatch "(?m)^\|\s*``$field``\s*\|") { throw "$name`: $field is not declared as a field" }
+      }
+    }
+    $true
+  }
+
+  # ADR 0056's claim is the *width*: one index at the family root, spanning all
+  # five, which is what makes `kind` a column rather than a restatement of the
+  # path. An index beneath each kind would satisfy "declares fields" and defeat
+  # the obligation the index exists to serve.
+  Assert "the index spans every kind, at the family root" {
+    if (-not (Test-Path $evidenceMap)) { throw '.claude/evidence/map.md is missing' }
+    $m = (Get-Content $evidenceMap -Raw) -replace "`r", ''
+    if ($m -notmatch '(?m)^\| Finding \| Kind \| Falsifies \|$') { throw 'the kind column is missing' }
+    foreach ($dir in (Get-ChildItem (Join-Path $repo '.claude/evidence') -Directory)) {
+      foreach ($f in (Get-ChildItem $dir.FullName -File -Filter '*.md' | Where-Object { $_.Name -ne 'map.md' })) {
+        $link = "($($dir.Name)/$($f.Name))"
+        if (-not $m.Contains($link)) { throw "no row for $($dir.Name)/$($f.Name)" }
+      }
+    }
+    $true
+  }
+
+  Assert "the committed evidence index matches a regeneration, byte for byte" {
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions', 'evidence') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      $committed = [System.IO.File]::ReadAllBytes($evidenceMap)
+      $produced = [System.IO.File]::ReadAllBytes((Join-Path $root '.claude/evidence/map.md'))
+      if ($committed.Length -ne $produced.Length) {
+        throw "evidence/map.md differs in length: committed $($committed.Length) B, regenerated $($produced.Length) B"
+      }
+      for ($i = 0; $i -lt $committed.Length; $i++) {
+        if ($committed[$i] -ne $produced[$i]) { throw "evidence/map.md differs at byte $i" }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  Assert "a finding declaring no fields stops the regeneration, and is named" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md'    = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'       = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+      '.claude/evidence/drift/bare.md'    = "# Bare`n`nNo frontmatter.`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a fieldless finding was accepted into the index' }
+      if ($r.Output -notmatch 'bare\.md') { throw "the failure does not name the file: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The kinds with no file have no directory, and the format says so. Asserted
+  # because the easy mistake is to create all five while adding the index, which
+  # would make every empty one a claim that the work behind it happened.
+  Assert "a kind earns its directory when it has a file, and empty ones are not created" {
+    $empty = @(Get-ChildItem (Join-Path $repo '.claude/evidence') -Directory |
+      Where-Object { -not (Get-ChildItem $_.FullName -File -Filter '*.md' | Where-Object { $_.Name -ne 'map.md' }) })
+    if ($empty) { throw "evidence directories with no finding in them: $($empty.Name -join ', ')" }
+    foreach ($name in $evidenceFormats.Keys) {
+      if ((& $evidenceFormats[$name]) -notmatch '(?i)earns its directory') {
+        throw "$name`: the rule that a kind earns its directory is not stated"
+      }
+    }
+    $true
+  }
+
+  # Anchored on the *path*, not on the sentence that used to contain it. The
+  # first version matched the old prose's verb, and review rewrote the step to
+  # read the whole directory in different words — this assertion and
+  # `scaffolding/04` both stayed green. After this ticket the discovery step has
+  # no reason to name the drift directory at all: it names the index.
+  Assert "/design routes through the index rather than reading the drift directory" {
+    $discover = Get-Section (Get-SkillFile 'design/SKILL.md') 'Discover'
+    if ($discover -notmatch [regex]::Escape('.claude/evidence/map.md')) {
+      throw 'the discovery step does not name the index'
+    }
+    if ($discover -match [regex]::Escape('.claude/evidence/drift/')) {
+      throw 'the discovery step still names the drift directory'
+    }
+    $true
+  }
+
+  # ADR 0056's first rejected option, reintroducible with nothing failing until
+  # now: review created `.claude/evidence/drift/map.md` by hand and the whole
+  # suite passed. Both the regenerator and the assertions filter `map.md` out of
+  # each kind, so a per-kind index is invisible to every check that walks them.
+  Assert "no index sits beneath a kind — the family root is the only one" {
+    $offenders = @(Get-ChildItem (Join-Path $repo '.claude/evidence') -Directory |
+      Where-Object { Test-Path (Join-Path $_.FullName 'map.md') } |
+      ForEach-Object { "$($_.Name)/map.md" })
+    if ($offenders) { throw "an index beneath a kind: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The column ADR 0056 made load-bearing has to agree with the directory the
+  # file sits in, or a row reads as one kind and links to another. Review
+  # produced exactly that with a one-word edit and six assertions passed.
+  Assert "a declared kind that disagrees with its directory stops the regeneration" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md'  = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'     = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+      '.claude/evidence/research/f.md'  = "---`nkind: discussions`nfalsifies: []`n---`n`n# F`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a finding indexed under a kind it does not sit in' }
+      if ($r.Output -notmatch 'discussions') { throw "the failure does not name the disagreement: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+}
+
+# --- ticket declared-fields/07 — designs gain a generated index ---------------
+
+Describe-Ticket 'declared-fields/07' 'designs gain a generated index where the directory is flat' {
+
+  $designMap = Join-Path $repo '.claude/tickets/map.md'
+
+  # ADR 0059 gave this path to the design index once the per-effort map vacated
+  # it. Both halves are asserted: the index is here, and the row for every
+  # effort's spec is in it — a table with a header and no rows would satisfy a
+  # presence check while indexing nothing.
+  Assert "every effort's spec has a row, where the tracker policy puts specs" {
+    if (-not (Test-Path $designMap)) { throw '.claude/tickets/map.md is missing' }
+    $m = (Get-Content $designMap -Raw) -replace "`r", ''
+    foreach ($effort in (Get-ChildItem (Join-Path $repo '.claude/tickets') -Directory)) {
+      if (-not (Test-Path (Join-Path $effort.FullName 'spec.md'))) { continue }
+      if (-not $m.Contains("($($effort.Name)/spec.md)")) { throw "no row for the $($effort.Name) effort" }
+    }
+    $true
+  }
+
+  Assert "the design index carries each spec's status" {
+    $m = (Get-Content $designMap -Raw) -replace "`r", ''
+    if ($m -notmatch '(?m)^\| Design \| Status \| Sources \|$') { throw 'the status column is missing' }
+    foreach ($effort in (Get-ChildItem (Join-Path $repo '.claude/tickets') -Directory)) {
+      $spec = Join-Path $effort.FullName 'spec.md'
+      if (-not (Test-Path $spec)) { continue }
+      $declared = [regex]::Match((Get-Frontmatter (Get-Content $spec -Raw)), '(?m)^status:[ \t]*(.+?)[ \t]*$').Groups[1].Value
+      $row = [regex]::Match($m, "(?m)^\| \[$([regex]::Escape($effort.Name))\][^\r\n]*$").Value
+      if ($row -notmatch [regex]::Escape($declared)) {
+        throw "$($effort.Name) declares '$declared' and the index does not say so"
+      }
+    }
+    $true
+  }
+
+  # The configured-repository path, which this tree does not have. The fixture's
+  # first spec carries a comma *inside* one pointer — that comma is the whole
+  # reason specs take block form, and the first attempt at this ticket deleted
+  # the only assertion covering it, after which splitting entries on commas
+  # passed everything. It is covered here, through the live path.
+  Assert "a flat designs directory is indexed, and a comma inside a pointer survives" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+      '.claude/designs/caching.md'     = "---`nstatus: accepted`nsources:`n  - specs.md §5, §8`n  - src/cache/`n---`n`n# feat(cache): add a layer`n"
+      '.claude/designs/retries.md'     = "---`nstatus: implemented`nsources: []`n---`n`n# fix(http): retry`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      $m = (Get-Content (Join-Path $root '.claude/designs/map.md') -Raw) -replace "`r", ''
+      if ($m -notmatch '(?m)^\| \[caching\]\(caching\.md\) \| accepted \| `specs\.md §5, §8`, `src/cache/` \|$') {
+        throw "a comma inside one pointer was split, or the row is wrong: $m"
+      }
+      if ($m -notmatch '(?m)^\| \[retries\]\(retries\.md\) \| implemented \| — \|$') {
+        throw "the empty-sources row is wrong: $m"
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # Both layouts at once is refused rather than silently preferred. The first
+  # attempt preferred the flat one, so this repository was one `mkdir` away from
+  # dropping every row and reporting it as a stale index.
+  Assert "a tree holding both layouts is refused, and says which two" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md'   = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'      = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+      '.claude/designs/caching.md'       = "---`nstatus: accepted`nsources: []`n---`n`n# feat(cache): a layer`n"
+      '.claude/tickets/alpha/spec.md'    = "---`nstatus: accepted`nsources: []`n---`n`n# feat(alpha): a thing`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'both layouts were accepted and one was silently dropped' }
+      if ($r.Output -notmatch 'designs' -or $r.Output -notmatch 'tickets') {
+        throw "the refusal does not name both layouts: $($r.Output)"
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The two refusals the first attempt wrote and covered with nothing. Review
+  # mutated each to an empty list and all 1025 assertions stayed green — the
+  # ticket's own checklist named this reintroduction and the rebuild repeated it.
+  # One fixture each, because a single one would leave whichever refusal it did
+  # not reach exactly as unheld as before.
+  foreach ($case in @(
+    @{ Name = 'declares sources as YAML null'; Body = "---`nstatus: accepted`nsources:`n---`n`n# feat(x): a thing`n" },
+    @{ Name = 'omits sources entirely';        Body = "---`nstatus: accepted`n---`n`n# feat(x): a thing`n" }
+  )) {
+    Assert "a spec that $($case.Name) stops the regeneration, and is named" {
+      $root = & $mkIndexTree @{
+        '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+        '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+        '.claude/designs/thin.md'        = $case.Body
+      }
+      try {
+        $r = & $runRegenerator $root
+        if ($r.ExitCode -eq 0) { throw "a spec that $($case.Name) was indexed as pointing at nothing" }
+        if ($r.Output -notmatch 'thin') { throw "the failure does not name the file: $($r.Output)" }
+      } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+      $true
+    }
+  }
+
+  # The fixtures above and below hand-write frontmatter, so they prove the
+  # regenerator and not the template. This pairs them: the keys a fixture
+  # declares are read out of `specs.template.md`'s own example, so a template
+  # whose shape drifted fails here instead of passing silently.
+  Assert "the fixtures declare the keys the shipped template prescribes" {
+    $block = [regex]::Match((Get-Section (Get-SkillFile 'configure/policies/specs.template.md') 'Template'),
+                            '(?ms)^```markdown\r?\n(.*?)^```')
+    if (-not $block.Success) { throw 'the template carries no example' }
+    $fm = Get-Frontmatter $block.Groups[1].Value
+    if (-not $fm) { throw 'the template example opens with no frontmatter' }
+    $keys = @([regex]::Matches($fm, '(?m)^([a-z][a-z0-9-]*):') | ForEach-Object { $_.Groups[1].Value })
+    foreach ($k in 'status', 'sources') {
+      if ($keys -notcontains $k) { throw "the template no longer prescribes '$k', which every fixture here declares" }
+    }
+    $true
+  }
+
+  Assert "a spec declaring no status stops the regeneration, and is named" {
+    $root = & $mkIndexTree @{
+      '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+      '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+      '.claude/designs/nostatus.md'    = "---`nsources: []`n---`n`n# feat(x): a thing`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -eq 0) { throw 'a spec with no status was indexed anyway' }
+      if ($r.Output -notmatch 'nostatus\.md') { throw "the failure does not name the file: $($r.Output)" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  Assert "the committed design index matches a regeneration, byte for byte" {
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions', 'evidence', 'tickets') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      $committed = [System.IO.File]::ReadAllBytes($designMap)
+      $produced = [System.IO.File]::ReadAllBytes((Join-Path $root '.claude/tickets/map.md'))
+      if ($committed.Length -ne $produced.Length) {
+        throw "tickets/map.md differs in length: committed $($committed.Length) B, regenerated $($produced.Length) B"
+      }
+      for ($i = 0; $i -lt $committed.Length; $i++) {
+        if ($committed[$i] -ne $produced[$i]) { throw "tickets/map.md differs at byte $i" }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  Assert "the spec format states the index it generates, and that it is never hand-edited" {
+    $copies = @{
+      'the shipped template' = Get-SkillFile 'configure/policies/specs.template.md'
+      'this repository'      = Get-Content (Join-Path $repo '.claude/policies/specs.md') -Raw
+    }
+    foreach ($name in $copies.Keys) {
+      if ($copies[$name] -notmatch 'map\.md') { throw "$name`: the index is unnamed" }
+      if ($copies[$name] -notmatch '(?i)never hand-edited') { throw "$name`: the index is not stated as never hand-edited" }
+    }
+    $true
+  }
+}
+
+# --- ticket declared-fields/09 — a configured repository derives the script ---
+
+Describe-Ticket 'declared-fields/09' 'a configured repository gets the regenerator, not a promise' {
+
+  $page = 'configure/SCRIPTS.md'
+
+  Assert "the derivation page ships, and /configure reaches it by pointer" {
+    if (-not (Test-Path (Join-Path $skills $page))) { throw "skills/$page is missing" }
+    if ((Get-SkillFile 'configure/SKILL.md') -notmatch [regex]::Escape('SCRIPTS.md')) {
+      throw '/configure does not point at the derivation page'
+    }
+    $true
+  }
+
+  # The criterion is *every index the workflow generates*, not a list — the
+  # ticket's own enumeration was written before the evidence index existed and
+  # already names three of the four.
+  #
+  # Both directions, and both read from artefacts rather than from a literal
+  # here. The first version derived the script's families from *doc comments*
+  # while claiming to read the script, so a family added to `$families` was
+  # invisible to it; and it checked page→script not at all, so a family the page
+  # invented passed. Review found both.
+  $emittedTitles = {
+    # The `# <Family> map` heading each builder emits, which is the one place
+    # the script states a family in a form the page must match.
+    @([regex]::Matches((Get-Content $regenerator -Raw), "'(#\s+\w+\s+map)'") |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+  }
+  $pageTitles = {
+    @([regex]::Matches((Get-SkillFile $page), '(?m)^(#\s+\w+\s+map)\s*$') |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+  }
+
+  Assert "the page specifies every index the regenerator emits, and no index it does not" {
+    $emitted = @(& $emittedTitles)
+    $documented = @(& $pageTitles)
+    if (-not $emitted) { throw 'no index titles could be read from the regenerator' }
+    $missing = @($emitted | Where-Object { $documented -notcontains $_ })
+    if ($missing) { throw "the regenerator emits an index the page does not specify: $($missing -join ', ')" }
+    $invented = @($documented | Where-Object { $emitted -notcontains $_ })
+    if ($invented) { throw "the page specifies an index nothing produces: $($invented -join ', ')" }
+    $true
+  }
+
+  # The two layouts differ in where the file lands, not only in what the rows
+  # say — the first version of this page claimed the index sits "beside the
+  # specs" either way, which ADR 0059 names as false under the effort layout and
+  # which would have put the file one directory too deep in every repository
+  # that uses it.
+  Assert "the page states where the designs index lands under each layout" {
+    $c = Get-SkillFile $page
+    foreach ($path in '.claude/designs/map.md', '.claude/tickets/map.md') {
+      if (-not $c.Contains($path)) { throw "the page does not say the index lands at $path" }
+    }
+    $true
+  }
+
+  # Byte-stability is the property the whole enforcement rests on, and it is the
+  # one a derived script gets wrong invisibly. Deleting this section from the
+  # page left every other assertion here green.
+  Assert "the page states what makes the output byte-stable" {
+    $c = Get-SkillFile $page
+    foreach ($rule in 'line ending', 'byte-order mark', 'trailing newline') {
+      if ($c -notmatch "(?i)$([regex]::Escape($rule))") { throw "the page does not state: $rule" }
+    }
+    $true
+  }
+
+  # Stated as behaviour rather than as code, because an implementation in another
+  # language cannot inherit a refusal it can only read about in PowerShell.
+  Assert "the page states the refusals, not only the happy path" {
+    $c = Get-SkillFile $page
+    foreach ($refusal in 'no frontmatter', 'absent', 'other shape', 'YAML null', 'disagrees with the directory') {
+      if ($c -notmatch "(?i)$([regex]::Escape($refusal))") { throw "the page does not state the refusal: $refusal" }
+    }
+    if ($c -notmatch '(?i)names the file') { throw 'the page does not say a refusal names the file' }
+    $true
+  }
+
+  # The one check whose answer was not produced by the thing being checked — so
+  # both halves are read out of the page. The first version transcribed the
+  # fixture's *input* into this assertion and only compared the output, which
+  # meant editing the page's input, or deleting the whole fixture block, changed
+  # nothing here. Review found both.
+  Assert "the page's fixture is real: its own input produces its own claimed output" {
+    $c = (Get-SkillFile $page) -replace "`r", ''
+
+    # Input: the fenced block under the fixture heading, in which each file's
+    # path is the line before its `---`.
+    $fenced = [regex]::Match($c, '(?ms)Build this tree in a temporary directory:\r?\n\r?\n```\r?\n(.*?)^```')
+    if (-not $fenced.Success) { throw 'the page carries no fixture tree' }
+    $files = @{}
+    foreach ($m in [regex]::Matches($fenced.Groups[1].Value, '(?ms)^(\S+\.md)\r?\n(---\r?\n.*?\r?\n---\r?\n\r?\n#[^\r\n]*)\r?\n')) {
+      $files[$m.Groups[1].Value] = $m.Groups[2].Value + "`n"
+    }
+    if ($files.Count -lt 3) { throw "the fixture tree parsed as $($files.Count) files, expected at least 3" }
+
+    $root = & $mkIndexTree $files
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the page's own fixture does not regenerate: $($r.Output)" }
+      foreach ($family in 'contexts', 'decisions') {
+        $produced = ((Get-Content (Join-Path $root ".claude/$family/map.md") -Raw) -replace "`r", '').TrimEnd("`n")
+        if (-not $c.Contains($produced)) {
+          throw "the page's claimed $family output is not what its own fixture produces:`n$produced"
+        }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # ADR 0060's consequence, and the one an author would most plausibly get wrong
+  # by reaching for the mechanism `TOOLS.md` uses. There is nothing to compare
+  # between a specification and an implementation of it.
+  Assert "the page names behaviour as the enforcement, and refuses a text comparison" {
+    $c = Get-SkillFile $page
+    if ($c -notmatch '(?i)regenerat\w+ (each index )?and compar') { throw 'the page does not name regenerate-and-compare' }
+    if ($c -notmatch '(?i)nothing to compare') { throw 'the page does not say why a text comparison does not apply' }
+    $true
+  }
+
+  # No row, and said rather than left to a reader who would otherwise wonder
+  # whether it was forgotten.
+  Assert "the migration carries no row for the script, and /configure says why" {
+    if ((Get-SkillFile 'configure/MIGRATION.md') -match '(?i)regenerate-indexes') {
+      throw 'the migration converts a script no earlier version ever installed'
+    }
+    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)no row for it') {
+      throw '/configure does not say the migration carries no row'
+    }
+    $true
+  }
+}
+
+# --- ticket declared-fields/08 — a local ticket declares its lifecycle facts --
+
+# Every ticket file this repository holds. The forge form is a different shape
+# and is not swept: nothing here is a claim about issues on GitHub.
+function Get-LocalTicketFile {
+  $efforts = Join-Path $repo '.claude/tickets'
+  if (-not (Test-Path $efforts)) { return @() }
+  @(Get-ChildItem $efforts -Directory | ForEach-Object {
+    $issues = Join-Path $_.FullName 'issues'
+    if (Test-Path $issues) { Get-ChildItem $issues -File -Filter '*.md' }
+  })
+}
+
+Describe-Ticket 'declared-fields/08' 'a local ticket declares its lifecycle facts as fields' {
+
+  # Anchored on the retired forms themselves rather than on anything this ticket
+  # wrote, for the reason `.claude/rules/skills.md` gives: a guard built from the
+  # new phrasing cannot see a restatement that predates it.
+  Assert "no ticket states a lifecycle fact as a prose line" {
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $body = Get-BodyBelowFrontmatter (Get-Content $t.FullName -Raw)
+      # Fenced blocks masked, as the H1 sweep beside this one does: a ticket
+      # quoting the retired form inside an example is showing it, not using it,
+      # and the two sweeps disagreeing would make one of them a false positive.
+      $unfenced = [regex]::Replace($body, '(?ms)^```.*?^```', { param($f) ($f.Value -replace '[^\r\n]', '.') })
+      $m = [regex]::Match($unfenced, '(?m)^(Status|Blocked by|Part of|Superseded by|Type):')
+      if ($m.Success) { $offenders += "$($t.Name): $($m.Groups[1].Value)" }
+    }
+    if ($offenders) { throw "declared as prose in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # Nothing checked the title at all until review found the consequence: the
+  # conversion left the id restated inside `title` on 22 files — `01 — feat(…)`
+  # — in the same diff that wrote "the id is the filename, so it is not restated
+  # inside". A field the format requires and nothing asserts is untested by
+  # construction, and this is what that costs.
+  Assert "every ticket declares a title, and never restates the id in it" {
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $fm = Get-Frontmatter (Get-Content $t.FullName -Raw)
+      if (-not $fm) { $offenders += "$($t.Name): no frontmatter"; continue }
+      $m = [regex]::Match($fm, '(?m)^title:[ \t]*(\S.*)$')
+      if (-not $m.Success) { $offenders += "$($t.Name): no title field"; continue }
+      if ($m.Groups[1].Value -match '^\d{2}\s*[—-]') { $offenders += "$($t.Name): the id is restated in the title" }
+    }
+    if ($offenders) { throw ($offenders -join ', ') }
+    $true
+  }
+
+  # ADR 0058 drops the heading, so a ticket opens at its first section. Scoped
+  # below the frontmatter and outside fenced blocks — `tenure/15` shows a tool
+  # guide's own `# ` heading inside an example, which is content, not a title.
+  Assert "no ticket carries an H1 — the title is the field" {
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $body = Get-BodyBelowFrontmatter (Get-Content $t.FullName -Raw)
+      $unfenced = [regex]::Replace($body, '(?ms)^```.*?^```', { param($f) ($f.Value -replace '[^\r\n]', '.') })
+      if ($unfenced -match '(?m)^#[ \t]') { $offenders += $t.Name }
+    }
+    if ($offenders) { throw "an H1 survives in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The union in the tracker policy, not a narrowed set: the build lifecycle and
+  # the triage roles both live in one field here, which that policy records as a
+  # deliberate wrinkle. `superseded` joined the lifecycle in this ticket because
+  # nine files already used it under ADR 0030 and nothing defined it (ADR 0008).
+  Assert "every ticket declares a status the policies define" {
+    # Both copies, because ADR 0025 makes the template the one that leads and
+    # deleting the fifth state from it alone left the whole suite green.
+    foreach ($copy in (Get-SkillFile 'configure/policies/tickets.template.md'),
+                      (Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw)) {
+      if ($copy -notmatch '(?m)^superseded[ \t]') { throw 'a format copy does not define the superseded state' }
+    }
+    $lifecycle = @([regex]::Matches(
+      (Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw),
+      # One space, not two: the block pads the shorter words to align, and
+      # `superseded` is the longest, so requiring alignment would have excluded
+      # exactly the state this ticket added.
+      '(?m)^(open|blocked|resolved|obsolete|superseded)[ \t]') | ForEach-Object { $_.Groups[1].Value })
+    if ($lifecycle.Count -lt 5) { throw "the lifecycle block defines only: $($lifecycle -join ', ')" }
+    $roles = @([regex]::Matches(
+      (Get-Content (Join-Path $repo '.claude/policies/tracker.md') -Raw),
+      '(?m)^\|\s*`?([a-z-]+)`?\s*\|\s*`([a-z-]+)`\s*\|') | ForEach-Object { $_.Groups[2].Value })
+    # The roles half is asserted non-empty rather than merely collected: no
+    # ticket carries a triage role today, so a derivation that silently
+    # collapsed to nothing would narrow the union invisibly.
+    if ($roles.Count -lt 2) { throw "the tracker policy's role table yielded only: $($roles -join ', ')" }
+    $vocabulary = @($lifecycle + $roles | Sort-Object -Unique)
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $fm = Get-Frontmatter (Get-Content $t.FullName -Raw)
+      if (-not $fm) { $offenders += "$($t.Name): no frontmatter"; continue }
+      $m = [regex]::Match($fm, '(?m)^status:[ \t]*(\S+)')
+      if (-not $m.Success) { $offenders += "$($t.Name): no status field"; continue }
+      if ($vocabulary -notcontains $m.Groups[1].Value) { $offenders += "$($t.Name): $($m.Groups[1].Value)" }
+    }
+    if ($offenders) { throw "a status the policies do not define: $($offenders -join ', ')" }
+    $true
+  }
+
+  # A list, so the `—` sentinel disappears rather than being parsed. `[]` is the
+  # positive statement, which is why an absent field is refused rather than read
+  # as unblocked — the two are the same fact and only one is checkable.
+  Assert "every ticket declares blocked-by as a list, and the sentinel is gone" {
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $fm = Get-Frontmatter (Get-Content $t.FullName -Raw)
+      if (-not $fm) { $offenders += "$($t.Name): no frontmatter"; continue }
+      if ($fm -notmatch '(?m)^blocked-by:[ \t]*\[[^\]]*\][ \t]*$') { $offenders += "$($t.Name): not an inline list" }
+      if ($fm -match '(?m)^blocked-by:.*—') { $offenders += "$($t.Name): the em-dash sentinel survives" }
+    }
+    if ($offenders) { throw ($offenders -join ', ') }
+    $true
+  }
+
+  # A superseded ticket forwards. Without this the state and its forwarding are
+  # independent, and a reader of the index learns a ticket is dead without
+  # learning what replaced it — which is the whole distinction from `obsolete`.
+  Assert "a superseded ticket names what replaced it" {
+    $offenders = @()
+    foreach ($t in Get-LocalTicketFile) {
+      $fm = Get-Frontmatter (Get-Content $t.FullName -Raw)
+      if (-not $fm -or $fm -notmatch '(?m)^status:[ \t]*superseded[ \t]*$') { continue }
+      if ($fm -notmatch '(?m)^superseded-by:[ \t]*\S') { $offenders += $t.Name }
+    }
+    if ($offenders) { throw "superseded without naming a replacement: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The asymmetry ADR 0058 decided, and the half most easily lost: a forge owns
+  # the lifecycle natively, so frontmatter there would be a second home for what
+  # the forge already knows. Both format copies, because ADR 0025 orders them.
+  Assert "the ticket format keeps the forge form free of frontmatter" {
+    $copies = @{
+      'the shipped template' = Get-SkillFile 'configure/policies/tickets.template.md'
+      'this repository'      = Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw
+    }
+    foreach ($name in $copies.Keys) {
+      $c = $copies[$name]
+      # Scoped to the paragraph making the claim. File-wide, the reason check
+      # passed on an unrelated "second home" elsewhere in the same policy —
+      # a phrase travelling near the subject rather than stating it.
+      $para = [regex]::Match(($c -replace "`r", ''), '(?m)^.*local[- ]markdown form.*$').Value
+      if (-not $para) { throw "$name`: the fields are not scoped to the local form" }
+      if ($para -notmatch '(?i)(second home|noise in its issue UI)') {
+        throw "$name`: why the forge form stays as it is goes unsaid"
+      }
+      # File-wide, because review put the offending sentence one line below the
+      # paragraph and it passed. Co-occurrence alone cannot be the test: the
+      # paragraph that *forbids* forge frontmatter necessarily mentions both.
+      # So every sentence naming the forge and frontmatter together must also
+      # negate — a prohibition reads differently from a claim, and that is the
+      # difference being checked.
+      foreach ($sentence in (($c -replace "`r", '') -split '(?<=\.)\s+')) {
+        if ($sentence -notmatch '(?i)GitHub|forge') { continue }
+        if ($sentence -notmatch '(?i)frontmatter') { continue }
+        if ($sentence -notmatch '(?i)\b(would be|never|not|no|rather than|instead)\b') {
+          throw "$name`: the forge form is described as carrying frontmatter: $($sentence.Trim())"
+        }
+      }
+    }
     $true
   }
 }

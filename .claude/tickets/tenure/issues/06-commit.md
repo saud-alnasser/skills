@@ -1,7 +1,8 @@
-# feat(commit): the transaction boundary
-
-Status: resolved
-Blocked by: 02, 04, 05
+---
+title: feat(commit): the transaction boundary
+status: resolved
+blocked-by: [02, 04, 05]
+---
 
 ## Problem
 

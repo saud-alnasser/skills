@@ -1,12 +1,12 @@
 ---
 name: research
 description: Investigate a question against primary sources and write the findings as one cited file. Use when a decision depends on facts that are not in this repository — an external API's behaviour, a library's guarantees, a specification's wording.
+metadata:
+  mode: research
+  policies: [evidence, sub-agents]
 ---
 
 # Research
-
-Mode: research
-Policies: `.claude/policies/evidence.md`, `.claude/policies/sub-agents.md`
 
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
 

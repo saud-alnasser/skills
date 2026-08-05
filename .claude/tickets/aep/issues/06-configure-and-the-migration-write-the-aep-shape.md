@@ -1,8 +1,9 @@
-# feat(configure): the templates generate the AEP shape, and the migration converts onto it
-
-Status: resolved
-Blocked by: 05
-Part of: aep
+---
+title: feat(configure): the templates generate the AEP shape, and the migration converts onto it
+status: resolved
+blocked-by: [05]
+part-of: aep
+---
 
 ## Problem
 

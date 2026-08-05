@@ -1,8 +1,9 @@
-# 14 — feat(skills): the migration converts a repository's knowledge to declared fields
-
-Status: resolved
-Blocked by: 08
-Part of: mechanics
+---
+title: feat(skills): the migration converts a repository's knowledge to declared fields
+status: resolved
+blocked-by: [08]
+part-of: mechanics
+---
 
 ## Problem
 

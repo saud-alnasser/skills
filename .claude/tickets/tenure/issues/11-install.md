@@ -1,7 +1,8 @@
-# chore(release): install Tenure and remove the mattpocock skills
-
-Status: resolved
-Blocked by: —
+---
+title: chore(release): install Tenure and remove the mattpocock skills
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

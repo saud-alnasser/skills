@@ -22,7 +22,7 @@
 {**Plain git** or **stacked changes**. One of the two, stated plainly — this is
 the fact everything below depends on.}
 
-On plain git, `Blocked by: 01` in a ticket means *wait until 01 is resolved*.
+On plain git, `blocked-by: [01]` in a ticket means *wait until 01 is resolved*.
 Where the repository uses stacked changes it means *stack on top of 01*, and
 waiting is the thing the tool exists to remove. Getting it wrong is expensive
 in both directions, which is why it is written down rather than rediscovered.

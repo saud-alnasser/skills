@@ -1,8 +1,9 @@
-# revert(rules): return the entrypoint to its pre-effort state, and keep the scope fix
-
-Status: obsolete
-Blocked by: —
-Part of: streamline
+---
+title: revert(rules): return the entrypoint to its pre-effort state, and keep the scope fix
+status: obsolete
+blocked-by: []
+part-of: streamline
+---
 
 ## Obsolete
 

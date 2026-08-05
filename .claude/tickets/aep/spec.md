@@ -1,7 +1,14 @@
-# refactor(aep): adopt the AI Engineering Protocol, and transition the framework onto its specification
+---
+status: draft
+sources:
+  - specs.md
+  - .claude/tickets/streamline/spec.md
+  - skills/
+  - .claude/
+  - scripts/verify.ps1
+---
 
-Status: draft
-Sources: `specs.md`, `.claude/tickets/streamline/spec.md`, `skills/`, `.claude/`, `scripts/verify.ps1`
+# refactor(aep): adopt the AI Engineering Protocol, and transition the framework onto its specification
 
 ## Problem
 

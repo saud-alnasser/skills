@@ -1,3 +1,8 @@
+---
+kind: drift
+falsifies: [.claude/policies/tracker.md]
+---
+
 # The tracker's tracked-intent declaration rests on a falsified landing fact
 
 Consumed: `.claude/policies/tracker.md`, "What a ticket is" — the declaration was re-argued from the unit rather than from the landing mechanism, and did not flip

@@ -1,8 +1,9 @@
-# feat(skills): the existing spawners conform to the policy
-
-Status: resolved
-Blocked by: 02
-Part of: orchestration
+---
+title: feat(skills): the existing spawners conform to the policy
+status: resolved
+blocked-by: [02]
+part-of: orchestration
+---
 
 ## Problem
 

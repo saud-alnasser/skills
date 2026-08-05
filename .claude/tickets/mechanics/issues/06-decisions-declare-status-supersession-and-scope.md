@@ -1,8 +1,9 @@
-# 06 — feat(skills): decisions declare status, supersession, and scope
-
-Status: resolved
-Blocked by: 05
-Part of: mechanics
+---
+title: feat(skills): decisions declare status, supersession, and scope
+status: resolved
+blocked-by: [05]
+part-of: mechanics
+---
 
 ## Problem
 

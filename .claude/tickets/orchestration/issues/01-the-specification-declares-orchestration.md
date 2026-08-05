@@ -1,8 +1,9 @@
-# feat(specs): the specification declares orchestration
-
-Status: resolved
-Blocked by: —
-Part of: orchestration
+---
+title: feat(specs): the specification declares orchestration
+status: resolved
+blocked-by: []
+part-of: orchestration
+---
 
 ## Problem
 

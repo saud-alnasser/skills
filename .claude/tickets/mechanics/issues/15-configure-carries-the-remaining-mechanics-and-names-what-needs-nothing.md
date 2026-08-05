@@ -1,8 +1,9 @@
-# 15 — feat(skills): configure carries the remaining mechanics, and names what needs nothing
-
-Status: resolved
-Blocked by: 03, 09, 11
-Part of: mechanics
+---
+title: feat(skills): configure carries the remaining mechanics, and names what needs nothing
+status: resolved
+blocked-by: [03, 09, 11]
+part-of: mechanics
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# feat(implement): commit follows review without asking
-
-Status: resolved
-Blocked by: 02
-Part of: streamline
+---
+title: feat(implement): commit follows review without asking
+status: resolved
+blocked-by: [02]
+part-of: streamline
+---
 
 ## Problem
 

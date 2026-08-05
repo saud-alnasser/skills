@@ -1,12 +1,12 @@
 ---
 name: prototype
 description: Build throwaway code to answer a design question by feel, then record the answer and delete the code. Use when a state model, an interaction, or a layout has to be driven by hand before it can be judged.
+metadata:
+  mode: prototype
+  policies: [evidence]
 ---
 
 # Prototype
-
-Mode: prototype
-Policies: `.claude/policies/evidence.md`
 
 A prototype is **throwaway code that answers a question**. Its sibling `/research` answers questions about **facts**; this one answers questions about **feel** — does this state model hold up, does this layout read right. The question decides the shape.
 

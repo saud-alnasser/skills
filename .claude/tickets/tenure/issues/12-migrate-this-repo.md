@@ -1,7 +1,8 @@
-# test(configure): migrate this repository onto Tenure
-
-Status: resolved
-Blocked by: 11
+---
+title: test(configure): migrate this repository onto Tenure
+status: resolved
+blocked-by: [11]
+---
 
 ## Problem
 

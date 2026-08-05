@@ -32,12 +32,14 @@ The routing table alone. It is the mechanism that makes context loading demand-d
 | [repository](repository.md) | a term, boundary, or constraint is in question | — |
 | [database](database.md) | the request touches schema, migrations, or queries | `src/db/` |
 | [auth](auth.md) | the request touches sessions, tokens, or permissions | `src/auth/` |
-| **web** | | `apps/web/` |
+| **web** | | |
 | [web/routing](web/routing.md) | the request touches navigation or URL shape | `apps/web/src/routes/` |
 | [web/forms](web/forms.md) | the request touches form state or validation | `apps/web/src/forms/` |
 ```
 
 **Every file under `contexts/` has exactly one row, including `repository.md` itself.** A file with no row is unreachable; a row with no file is a pointer at nothing. Group the rows: repository-wide domains first and flat, then each Project Context as a labelled group of its own.
+
+The order within the flat group is `repository.md` first — it is the cross-cutting vocabulary rather than a domain — then filename order, which is the only ordering a directory supplies. **A Project Context's label row carries the directory name and nothing else**: no member file states a fact about its group and a directory has no frontmatter, so there is nothing to roll up. A value there would be the one thing a generated table may not contain, a claim its directory never made. That is also why the group row's cells are blank where a file's empty `sources` renders as `—`: the dash says the file declared nothing to point at, and a blank says nobody was asked.
 
 Nothing else goes in this file. A sentence of orientation here is a sentence every session pays for, which is the cost the split was made to remove.
 

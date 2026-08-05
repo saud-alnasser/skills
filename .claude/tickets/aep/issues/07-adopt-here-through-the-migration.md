@@ -1,8 +1,9 @@
-# feat(layout): move this repository onto the AEP shape, through the migration
-
-Status: resolved
-Blocked by: 06
-Part of: aep
+---
+title: feat(layout): move this repository onto the AEP shape, through the migration
+status: resolved
+blocked-by: [06]
+part-of: aep
+---
 
 ## Problem
 

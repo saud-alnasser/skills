@@ -1,8 +1,9 @@
-# 08 — feat(skills): the decisions index is generated, and the review stage routes through it
-
-Status: resolved
-Blocked by: 06, 07
-Part of: mechanics
+---
+title: feat(skills): the decisions index is generated, and the review stage routes through it
+status: resolved
+blocked-by: [06, 07]
+part-of: mechanics
+---
 
 ## Problem
 

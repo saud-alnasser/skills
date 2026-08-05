@@ -1,8 +1,9 @@
-# feat(skills): a ticket-builder role ships
-
-Status: resolved
-Blocked by: 02
-Part of: parallel-tickets
+---
+title: feat(skills): a ticket-builder role ships
+status: resolved
+blocked-by: [02]
+part-of: parallel-tickets
+---
 
 ## Problem
 

@@ -1,7 +1,8 @@
-# feat(coordination): assignment, claim, and the branch as the lock
-
-Status: resolved
-Blocked by: —
+---
+title: feat(coordination): assignment, claim, and the branch as the lock
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

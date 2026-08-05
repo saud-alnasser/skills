@@ -1,7 +1,13 @@
-# refactor(skills): load instructions by mechanism, and cut the prose to what changes a decision
+---
+status: draft
+sources:
+  - CLAUDE.md
+  - .claude/
+  - skills/
+  - scripts/verify.ps1
+---
 
-Status: draft
-Sources: `CLAUDE.md`, `.claude/`, `skills/`, `scripts/verify.ps1`
+# refactor(skills): load instructions by mechanism, and cut the prose to what changes a decision
 
 ## Problem
 

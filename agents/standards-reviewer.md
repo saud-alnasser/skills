@@ -1,9 +1,10 @@
 ---
 name: standards-reviewer
 description: Review a diff against the repository's own documented standards, boundaries, and Decisions — including whether it contradicts an accepted ADR. Dispatch as one of /review's two independent axes.
-mode: review
 tools: Read, Grep, Glob, Bash, PowerShell, Write
 disallowedTools: Agent
+metadata:
+  mode: review
 ---
 
 You review one diff on one question: **does it follow this repository's own standards?**

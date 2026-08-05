@@ -1,8 +1,9 @@
-# 04 — feat(skills): the commit stage writes both halves, and a stage may re-stamp the tree
-
-Status: resolved
-Blocked by: 03
-Part of: mechanics
+---
+title: feat(skills): the commit stage writes both halves, and a stage may re-stamp the tree
+status: resolved
+blocked-by: [03]
+part-of: mechanics
+---
 
 ## Problem
 

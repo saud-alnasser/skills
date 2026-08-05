@@ -1,7 +1,8 @@
-# feat(code-review): review axes for Tenure
-
-Status: resolved
-Blocked by: 01
+---
+title: feat(code-review): review axes for Tenure
+status: resolved
+blocked-by: [01]
+---
 
 ## Problem
 

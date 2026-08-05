@@ -1,12 +1,12 @@
 ---
 name: commit
 description: Turn finished work into a commit — confirm the earlier stages ran, heal the Context the whole diff falsified, write the message, and advance the Marker. Use when work is ready to commit, or when /implement closes out a ticket.
+metadata:
+  mode: maintenance
+  policies: [knowledge, specs, tracker, version-control]
 ---
 
 # Commit
-
-Mode: maintenance
-Policies: `.claude/policies/knowledge.md`, `.claude/policies/specs.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
 
 The transaction boundary: everything before it produced a change in the working tree, and this is where that change becomes history.
 
@@ -55,11 +55,25 @@ A repository with no `.claude/` has no Context to contradict. Say so in one line
 
 Acceptance criteria can span several commits, so this is the only place the last one is knowable.
 
-When this commit completes them, set `Status: implemented` on the spec in `.claude/designs/`. **Only the status line moves** — never a word of the spec's content. The status vocabulary, and why the rest is frozen, are in `.claude/policies/specs.md`.
+When this commit completes them, set the spec's frontmatter field to `status: implemented`. **Only the status field moves** — never a word of the spec's content. Where a spec lives, the status vocabulary, and why the rest is frozen are all in `.claude/policies/specs.md`.
 
 Do this **before staging**, not after committing — the spec is a tracked file, and marking it afterwards leaves the tree dirty the moment the commit lands, defeating the Marker's clean path on the very next turn.
 
-## 4 — The message
+## 4 — Regenerate the generated indexes
+
+```
+pwsh -NoProfile -File scripts/regenerate-indexes.ps1
+```
+
+Every generated index is produced from the fields its directory declares, and this is where they are produced (ADR 0057). Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.
+
+Run it **before staging**, for the same reason the spec's status is set before staging — the indexes are tracked files, and regenerating after the commit leaves the tree dirty the moment it lands.
+
+**Never hand-edit an index instead.** The suite regenerates and compares, so a hand edit is a build failure rather than a shortcut, and the failure names the file.
+
+Where the script is absent, **say that the indexes are unverified** and carry on — the commit is not blocked, and the report is what stops an unenforced index reading as an enforced one. Nothing else in this stage depends on it.
+
+## 5 — The message
 
 `.claude/policies/version-control.md` carries the convention AEP defaults to, and `CLAUDE.md` the standing rule that a convention is detected before it is asserted. This is where that detection happens, so make it a step: read `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`, then the recent `git log`.
 
@@ -76,13 +90,13 @@ Reference the ticket. Whether this repository has a shared tracker is in `.claud
 
 `.claude/tools/github.md` has both forms and their constraints; `.claude/tools/graphite.md` records what was and was not verified about the submit path. Read them — several words that look equivalent are not.
 
-## 5 — Make the commit
+## 6 — Make the commit
 
 The staging rule, the commit invocation, and the amend that further changes take instead of a fixup are all in `.claude/tools/git.md`. Read it rather than reaching for a flag from memory.
 
 What belongs to `/commit` is only the consequence: an amend rewrites the commit, so the step below runs again.
 
-## 6 — Advance the Marker
+## 7 — Advance the Marker
 
 Last, once the commit exists. **A commit cannot contain its own SHA** (ADR 0005) — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
 
@@ -113,7 +127,7 @@ Stated here rather than only pointed at, because this is the file a reader opens
 
 ## What stays with the caller
 
-`/commit` **does not resolve tickets.** `/implement` sets `Status: resolved` after `/commit` returns — one writer for that field, so a ticket is never left marked resolved for a commit that was refused.
+`/commit` **does not resolve tickets.** `/implement` sets `status: resolved` after `/commit` returns — one writer for that field, so a ticket is never left marked resolved for a commit that was refused.
 
 ---
 

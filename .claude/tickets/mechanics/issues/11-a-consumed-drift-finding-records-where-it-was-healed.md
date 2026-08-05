@@ -1,8 +1,9 @@
-# 11 — feat(skills): a consumed drift finding records where it was healed
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(skills): a consumed drift finding records where it was healed
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

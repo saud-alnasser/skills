@@ -1,9 +1,10 @@
-# test(verify): assert the always-on budget and confirm the result
-
-Status: superseded
-Superseded by: aep/08 (ADR 0030)
-Blocked by: 10, 11, 12, 13
-Part of: streamline
+---
+title: test(verify): assert the always-on budget and confirm the result
+status: superseded
+blocked-by: [10, 11, 12, 13]
+part-of: streamline
+superseded-by: aep/08 (ADR 0030)
+---
 
 ## Problem
 

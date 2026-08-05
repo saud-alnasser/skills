@@ -1,8 +1,9 @@
-# feat(implement): each ticket lands on its own branch, and collisions are resolved
-
-Status: resolved
-Blocked by: 04
-Part of: parallel-tickets
+---
+title: feat(implement): each ticket lands on its own branch, and collisions are resolved
+status: resolved
+blocked-by: [04]
+part-of: parallel-tickets
+---
 
 ## Problem
 

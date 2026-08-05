@@ -1,8 +1,9 @@
-# refactor(dist): rename the framework from Tenure to AEP
-
-Status: resolved
-Blocked by: 01
-Part of: aep
+---
+title: refactor(dist): rename the framework from Tenure to AEP
+status: resolved
+blocked-by: [01]
+part-of: aep
+---
 
 ## Problem
 

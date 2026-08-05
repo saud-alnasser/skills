@@ -1,8 +1,9 @@
-# feat(configure): one guide per workflow concern, reached by pointer
-
-Status: resolved
-Blocked by: 02
-Part of: streamline
+---
+title: feat(configure): one guide per workflow concern, reached by pointer
+status: resolved
+blocked-by: [02]
+part-of: streamline
+---
 
 ## Problem
 

@@ -1,3 +1,8 @@
+---
+kind: research
+falsifies: []
+---
+
 # What orchestration primitives does Claude Code provide for sub-agents, and what does a sub-agent inherit?
 
 Verified against: Claude Code 2.1.222 (`claude --version`), docs.claude.com as of 2026-08-05

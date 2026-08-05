@@ -1,8 +1,9 @@
-# chore(skills): adopt orchestration here
-
-Status: resolved
-Blocked by: 06, 07
-Part of: orchestration
+---
+title: chore(skills): adopt orchestration here
+status: resolved
+blocked-by: [06, 07]
+part-of: orchestration
+---
 
 ## Problem
 

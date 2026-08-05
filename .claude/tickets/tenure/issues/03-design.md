@@ -1,7 +1,8 @@
-# feat(design): the whole planning surface
-
-Status: resolved
-Blocked by: 01, 02
+---
+title: feat(design): the whole planning surface
+status: resolved
+blocked-by: [01, 02]
+---
 
 ## Problem
 

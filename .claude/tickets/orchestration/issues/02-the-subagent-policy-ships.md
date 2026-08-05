@@ -1,8 +1,9 @@
-# feat(skills): the sub-agent policy ships
-
-Status: resolved
-Blocked by: 01
-Part of: orchestration
+---
+title: feat(skills): the sub-agent policy ships
+status: resolved
+blocked-by: [01]
+part-of: orchestration
+---
 
 ## Problem
 

@@ -1,7 +1,8 @@
-# feat(tracker): hierarchy, relationships, labels, and title conventions
-
-Status: resolved
-Blocked by: 09
+---
+title: feat(tracker): hierarchy, relationships, labels, and title conventions
+status: resolved
+blocked-by: [09]
+---
 
 ## Problem
 

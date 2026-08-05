@@ -1,8 +1,9 @@
-# feat(skills): the build stage dispatches, isolates, and integrates
-
-Status: resolved
-Blocked by: 03, 04, 05
-Part of: orchestration
+---
+title: feat(skills): the build stage dispatches, isolates, and integrates
+status: resolved
+blocked-by: [03, 04, 05]
+part-of: orchestration
+---
 
 ## Problem
 

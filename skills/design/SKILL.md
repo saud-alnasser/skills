@@ -2,12 +2,12 @@
 name: design
 description: Turn a request into a workable plan — discover, state an understanding, grill, gather evidence, and leave a spec and tickets on disk. Use when starting any piece of work that isn't already planned.
 disable-model-invocation: true
+metadata:
+  mode: design
+  policies: [decisions, evidence, knowledge, maps, specs, tickets, tracker]
 ---
 
 # Design
-
-Mode: design
-Policies: `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/maps.md`, `.claude/policies/specs.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`
 
 Everything between a request and a plan `/implement` can build. Discovery, the grill, evidence, scope, and the deliverable — one skill, because splitting them lets the grill be skipped.
 
@@ -23,7 +23,9 @@ Then, in order:
 2. **Route** — its table says which Domain Contexts this request touches. Load those, and only those.
 3. **Verify** what you are about to rely on — scoped to what routing selected, which is why it comes after routing: verifying everything is the startup scan the Marker exists to avoid.
 4. **Read the code.** `.claude/rules/engineering.md` has the rule; discovery is where it bites hardest.
-5. **Read the waiting drift.** `.claude/evidence/drift/` holds findings nobody has consumed — read the ones touching what this request plans, and fold their healing into this run's deliverable. Skipping this read is how a finding stays unread. What one is, and why it may be waiting: `.claude/policies/evidence.md`.
+5. **Read the waiting drift.** `.claude/evidence/map.md` indexes every finding of every kind, with what each falsifies — **route through it and open only the findings whose area this request plans**, then fold their healing into this run's deliverable. Skipping this read is how a finding stays unread. What one is, and why it may be waiting: `.claude/policies/evidence.md`.
+
+   **Reading the directory whole is the cost the index exists to remove**, and a stage that does it anyway has not been slowed down — it has stopped using the mechanism.
 
    **Waiting is read off the finding, never derived.** Which line answers it is `.claude/policies/evidence.md`'s. Opening the knowledge a finding falsified in order to work out whether anyone had already healed it is the cost that line removes — and it is a cost paid *before* anyone knows the finding was spent.
 

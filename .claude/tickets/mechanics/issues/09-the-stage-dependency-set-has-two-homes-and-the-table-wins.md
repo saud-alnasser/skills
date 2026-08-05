@@ -1,8 +1,9 @@
-# 09 — feat(specs): the stage-dependency set has two homes, and the table wins
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(specs): the stage-dependency set has two homes, and the table wins
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

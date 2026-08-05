@@ -1,8 +1,9 @@
-# refactor(knowledge): split routing from vocabulary, and re-home the terms
-
-Status: resolved
-Blocked by: 03
-Part of: streamline
+---
+title: refactor(knowledge): split routing from vocabulary, and re-home the terms
+status: resolved
+blocked-by: [03]
+part-of: streamline
+---
 
 ## Problem
 

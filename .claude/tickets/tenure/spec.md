@@ -1,6 +1,9 @@
-# Tenure
+---
+status: implemented
+sources: []
+---
 
-Status: implemented
+# Tenure
 
 > **On this document's age.** This effort was built and closed before the `layout` effort revisited parts of it — ADR 0018 dissolved `.claude/docs/`, and ADR 0019 replaced the `tools` skill with a directory `/configure` derives. Its Source Pointers have been repaired to the current tree; its *decisions* still read as they were made, and where one is superseded it says so in place. Nothing here is rewritten to describe a design it did not specify — the build record's job is to say what was built. Check the ADRs before treating any statement here as current.
 

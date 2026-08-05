@@ -1,8 +1,9 @@
-# feat(rules): the always-on standards cover what gets written, and close-out invokes the commit skill
-
-Status: resolved
-Blocked by: 09
-Part of: aep
+---
+title: feat(rules): the always-on standards cover what gets written, and close-out invokes the commit skill
+status: resolved
+blocked-by: [09]
+part-of: aep
+---
 
 ## Problem
 

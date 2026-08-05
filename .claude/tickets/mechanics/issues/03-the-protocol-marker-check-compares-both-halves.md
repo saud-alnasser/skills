@@ -1,8 +1,9 @@
-# 03 — feat(skills): the protocol's marker check compares both halves
-
-Status: resolved
-Blocked by: 01, 02
-Part of: mechanics
+---
+title: feat(skills): the protocol's marker check compares both halves
+status: resolved
+blocked-by: [01, 02]
+part-of: mechanics
+---
 
 ## Problem
 

@@ -44,8 +44,11 @@ AEP once grouped decisions, designs, research, and prototype write-ups under `.c
 | `.claude/docs/prototypes/*` | `.claude/evidence/prototypes/`, unchanged in content |
 | `.claude/docs/out-of-scope/*` | `.claude/evidence/out-of-scope/`, unchanged in content |
 | `.claude/docs/` itself | deleted, once empty |
+| `.claude/tickets/map.md` | `.claude/tickets/<effort>/map.md` — the effort it charts, read from its `# map: <effort name>` title (ADR 0059) |
 
 **A file moves; it is never rewritten.** Nothing here changes shape — the whole change is which directory the file sits in. Classification does not apply and neither does the compression test: this content was already admitted to AEP once.
+
+The map row is the one that needs a value read out of the file rather than a fixed destination: a map names the effort it charts in its own title, and that is what says which directory it belongs in. A map whose title names no effort, or names one with no directory, is **reported rather than guessed at** — a map filed under the wrong effort is worse than one left where it was, because the next session finds it and believes it.
 
 **ADRs keep their filenames.** The rule is in the numbering section of `.claude/policies/decisions.md`, and it governs this move exactly as it governs a migration in from somebody else's layout.
 

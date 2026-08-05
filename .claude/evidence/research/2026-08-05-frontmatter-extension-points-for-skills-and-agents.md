@@ -1,3 +1,8 @@
+---
+kind: research
+falsifies: []
+---
+
 # Where a skill or agent may carry AEP's own fields
 
 Date: 2026-08-05

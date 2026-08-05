@@ -1,7 +1,8 @@
-# feat(tracker): what tenure may write to a tracker other people read
-
-Status: resolved
-Blocked by: 17
+---
+title: feat(tracker): what tenure may write to a tracker other people read
+status: resolved
+blocked-by: [17]
+---
 
 ## Problem
 

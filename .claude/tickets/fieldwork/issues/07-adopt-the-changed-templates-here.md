@@ -1,8 +1,9 @@
-# chore(repo): adopt the changed templates into this repository's installed protocol
-
-Status: resolved
-Blocked by: 01, 02, 03, 04, 05, 06
-Part of: fieldwork
+---
+title: chore(repo): adopt the changed templates into this repository's installed protocol
+status: resolved
+blocked-by: [01, 02, 03, 04, 05, 06]
+part-of: fieldwork
+---
 
 ## Problem
 
