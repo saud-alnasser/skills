@@ -33,7 +33,7 @@ This repository runs the **Agentic Engineering Protocol**; this file is its per-
 
 **Position has a directory: `.claude/position/`.** That is the category made structural rather than declared — a per-clone file goes there and is covered by the existing ignore rule, instead of arguing for a new exception each time.
 
-`.claude/.gitignore` still carries the membership test in prose, because the directory says *where* and only the test says *which*. Read it there. One file sits outside: `settings.local.json` belongs to the harness rather than to this workflow, and the harness would not find it anywhere else.
+`.claude/.gitignore` still carries the membership test in prose, because the directory says *where* and only the test says *which*. Read it there. Two paths sit outside, both the harness's rather than this workflow's, and both at locations the harness would not find anywhere else: `settings.local.json`, and `worktrees/`, where it checks out an isolated child.
 
 The invariant that keeps Position from becoming a fourth knowledge layer: **nothing shared may depend on it.** Delete every ignored file under `.claude/` and no other person and no other clone loses information they needed. This clone loses a shortcut and re-earns it.
 

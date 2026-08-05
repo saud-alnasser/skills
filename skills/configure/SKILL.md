@@ -89,6 +89,7 @@ The shape being generated, so the tree reads as its own map — every category i
 ├── tickets/             one directory per effort
 ├── tools/               one file per tool this repository uses
 ├── position/            per-clone state — never committed
+├── worktrees/           the harness's isolated child checkouts (ADR 0050)
 └── .gitignore           what per-clone means, and the test for it
 ```
 
@@ -96,7 +97,11 @@ The shape being generated, so the tree reads as its own map — every category i
 
 The two `settings` files are the harness's, not this workflow's: it reads them from those exact paths and would not find them anywhere else. They are still not one case. `settings.local.json` is per-clone, which is the exemption `.claude/.gitignore` states and the reason it cannot move under `position/`, and it appears in neither the tree above nor the canonical layout. `settings.json` is committed, so it is in both (ADR 0045).
 
+`worktrees/` is the harness's too, and it is a third case rather than a repeat of either — which is why being per-clone is not on its own what keeps something out of the layout. It is per-clone like `settings.local.json`, and named in both the tree and the canonical layout like `settings.json`. What separates it is that it is a **directory**: the layout names every category, and a category nothing names is one the ignore file is free to forget (ADR 0050).
+
 The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope,discussions}/`, `.claude/tickets/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
+
+`worktrees/` is lazy in a stronger sense: **no command of this workflow ever creates it.** The harness does, the first time a stage dispatches an isolated child. It is in the tree because the tree is the shape of a conforming repository rather than a manifest of what this run writes — and because a directory the layout does not name is one the ignore file is free to forget, which is exactly what happened.
 
 **`.claude/contexts/**`**, as three kinds of file: `.claude/contexts/map.md` holding the routing table alone, `.claude/contexts/repository.md` holding the vocabulary and boundaries that cross domains, and one file per domain that earns one. The format, the placement rule for a term, and the test a domain has to pass are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line is in `CLAUDE.md`.
 
@@ -154,18 +159,25 @@ Take every repository-specific command from the manifest, scripts, or CI configu
 # write-ups that outlive it used to share a name and differ only by a leading
 # slash, and they now sit under different parents.
 #
-# `settings.local.json` is separate because it is not the workflow's. The
-# harness writes it at exactly that path and would not find it anywhere else,
-# so it is the one per-clone file that cannot be moved under `position/`.
+# Two paths sit outside that directory, and both for the same reason: they are
+# the harness's, not the workflow's. It writes each at exactly the path below
+# and would not find it anywhere else, so neither can be moved under
+# `position/`. `settings.local.json` is this clone's harness configuration;
+# `worktrees/` is where the harness checks out an isolated child, which makes
+# every dispatched sub-agent's workspace per-clone state by the test above.
 #
-# The leading slash is still load-bearing: unanchored, `position/` would match
-# at every depth and swallow any directory of that name in the repository.
+# The leading slash is still load-bearing, and `worktrees/` is the case that
+# proves it: unanchored, a pattern matches at every depth, and a child's
+# workspace is a full checkout containing its own `.claude/`.
 
 /position/
+/worktrees/
 settings.local.json
 ```
 
 It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets AEP be added or removed as one directory instead of leaking entries into a file the repository owns.
+
+`worktrees/` is named in §21's layout as the harness's rather than this workflow's (ADR 0050), which is what puts it inside the entry-for-entry comparison of this tree against the specification. `/configure` never creates it: the harness does, the first time a stage dispatches an isolated child.
 
 **`.claude/settings.json`**, carrying the worktree base ref. A sub-agent given worktree isolation branches from the repository's **default branch, not the parent session's `HEAD`**. So a child working a portion of a claimed ticket builds against a tree that does not contain the work it is extending — and nothing reports it: the child succeeds, the integration reads as routine, and the result is wrong in a way no test on the child's side can reach. A sentence telling a caller to set this is not enough, because the caller who forgets produces no error.
 
@@ -198,6 +210,7 @@ So this pass reaches what the routing table does not:
 - **Re-check `.claude/tools/`.** A repository's tooling changes, and a stale command is worse than no command: no command asks, a wrong one runs.
 - **Re-check `What a ticket is`** in the tracker policy against the version-control policy — the declaration drifts when the branching model moves, and a tracker file written before the declaration existed gets it backfilled here, which is the repair `.claude/policies/maps.md` sends a stale repository back for.
 - **Mark specs reality already satisfies.** `/commit` marks a spec `implemented` when it lands the last criterion; a spec finished outside that path stays `accepted` forever. This pass catches those.
+- **Repair an ignore file that predates the child-workspace rule.** An installed `.claude/.gitignore` covering `/position/` and `settings.local.json` but not `/worktrees/` was written before orchestration shipped, and the repository has been accumulating untracked child checkouts ever since. Recognition is by content, and the ignore file is **repaired rather than reported** — a repository configured once does not run the generate branch again on its own, so this pass is the only thing that reaches it.
 - **Heal the framework's name.** A protocol file expanding AEP as the *AI* Engineering Protocol was installed before the rename to *Agentic*. The acronym never moved, so nothing is broken and nothing routes on the sentence — which is why only this pass reaches it. One sentence, not a migration.
 
 Pruning deletes, so it goes through step 2's plan like everything else.

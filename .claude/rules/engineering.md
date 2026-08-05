@@ -1,10 +1,16 @@
 # Engineering standards
 
 <!--
-  No `paths:` frontmatter, deliberately. Every rule here must fire on turns
-  where no file is opened at all. These are standards of engineering conduct;
-  how a *stage* is run belongs to the skill that runs it, and what the
-  workflow is belongs in `.claude/protocol.md`.
+  Installed by /configure at `.claude/rules/engineering.md`.
+
+  No `paths:` frontmatter, deliberately. Every standard below has to hold on a
+  turn that opens no file at all — a question answered from memory is exactly
+  where "verify before claiming" earns its place.
+
+  Copied as-is: these are the workflow's standards, not the repository's. A
+  standard discovered *here* gets its own file in the same directory,
+  path-scoped where it applies to part of the tree. Keep the directory small —
+  a file without `paths:` is a permanent per-turn cost.
 -->
 
 ## Verify before claiming

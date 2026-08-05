@@ -10,7 +10,9 @@
   chain a session uses and there is nothing to bootstrap (ADR 0040).
 
   Reached by pointer from `.claude/protocol.md`'s routing table, by every stage
-  that dispatches. Those stages point at this file and restate no part of it.
+  that dispatches. Those stages point at this file and restate no part of it —
+  four of them each carried a fragment before it existed, and one fragment was
+  false, which is the drift a single home removes.
 -->
 
 **A sub-agent is a child that an orchestrating stage dispatches to work part of what that stage was doing.** It runs in its own context and never speaks to the human.

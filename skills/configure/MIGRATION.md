@@ -69,7 +69,7 @@ Every row is **mechanical except one**, and the exception is called out because 
 | `.claude/prototypes/` | `.claude/position/prototypes/` |
 | — | `.claude/rules/{precedence,engineering}.md`, written from their templates |
 | — | the seven copied guides, written into `.claude/policies/` |
-| `.claude/.gitignore` | rewritten: `/position/` and `settings.local.json` |
+| `.claude/.gitignore` | rewritten: `/position/`, `/worktrees/`, and `settings.local.json` |
 
 **`.claude/context.md` is the one that splits.** Its routing table becomes `.claude/contexts/map.md`; everything else — the vocabulary, the boundaries, the constraints — becomes `.claude/contexts/repository.md`. The Domain Contexts under `.claude/contexts/` do not move and do not change. Add a row for `repository.md` to the new map, because the file that is being created is the one nobody remembers to route to.
 

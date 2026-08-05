@@ -112,7 +112,7 @@ Apply the **compression test** in `CLAUDE.md` before writing anything into any o
 - **Only include terms specific to this repository.** General programming concepts — timeouts, error types, utility patterns — do not belong even where the repository uses them heavily. Before adding a term, ask whether it is unique to this repository or general; only the former belongs.
 - **Boundaries state ownership and the rules that cross it** — who may write what, what may only be referenced by id. Not a module list.
 - **Constraints are the ones that outlive the current implementation** — regulatory limits, contractual latency, platform bans. A constraint a refactor could remove is not stable; leave it out.
-- **A Source Pointer is a navigation coordinate, never a claim.** `Sources: src/auth/` means "start investigating here" — it says nothing about what is there. `CLAUDE.md` has the rules for verifying one and for recovering a broken one.
+- **A Source Pointer is a navigation coordinate, never a claim.** `Sources: src/auth/` means "start investigating here" — it says nothing about what is there. `CLAUDE.md` has the verify-before-use rule, and `.claude/protocol.md` how to recover a broken one.
 
 ## When a domain earns a file
 
