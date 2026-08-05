@@ -8,7 +8,7 @@ One ticket per file, or one per issue. Never a single combined file: tickets are
 
 ## A ticket tracks work — nothing else
 
-Engineering knowledge lives in the Codebase, in Context, and in Decisions. **None of it lives in a ticket body.** A tracker that accumulates it becomes a fourth knowledge layer that nothing verifies and nothing prunes, and it is the layer people will read first because it is the one with the search box.
+Engineering knowledge lives in the Codebase, in Context, and in Decisions. **None of it lives in a ticket body.** A tracker that accumulates it becomes a fourth knowledge layer that nothing verifies and nothing prunes — and the one people read first, because it has the search box.
 
 So: **no implementation diary.** Not what you tried, not what went wrong on the way, not a running log of the session. Detailed engineering belongs in a spec under `.claude/designs/`, which the ticket **references** — never pastes.
 
@@ -54,7 +54,7 @@ obsolete   no longer needed. Requires a one-line reason. Never deleted
 
 **On a shared tracker the merge resolves the ticket, not AEP.** AEP commits and never pushes, opens a pull request, or merges, so marking a shared issue resolved would assert an outcome it does not control — and a closed issue whose pull request is later rejected is a lie the tracker now tells everyone. Which text carries the closing keyword, and which carries a reference that closes nothing, depends on how the work reaches the default branch — `/commit` decides it and `.claude/tools/github.md` has the forms. Between commit and merge nothing new is written anywhere: the branch still exists, so the Claim still holds and the ticket stays off the frontier on its own.
 
-**This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and is never triaged, so it never carries one of those. Mixing the two sets means a ticket's status stops answering "can this be worked" and starts answering two different questions at once.
+**This is not the triage vocabulary.** Triage roles — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` — describe *incoming* issues someone else filed. A build ticket `/design` created is agent-ready by construction and never carries one; mixing the two sets makes a ticket's status answer two questions at once.
 
 **There is no `claimed` state, and a tracker never records one.** Which instance is building a ticket right now is agent-level bookkeeping on a surface reserved for human-level facts, and a status written into a file cannot stop two instances writing it at the same moment. The Claim is the ticket's branch; `/implement` owns it and states the naming.
 

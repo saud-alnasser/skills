@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.7.0
+**Version:** 1.8.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -297,6 +297,7 @@ specs.md                     this specification (framework repository only)
   tools/                     tool guides, derived per repository
   tickets/<effort>/          spec.md + issues/NN-*.md per effort
   position/                  per-clone state — gitignored, never depended on
+  worktrees/                 the harness's isolated child checkouts — gitignored
   .gitignore                 what per-clone means, and the membership test
 ```
 

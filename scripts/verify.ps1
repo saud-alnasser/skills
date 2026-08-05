@@ -5305,10 +5305,25 @@ Describe-Ticket 'layout/06' "state this repository's version-control policy" {
     $true
   }
 
+  # ADR 0051 moved the unit from the ticket to the effort, so the name this
+  # checks for moved with it: `NN-slug` was the old form and is now the thing a
+  # correct file must *not* be demonstrating. The criterion is unchanged — the
+  # convention is stated, and stated with an example a reader can copy — so the
+  # guard tracks the subject rather than the wording it used to have.
   Assert "the branch convention is stated with an example a reader can copy" {
     $s = Get-Section (Get-RepoText '.claude/policies/version-control.md') 'Branch naming'
-    if ($s -notmatch '(?i)ticket') { throw 'does not tie the name to the ticket' }
-    if ($s -notmatch '(?m)^\d{2}-[a-z0-9-]+$|\s\d{2}-[a-z0-9-]+') { throw 'no worked example of the form' }
+    if ($s -notmatch '(?i)effort') { throw 'does not tie the name to the effort' }
+    if ($s -match '(?m)^\s*\d{2}-[a-z0-9-]+\s*$') { throw 'still demonstrates the per-ticket form ADR 0051 replaced' }
+    $example = [regex]::Match($s, '(?ms)^```\r?\n(.*?)^```')
+    if (-not $example.Success) { throw 'no worked example of the form' }
+    # The sample must name an effort that exists. A shape match would accept
+    # `my-effort`, which teaches the form without demonstrating that the name
+    # is read off `.claude/tickets/` — the whole of what makes it reproducible.
+    $efforts = @(Get-ChildItem (Join-Path $repo '.claude/tickets') -Directory | ForEach-Object { $_.Name })
+    $tokens = @([regex]::Matches($example.Groups[1].Value, '[a-z][a-z0-9-]+') | ForEach-Object { $_.Value })
+    if (-not ($tokens | Where-Object { $_ -in $efforts })) {
+      throw "the example names no effort that exists: $($tokens -join ', ')"
+    }
     $true
   }
 
@@ -6963,9 +6978,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.7.0, not a draft" {
+  Assert "the specification is released at 1.8.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.7\.0\s*$') { throw 'the specification is not at a released 1.7.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.8\.0\s*$') { throw 'the specification is not at a released 1.8.0' }
     $true
   }
 
@@ -9425,6 +9440,182 @@ Describe-Ticket 'parallel-tickets/07' 'adopt the second axis here' {
     if ($c -notmatch '(?is)missing edge[^.]{0,120}no amount of change-record detail repairs') {
       throw 'the limit of the change record is unstated'
     }
+    $true
+  }
+}
+
+# --- ticket worktrees/01 — the ignore rule covers child workspaces -----------
+
+# The harness creates a worktree for every isolated child under
+# `.claude/worktrees/`, so orchestration made a directory appear inside the
+# protocol directory that nothing ignored. These guards read the shipped block
+# rather than this repository's installed copy: adopting it here is 02's, and a
+# guard that read the installed file would go green on the adoption while every
+# repository AEP configures still had the defect.
+Describe-Ticket 'worktrees/01' 'the ignore rule covers the harness''s child workspaces' {
+
+  # Entries only — the comment names the path too, in prose, so a whole-block
+  # match would stay green with the entry deleted and the paragraph left behind.
+  # That is the failure mode `.claude/rules/skills.md` names: matching a phrase
+  # travelling with the subject rather than the subject itself.
+  $entries = {
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
+    if (-not $block.Success) { throw 'the .gitignore block is gone' }
+    @($block.Groups[1].Value -split '\r?\n' |
+      Where-Object { $_ -match '\S' -and $_ -notmatch '^\s*#' } |
+      ForEach-Object { $_.Trim() })
+  }
+
+  Assert "the shipped ignore block covers the harness's child workspaces" {
+    $e = & $entries
+    if ('/worktrees/' -notin $e -and 'worktrees/' -notin $e) {
+      throw "a dispatched child's workspace is untracked in every configured repository: $($e -join ', ')"
+    }
+    $true
+  }
+
+  # Anchoring is not cosmetic here and the reason is this entry's own: a child's
+  # workspace is a full checkout, so it contains its own `.claude/worktrees/`.
+  # Unanchored, the pattern matches at every depth — which is the same argument
+  # `/position/` was anchored for, reaching a case that actually nests.
+  Assert "the entry is anchored, so it cannot match inside a child's own checkout" {
+    $e = & $entries
+    if ('worktrees/' -in $e) { throw 'unanchored — also matches .claude/worktrees/*/.claude/worktrees/' }
+    if ('/worktrees/' -notin $e) { throw "the entry is not there to be anchored: $($e -join ', ')" }
+    $true
+  }
+
+  # ADR 0012's finding, held against the second instance: a list is what the
+  # file forgets. There are now two paths outside `position/` and both are the
+  # harness's, so the comment has to state the shape they share — and stop
+  # claiming `settings.local.json` is the only one, which is the sentence this
+  # ticket falsified.
+  Assert "the comment states the category the two harness paths share, not a list" {
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
+    if (-not $block.Success) { throw 'the .gitignore block is gone' }
+    $b = $block.Groups[1].Value
+    # Matched against the claim as it is actually worded — "the one per-clone
+    # file that cannot be moved" — not against a paraphrase of it. A guard
+    # written from the replacement's wording would have gone green on the
+    # sentence still standing.
+    if ($b -match '(?i)\bthe one\b[^.]{0,60}\bcannot be moved\b') { throw 'the comment still claims a single exception' }
+    if ($b -notmatch '(?i)harness') { throw 'the comment never says whose the paths are' }
+    if ($b -notmatch '(?i)wrong in another clone') { throw 'the membership test went with it' }
+    $true
+  }
+
+  # Same shape as ADR 0045's guard, because it is the same amendment: a harness
+  # path the workflow depends on, entering a layout that did not name it. Both
+  # halves — §21 naming it, and saying whose it is. Naming it alone would put a
+  # directory in the canonical tree that `/configure` is then expected to create.
+  Assert "the specification's layout names the directory and marks it the harness's" {
+    $s = Get-SpecSection 21
+    if ($s -notmatch '(?m)^\s+worktrees/\s') { throw 'the specification layout omits it, so the tree comparison cannot see it' }
+    if ($s -notmatch '(?im)^\s+worktrees/[^\r\n]*harness') { throw "the row never says the directory is the harness's" }
+    $true
+  }
+
+  # ADR 0029's citation half, guarded as 0045's is. The version the amendment
+  # moved to is recorded in the Decision, so a reader arriving at the ADR learns
+  # which release carried it without reconstructing it from the log.
+  Assert "the layout amendment is recorded as a Decision the shipped skill cites" {
+    $adr = Join-Path $repo '.claude/decisions/0050-spec-21-names-the-harness-worktree-directory.md'
+    if (-not (Test-Path $adr)) { throw 'no Decision records the amendment' }
+    $c = Get-Content $adr -Raw
+    if ($c -notmatch '(?i)§21') { throw 'the Decision does not name the section it amends' }
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ($spec -notmatch '(?m)^\*\*Version:\*\*\s*(\S+)\s*$') { throw 'the specification states no version' }
+    if ($c -notmatch [regex]::Escape($Matches[1])) { throw 'the Decision does not record the version it moved to' }
+    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)ADR 0050') { throw 'the layout does not cite it' }
+    $true
+  }
+
+  # Found by the whole-diff knowledge check at commit, not by the plan: the
+  # router states the same count the ignore file's comment did, so correcting
+  # one and not the other would leave the shipped protocol file asserting a
+  # single exception against an ignore file listing two.
+  Assert "the shipped protocol file does not claim a single path outside position/" {
+    $c = Get-SkillFile 'configure/protocol.template.md'
+    if ($c -match '(?i)one file sits outside') { throw 'the router still counts one exception' }
+    if ($c -notmatch '(?i)worktrees') { throw 'the router never names the second path' }
+    $true
+  }
+
+  # Criterion 5's third clause, missed when 01 was built and caught by the
+  # spec check at 02's commit. The row is what reaches a repository arriving
+  # from a superseded layout, which the audit above does not cover: those two
+  # are different paths in and both have to name the entry.
+  Assert "the migration row names the covered path" {
+    $c = Get-SkillFile 'configure/MIGRATION.md'
+    $row = [regex]::Match($c, '(?m)^\|\s*`\.claude/\.gitignore`\s*\|([^|]*)\|')
+    if (-not $row.Success) { throw 'the migration has no ignore-file row' }
+    if ($row.Groups[1].Value -notmatch 'worktrees') { throw "the row rewrites the file without the entry: $($row.Groups[1].Value.Trim())" }
+    $true
+  }
+
+  # The repair half, and the one the ticket calls the risk: a repository
+  # configured before this rule never re-runs the generate branch on its own, so
+  # the fix reaches it only if the audit does. Bound to the audit section rather
+  # than the file — the generate step names the path too, and a file-wide match
+  # would pass on that with the audit row absent.
+  Assert "the audit repairs an ignore file that predates the rule, rather than reporting it" {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') '5 — Audit'
+    if ($s -notmatch '(?i)worktrees') { throw 'the audit never reaches an ignore file written before the rule' }
+    if ($s -notmatch '(?is)worktrees[^\r\n]{0,200}(repair|heal|add)') { throw 'the audit reports it instead of repairing it' }
+    $true
+  }
+}
+
+# --- ticket worktrees/02 — adopt the covered ignore rule here -----------------
+
+# 01's guards all read the shipped block, deliberately, so none of them says
+# anything about this clone. These read the installed files — which is the whole
+# of the difference between the two tickets.
+Describe-Ticket 'worktrees/02' 'adopt the covered ignore rule here' {
+
+  Assert "the installed ignore file matches the block this repository ships" {
+    $p = Join-Path $repo '.claude/.gitignore'
+    if (-not (Test-Path $p)) { throw 'there is no installed ignore file' }
+    $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
+    if (-not $block.Success) { throw 'the shipped block is gone' }
+    # Line endings only. The file is checked out with the platform's, and a
+    # comparison that failed on CRLF would fail on Windows and pass in CI —
+    # which is the shape of green that hides a real divergence.
+    $norm = { param($t) ($t -replace '\r\n', "`n").TrimEnd() }
+    if ((& $norm $block.Groups[1].Value) -ne (& $norm (Get-Content $p -Raw))) {
+      throw 'the installed ignore file has diverged from the block AEP distributes'
+    }
+    $true
+  }
+
+  # The criterion asks git rather than the file, and that is the point: the
+  # entry being present is what 01 asserts, and what this repository needs is
+  # the *outcome*. A pattern can be present and not match — an unanchored one,
+  # or one shadowed by an earlier negation — and only git knows.
+  Assert "a path inside a child workspace is ignored in this clone, asked of git" {
+    $probe = '.claude/worktrees/some-child/src/main.ts'
+    & git -C $repo check-ignore -q $probe
+    if ($LASTEXITCODE -ne 0) { throw "git does not ignore $probe — a dispatched child's checkout would be untracked here" }
+    # Committed knowledge must stay visible, or the entry is over-broad —
+    # and this half needs `--no-index` to be able to fire at all. `git
+    # check-ignore` skips tracked paths, because ignore rules do not apply to
+    # tracked content, so probing a committed file without it reports "not
+    # ignored" no matter what the patterns say. Found by appending `policies/`
+    # and watching the guard stay green twice.
+    foreach ($visible in '.claude/policies', '.claude/policies/sub-agents.md') {
+      & git -C $repo check-ignore -q --no-index $visible
+      if ($LASTEXITCODE -eq 0) { throw "the entry is over-broad — it ignores committed knowledge at $visible" }
+    }
+    $true
+  }
+
+  # The router half, found by 01's whole-diff check and fixed only in the
+  # shipped copy. Read here from the installed file for the reason the block
+  # above gives: 01's guard cannot see this clone.
+  Assert "the installed router does not claim a single path outside position/" {
+    $c = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    if ($c -match '(?i)one file sits outside') { throw 'the installed router still counts one exception' }
+    if ($c -notmatch '(?i)worktrees') { throw 'the installed router never names the second path' }
     $true
   }
 }

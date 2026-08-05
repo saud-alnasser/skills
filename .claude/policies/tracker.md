@@ -14,7 +14,9 @@ The GitHub remote (`saud-alnasser/skills`) is a code remote only. Issues are ena
 
 ## What a ticket is
 
-**Tracked intent.** A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The version-control policy ties one ticket to one branch and one commit, but work lands by fast-forward with no pull requests (`.claude/policies/version-control.md`, "How work lands"), so the one-ticket-one-pull-request test fails: a ticket exists and resolves as a file — the Claim is still its branch, per `.claude/policies/tickets.md` — and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.
+**Tracked intent.** A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The detect test asks whether the version-control policy ties one ticket to one branch, one commit, and one pull request. It ties none of the three: the unit is the **effort**, and a ticket is one of several amending its single commit (`.claude/policies/version-control.md`, "The unit is the effort, not the ticket"). So a ticket exists and resolves as a file, the Claim is the effort's branch rather than the ticket's, and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.
+
+The reasoning here was previously the *absence* of pull requests, which `.claude/evidence/drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md` recorded as false — work does land by pull request. That finding is the dated record of the check and stays as it is; what it falsified is repaired above. The declaration did not flip, and the finding was careful to say it might not: the conclusion was unsupported rather than refuted, and it now rests on the unit instead of on the landing mechanism.
 
 - One effort per directory: `.claude/tickets/<effort>/`
 - The spec is `.claude/tickets/<effort>/spec.md`
