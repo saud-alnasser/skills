@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.8.0
+**Version:** 1.9.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -94,6 +94,10 @@ Every engineering activity begins with the protocol, and nothing bypasses it, wi
 
 For each task the protocol determines: the activity, the objective, the mode, the workflow, the applicable policies, the required contexts, the relevant tool guides, and the completion requirements. The concrete routing lives in one committed file per repository — the protocol file — holding the stage→dependency table and the verification machinery (§19), reached by pointer so a turn that only answers a question never pays for it.
 
+**The table is this repository's actual dependency set**, and that is what distinguishes it from the defaults each skill declares (§11). A skill ships in the framework and cannot know any repository's local guides; the table is written where the repository is, so where the two differ the **table governs**. It is derived by the configuration stage from the skill defaults plus whatever is local, and every stage has exactly one row. A guide a skill declares and its row omits is a defect unless the row records the omission — so dropping one stays possible and stops being silent.
+
+**The table cannot be dropped in favour of the skills' own declarations**, however redundant it looks from inside a session. In a configured repository the skills ship with the framework and are absent from the tree, so the protocol file is the only committed place that can answer what a stage reads — and nothing committed may assume the framework is installed (§22).
+
 ## 6. Rules
 
 Rules are universal engineering principles. They are intentionally difficult to change and apply across projects, languages, and repositories.
@@ -123,6 +127,12 @@ Contexts contain facts and NEVER instructions. They answer *what is true and whe
 Structure: one **map** (the routing table, loaded at session start, small by design — it says which domain context a request touches), one **repository context** (cross-cutting vocabulary only), and **domain contexts** loaded only when the map routes to them. Loading them all defeats the point. Vocabulary that belongs to one stage lives in that stage's policy, not in a context.
 
 A **source pointer** in a context says *start investigating here* — never what APIs or behavior exist there. Pointers are verified before use, always (§19).
+
+**A routing table is generated from fields the routed files declare, never written by hand.** Each routed file declares exactly two things, and they are the table's own columns: its **load condition** — when to load this file — and its **sources**, where its subject lives. The table is rolled up from them.
+
+The load condition is a **sentence about when to load**, never a description of what the file is about. That distinction is the whole mechanism: subject matter answers a question nobody asked, and a keyword list answers it worse. A condition that describes a topic satisfies every mechanical check and is the one failure this shape can still produce.
+
+What generation buys is not brevity. **A generated table cannot disagree with its directory**, because it is not a second statement of the directory's contents — so a file added without fields cannot appear in one, and the obligation to audit a hand-written index for missing rows does not arise rather than being discharged. **A generated file is never hand-edited, and the prohibition is enforced** by comparing it against a regeneration rather than requested of whoever opens it.
 
 ## 9. Modes
 
@@ -159,6 +169,8 @@ A skill is a lightweight entry point to a capability. It contains very little sh
 
 A skill NEVER restates what a policy, mode, or guide already owns; it points. Dependency declarations are prose lines in the skill body — read by the only reader there is, and asserted by the verification suite — not a parallel manifest.
 
+**A skill's declaration is the framework's default, and the protocol table is the instance** (§5). These are two homes for related facts, which single-home would otherwise forbid, and what makes it survivable is that **each can state something the other cannot**: a skill shipping in the framework cannot know a repository's local guides, and a repository cannot ship into the framework. Where that asymmetry is absent, a second home is duplication and this is not a precedent for it. The instance governs on conflict, and the containment runs one way: the table carries at least what the skill declares.
+
 Skills divide into the **spine** (the seven workflow stages), the **primitives** composed by spine stages (test-driven development, bug diagnosis, merge-conflict resolution, codebase design vocabulary), and **on-ramps** (grilling a plan, domain modeling, triage, survey, handoff, help). Derived skills carry their upstream attribution; that is a license obligation and survives every rewrite.
 
 ## 12. Tool guides
@@ -188,6 +200,10 @@ A prototype validates an assumption by building. It records: the hypothesis, the
 ## 16. Decisions
 
 A decision converts temporary thinking into permanent knowledge: the problem, the chosen solution, the rejected alternatives, the reasoning, the expected consequences. Decisions are authoritative (§4) and append-only — a reversed decision is recorded as a new decision, preserving history. Contexts summarize decisions; decisions preserve the reasoning.
+
+**Decisions are routed, on the same mechanism contexts use (§8)**: each declares its load condition and its sources, and the index is generated from them. Without it the layer that grows without bound is the one every stage reads whole, and the cost is monotonic — each accepted decision enlarges the unrouted read and nothing ever shrinks it.
+
+A decision additionally declares **supersession at both ends**: what it supersedes, and what supersedes it. Both are written in the same change, so the relationship reads from either end and can be checked from either end. A claim made at one end and absent at the other is a defect, not a stylistic preference — and it is what makes the graph checkable at all. Its **status** is declared too, and remains the one thing that moves after a decision is committed; the reasoning is frozen.
 
 ## 17. The knowledge lifecycle
 
@@ -227,7 +243,13 @@ No single document contains the methodology; it emerges from composition. A skil
 
 **Verification at use — never a scan, never a phase.** There is no synchronization stage. At the moment a context statement is about to be relied on, it is checked against the Codebase. Scope is what the work touches; drift elsewhere is not this request's problem.
 
-**The marker.** Each clone keeps per-clone **position** state — never committed, never depended on by anything shared. The marker records the commit knowledge was last verified against. When the marker matches `HEAD` and the tree is clean, context is trusted with no reading at all — the check is a cache-validity test, not a task. Otherwise drift is read from two sources (what commits changed; what the human changed uncommitted), and only the statements about to be relied on are verified. Only the commit stage advances the marker.
+**The marker.** Each clone keeps per-clone **position** state — never committed, never depended on by anything shared. The marker records **two facts**: the commit drift was last read against, and a fingerprint of the working tree it was read against. Both are compared, and there is no third condition — a fingerprint of a dirty tree is the same kind of value as a fingerprint of a clean one, so the rule carries no clean-versus-dirty branch.
+
+**What a match licenses is bounded, and the bound is the point.** A match means the drift reads may be skipped: some earlier run already read this exact tree's drift and dealt with what it found. It does **not** mean any knowledge is correct. Verification at use is unaffected by the marker in every case — a statement about to be relied on is checked against the Codebase whether the marker matched or not, and a marker that matched has never been a reason to skip that check. Where the facts differ, drift is read from two sources (what commits changed; what the human changed uncommitted) and only the statements about to be relied on are verified.
+
+**Who writes which fact.** The commit stage writes both, together, so the pair is never half-fresh. Any stage that reads drift and **deals with what it found** — heals it, or discounts it as outside what the work touches and says which — may re-stamp the tree fact alone, leaving the commit fact untouched. The permission is conditional on the dealing, never on the reading: a stage that read drift and neither healed nor discounted it has established nothing and re-stamps nothing. That narrow claim is what makes a second writer safe, because re-stamping asserts only what the re-stamping stage actually did.
+
+**An absent tree fact means the tree is unknown**, and the check falls back to comparing the commit against `HEAD` and reading the tree live. No repository needs converting, and a clone that never gains the second fact loses a shortcut and nothing else.
 
 **Reported, every time.** Every stage that relies on context opens with a one-line verification report — including when there was nothing to verify. Silence is indistinguishable from the check never having run.
 

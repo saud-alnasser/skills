@@ -1,5 +1,9 @@
 ---
-status: superseded in part by 0010
+status: superseded
+load-when: which stage may write which knowledge layer is being changed
+sources: [.claude/policies/knowledge.md]
+supersedes: []
+superseded-by: [0010]
 ---
 
 # Sync moves to the front, and knowledge is owned by type rather than by file

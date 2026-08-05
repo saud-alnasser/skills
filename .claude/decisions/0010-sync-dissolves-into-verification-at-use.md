@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a synchronisation or reconciliation pass is proposed
+sources: [.claude/protocol.md]
+supersedes: [0005]
+superseded-by: []
+---
+
 # /sync dissolves; Context is verified where it is used
 
 There is no synchronization stage. `/sync` is removed as a command, and the spine drops from eight to seven.

@@ -7,18 +7,56 @@ Create the directory lazily — only when the first ADR is needed.
 ## Template
 
 ```md
+---
+status: accepted
+load-when: {the condition under which a reader should open this}
+sources: [{where the subject of this decision lives}]
+supersedes: []
+superseded-by: []
+---
+
 # {Short title of the decision}
 
 {1-3 sentences: what's the context, what did we decide, and why.}
 ```
 
-That's it. An ADR can be a single paragraph. The value is in recording *that* a decision was made and *why* — not in filling out sections.
+The prose can still be a single paragraph. The value is in recording *that* a decision was made and *why* — not in filling out sections.
+
+## Declared fields
+
+Every ADR declares these, and they are the only frontmatter it carries. Each exists because something reads it; a field nothing acts on is deleted rather than maintained.
+
+| Field | Holds | Read by |
+| --- | --- | --- |
+| `status` | `proposed \| accepted \| deprecated \| superseded` | a reader deciding whether this is live |
+| `load-when` | the condition under which to open this file | the generated index |
+| `sources` | where the subject of this decision lives | the generated index, and anyone navigating |
+| `supersedes` | the ADRs this one replaces | the supersession graph |
+| `superseded-by` | the ADRs that replace this one | the supersession graph |
+
+**The routing mechanism is `.claude/policies/context.md`'s, and Decisions use it unchanged.** What a `load-when` has to be, why a topic fails there, and why a generated index is never hand-edited are stated in that file and deliberately not repeated here — the rule is the same rule, and a second copy is the one that goes stale. What belongs to *this* format is the supersession pair below, which routing has no equivalent of.
+
+## The index
+
+`.claude/decisions/map.md`, generated from the fields above, one row per ADR in numeric order:
+
+```md
+# Decision map
+
+| ADR | Load when | Status | Sources |
+| --- | --- | --- | --- |
+| [0007](0007-events-not-synchronous-http.md) | Ordering and Billing need to communicate | accepted | `src/ordering/` |
+| [0018](0018-read-models-are-projected.md) | a query reaches for the write model | superseded | `src/db/` |
+```
+
+The status column is what makes the index answer *is this live* without opening anything, which is the question a reader of a fifty-file directory asks first.
+
+**A stage routes through this file and opens only the ADRs it names.** Reading the directory whole is the cost the index exists to remove, and a stage that does it anyway has not been slowed down — it has stopped using the mechanism.
 
 ## Optional sections
 
 Only include these when they add genuine value. Most ADRs won't need them.
 
-- **`status` frontmatter** (`proposed | accepted | deprecated | superseded by NNNN`) — useful when decisions are revisited
 - **`## Considered Options`** — only when the rejected alternatives are worth remembering
 - **`## Consequences`** — only when non-obvious downstream effects need to be called out
 
@@ -34,9 +72,11 @@ Whenever decisions move — in from another layout, or across a change to AEP's 
 
 An ADR is a **draft until committed** and may be edited freely while the grill refines it.
 
-Once committed its reasoning is **frozen**. Only `status: superseded by NNNN` moves after that — never the prose. An ADR records what was decided and why *at the time*; rewriting it destroys the only record of the reasoning that was actually applied.
+Once committed its reasoning is **frozen**. Of the declared fields only `status` and `superseded-by` move after that, and never the prose — an ADR records what was decided and why *at the time*, so rewriting it destroys the only record of the reasoning that was actually applied. `load-when` and `sources` describe the file rather than the decision, and are corrected like any other pointer when what they name moves.
 
-A changed mind is a new file. The superseding ADR names what it supersedes, so the relationship reads from either end: a reader opening the old file learns immediately that it is dead, and a reader opening the new one learns what it replaced.
+A changed mind is a new file. **Supersession is written at both ends, in the same change**: the new ADR lists the old under `supersedes`, the old lists the new under `superseded-by`, and its `status` becomes `superseded`. A claim made at one end and absent at the other is a **defect**, not a stylistic preference — it is what makes the relationship readable from either side, and what lets the graph be checked at all rather than trusted.
+
+Writing only the new end is the tempting half, because that is the file being edited. It leaves a reader who opens the old ADR with no way to learn it is dead, which is the exact reader this rule exists for.
 
 ## When to offer an ADR
 

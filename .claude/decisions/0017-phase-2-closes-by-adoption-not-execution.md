@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: an effort is being closed while its obligations are unfinished
+sources: [.claude/tickets/]
+supersedes: []
+superseded-by: []
+---
+
 # Phase 2's checkpoint closes by adoption, not by execution
 
 The build order put a **dogfood checkpoint** between `/design` and the fifteen skills that followed it: run `/design` on real work in this repository, watch what breaks, and fix it before writing anything else. It never ran. Every skill after ticket 03 was built by hand, and phase 2 sat in `STATUS.md` as the one item outstanding after all twenty tickets resolved.

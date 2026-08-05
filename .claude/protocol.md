@@ -39,19 +39,25 @@ The invariant that keeps Position from becoming a fourth knowledge layer: **noth
 
 ## Trusting Context — the Marker
 
-The marker file holds the commit Context was last verified against — `.claude/tools/git.md` names its path and the read, and is the only file that does. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
+The marker file holds **two facts**: the commit drift was last read against, and a fingerprint of the working tree it was read against. `.claude/tools/git.md` names its path, the read, and the invocation that builds the fingerprint, and is the only file that does. It is Position: machine-local and gitignored, because a teammate's verification is not Claude's.
 
 ```
-marker.json commit == HEAD  AND  working tree clean
-  → Context is trusted as-is. No verification, no reading.
+marker.json commit == HEAD  AND  marker.json tree == fingerprint of the tree now
+  → the two drift reads may be skipped
 
 otherwise
-  → verify the statements you are about to rely on, and only those
+  → read the drift, and verify the statements you are about to rely on
 ```
 
-The clean path is one `git` check and no reading. That is the whole point of the Marker — it is a cache-validity check, not a task. It never *adds* an obligation: with no marker file at all, the verification-at-use rule applies unchanged and nothing is lost but the shortcut. What a missing file means at check time — and what it does not license — is `.claude/tools/git.md`'s.
+**Both comparisons are identity tests, and there is no third condition.** A fingerprint of a dirty tree is the same kind of value as a fingerprint of a clean one, so nothing here asks whether the tree is clean — a dirty tree that has not changed since its drift was read matches, and that is the case the second fact exists for.
 
-Only `/commit` advances the Marker, to the new `HEAD` after committing. Nothing else moves it.
+**What a match licenses is exactly that, and no more.** It says an earlier run already read this tree's drift and dealt with what it found. It does **not** say any knowledge is correct: verification at use is unaffected either way, and a statement about to be relied on is checked against the Codebase whether the marker matched or not. Reading a match as *Context is correct* is the mistake the second fact makes possible, so it is named rather than left to inference.
+
+The matching path is two `git` reads and no drift reading. That is the whole point of the Marker — it is a cache-validity check, not a task. It never *adds* an obligation: with no marker file at all, the verification-at-use rule applies unchanged and nothing is lost but the shortcut. What a missing file means at check time — and what it does not license — is `.claude/tools/git.md`'s.
+
+**A marker carrying no tree fact means the tree is unknown.** Compare the commit against `HEAD` and read the tree live, exactly as before the second fact existed. Nothing needs converting, and a clone that never gains it loses a shortcut and nothing else.
+
+`/commit` writes both facts, together, so the pair is never half-fresh. **Any stage that reads drift and deals with what it found may re-stamp the tree fact alone**, leaving the commit fact untouched — healed it, or discounted it as outside what the work touches and said which. The permission is conditional on the dealing and never on the reading: a stage that read drift and neither healed nor discounted it has established nothing and re-stamps nothing. That narrowed claim is what makes a second writer safe at all.
 
 ### When the Marker does not match
 
@@ -70,9 +76,11 @@ See `.claude/tools/git.md` for the exact invocations and for how `--porcelain` o
 
 ## Reported, every time
 
-Every skill that relies on Context opens with a one-line verification report. **Including when there was nothing to verify.** "Marker matches HEAD, tree clean — Context trusted" is a statement; silence is indistinguishable from the check never having run.
+Every skill that relies on Context opens with a one-line verification report. **Including when there was nothing to verify.** "Marker matches on both facts — drift reads skipped" is a statement; silence is indistinguishable from the check never having run.
 
 That report is the only evidence the discipline ran. Verification is never best-effort; this is what makes a lapse visible rather than silent.
+
+**Where drift was read, the report says which happened to it** — healed, or discounted as outside what the work touches. That is not a second obligation: it is the same sentence the stage was already writing, and it is what makes the re-stamp above auditable rather than asserted. A report that says drift was read and stops has not earned the re-stamp, and the gap between the two reads as a stage that looked and moved on.
 
 ## Recovering a broken Source Pointer
 
@@ -91,7 +99,7 @@ Every stage also loads `.claude/contexts/repository.md` and routes from its tabl
 | `/configure` | maintenance | every guide in `.claude/policies/` — it writes them all, and an audit run reads each one back against the repository |
 | `/design` | design | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
 | `/implement` | implementation | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/policies/sub-agents.md`, `.claude/tools/git.md`, the forge reference |
-| `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/rules/`, `.claude/decisions/`, `.claude/tools/git.md`, the forge reference |
+| `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/rules/`, `.claude/decisions/map.md` and the Decisions it routes to, `.claude/tools/git.md`, the forge reference |
 | `/research` | research | `.claude/policies/evidence.md`, `.claude/policies/sub-agents.md` |
 | `/prototype` | prototype | `.claude/policies/evidence.md`, `.claude/.gitignore` |
 | `/commit` | maintenance | `.claude/policies/specs.md`, `.claude/policies/knowledge.md`, `.claude/policies/version-control.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md` |

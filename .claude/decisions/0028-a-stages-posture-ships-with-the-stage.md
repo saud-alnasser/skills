@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a reasoning posture is proposed as derived per repository
+sources: [.claude/modes/]
+supersedes: []
+superseded-by: []
+---
+
 # A stage's posture ships with the stage, and is not derived per repository
 
 Each Spine skill states its own **posture** — the tradeoffs that are acceptable while it runs, and what "done" means for it. `/prototype` says tests are optional and speed beats correctness; `/implement` says the reverse. It is a section in the skill, not a guide and not a directory.

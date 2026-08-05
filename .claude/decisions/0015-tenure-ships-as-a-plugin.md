@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: how AEP is installed or distributed is in question
+sources: [.claude-plugin/]
+supersedes: []
+superseded-by: []
+---
+
 # Tenure ships as a plugin, installed per project
 
 Tenure is distributed as a Claude Code plugin published from this repository, and installed at **`local` scope** — recorded in `.claude/settings.local.json`, which is gitignored. It is therefore personal but not global: enabled in the projects chosen for it, absent everywhere else.

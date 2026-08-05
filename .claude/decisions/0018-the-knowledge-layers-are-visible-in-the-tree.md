@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the directory layout under .claude/ is being changed
+sources: [.claude/]
+supersedes: []
+superseded-by: []
+---
+
 # The knowledge layers are visible in the tree
 
 Supersedes the layout stated in `0006`, which grouped decisions, designs, research, and prototype write-ups under `.claude/docs/`. Only its layout is superseded — `0006`'s ruling that everything lives under `.claude/` with the root `CLAUDE.md` as the sole entrypoint stands.

@@ -1,8 +1,9 @@
+---
+load-when: the work dispatches sub-agents, or reads what one returned
+sources: [agents/, .claude/policies/sub-agents.md, skills/implement/SKILL.md]
+---
+
 # Orchestration
-
-Sources: `agents/`, `.claude/policies/sub-agents.md`, `skills/implement/SKILL.md`
-
-Load when the work dispatches sub-agents, or reads what one returned.
 
 These terms were cross-cutting until this file existed, which meant every stage
 paid for nine of them and most turns touch none. `.claude/policies/context.md`

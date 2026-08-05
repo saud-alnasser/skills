@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: who is building a ticket right now has to be recorded somewhere
+sources: [skills/implement/]
+supersedes: []
+superseded-by: []
+---
+
 # Assignment is human; the Claim is the branch
 
 Coordination has two levels, and conflating them is what made the original single `Status: claimed` unable to serve either.

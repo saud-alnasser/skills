@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a child's worktree base is in question
+sources: [.claude/settings.json]
+supersedes: []
+superseded-by: []
+---
+
 # A child branches from the Claim, and its change record drives integration
 
 Worktree isolation branches from the repository's **default branch, not the parent session's `HEAD`**, unless the base ref is set to head. A child dispatched by `/implement` is working a portion of a claimed ticket, so a child that branches from trunk builds against the wrong tree and does it silently — the failure produces plausible code and an integration that looks routine. Branching from the Claim is therefore a configuration obligation, written by `/configure`, not a sentence in a skill anyone can forget.

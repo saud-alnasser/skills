@@ -22,6 +22,8 @@ Context is how this repository thinks. It lives in `.claude/contexts/` as three 
 
 The routing table alone. It is the mechanism that makes context loading demand-driven — without it every session pays for every domain.
 
+**It is generated from the fields each context declares, never written by hand.** The two columns beyond the link are the two fields — `load-when` and `sources` — rolled up from the files they describe. A generated table cannot disagree with its directory, because it is not a second statement of the directory's contents: a context added without fields cannot appear in a regeneration, and a row pointing at nothing cannot be produced. That is the property, and it replaces the audit that a hand-written table needed rather than adding to it. **A generated file is never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it.
+
 ```md
 # Context map
 
@@ -67,12 +69,15 @@ _Avoid_: purchase, transaction
 
 ## `contexts/<domain>.md`
 
-The same shape, minus anything repository-wide, and with a `Sources:` line at the top.
+The same shape, minus anything repository-wide, and with its **declared fields** at the top.
 
 ```md
-# Database
+---
+load-when: the request touches schema, migrations, or queries
+sources: [src/db/, migrations/]
+---
 
-Sources: `src/db/`, `migrations/`
+# Database
 
 Persistence for the write model. Read models are projected, never queried directly.
 
@@ -112,7 +117,8 @@ Apply the **compression test** in `CLAUDE.md` before writing anything into any o
 - **Only include terms specific to this repository.** General programming concepts — timeouts, error types, utility patterns — do not belong even where the repository uses them heavily. Before adding a term, ask whether it is unique to this repository or general; only the former belongs.
 - **Boundaries state ownership and the rules that cross it** — who may write what, what may only be referenced by id. Not a module list.
 - **Constraints are the ones that outlive the current implementation** — regulatory limits, contractual latency, platform bans. A constraint a refactor could remove is not stable; leave it out.
-- **A Source Pointer is a navigation coordinate, never a claim.** `Sources: src/auth/` means "start investigating here" — it says nothing about what is there. `CLAUDE.md` has the verify-before-use rule, and `.claude/protocol.md` how to recover a broken one.
+- **A Source Pointer is a navigation coordinate, never a claim.** A declared `sources: [src/auth/]` means "start investigating here" — it says nothing about what is there. Declaring it as a field moved where the pointer is written and nothing about what it means: `CLAUDE.md` has the verify-before-use rule, and `.claude/protocol.md` how to recover a broken one.
+- **`load-when` states when to load the file, never what it is about.** *"the request touches sessions, tokens, or permissions"* routes; *"authentication and session handling"* is a topic, and a topic answers a question nobody asked. It is the one field a generated table cannot check, so it is read back rather than counted. This rule governs **every** declared load condition, Decisions included — `.claude/policies/decisions.md` adopts the mechanism and points here rather than restating it.
 
 ## When a domain earns a file
 

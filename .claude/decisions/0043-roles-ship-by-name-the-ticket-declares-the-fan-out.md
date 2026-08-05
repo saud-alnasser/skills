@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a fan-out is being declared on a ticket
+sources: [agents/]
+supersedes: []
+superseded-by: []
+---
+
 # Roles ship by name; the ticket declares the fan-out in one line
 
 A survey of ten agent frameworks found that **no framework has an authored decomposition manifest a human writes before the run.** What gets declared is always a role or a graph; the split into N is composed at dispatch. Claude Code's agent-teams documentation goes further and says the equivalent artifact must not be hand-authored, because the runtime overwrites it.

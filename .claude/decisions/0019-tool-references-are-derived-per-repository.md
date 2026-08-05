@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a tool reference is being written, or a tools skill is proposed
+sources: [.claude/tools/]
+supersedes: []
+superseded-by: []
+---
+
 # Tool references are derived per repository, and the tools skill is deleted
 
 Reverses spec decision 34, which put workflow tools (`git`, `gh`, `glab`, `gt`) in a shipped model-invoked skill and repository tools in `.claude/tools/`, and which ticket 15 built as two tiers.

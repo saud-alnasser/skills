@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the ignore file or the layout omits a directory something writes
+sources: [.claude/.gitignore]
+supersedes: []
+superseded-by: []
+---
+
 # Spec §21 names the harness's worktree directory
 
 The harness creates a worktree for every isolated child under `.claude/worktrees/`, so orchestration puts a directory inside the protocol directory that §21's canonical layout did not name and that `/configure` does not create. The layout's two existing rules each answer differently: `position/` is listed because it is this workflow's, and `settings.local.json` is omitted because it is per-clone — and this path is both at once. We decided §21 **names it, marked as the harness's rather than AEP's**, and that the ignore block covers it as a second instance of the exception already made for `settings.local.json`: a harness-fixed path that cannot be moved under `position/`. It is Position by the membership test — wrong in another clone, and depended on by nothing, since losing one costs a rebuild that `/implement` already treats as the price of a returned ticket.

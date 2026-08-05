@@ -1,5 +1,9 @@
 ---
-status: superseded by 0006
+status: superseded
+load-when: the placement of knowledge at the repository root is argued from history
+sources: [.claude/]
+supersedes: []
+superseded-by: [0006]
 ---
 
 # Repository knowledge lives at the root; only agent machinery lives in .claude/

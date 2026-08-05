@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a rename would touch a Decision or a resolved ticket
+sources: [.claude/decisions/]
+supersedes: []
+superseded-by: []
+---
+
 # The rename to Agentic stops at frozen records
 
 AEP's expansion became the **Agentic Engineering Protocol**; the acronym, the plugin

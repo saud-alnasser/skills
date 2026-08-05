@@ -25,6 +25,8 @@ Then, in order:
 4. **Read the code.** `.claude/rules/engineering.md` has the rule; discovery is where it bites hardest.
 5. **Read the waiting drift.** `.claude/evidence/drift/` holds findings nobody has consumed — read the ones touching what this request plans, and fold their healing into this run's deliverable. Skipping this read is how a finding stays unread. What one is, and why it may be waiting: `.claude/policies/evidence.md`.
 
+   **Waiting is read off the finding, never derived.** Which line answers it is `.claude/policies/evidence.md`'s. Opening the knowledge a finding falsified in order to work out whether anyone had already healed it is the cost that line removes — and it is a cost paid *before* anyone knows the finding was spent.
+
 Open with the one-line verification report, including when there was nothing to verify.
 
 ## 2 — State your understanding

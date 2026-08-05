@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: work whose whole effect sits under .claude/ is about to be ticketed
+sources: [.claude/policies/tickets.md]
+supersedes: []
+superseded-by: []
+---
+
 # Protocol scaffolding is never its own unit of work
 
 The second field run left a shared tracker whose top level was mostly the workflow's own bookkeeping: build tickets existing solely to write files under `.claude/`, beside a drift report filed as an issue. The branch-bound test (ADR 0035) separates decisions from work but cannot tell product work from scaffolding — any `docs:` commit produces a branch and passes. We decided: no tracker item and no pull request the workflow creates has its entire effect under the protocol directory, with exactly one exception — the **design PR**, one per design run, whose entire diff is protocol-only and whose approval is approval of the plan. Everything else rides its consumer: evidence gating a map decision lands in that session's design PR, evidence gating a build is a declared increment (ADR 0037) shipping with the code it unblocked. The rule binds workflow-created items on shared trackers, reads the diff and never the commit type, and is vacuous on a local-markdown tracker.

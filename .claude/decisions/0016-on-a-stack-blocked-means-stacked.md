@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a blocked ticket is being scheduled on a stacking repository
+sources: [.claude/policies/version-control.md]
+supersedes: []
+superseded-by: []
+---
+
 # On a stack, blocked means stacked, not waiting
 
 `Blocked by: 01` means *wait until 01 is resolved* on a plain git repository. On a repository using stacked changes it means *stack on top of 01*, and waiting is precisely what the tool exists to avoid.

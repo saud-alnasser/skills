@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a grill ends without reaching a decision
+sources: [.claude/evidence/]
+supersedes: []
+superseded-by: []
+---
+
 # A discussion is a fourth kind of Evidence, not a peer of Decisions
 
 A grill that ends without a decision is recorded at `.claude/evidence/discussions/`, beside research findings, prototype write-ups, and rejected requests.

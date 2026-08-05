@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: where the sub-agent contract belongs is in question
+sources: [.claude/policies/sub-agents.md]
+supersedes: []
+superseded-by: []
+---
+
 # Orchestration is a system, and the sub-agent contract is a policy
 
 The `aep` effort ruled multi-agent orchestration beyond assignment and claim out of scope, on the ground that ADR 0013 already implemented the coordination floor. That floor coordinates **peers** — two instances racing for one ticket. It says nothing about a parent dispatching children, which four shipped skills already do: `/review`'s two axes, `/research`'s dispatch, `codebase-design`'s design-it-twice fan-out, and `/survey`'s use of `Explore`. Each restates its own dispatch rules, and four homes for one rule is the failure this framework exists to prevent — one of the four is already falsified by the harness. So orchestration becomes a system rather than a technique repeated per skill.

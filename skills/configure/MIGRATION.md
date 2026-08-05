@@ -125,6 +125,67 @@ A repository configured while orchestration had only one axis carries `.claude/p
 
 **The build stage is not part of it**, for the reason the shipped roles above are not. What a migration can reach is the contract the children read; the stage that dispatches them arrives with the plugin.
 
+## Knowledge that predates declared fields
+
+A repository configured before Contexts and Decisions declared their own fields has a
+hand-written routing table, Domain Contexts carrying a prose `Sources:` line, and a decisions
+directory with no index at all. Recognition is by content and needs **both halves**, because
+either alone is an unfinished run rather than an older shape: `.claude/decisions/` is populated,
+and its files declare no frontmatter fields.
+
+Nothing else reaches this. The generate step passes over every one of those files — they exist,
+and under the shape they were written for they are correct — and a repository configured once
+does not run generation again on its own. Without this row an existing repository stays on the
+old shape indefinitely while the framework ships the new one.
+
+**The existing routing table is the conversion's input, not its casualty.** Its trigger
+sentences were written for exactly this purpose: carry each onto the file it describes as that
+file's `load-when`, and carry the Sources column onto the same file. Only where no such sentence
+exists anywhere — every Decision, since Decisions were never routed — is one being authored.
+
+**That authoring is judgement, and it is the one output nothing can check.** A load condition
+that describes what a file is *about* passes every assertion this shape adds and silently
+reintroduces what ADR 0002 rejected. So this row goes through the plan **file by file, with the
+sentences visible**, never as a count — a human reading them is the only check there is. It is
+the same reason the term-placement row above is shown term by term.
+
+Supersession is converted from wherever it is stated today and made symmetric at both ends.
+**Prose that discusses supersession without claiming it** — "supersedes one consequence of
+`0025`", "supersedes the layout stated in `0006`" — is **reported, never promoted**: reading it
+as a claim is a guess about what its author meant, and a partial supersession is not a
+supersession. Where a claim is partial, say so in the plan rather than rounding it.
+
+Filenames and numbers do not move. The numbering section of `.claude/policies/decisions.md`
+already governs that, and it governs this conversion exactly as it governs a move.
+
+Then generate both indexes from the fields. A repository already declaring fields is **current**:
+say so and change nothing.
+
+## Mechanics a configured repository does not get by generation
+
+Three of AEP's later mechanics land in files a repository already has, so the generate step
+passes over all three. They are **not the same kind of work**, and a run that treats them alike
+will repair the one that should have been reported.
+
+**The stage table is repaired**, and that repair is the audit's — see `SKILL.md`.
+
+**Drift findings are reported, never repaired.** A repository whose `.claude/evidence/drift/`
+entries carry no `Consumed:` line has findings whose disposal is unknown. Whether any one of them
+was healed is a question about knowledge elsewhere in that repository, and answering it by
+inference is precisely the guess the finding format exists to stop. **Leave every unmarked
+finding unmarked** — that reads as waiting, which is the safe direction and the behaviour the
+repository already has — and list them in the plan so a human knows they are unresolved.
+
+**The Marker needs no conversion, and this row exists to say so** rather than leave a reader
+hunting for one. A marker carrying only a commit means the tree is unknown: `.claude/protocol.md`
+defines that state and its fallback, and it corrects itself the first time a stage advances the
+marker. `/configure` does **not** write a tree fact — stamping one asserts that a drift read
+happened and was dealt with, and this stage did neither.
+
+**The shipped roles arrive with the plugin**, for the reason already recorded twice above:
+`agents/` belongs to the plugin rather than to the configured repository, so a role gaining a
+declared mode reaches a repository by updating the plugin and nothing here installs it.
+
 ## The Tenure → AEP rename
 
 The framework was called **Tenure** before it became AEP, and a repository configured under that name carries it in prose: the entrypoint, the protocol file, the policies, and the tool references say Tenure and name `/tenure:` commands. The layout may already be current — the name is a conversion of its own, and it applies on top of whichever layout migration the repository also needs.

@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: an effort's open obligations have to move to another effort
+sources: [.claude/tickets/]
+supersedes: []
+superseded-by: []
+---
+
 # Streamline is superseded by the aep effort, and its open obligations transition
 
 The streamline effort is closed **superseded, not failed**. Its tickets 01–08 landed and conform to the specification adopted by ADR 0029 — the tier model, the policies directory, the context split, declared dependencies, commit-after-review, and the layout migration all survive as built. Its open tickets described work the specification still wants, anchored to a name and a framing the AEP rethink replaced; executing them as written would land prose that contradicts `specs.md`.

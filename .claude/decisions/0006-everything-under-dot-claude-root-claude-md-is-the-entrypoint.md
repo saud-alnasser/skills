@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: something is proposed at the repository root rather than under .claude/
+sources: [CLAUDE.md, .claude/]
+supersedes: [0003]
+superseded-by: []
+---
+
 # Everything lives under .claude/; root CLAUDE.md is the sole entrypoint
 
 Supersedes `0003`, which put knowledge at the repo root.

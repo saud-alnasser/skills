@@ -1,3 +1,8 @@
+---
+load-when: a term, boundary, or constraint is in question
+sources: []
+---
+
 # AEP
 
 This repository builds the **Agentic Engineering Protocol** — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering), and its canonical definition is `specs.md` at the root.
@@ -63,8 +68,16 @@ The one pull request whose entire diff may sit under the protocol directory — 
 _Avoid_: docs PR, knowledge PR
 
 **Drift Finding**:
-The evidence record of a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies. Written by whoever finds it, indexed as a task-list line on the live effort's map, healed by design, never a tracker item (ADR 0039).
+The evidence record of a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies. Written by whoever finds it, indexed as a task-list line on the live effort's map, healed by design, never a tracker item (ADR 0039). Records its own consumption, so a spent one is distinguishable from a waiting one without opening what it falsified.
 _Avoid_: drift report, drift issue
+
+**Tree Fingerprint**:
+The identity of a working tree's contents, recorded beside the Marker's commit. Its match licenses skipping the drift reads — never that any statement is correct — which is what makes a stage other than commit safe to write it (ADR 0052).
+_Avoid_: tree hash, working-tree state, dirty flag
+
+**Generated Index**:
+A routing table produced from fields the routed files declare, rather than written. Cannot disagree with its directory, which is why the audit obligation a hand-written one carries does not apply to it (ADR 0053).
+_Avoid_: manifest, generated map, derived table
 
 ## Boundaries
 

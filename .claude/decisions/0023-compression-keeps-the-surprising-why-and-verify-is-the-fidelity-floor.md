@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: text is being compressed, or a claim is about to be dropped for brevity
+sources: [scripts/verify.ps1]
+supersedes: []
+superseded-by: []
+---
+
 # Compression keeps the surprising why, and `verify.ps1` is the fidelity floor
 
 Rhetorical amplification is removed from everything shipped and from this repository's own knowledge files. One clause of rationale survives only where the rule would read as arbitrary without it. Readability for a human maintainer is explicitly traded away; unambiguity for the model is not.

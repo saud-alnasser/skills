@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a policy and the invocations that serve it are being put in one file
+sources: [.claude/policies/, .claude/tools/]
+supersedes: []
+superseded-by: []
+---
+
 # Policy and invocation are separate files, and version control gets its missing half
 
 `.claude/version-control.md` is added, holding what this repository does about branches and commits: whether it uses plain git or stacked changes, its branch convention, its commit discipline, and the never-push rule. `.claude/tracker.md` keeps what it is named for and gives up branch naming.

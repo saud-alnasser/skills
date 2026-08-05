@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a child needs something it is not permitted to do itself
+sources: [.claude/policies/sub-agents.md]
+supersedes: []
+superseded-by: []
+---
+
 # The orchestrator brokers what a child may not do itself, on a closed menu
 
 A child cannot dispatch, so it cannot run any capability that fans out — `/review` most obviously, since its two axes are themselves sub-agents. Until now that meant such work happened only in the parent, after the child was finished, which is too late for the child to act on it.

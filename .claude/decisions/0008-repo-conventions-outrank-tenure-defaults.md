@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: an AEP default conflicts with what this repository already does
+sources: [.claude/policies/]
+supersedes: []
+superseded-by: []
+---
+
 # Tenure's conventions are defaults; the repository's documented conventions win
 
 Tenure carries opinions — Conventional Commits, label vocabularies, PR description shape, file layout. Every one of them is a **default that applies when the repository is silent**, never a mandate. Where `CONTRIBUTING.md`, a PR template, an existing label set, or the repository's own history documents a different convention, that convention wins and Tenure adopts it.

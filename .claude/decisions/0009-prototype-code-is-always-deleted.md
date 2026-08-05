@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: prototype code is about to be kept
+sources: [skills/prototype/]
+supersedes: []
+superseded-by: []
+---
+
 # Prototype code is always deleted; the write-up is the artifact
 
 `workflow.md` stores prototypes under `.claude/prototypes/` and has a *Prototype Reuse* section that inspects existing prototypes before building a new one. matt's `prototype` says the opposite — throwaway from day one, keep the answer and delete the code. Reuse of code that was deleted is impossible, so one had to give.

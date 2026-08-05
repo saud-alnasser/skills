@@ -1,5 +1,7 @@
 # The tracker's tracked-intent declaration rests on a falsified landing fact
 
+Consumed: `.claude/policies/tracker.md`, "What a ticket is" — the declaration was re-argued from the unit rather than from the landing mechanism, and did not flip
+
 Found in passing while adopting this effort's templates (ticket `scaffolding/05`). Filed
 rather than healed: correcting the declaration changes how `/design` routes decision work,
 which is `/design`'s call and not a build session's.

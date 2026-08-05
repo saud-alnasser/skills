@@ -257,6 +257,18 @@ Everything under the two headings above is a fan-out's. A set is the other axis,
 
 **What a child stopped on still reaches the human.** A question this stage can carry goes to the human, and the child is resumed with the answer and the run continues. One it cannot carry travels in the report above, and that ticket returns to the frontier like any other that did not land. The human answers either way — neither disposition is this stage answering on a child's behalf.
 
+### A spent worktree is removed
+
+**This rule holds for both axes**, and says so out loud because the two are otherwise kept deliberately apart: a portion's workspace and a whole ticket's are the same kind of thing once the work inside them has landed.
+
+A worktree is **spent when the work it held has landed** — integrated, committed, and therefore recoverable from the branch rather than from the checkout. Remove it then; it holds nothing the branch does not.
+
+**The determination is this stage's and nobody else's.** The harness created the worktree and cannot tell whether the work in it ever reached a branch. The child cannot — it is bound against touching version control, and it is gone by the time the question becomes answerable. Only the party that integrated the work knows the work is safe somewhere else, which is why nothing removes a worktree unless this stage does, and why they otherwise accumulate one per dispatched ticket for the life of the clone.
+
+**What is kept is still kept.** A failed or stopped child's worktree stays, for the reason given above — a resumed session continues from it instead of rebuilding. Removal reaches what has landed, retention reaches what may still be resumed, and neither reaches the other's case.
+
+**Never force it.** `git worktree remove` refuses a worktree that still holds uncommitted or untracked work, and that refusal is a **second opinion on this stage's judgement** rather than an obstacle to it: one that will not come away cleanly is one whose work had not all landed after all. Forcing past it destroys the evidence that the determination was wrong. `.claude/tools/git.md` has the invocations, and what `prune` does not do.
+
 ## 3 — When the plan turns out wrong
 
 A plan is wrong when the ticket cannot be built as written: the architecture it assumes is not there, an approach it depends on does not work, or the change crosses a boundary nobody costed.

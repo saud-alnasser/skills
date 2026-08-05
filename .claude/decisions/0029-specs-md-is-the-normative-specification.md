@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the specification and what ships disagree
+sources: [specs.md]
+supersedes: []
+superseded-by: []
+---
+
 # `specs.md` is the normative specification, and every change conforms to it or amends it
 
 The framework is the **AI Engineering Protocol**, and its canonical definition lives at `specs.md` in the repository root — self-contained, written like a language specification, covering every system the framework has including the ones nothing implements yet.
