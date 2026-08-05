@@ -27,7 +27,7 @@ Prompt each sub-agent with a separate technical brief (Source Pointers, coupling
 - Agent 3: "Optimise for the most common caller — make the default case trivial."
 - Agent 4 (if applicable): "Design around ports & adapters for cross-seam dependencies."
 
-Include both [SKILL.md](SKILL.md) vocabulary and the project's Context vocabulary (`.claude/contexts/repository.md` plus any Domain Context the work touches) in the brief, so each sub-agent names things consistently with the architecture language and the project's domain language. A sub-agent has no Context loaded of its own — quote the terms it needs into the brief rather than pointing at the file.
+Each brief covers both [SKILL.md](SKILL.md) vocabulary and the project's Context vocabulary (`.claude/contexts/repository.md` plus any Domain Context the work touches), so each sub-agent names things consistently with the architecture language and the project's domain language. **How** that reaches a brief, and what a child arrives holding, are `.claude/policies/sub-agents.md`'s — which is also where the instruction that used to sit here was found to be wrong.
 
 Each sub-agent outputs:
 

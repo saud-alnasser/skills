@@ -46,7 +46,7 @@ scripts/verify.ps1       asserts the build tickets' acceptance criteria against 
 └── tickets/<effort>/    each effort's spec and build tickets
 ```
 
-This repository is itself configured by AEP, so `.claude/` here is an example of the output as well as the input to it. `skills/` is what ships; `.claude/` is what this repository runs on.
+This repository is itself configured by AEP, so `.claude/` here is an example of the output as well as the input to it. `skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.
 
 There is no package manifest and no test runner. `scripts/verify.ps1` stands in for one:
 

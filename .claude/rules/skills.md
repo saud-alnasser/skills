@@ -1,6 +1,7 @@
 ---
 paths:
   - "skills/**"
+  - "agents/**"
   - "scripts/verify.ps1"
 ---
 

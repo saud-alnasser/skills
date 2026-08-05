@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.4.0
+**Version:** 1.7.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -108,7 +108,9 @@ Rules split by **when they fire** (§22): unconditional rules load every turn an
 
 Policies are the repository's operational agreements: how engineering work is performed *here*. Unlike rules they evolve with the project.
 
-Each policy owns exactly one concern. The canonical set — extensible per repository — covers: version control, the tracker, tickets, specs, decisions, evidence, discussions, knowledge writing, context format, and code review. A testing policy says when tests are required; it does not explain the test framework (that is a tool guide's job). A policy defines expectations, never knowledge.
+Each policy owns exactly one concern. The canonical set — extensible per repository — covers: version control, the tracker, tickets, specs, decisions, evidence, discussions, knowledge writing, context format, code review, and the sub-agent contract (§20). A testing policy says when tests are required; it does not explain the test framework (that is a tool guide's job). A policy defines expectations, never knowledge.
+
+The sub-agent contract is a policy rather than a second protocol file, because a dispatched child inherits the boot tier and therefore reaches it through the same pointer chain a session uses (§22). A second router would be a second place to look before knowing which one to read (ADR 0040).
 
 Policies are reached by pointer, selected by the stage being run — a stage reads its declared policies and stops. Reading another stage's policies is the cost the routing table exists to remove.
 
@@ -237,6 +239,38 @@ AEP assumes engineering may involve multiple agents — human or AI. Every agent
 
 Coordination is by **assignment and claim, with the branch as the lock**: a ticket is claimed by the clone working it, the claim is visible in the tracker, and shared state never depends on any clone's position files. What may be written to a tracker other people read is bounded by the tracker policy.
 
+**Orchestration is the second relationship, and it is not the first.** Assignment and claim arbitrate between *peers* — instances that dispatch nobody. Orchestration is a stage dispatching sub-agents and integrating what they return, which introduces a direction the peer model has no vocabulary for. Both may hold at once, and how depends on the axis: a claim holds one ticket while children work portions of it, and the unit widens to cover them; a set is claimed ticket by ticket, all of them by the parent, before anything is dispatched. The contract is a policy (ADR 0040).
+
+**Orchestration has two axes, and they invert each other.** A **fan-out** divides one ticket into portions; a **dispatched set** runs several whole tickets that gate none of each other. The words are not interchangeable and no rule crosses between them without being restated, because the answers differ at every point that matters (ADR 0046):
+
+| | Fan-out | Dispatched set |
+| --- | --- | --- |
+| unit | a portion of one ticket | one whole ticket |
+| lands as | one commit for all portions | one commit each, on that ticket's branch |
+| on one child failing | nothing integrates | siblings land; that ticket returns to the frontier |
+| disjointness | declared, as file ownership | none — edges gate work, not files |
+| review | once, in the parent, after integration | requested by each child, findings returned to it |
+
+A dispatching stage works through three artifacts:
+
+- A **brief** — the instruction set for one child: objective, inputs given as paths rather than pasted content, what that child owns — the files, for a portion; the ticket, for a set member — the return shape, done-criteria, and a cap.
+- A **role** — a shipped agent definition a brief names. Identity is the definition's name, so an orchestrator holds a name rather than a path or an import; that is what lets an existing capability be dispatched without being rewritten (ADR 0043).
+- A **change record** — the manifest a child writes and the orchestrator integrates by, of which the child returns only a path and a compressed summary. It is per-clone position and never evidence, because its subject is a diff about to be integrated (ADR 0042).
+
+Decomposition is declared, never inferred. A build ticket MAY declare a **fan-out** naming the roles that run and the files each owns; a stage NEVER invents one, for the same reason it never invents a design increment (§10, ADR 0043).
+
+A **dispatched set is computed rather than declared**, and that is not the same licence. Its members are the frontier tickets that gate none of each other, read off the declared edges — reading a declaration is not making one. The stage states the set before dispatching. **The parent creates every branch in the set before dispatching anything**, which is how a child still claims nothing: creating the branch is the claim, and the parent makes all of them (ADR 0047). A ticket in a set that declares a fan-out of its own is **built alone by its child, which records that it declined** — one layer is one layer, and the declaration is not honoured recursively (ADR 0046).
+
+A child works an isolated worktree — branched from the claim for a portion, and from that ticket's own branch for a set member — and **the orchestrator is the only integrator** — enforced by the harness rather than assumed, since an isolated child's version-control commands fail if they reach the main checkout. Integration reconciles the record against the child's actual diff before anything lands. For a fan-out, a mismatch stops the whole fan-out: a manifest that cannot be trusted still reads as a check that happened (ADR 0044).
+
+For a set, the failure that has no analogue in a fan-out is a **collision** — two children writing one path, which the declared edges never promised against, because an edge gates work and says nothing about files. **Resolving it belongs to the orchestrator**, by the mechanism its own version-control model provides, and it is resolved rather than refused: the orchestrator holds both change records, so it knows what each child believed it was doing rather than only what each hunk says (ADR 0048).
+
+**Human authority is never delegated downward.** A sub-agent has no surface on which to ask a human — the question tool and plan mode are withheld from it, and no agent's message is another agent's consent. So a child that reaches a decision records it and stops, and the orchestrator raises it: a decision a child cannot make is the same event as a decision discovered undeclared, and blocks the same way. Where the orchestrator can broker the question, stopping means **stopping pending an answer** rather than ending the run — the amendment ADR 0049 makes to this consequence, leaving the principle above it untouched. No increment needing a human is ever assigned to a child (§2, ADR 0041).
+
+**The orchestrator brokers what a child may not do itself**, which is what makes one layer survivable. A child cannot dispatch, so it cannot run any capability that fans out; it requests, the orchestrator performs, and the result returns to the requester, which resumes. The capability is still dispatched **at depth one, from the orchestrator**, so nothing about the bound is bent. **The menu is closed** — a capability that requires dispatch, and a question put to the human — and anything else is refused without being weighed, because an open channel would make every prohibition on a child advisory. A request spends the brief's cap, so a child that keeps asking runs out as one that keeps working does (ADR 0049).
+
+Brokering moves nothing about who answers. The chain is child, orchestrator, human, orchestrator, child: the question travels **attributed** to a child and a ticket, the answer travels **verbatim**, and an orchestrator that cannot relay faithfully stops the child rather than reinterpreting for it — a paraphrase is the orchestrator's answer wearing the human's authority, and it fails silently because the child cannot tell. So a child's return has four outcomes rather than three: done, failed, stopped, and **waiting** (ADR 0049).
+
 Protocol scaffolding is never its own unit of work on a shared surface: no tracker item and no pull request the workflow creates has its entire effect under the protocol directory, except the **design PR** — one per design run, whose entire diff is protocol-only and whose approval is approval of the plan. Everything else rides its consumer: evidence gating a map decision lands in that session's design PR, evidence gating a build ships as a declared increment with the code it unblocked, and drift found in passing is filed as evidence and indexed on the live effort's map, never as a tracker item. The rule reads the diff, never the commit type, and does not bind what humans file. (ADRs 0038, 0039.)
 
 ## 21. Repository layout
@@ -248,6 +282,7 @@ CLAUDE.md                    entrypoint: what this is, where machinery lives (bo
 specs.md                     this specification (framework repository only)
 .claude/
   protocol.md                the protocol file: marker, drift reads, stage→dependency table
+  settings.json              harness configuration the workflow depends on (§22)
   rules/                     unconditional (no paths:) and scoped (paths:) rules
   modes/                     one reasoning posture per file, declared by skills (§9)
   policies/                  one file per concern
@@ -276,6 +311,8 @@ Claude Code auto-loads exactly two things: `CLAUDE.md` and `.claude/rules/**`. E
 - **Boot tier** = `CLAUDE.md` + rules without `paths:` frontmatter. Loaded every turn; kept under a measured, asserted budget. Adding to it is a permanent per-turn tax.
 - **Scoped tier** = rules with `paths:` frontmatter, loaded when a covered file is read. A scope announced in prose but not in frontmatter is paid for on every turn and enforced on none — the defect class this binding exists to prevent.
 - **Pointer tier** = everything else: the protocol file, policies, contexts, modes, workflows, tool guides, artifacts. The protocol governs this tier; the routing tables are its instrument.
+
+**A sub-agent inherits the boot tier and none of the conversation.** A dispatched child receives the entrypoint hierarchy the parent loaded — including the unconditional rules — alongside its own system prompt and the brief. It does not receive the parent's conversation, tool results, or system prompt. So the three tiers above describe a child as well as a session, and a child arrives already bound by the boot tier: the sub-agent contract (§20) narrows what it may do rather than bootstrapping what it knows (ADR 0040). Two consequences the tiers alone do not give. Anything a child needs from the *conversation* is written into the brief, because the brief is the only parent-to-child channel. And pointer-tier material is reached by the child rather than quoted into the brief, because a child can read — quoting it spends the parent's window to buy nothing.
 
 Placement is by loading mechanism, never by topic — a mechanism is observable, a discipline is not. The framework ships as a plugin (`aep`); slash commands are the skills; nothing *committed* requires the plugin — a reader without it follows the same pointers and reads the same files. Only invoking the stages needs it.
 

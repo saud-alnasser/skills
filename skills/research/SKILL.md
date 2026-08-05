@@ -6,7 +6,7 @@ description: Investigate a question against primary sources and write the findin
 # Research
 
 Mode: research
-Policies: `.claude/policies/evidence.md`
+Policies: `.claude/policies/evidence.md`, `.claude/policies/sub-agents.md`
 
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
 
@@ -22,17 +22,15 @@ Check its **verified-against line** first. A finding recorded against a version 
 
 The research runs in a **subagent**, for **context isolation**: twenty pages of documentation read to extract four facts would otherwise spend the parent's window on nineteen pages nobody needs again. The subagent burns its own window and returns one small cited file.
 
+Dispatch the shipped **`researcher`** role by name rather than describing the job again at the call site. What the brief adds is the question and the paths, and what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s — this stage restates none of it.
+
 **Isolation is not the same as not waiting.** Whether the caller blocks on the answer is a separate axis, and it is the caller's — `/design` decides it at the gate, and the rule is in `/design`. Conflating the two is what turns a load-bearing question into a background one.
 
 Say which it is when dispatching. A subagent cannot tell from the inside whether anything is waiting on it.
 
 ## 2 — Primary sources only
 
-A **primary source** is the thing that owns the fact: official documentation, the specification, the library's own source, a first-party API response. A blog post explaining the specification is a secondary write-up, and it is where stale and half-remembered claims enter.
-
-Follow **every claim back to the source that owns it.** A claim that cannot be traced is not a finding — it is reported as an open question instead.
-
-Where a secondary source is the only thing available, say so explicitly in the finding. That is a limitation of the research, not a detail to smooth over.
+What counts as a primary source, what becomes of a claim that cannot be traced to one, and how a secondary source is disclosed are the **`researcher`** role's — dispatched by name, and not retyped here.
 
 The rule against guessing an API — and a CLI counts — is in `.claude/rules/engineering.md`. It applies with full force here: research that establishes a fact by trying flags until something works has established what that build does today, not what the tool guarantees.
 

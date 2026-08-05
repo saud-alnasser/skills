@@ -1,6 +1,6 @@
 # AEP
 
-This repository builds the **Agentic Engineering Protocol (AEP)** — a Claude Code skill framework where understanding of a repository compounds over time. `skills/` is what ships, `.claude/` is what this repository runs on, and `specs.md` is the canonical specification.
+This repository builds the **Agentic Engineering Protocol (AEP)** — a Claude Code skill framework where understanding of a repository compounds over time. `skills/` and `agents/` are what ships, `.claude/` is what this repository runs on, and `specs.md` is the canonical specification.
 
 ## Rules that always apply
 

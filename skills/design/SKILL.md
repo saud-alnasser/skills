@@ -114,6 +114,8 @@ Read a format file when the tier selects it, not before.
 
 A ticket may carry **declared increments** — decisions only partial code can answer. `.claude/policies/tickets.md` has the declaration and its timing, and `/implement` what reaching one does. Declare one only where the answer genuinely needs the partial build to exist: increments on questions answerable up front are the scope assessment being dodged, and the smell that the phase split is hollowing.
 
+A ticket may also carry a **fan-out** — the declaration that its work divides. `/design` writes it, for the reason the format gives, and this is where that reason is grilled; the format is `.claude/policies/tickets.md`'s. Declare one only where the portions are genuinely separable: a split whose parts keep reaching into each other costs more to integrate than it saved, and that shows up while the declaration is being written rather than after the code is.
+
 ### On a shared tracker, the set is approved before it is created
 
 **Creating an issue publishes.** It lands in other people's workspace, so it is gated exactly as opening a pull request is.

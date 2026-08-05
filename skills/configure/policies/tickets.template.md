@@ -103,6 +103,24 @@ Some decisions are answerable only once partial code exists — whether a surfac
 
 The step names where in the build the question becomes answerable; the question is stated as sharply as a decision ticket's; the type is the map vocabulary's (`.claude/policies/maps.md`). What `/implement` does on reaching one — which types resolve inline, which stop for the human, and the guardrail on what it may never do — is that skill's to state. An increment's resolution is recorded where any design decision lands: an ADR when it clears the bar in `.claude/policies/decisions.md`, the design document otherwise.
 
+## Declared fan-out
+
+Dividing a ticket into portions worked in parallel is an architecture decision, so it is declared rather than discovered. A build ticket MAY carry one **fan-out**, written at design time only — never added during the build:
+
+```markdown
+## Fan-out
+
+- <role>: <the files this portion owns>
+```
+
+The role is a shipped agent definition, named rather than described. The files are that portion's to write and no other portion's — overlapping ownership is not a fan-out, it is two children editing the same file with no way to tell afterwards which meant what. What a dispatched child is bound by is `.claude/policies/sub-agents.md`'s.
+
+**The declaration names roles and ownership, and stops.** It does not compose a brief: what to tell a child can only be written once the code has been read, which is at dispatch and not at design time. What `/implement` does with a declaration — how it dispatches, how it integrates, and the guardrail on what it may never do — is that skill's to state.
+
+A ticket with no `## Fan-out` section is a ticket built by one instance, unchanged in every respect.
+
+**A fan-out and an increment needing a human do not run together.** A child has no surface on which to ask one, so a `grilling` or `prototype` increment on a fanned-out ticket **resolves first, in the parent, before anything is dispatched** (ADR 0041). A declaration that would hand such an increment to a child is refused rather than reordered — the portion is wrong, not merely early. An AFK increment — `research` or `task` — needs nobody present and may sit inside a portion.
+
 ## Above Express — slicing
 
 Below Express there is one ticket and nothing to slice. Above it, the rules that matter:
