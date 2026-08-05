@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: context loading is being changed, or frontmatter is proposed for routing
+sources: [.claude/contexts/]
+supersedes: []
+superseded-by: []
+---
+
 # Context loading uses a routing table, not frontmatter tags
 
 `CONTEXT.md` ends with a Routing Table naming each Domain Context, the condition for loading it, and its Source Pointer. The original spec instead put `domain` + `tags` frontmatter on every file for "semantic discovery without a central index."

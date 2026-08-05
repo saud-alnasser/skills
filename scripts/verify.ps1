@@ -261,9 +261,16 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
     ($adr -match 'real trade-off')
   }
 
-  Assert "ADR-FORMAT states the supersession rule — reasoning frozen, only status moves" {
+  # Repointed by mechanics/06, which changed the rule this guarded: two declared
+  # fields move after a commit now, not one. Anchored on what survived — that
+  # supersession is stated and the reasoning is frozen — because the literal it
+  # used to pin (`superseded by`, unhyphenated) was the old field syntax, and a
+  # guard pinned to syntax fails on every rewording that leaves the rule intact.
+  # Which fields move is `mechanics/06`'s to assert; enumerating them here too
+  # would be the second home this table exists to prevent.
+  Assert "ADR-FORMAT states the supersession rule, with the reasoning frozen" {
     $adr = Get-SkillFile 'configure/policies/decisions.template.md'
-    ($adr -match 'superseded by') -and ($adr -match '(?i)frozen')
+    ($adr -match '(?i)supersed') -and ($adr -match '(?i)frozen')
   }
 
   Assert "attribution to mattpocock/skills is present in every vendored primitive" {
@@ -522,6 +529,17 @@ $rulePattern = [ordered]@{
   # reasoning had reached four files before the guard existed.
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
   'the stale-command rule'             = '(?i)stale command is worse than no command'
+  # mechanics/11. The evidence policy owns what a consumed finding records and
+  # who writes it; `/design` reads the answer and points. Anchored on the
+  # obligation rather than on the field name, because the reading stage has a
+  # legitimate reason to mention the field and no reason to restate the duty.
+  'the finding-consumption rule'       = '(?i)records its own consumption'
+  # mechanics/07. The context format owns the routing mechanism, so it owns what
+  # a load condition has to be; the decisions format adopts it and points. Both
+  # stated it independently at first, which is how one rule acquires two homes
+  # that agree today. Anchored on the topic-versus-trigger claim rather than on
+  # the field name, since both files have a legitimate reason to name the field.
+  'the load-condition rule'            = '(?i)never what it is about|never a description of what'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
   # aep/11. The always-on tier owns the workaround-comment test; design's
   # root-cause section is about the *plan* and carries its own anchor.
@@ -876,9 +894,12 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     ($c -match '(?i)HEAD')
   }
 
-  Assert "the clean path costs one git check and no reading" {
+  # Repointed by mechanics/03: the matching path is now two reads rather than
+  # one, because the Marker compares two facts. What it still buys — and what
+  # this asserts — is that no *drift* is read on that path.
+  Assert "the matching path costs git reads and no drift reading" {
     $c = Get-SkillFile $protocolTemplate
-    $c -match '(?i)(no reading|without reading|read nothing)'
+    $c -match '(?i)(no drift reading|no reading|without reading|read nothing)'
   }
 
   Assert "both drift sources are named, with the command that reads each" {
@@ -911,9 +932,18 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     $c -match '(?i)where you find it|in the same breath|no deferred|no queue'
   }
 
-  Assert "only /commit advances the Marker" {
+  # Rewritten by mechanics/03 rather than repointed: the rule itself changed.
+  # `/commit` was the only writer because the old claim — Context is trusted —
+  # could only be earned by a stage that verified everything. The claim is now
+  # narrowed to "this tree's drift was read", which a drift-reading stage does
+  # earn, so the single-writer rule is gone and a bounded second writer replaced
+  # it. Asserting the old rule here would contradict the specification.
+  Assert "/commit writes both facts, and only the tree fact has a second writer" {
     $c = Get-SkillFile $protocolTemplate
-    ($c -match '/commit') -and ($c -match '(?i)nothing else (moves|advances)|only `?/commit`?')
+    if ($c -notmatch '(?is)/commit.{0,40}writes both facts') { throw '/commit is not named as the writer of both' }
+    if ($c -notmatch '(?is)re-stamp the tree fact alone') { throw 'the second writer is unbounded or absent' }
+    if ($c -notmatch '(?is)leaving the commit fact untouched') { throw 'nothing keeps the second writer off the commit fact' }
+    $true
   }
 
   Assert "the Marker is machine-local — a teammate's verification is not Claude's" {
@@ -933,7 +963,23 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   # alternation because word choice is not a licence: without it, a verbatim
   # restatement slips through by spelling `==` differently.
   $singleHome = [ordered]@{
-    'the Marker cache-validity rule'  = '(?is)marker.{0,80}(==|equals|matches).{0,40}HEAD.{0,200}(trusted|no reading|no verification)'
+    # Repointed by mechanics/03. The old pattern required the match to license
+    # *trust*; the rule now licenses skipping the drift reads and explicitly
+    # refuses the trust reading, so a pattern demanding the old wording reported
+    # the rule as stated nowhere while it sat two lines away.
+    'the Marker cache-validity rule'  = '(?is)marker.{0,80}(==|equals|matches).{0,60}HEAD.{0,240}(drift reads may be skipped|trusted|no reading|no verification)'
+    # mechanics/04. Here rather than in `$rulePattern` for the same reason the
+    # Marker rule is: it is router machinery, not a rule that must fire on every
+    # turn, and `$rulePattern` membership asserts the latter. The router owns it
+    # because the router owns the Marker; every stage reads the router, so a
+    # stage restating it gains nothing and drifts on the condition — which is
+    # the half that makes the permission safe.
+    'the tree re-stamp permission'    = '(?i)re-stamp the tree fact alone'
+    # mechanics/16. The build stage owns when a worktree is spent, because it is
+    # the only party that knows the work landed. The git guide carries the
+    # invocation and no judgement, so it is not a second home — the pattern
+    # matches the determination, not the verb.
+    'the spent-worktree rule'         = '(?i)spent when the work it held has landed'
     'the commit scope vocabulary'     = '(?i)`misc`.{0,40}`stuff`'
     # `that` optional: `streamline/03` moved this into its guide, where the
     # sentence no longer needs the demonstrative. Anchored to the subject —
@@ -4614,7 +4660,11 @@ Describe-Ticket 'layout/02' 'move this repository onto the dissolved layout' {
   # checked as a sequence rather than a count, because losing 0007 and gaining
   # 0021 keeps the count identical.
   Assert "every ADR number survives the move, contiguous and unique" {
-    $adrs = Get-ChildItem (Join-Path $repo '.claude/decisions') -Filter '*.md' | Sort-Object Name
+    # `map.md` is the generated index (mechanics/12), not a Decision — it is
+    # deliberately unnumbered, and counting it would also break the contiguity
+    # check below by one.
+    $adrs = Get-ChildItem (Join-Path $repo '.claude/decisions') -Filter '*.md' |
+      Where-Object { $_.Name -ne 'map.md' } | Sort-Object Name
     if ($adrs.Count -eq 0) { throw 'no decision records at the new location' }
     $numbers = $adrs | ForEach-Object {
       if ($_.Name -notmatch '^(\d{4})-.+\.md$') { throw "not numbered-and-slugged: $($_.Name)" }
@@ -6978,9 +7028,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.8.0, not a draft" {
+  Assert "the specification is released at 1.9.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.8\.0\s*$') { throw 'the specification is not at a released 1.8.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.9\.0\s*$') { throw 'the specification is not at a released 1.9.0' }
     $true
   }
 
@@ -9389,13 +9439,18 @@ Describe-Ticket 'parallel-tickets/07' 'adopt the second axis here' {
       param($text)
       @([regex]::Matches($text, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
     }
+    # Repointed by mechanics/12: the prose `Sources:` line became a declared
+    # field, so the file's half is read out of frontmatter and carries no
+    # backticks. The check itself is unchanged and is now nearly tautological —
+    # the map is generated from this field — but it is what would catch a
+    # hand-edited map, which is the failure it was written for.
     $dc = Get-Content (Join-Path $repo '.claude/contexts/orchestration.md') -Raw
-    $line = [regex]::Match($dc, '(?im)^Sources:(.+)$')
-    if (-not $line.Success) { throw 'the Domain Context names no sources' }
+    $line = [regex]::Match($dc, '(?im)^sources:\s*\[(.*?)\]\s*$')
+    if (-not $line.Success) { throw 'the Domain Context declares no sources' }
     $row = [regex]::Match((Get-Content (Join-Path $repo '.claude/contexts/map.md') -Raw),
                           '(?im)^\|\s*\[orchestration\][^|]*\|[^|]*\|([^|]*)\|')
     if (-not $row.Success) { throw 'the map has no orchestration row' }
-    $inFile = & $paths $line.Groups[1].Value
+    $inFile = @($line.Groups[1].Value -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) | Sort-Object -Unique
     $inMap  = & $paths $row.Groups[1].Value
     if ("$inFile" -ne "$inMap") {
       throw "sources disagree — file: $($inFile -join ', ') / map: $($inMap -join ', ')"
@@ -9523,9 +9578,13 @@ Describe-Ticket 'worktrees/01' 'the ignore rule covers the harness''s child work
     if (-not (Test-Path $adr)) { throw 'no Decision records the amendment' }
     $c = Get-Content $adr -Raw
     if ($c -notmatch '(?i)§21') { throw 'the Decision does not name the section it amends' }
-    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
-    if ($spec -notmatch '(?m)^\*\*Version:\*\*\s*(\S+)\s*$') { throw 'the specification states no version' }
-    if ($c -notmatch [regex]::Escape($Matches[1])) { throw 'the Decision does not record the version it moved to' }
+    # Pinned to the version this Decision moved the specification to, not read
+    # off `specs.md`. Reading it live coupled a frozen record to a moving
+    # number: the next bump falsified an ADR that had recorded the truth at the
+    # time, leaving only two ways out, and one of them is editing frozen
+    # reasoning. Found by the 1.9.0 bump, which failed this on 0050 having
+    # correctly said 1.8.0.
+    if ($c -notmatch [regex]::Escape('1.8.0')) { throw 'the Decision does not record the version it moved to' }
     if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)ADR 0050') { throw 'the layout does not cite it' }
     $true
   }
@@ -9616,6 +9675,1417 @@ Describe-Ticket 'worktrees/02' 'adopt the covered ignore rule here' {
     $c = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
     if ($c -match '(?i)one file sits outside') { throw 'the installed router still counts one exception' }
     if ($c -notmatch '(?i)worktrees') { throw 'the installed router never names the second path' }
+    $true
+  }
+}
+
+# --- ticket mechanics/01 — the marker records the tree it read drift against --
+
+# Every assertion here is scoped to §19. The marker's vocabulary travels into
+# §22 and into the protocol template, so a file-wide match would pass on text
+# that says nothing about the rule this ticket changed.
+#
+# The negative guards below are written against the *subject* — the match
+# condition, the licence, the writer — rather than against the sentences that
+# were just written. A guard transcribed from new wording matches only that
+# wording, and this file already records four occasions where that happened.
+Describe-Ticket 'mechanics/01' 'the marker records the tree it read drift against' {
+
+  $s19 = Get-SpecSection 19
+
+  Assert "the section this ticket amends resolves, and to itself" {
+    if ($s19 -notmatch '(?m)\A##[^\r\n]*Verification and healing') { throw 'section 19 resolved to the wrong heading' }
+    $true
+  }
+
+  Assert "the marker records two facts, and the rule compares both" {
+    if ($s19 -notmatch '(?is)\*\*The marker\.\*\*') { throw 'the marker paragraph is gone' }
+    if ($s19 -notmatch '(?is)marker[^.]{0,200}(tree|fingerprint)') { throw 'the marker records no tree fact' }
+    if ($s19 -notmatch '(?is)(both are compared|compares both|both facts are compared)') {
+      throw 'nothing says both facts are compared'
+    }
+    $true
+  }
+
+  # The defect this replaces: trust conditioned on the tree's *state* rather
+  # than on its identity. Matched by subject — any sentence that makes
+  # cleanliness a condition of trusting or skipping — so a reintroduction
+  # phrased as "carries no local changes" is caught with the original wording
+  # gone. The fallback sentence legitimately reads the tree live, so sentences
+  # about the absent-fact case are excluded rather than the word being banned.
+  Assert "tree cleanliness is nowhere a condition of the match" {
+    foreach ($sent in [regex]::Split($s19, '(?<=\.)\s+')) {
+      if ($sent -match '(?i)(clean|unmodified|pristine|no (uncommitted|local|outstanding) changes)' -and
+          $sent -match '(?i)(trusted|no reading|skip|match)' -and
+          $sent -notmatch '(?i)(absent|unknown|falls back|fallback)') {
+        throw "a clean-tree condition survives: $sent"
+      }
+    }
+    $true
+  }
+
+  Assert "a match licenses skipping the drift reads, and says so as the bound" {
+    if ($s19 -notmatch '(?is)match[^.]{0,120}(skip|may be skipped)[^.]{0,60}drift') {
+      throw 'nothing ties a match to skipping the drift reads'
+    }
+    $true
+  }
+
+  # Presence of the affirmative is symmetric with its negation, so the licence
+  # is checked by its refusal rather than by its claim: what must be present is
+  # the sentence ruling out the *stronger* reading.
+  Assert "a match is refused the claim that knowledge is correct" {
+    if ($s19 -notmatch '(?is)(does\s+\*{0,2}not\*{0,2}|never)\s+mean[^.]{0,80}(correct|verified|true|right)') {
+      throw 'nothing refuses the reading that a match means knowledge is correct'
+    }
+    $true
+  }
+
+  Assert "verification at use is stated as unaffected by the marker" {
+    if ($s19 -notmatch '(?is)(verification at use|about to be relied on)[^.]{0,160}(unaffected|regardless|whether or not|whether the marker)') {
+      throw 'nothing says verification at use is unaffected by a matching marker'
+    }
+    $true
+  }
+
+  Assert "the commit stage writes both facts, together" {
+    if ($s19 -notmatch '(?is)commit stage[^.]{0,80}both') { throw 'the commit stage is not named as the writer of both' }
+    $true
+  }
+
+  Assert "the re-stamp is conditional on dealing with the drift, not on reading it" {
+    if ($s19 -notmatch '(?is)(re-stamp|restamp)[^.]{0,200}(tree)') { throw 'no re-stamp permission is stated' }
+    if ($s19 -notmatch '(?is)(deals?|dealt|dealing) with what[^.]{0,60}found') { throw 'the permission is not conditioned on dealing with the drift' }
+    if ($s19 -notmatch '(?is)conditional on the dealing') { throw 'the condition is not named as the dealing rather than the reading' }
+    $true
+  }
+
+  # A rule and its negation are not interchangeable, and presence alone cannot
+  # tell them apart — so the case that must be *refused* is asserted on its own.
+  Assert "a stage that read drift and did nothing about it is refused the re-stamp" {
+    if ($s19 -notmatch '(?is)neither healed nor discounted[^.]{0,80}(nothing|re-stamps nothing)') {
+      throw 'nothing rules out re-stamping after a drift read that changed nothing'
+    }
+    $true
+  }
+
+  Assert "an absent tree fact is a defined state with a defined fallback" {
+    if ($s19 -notmatch '(?is)absent tree fact[^.]{0,80}unknown') { throw 'an absent tree fact is not defined' }
+    if ($s19 -notmatch '(?is)falls back') { throw 'no fallback is stated' }
+    $true
+  }
+
+  Assert "a Decision records the narrowing, and why a second writer is safe under it" {
+    $p = Join-Path $repo '.claude/decisions/0052-the-marker-records-the-tree-and-claims-only-that-drift-was-read.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?is)narrow') { throw 'the Decision does not record the narrowing' }
+    if ($c -notmatch '(?is)Considered Options') { throw 'the Decision weighs no alternatives' }
+    foreach ($alt in 'stash create', 'porcelain', 'dirty set') {
+      if ($c -notmatch [regex]::Escape($alt)) { throw "the Decision does not record why '$alt' was rejected" }
+    }
+    $true
+  }
+}
+
+# --- ticket mechanics/05 — a routing table is generated from declared fields --
+
+# Split across the two sections that own the halves: §8 states the mechanism,
+# §16 applies it to Decisions and adds supersession. Asserting either file-wide
+# would pass on the other's text, and the whole claim of this ticket is that
+# both sections now say it.
+Describe-Ticket 'mechanics/05' 'a routing table is generated from declared fields' {
+
+  $s8  = Get-SpecSection 8
+  $s16 = Get-SpecSection 16
+
+  Assert "the two sections this ticket amends resolve, and to themselves" {
+    if ($s8  -notmatch '(?m)\A##[^\r\n]*Contexts')  { throw 'section 8 resolved to the wrong heading' }
+    if ($s16 -notmatch '(?m)\A##[^\r\n]*Decisions') { throw 'section 16 resolved to the wrong heading' }
+    $true
+  }
+
+  Assert "a routing table is generated rather than written, and names the two declared fields" {
+    if ($s8 -notmatch '(?is)routing table is generated') { throw 'nothing says the table is generated' }
+    if ($s8 -notmatch '(?is)load condition') { throw 'the load-condition field is unnamed' }
+    if ($s8 -notmatch '(?is)\bsources\b') { throw 'the sources field is unnamed' }
+    $true
+  }
+
+  # ADR 0002 turned on this distinction, and it is the one thing generation
+  # cannot enforce — so the specification has to carry it explicitly. Matched by
+  # subject: the load condition set against subject matter, in either order.
+  Assert "the load condition is a trigger, and subject matter is refused" {
+    if ($s8 -notmatch '(?is)(when to load)[^.]{0,120}(never|not)[^.]{0,120}(about|topic|subject)' -and
+        $s8 -notmatch '(?is)(never|not)[^.]{0,120}(about|topic|subject)[^.]{0,120}(when to load)') {
+      throw 'nothing sets the trigger against a description of subject matter'
+    }
+    $true
+  }
+
+  # The property, not the convenience. A generated table that were merely
+  # tidier would not have justified the change.
+  Assert "generation is justified by the drift it makes impossible, not by effort saved" {
+    if ($s8 -notmatch '(?is)cannot (disagree|drift)') { throw 'the impossibility is not stated' }
+    if ($s8 -notmatch '(?is)(not a second statement|does not arise)') {
+      throw 'nothing says why it cannot drift, so the claim reads as an assertion'
+    }
+    $true
+  }
+
+  Assert "a generated file is not hand-edited, and the prohibition is enforced rather than requested" {
+    if ($s8 -notmatch '(?is)never hand-edited') { throw 'hand-editing is not prohibited' }
+    if ($s8 -notmatch '(?is)enforced[^.]{0,80}(regeneration|regenerat)') {
+      throw 'the prohibition is stated without the thing that enforces it'
+    }
+    $true
+  }
+
+  Assert "Decisions are routed on the same mechanism, with the reason the cost is monotonic" {
+    if ($s16 -notmatch '(?is)routed') { throw 'Decisions are not declared routed' }
+    if ($s16 -notmatch '(?is)load condition') { throw 'a Decision declares no load condition' }
+    if ($s16 -notmatch '(?is)monotonic|nothing ever shrinks') { throw 'the reason routing is needed is unstated' }
+    $true
+  }
+
+  Assert "supersession is declared at both ends, and one-sidedness is a defect" {
+    if ($s16 -notmatch '(?is)both ends') { throw 'supersession is not stated as two-ended' }
+    if ($s16 -notmatch '(?is)(one end|at one end)[^.]{0,100}(defect|absent at the other)') {
+      throw 'a one-sided claim is not called a defect'
+    }
+    $true
+  }
+
+  Assert "the freeze survives: only status moves after a Decision is committed" {
+    if ($s16 -notmatch '(?is)status[^.]{0,120}(moves|move)') { throw 'the moving field is unnamed' }
+    if ($s16 -notmatch '(?is)reasoning is frozen') { throw 'the freeze is no longer stated' }
+    $true
+  }
+
+  Assert "a Decision records why declared fields are not the pattern ADR 0002 rejected" {
+    $p = Join-Path $repo '.claude/decisions/0053-a-routing-table-is-generated-from-fields-the-routed-file-declares.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?is)0002') { throw 'the Decision never engages with ADR 0002' }
+    if ($c -notmatch '(?is)trigger sentence') { throw 'the Decision does not identify what 0002 turned on' }
+    if ($c -notmatch '(?is)Considered Options') { throw 'the Decision weighs no alternatives' }
+    $true
+  }
+}
+
+# --- ticket mechanics/09 — two homes for the dependency set, and which wins ---
+
+# The containment assertion below is the one that does real work: the rest state
+# the rule, and this one is the thing that would have caught the relationship
+# going wrong while nobody had declared there was one.
+#
+# `(?m)$` cannot be used to bound a table row here. The files are CRLF, so
+# `[^\r\n]*` stops before the `\r` while `$` matches before the `\n` — the two
+# positions differ by one character and every such match silently fails. Found
+# by a row check that reported "no row" for all seven stages.
+Describe-Ticket 'mechanics/09' 'the stage-dependency set has two homes, and the table wins' {
+
+  $s5  = Get-SpecSection 5
+  $s11 = Get-SpecSection 11
+
+  # The seven spine stages, which are what the table has rows for. Primitives
+  # and on-ramps declare policies too and are deliberately not in it — a skill
+  # is not a stage, and asserting over every skill would demand rows for files
+  # the table has no business naming.
+  $spine = @('configure', 'design', 'implement', 'review', 'research', 'prototype', 'commit')
+
+  Assert "the two sections this ticket amends resolve, and to themselves" {
+    if ($s5  -notmatch '(?m)\A##[^\r\n]*Protocol') { throw 'section 5 resolved to the wrong heading' }
+    if ($s11 -notmatch '(?m)\A##[^\r\n]*Skills')   { throw 'section 11 resolved to the wrong heading' }
+    $true
+  }
+
+  Assert "each home is named for what it alone can know" {
+    if ($s5 -notmatch '(?is)cannot know[^.]{0,80}local') { throw 'section 5 does not say what a skill cannot know' }
+    if ($s11 -notmatch '(?is)(default)[^.]{0,60}(instance|protocol table)') {
+      throw 'section 11 does not name the pair as a default and an instance'
+    }
+    $true
+  }
+
+  Assert "the precedence is stated, and carries its reason rather than only its verdict" {
+    if ($s5 -notmatch '(?is)table (governs|wins)') { throw 'no precedence is stated' }
+    if ($s5 -notmatch '(?is)written where the repository is|table is written where') {
+      throw 'the precedence is asserted without the reason it runs that way'
+    }
+    $true
+  }
+
+  Assert "the table is derived by the configuration stage, not authored" {
+    if ($s5 -notmatch '(?is)derived by the configuration stage') { throw 'nothing says the table is derived' }
+    if ($s5 -notmatch '(?is)plus whatever is local') { throw 'the local half of the derivation is unstated' }
+    $true
+  }
+
+  # The tempting deletion, refused with the fact that refuses it. Without this
+  # the next reader re-proposes dropping the table, since inside a session it
+  # is always read after the skill that pointed at it.
+  Assert "dropping the table is refused, and on the plugin-independence fact" {
+    if ($s5 -notmatch '(?is)cannot be dropped') { throw 'nothing refuses dropping the table' }
+    if ($s5 -notmatch '(?is)absent from the tree') { throw 'the refusal does not name why a skill is unreachable' }
+    $true
+  }
+
+  # A second home is exactly what single-home forbids, so the exception has to
+  # state its own bound or it becomes the precedent for any duplication.
+  Assert "the exception states the asymmetry that bounds it, and refuses to generalise" {
+    if ($s11 -notmatch '(?is)asymmetry is absent[^.]{0,120}(duplication|not a precedent)') {
+      throw 'the two-home exception does not bound itself'
+    }
+    $true
+  }
+
+  Assert "every spine stage has exactly one row in the installed table" {
+    $proto = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    foreach ($s in $spine) {
+      $rows = [regex]::Matches($proto, "(?m)^\|\s*``/$s``\s*\|")
+      if ($rows.Count -ne 1) { throw "/$s has $($rows.Count) rows, not one" }
+    }
+    $true
+  }
+
+  # The containment, in the direction the rule declares: the table carries at
+  # least what the skill declares. Asserted per stage so a failure names the
+  # stage and the guide, rather than reporting that something somewhere differs.
+  Assert "the table carries at least every policy its stage's skill declares" {
+    $proto = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    foreach ($s in $spine) {
+      $sk = Get-SkillFile "$s/SKILL.md"
+      $m = [regex]::Match($sk, '(?m)^Policies:\s*([^\r\n]*)')
+      if (-not $m.Success) { continue }
+      $declared = @([regex]::Matches($m.Groups[1].Value, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value })
+      $row = [regex]::Match($proto, "(?m)^\|\s*``/$s``\s*\|([^\r\n]*)")
+      if (-not $row.Success) { throw "/$s declares policies and has no row" }
+      foreach ($g in $declared) {
+        if ($row.Groups[1].Value -notmatch [regex]::Escape($g)) {
+          throw "/$s declares $g and its row omits it"
+        }
+      }
+    }
+    $true
+  }
+
+  Assert "a Decision records the pair, and why neither home could be deleted" {
+    $p = Join-Path $repo '.claude/decisions/0054-the-stage-dependency-set-has-two-homes-and-the-protocol-table-wins.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?is)Considered Options') { throw 'the Decision weighs no alternatives' }
+    if ($c -notmatch '(?is)Table canonical') { throw 'the Decision does not weigh deleting the skill line' }
+    if ($c -notmatch '(?is)Skills canonical') { throw 'the Decision does not weigh deleting the table' }
+    $true
+  }
+}
+
+# --- ticket mechanics/10 — every shipped role declares its mode ---------------
+
+# This ticket amends no specification section: §20 already says agents differ by
+# mode among other things, so the roles declaring none were failing a statement
+# that was already normative. Asserted below against that sentence, so a future
+# edit that removes the obligation takes this ticket's justification with it
+# rather than leaving five orphaned fields.
+Describe-Ticket 'mechanics/10' 'every shipped role declares its mode' {
+
+  $roleDir = Join-Path $repo 'agents'
+  $roles = Get-ChildItem $roleDir -File -Filter *.md
+  $modeDir = Join-Path $skills 'configure/modes'
+
+  Assert "the specification already obliges an agent to have a mode" {
+    $s20 = Get-SpecSection 20
+    if ($s20 -notmatch '(?is)agents differ[^.]{0,60}mode') {
+      throw 'section 20 no longer names mode as something an agent carries'
+    }
+    $true
+  }
+
+  Assert "every shipped role declares exactly one mode" {
+    if ($roles.Count -lt 1) { throw 'no roles ship' }
+    foreach ($r in $roles) {
+      $c = Get-Content $r.FullName -Raw
+      $fm = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
+      if (-not $fm.Success) { throw "$($r.Name) has no frontmatter" }
+      $hits = [regex]::Matches($fm.Groups[1].Value, '(?m)^mode:\s*(\S+)')
+      if ($hits.Count -ne 1) { throw "$($r.Name) declares $($hits.Count) modes, not one" }
+    }
+    $true
+  }
+
+  Assert "every declared mode names a mode that ships" {
+    foreach ($r in $roles) {
+      $c = Get-Content $r.FullName -Raw
+      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
+      $p = Join-Path $modeDir "$($m.Groups[1].Value).template.md"
+      if (-not (Test-Path $p)) { throw "$($r.Name) declares mode '$($m.Groups[1].Value)', which ships no file" }
+    }
+    $true
+  }
+
+  Assert "every role reaches its mode by pointer, and names the mode only once" {
+    foreach ($r in $roles) {
+      $c = Get-Content $r.FullName -Raw
+      $body = $c -replace '(?s)\A---\r?\n.*?\r?\n---', ''
+      if ($body -notmatch '(?is)\.claude/modes/') { throw "$($r.Name) never points at the mode directory" }
+      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
+      if ($body -match "(?i)\bmode:\s*$($m.Groups[1].Value)\b") {
+        throw "$($r.Name) names its mode a second time in the body"
+      }
+    }
+    $true
+  }
+
+  # Restatement, matched by paraphrase rather than by quotation. Each mode's
+  # most copyable content is its tradeoff, so the guard carries the tradeoff's
+  # own noun out of the mode file and looks for it near a giving-up verb — a
+  # role that wrote "you trade momentum for thoroughness" is caught with none
+  # of the mode's wording present.
+  Assert "no role restates its mode's tradeoff, in the mode's words or its own" {
+    foreach ($r in $roles) {
+      $c = Get-Content $r.FullName -Raw
+      $m = [regex]::Match($c, '(?m)^mode:\s*(\S+)')
+      $modeText = Get-Content (Join-Path $modeDir "$($m.Groups[1].Value).template.md") -Raw
+      $t = [regex]::Match($modeText, '(?im)^Gives up:\s*(\w+)')
+      if (-not $t.Success) { throw "the $($m.Groups[1].Value) mode states no tradeoff to check against" }
+      $noun = $t.Groups[1].Value
+      if ($c -match '(?im)^Gives up:') { throw "$($r.Name) carries a tradeoff line of its own" }
+      if ($c -match "(?i)(gives? up|give up|trade[sd]?|sacrific\w*|forgo\w*)[^.]{0,60}\b$noun\b" -or
+          $c -match "(?i)\b$noun\b[^.]{0,60}(is given up|is traded|is sacrificed)") {
+        throw "$($r.Name) restates the $($m.Groups[1].Value) mode's tradeoff ('$noun')"
+      }
+    }
+    $true
+  }
+}
+
+# --- ticket mechanics/11 — a consumed drift finding records where it healed ---
+
+# The criterion this ticket exists for is "answering whether a finding is still
+# waiting requires reading only that finding". That is asserted below as a
+# property of the file rather than as a sentence in a policy — a policy can say
+# it while every finding on disk fails to carry it.
+Describe-Ticket 'mechanics/11' 'a consumed drift finding records where it was healed' {
+
+  $ev = Get-SkillFile 'configure/policies/evidence.template.md'
+
+  Assert "the evidence policy states that a finding records its consumption, and where" {
+    if ($ev -notmatch '(?is)records its own consumption') { throw 'consumption is not declared' }
+    if ($ev -notmatch '(?is)Consumed:') { throw 'the policy names no field to carry it' }
+    if ($ev -notmatch '(?is)naming where the healing landed') { throw 'the field is not required to name the destination' }
+    $true
+  }
+
+  Assert "the account stays frozen, and the line sits beside it rather than inside it" {
+    if ($ev -notmatch '(?is)(account itself is frozen|account is frozen)') { throw 'the freeze is unstated' }
+    if ($ev -notmatch '(?is)beside it rather than inside it') { throw 'nothing says the account is not edited' }
+    $true
+  }
+
+  Assert "the mark lands in the same change as the healing, with the reason a later one differs" {
+    if ($ev -notmatch '(?is)same change as the healing') { throw 'the timing is unstated' }
+    if ($ev -notmatch '(?is)window where it reads as waiting') { throw 'the reason a later mark is not equivalent is unstated' }
+    $true
+  }
+
+  # The rule and its inversion are different rules, and only one of them is
+  # safe. Asserted on the refusal, because "mark it when you know" and "work
+  # out whether it was healed and mark it" both read as present.
+  Assert "an unestablished consumption is left unmarked, and inferring one is refused" {
+    if ($ev -notmatch '(?is)cannot be established[^.]{0,80}unmarked') { throw 'the default is unstated' }
+    if ($ev -notmatch '(?is)(inferring|infer)[^.]{0,80}(guess|prevent)') { throw 'inferring consumption is not refused' }
+    $true
+  }
+
+  Assert "the design stage reads waiting off the finding rather than deriving it" {
+    $d = Get-SkillFile 'design/SKILL.md'
+    if ($d -notmatch '(?is)(read off the finding|never derived)') { throw 'nothing says waiting is read rather than derived' }
+    # Points rather than restates: the policy owns what the line is, so the
+    # discovery step naming it would be the second home the sweep exists to
+    # catch. What must be here is the pointer and the cost it removes.
+    if ($d -notmatch '(?is)evidence\.md') { throw 'the discovery step does not point at the policy that answers it' }
+    if ($d -notmatch '(?is)cost that line removes') { throw 'the reason the read is cheap is unstated' }
+    $true
+  }
+
+  # The property, asked of the directory. A finding is answerable on its own or
+  # it is not, and that is a fact about the files rather than about the prose.
+  Assert "every finding on disk answers 'still waiting?' from its own text" {
+    $dir = Join-Path $repo '.claude/evidence/drift'
+    if (-not (Test-Path $dir)) { return $true }
+    foreach ($f in Get-ChildItem $dir -File -Filter *.md) {
+      $c = Get-Content $f.FullName -Raw
+      # Waiting is the absence of the line, so only a *claimed* consumption can
+      # be malformed: a bare `Consumed:` naming nothing is worse than no line,
+      # because it reads as answered.
+      $m = [regex]::Match($c, '(?im)^Consumed:\s*([^\r\n]*)')
+      if ($m.Success -and $m.Groups[1].Value.Trim().Length -lt 10) {
+        throw "$($f.Name) claims consumption and names no destination"
+      }
+    }
+    $true
+  }
+
+  Assert "the finding this effort's design encountered is marked, and names where it healed" {
+    $p = Join-Path $repo '.claude/evidence/drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md'
+    if (-not (Test-Path $p)) { throw 'the finding is missing' }
+    $c = Get-Content $p -Raw
+    $m = [regex]::Match($c, '(?im)^Consumed:\s*([^\r\n]*)')
+    if (-not $m.Success) { throw 'the finding is still unmarked' }
+    if ($m.Groups[1].Value -notmatch 'tracker\.md') { throw 'the mark does not name where the healing landed' }
+    # The account is frozen, so what it recorded must survive the marking.
+    if ($c -notmatch '(?is)## What was checked') { throw 'the account was edited rather than annotated' }
+    $true
+  }
+}
+
+# --- ticket mechanics/02 — the git guide carries the fingerprint recipe -------
+
+# Four of this ticket's criteria are about what the recipe *does*, so they are
+# run rather than read. The rest of this file asserts prose; a documented
+# invocation that does not work is the one defect prose assertions cannot see.
+Describe-Ticket 'mechanics/02' 'the git guide carries the tree-fingerprint recipe' {
+
+  $g = Get-SkillFile 'configure/tools/git.md'
+
+  # Hoisted so the behavioural assertions below all exercise the same thing the
+  # guide documents. Transcribed from the guide's sh block; if the two drift,
+  # the assertions stop testing the entry they belong to.
+  $fingerprint = {
+    $idx = & git -C $repo rev-parse --path-format=absolute --git-path index
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+    Copy-Item $idx $tmp
+    try {
+      $env:GIT_INDEX_FILE = $tmp
+      & git -C $repo add -A 2>&1 | Out-Null
+      (& git -C $repo write-tree).Trim()
+    } finally {
+      $env:GIT_INDEX_FILE = $null
+      Remove-Item $tmp -ErrorAction SilentlyContinue
+    }
+  }
+
+  Assert "the guide has a fingerprint entry, reachable from the Marker" {
+    if ($g -notmatch '(?im)^##\s+Fingerprint the working tree') { throw 'no fingerprint entry' }
+    if ($g -notmatch '(?is)Marker''s second fact') { throw 'the entry does not tie itself to the Marker' }
+    $true
+  }
+
+  Assert "the index path is asked for rather than assumed, with the invocation and the reason" {
+    if ($g -notmatch '(?i)rev-parse --path-format=absolute --git-path index') { throw 'the invocation is missing' }
+    if ($g -notmatch '(?is)worktree.{0,60}is a file') { throw 'the reason the path cannot be hardcoded is unstated' }
+    $true
+  }
+
+  Assert "both shell forms ship, since the guide reaches repositories driven from either" {
+    if ($g -notmatch '(?s)```sh\b') { throw 'no sh form' }
+    if ($g -notmatch '(?s)```powershell\b') { throw 'no powershell form' }
+    if ($g -notmatch '(?i)GIT_INDEX_FILE') { throw 'neither form sets the index override' }
+    if ($g -notmatch '(?i)leaks into the next command') { throw 'the powershell form does not warn that the variable persists' }
+    $true
+  }
+
+  Assert "the seeding is stated as the thing that makes the check affordable" {
+    if ($g -notmatch '(?is)seeded from') { throw 'the seeding is not described' }
+    if ($g -notmatch '(?is)stat cache') { throw 'the reason seeding matters is unstated' }
+    if ($g -notmatch '(?is)re-hashe?s? every file') { throw 'the cost of not seeding is unstated' }
+    $true
+  }
+
+  Assert "the coverage is stated: untracked in, ignored out, no clean-tree sentinel" {
+    if ($g -notmatch '(?is)tracked and untracked') { throw 'untracked coverage is unstated' }
+    if ($g -notmatch '(?is)ignored files? (are )?excluded|excluded because') { throw 'ignored exclusion is unstated' }
+    if ($g -notmatch '(?is)no sentinel') { throw 'nothing rules out a clean-tree special case' }
+    $true
+  }
+
+  # Rejections carry their reason, not their verdict: without it the cheaper
+  # invocation gets substituted later by someone who never learned why it lost.
+  Assert "both rejected forms are named with the reason each fails" {
+    if ($g -notmatch '(?is)stash create[^.]{0,200}untracked') { throw 'the stash form is not rejected on untracked files' }
+    if ($g -notmatch '(?is)there is no ``?-u``?') { throw 'the stash rejection cites no evidence' }
+    if ($g -notmatch '(?is)files changed and never') { throw 'the status-digest rejection does not say what it misses' }
+    $true
+  }
+
+  Assert "the recipe is deterministic against an unchanged tree" {
+    $a = & $fingerprint
+    $b = & $fingerprint
+    if ($a -ne $b) { throw "two runs over one tree disagreed: $a vs $b" }
+    if ($a -notmatch '^[0-9a-f]{40}$') { throw "not a tree object: $a" }
+    $true
+  }
+
+  # Sensitivity and untracked coverage in one, and non-destructively: an added
+  # untracked file is the case `git stash create` cannot see, so proving the
+  # fingerprint moves for it is proving the rejection above was necessary.
+  Assert "an untracked file moves the fingerprint, and removing it moves it back" {
+    $probe = Join-Path $repo 'mechanics-fingerprint-probe.tmp'
+    $before = & $fingerprint
+    try {
+      Set-Content $probe 'probe' -NoNewline
+      $dirty = & $fingerprint
+      if ($dirty -eq $before) { throw 'an untracked file left the fingerprint unchanged' }
+    } finally {
+      Remove-Item $probe -ErrorAction SilentlyContinue
+    }
+    $after = & $fingerprint
+    if ($after -ne $before) { throw "the tree was restored and the fingerprint was not: $before vs $after" }
+    $true
+  }
+
+  Assert "running it leaves the repository's own index byte-identical" {
+    $idx = & git -C $repo rev-parse --path-format=absolute --git-path index
+    $before = (Get-FileHash $idx -Algorithm SHA256).Hash
+    & $fingerprint | Out-Null
+    $after = (Get-FileHash $idx -Algorithm SHA256).Hash
+    if ($before -ne $after) { throw 'the recipe wrote the real index' }
+    $true
+  }
+}
+
+# --- ticket mechanics/06 — decisions declare their fields ---------------------
+
+Describe-Ticket 'mechanics/06' 'decisions declare status, supersession, and scope' {
+
+  $d = Get-SkillFile 'configure/policies/decisions.template.md'
+
+  Assert "every declared field is named, with what reads it" {
+    foreach ($f in 'status', 'load-when', 'sources', 'supersedes', 'superseded-by') {
+      if ($d -notmatch [regex]::Escape($f)) { throw "the $f field is unnamed" }
+    }
+    if ($d -notmatch '(?is)Read by') { throw 'the fields are listed without their readers' }
+    $true
+  }
+
+  # The load-condition rule is the context format's single home, so this format
+  # reaches it by pointer. Asserting the *statement* here would have required
+  # the second home the `$rulePattern` sweep now forbids — found by the review
+  # axis, after both policies had independently stated it.
+  Assert "the routing mechanism is adopted by pointer, not restated" {
+    if ($d -notmatch '(?is)\.claude/policies/context\.md') { throw 'the format does not point at the routing mechanism' }
+    if ($d -notmatch '(?is)not repeated here|deliberately not repeated') { throw 'nothing says the rule is not restated here' }
+    if ($d -notmatch '(?is)supersession pair below') { throw 'the format does not say what is its own rather than borrowed' }
+    $true
+  }
+
+  Assert "supersession is written at both ends, in one change, and one-sidedness is a defect" {
+    if ($d -notmatch '(?is)both ends') { throw 'supersession is not two-ended' }
+    if ($d -notmatch '(?is)same change') { throw 'the timing is unstated' }
+    if ($d -notmatch '(?is)absent at the other is a \*\*defect\*\*|is a \*\*defect\*\*') { throw 'a one-sided claim is not called a defect' }
+    $true
+  }
+
+  # Presence is symmetric with its negation, so the half that actually goes
+  # wrong is asserted on its own: writing the new end is the tempting one,
+  # because that is the file already open.
+  Assert "the tempting half is named, with the reader it strands" {
+    if ($d -notmatch '(?is)only the new end is the tempting half|writing only the new end') {
+      throw 'nothing identifies which end gets forgotten'
+    }
+    if ($d -notmatch '(?is)no way to learn it is dead') { throw 'the consequence for the stranded reader is unstated' }
+    $true
+  }
+
+  Assert "the freeze survives, and says which fields still move" {
+    if ($d -notmatch '(?is)reasoning is \*\*frozen\*\*') { throw 'the freeze is gone' }
+    if ($d -notmatch '(?is)only ``?status``? and ``?superseded-by``? move') { throw 'the moving fields are not enumerated' }
+    if ($d -notmatch '(?is)never the prose') { throw 'the prose is not protected' }
+    $true
+  }
+
+  Assert "the preserve-the-number rule is unchanged, and stated exactly once" {
+    $hits = [regex]::Matches($d, '(?i)preserve each ADR''s existing number')
+    if ($hits.Count -ne 1) { throw "the numbering rule appears $($hits.Count) times, not once" }
+    if ($d -notmatch '(?is)they resolve by number') { throw 'the reason renumbering breaks references is gone' }
+    $true
+  }
+
+  Assert "the shipped template shows the fields it describes" {
+    $tpl = [regex]::Match($d, '(?s)```md\r?\n(.*?)```')
+    if (-not $tpl.Success) { throw 'the template block is missing' }
+    foreach ($f in 'status:', 'load-when:', 'sources:', 'supersedes:', 'superseded-by:') {
+      if ($tpl.Groups[1].Value -notmatch [regex]::Escape($f)) { throw "the template block omits $f" }
+    }
+    $true
+  }
+}
+
+# --- ticket mechanics/07 — contexts declare their sources and load condition --
+
+# Two criteria here are about build failures over data this repository does not
+# carry yet — its contexts gain fields in `mechanics/12`. A guard written
+# against that data would pass vacuously until then, which is the shape this
+# repository has shipped four broken guards in. So the checks are written as
+# validators and proved against synthetic input: they fail on a bad context now,
+# with nothing on disk to depend on.
+Describe-Ticket 'mechanics/07' 'contexts declare their sources and their load condition' {
+
+  $c = Get-SkillFile 'configure/policies/context.template.md'
+
+  $parseFields = {
+    param([string]$Text)
+    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $fm.Success) { return $null }
+    $lw = [regex]::Match($fm.Groups[1].Value, '(?m)^load-when:\s*(.+?)\s*$')
+    $sr = [regex]::Match($fm.Groups[1].Value, '(?m)^sources:\s*\[(.*?)\]\s*$')
+    if (-not $lw.Success -or -not $sr.Success) { return $null }
+    @{
+      LoadWhen = $lw.Groups[1].Value
+      Sources  = @($sr.Groups[1].Value -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    }
+  }
+
+  Assert "the policy names the fields and says the table is generated from them" {
+    if ($c -notmatch '(?is)generated from the fields each context declares') { throw 'the table is not declared generated' }
+    if ($c -notmatch '(?i)load-when') { throw 'the load-when field is unnamed' }
+    if ($c -notmatch '(?i)sources') { throw 'the sources field is unnamed' }
+    if ($c -notmatch '(?is)never hand-edited') { throw 'hand-editing is not prohibited' }
+    $true
+  }
+
+  Assert "generation is justified by the drift it makes impossible" {
+    if ($c -notmatch '(?is)cannot disagree with its directory') { throw 'the impossibility is unstated' }
+    if ($c -notmatch '(?is)not a second statement') { throw 'the reason is unstated, so the claim is an assertion' }
+    if ($c -notmatch '(?is)replaces the audit') { throw 'nothing says the audit obligation is retired rather than supplemented' }
+    $true
+  }
+
+  # The field moved; the meaning did not. Without this the next reader treats a
+  # declared source as an inventory of what is there.
+  Assert "a declared source is still a coordinate, and verify-before-use stays where it was" {
+    if ($c -notmatch '(?is)navigation coordinate, never a claim') { throw 'the coordinate rule is gone' }
+    if ($c -notmatch '(?is)moved where the pointer is written and nothing about what it means') {
+      throw 'nothing says the field changed the location and not the meaning'
+    }
+    # Stated by pointer, not restated: the rule's home is the always-on tier.
+    if ($c -match '(?is)verify (it|the pointer|every pointer) before (you )?(use|rely)') {
+      throw 'the verify-before-use rule has acquired a second home here'
+    }
+    $true
+  }
+
+  # `-cmatch`, not `-match`. PowerShell's `-match` is case-insensitive, so the
+  # capitalised prose form this checks for was matching the lowercase `sources:`
+  # field that replaced it — the guard fired on exactly the thing it exists to
+  # certify, and read as the format being unconverted.
+  Assert "the domain example shows fields, and no prose source line survives" {
+    if ($c -cmatch '(?m)^Sources:\s') { throw 'a prose Sources line survives in the format' }
+    $ex = [regex]::Match($c, '(?s)# Database.*?```')
+    if (-not $ex.Success) { throw 'the domain example is missing' }
+    $true
+  }
+
+  Assert "every file under contexts still has exactly one row, repository.md included" {
+    if ($c -notmatch '(?is)exactly one row, including ``?repository\.md``?') {
+      throw 'the one-row-per-file rule no longer names the file that is always forgotten'
+    }
+    $true
+  }
+
+  # Proved against synthetic input rather than against the tree, so it is a
+  # working check today and not one that starts working after mechanics/12.
+  Assert "a context declaring no fields is rejected, and one declaring them is accepted" {
+    $good = "---`nload-when: the request touches sessions or tokens`nsources: [src/auth/]`n---`n`n# Auth`n"
+    $bad  = "# Auth`n`nSources: ``src/auth/```n"
+    if ($null -eq (& $parseFields $good)) { throw 'a well-formed context was rejected' }
+    if ($null -ne (& $parseFields $bad))  { throw 'a context with a prose source line was accepted' }
+    $true
+  }
+
+  Assert "an unresolvable declared source is caught, and a resolvable one is not" {
+    $resolves = { param($f) @($f.Sources | Where-Object { -not (Test-Path (Join-Path $repo $_)) }) }
+    $ok  = & $parseFields "---`nload-when: x`nsources: [skills/, agents/]`n---`n# A`n"
+    $bad = & $parseFields "---`nload-when: x`nsources: [src/nowhere/]`n---`n# A`n"
+    if ((& $resolves $ok).Count -ne 0)  { throw 'a resolvable source was reported broken' }
+    if ((& $resolves $bad).Count -eq 0) { throw 'a source pointing at nothing was accepted' }
+    $true
+  }
+}
+
+# --- ticket mechanics/03 — the protocol's marker check compares both halves ---
+
+Describe-Ticket 'mechanics/03' 'the protocol template compares both marker facts' {
+
+  $p = Get-SkillFile 'configure/protocol.template.md'
+  # Get-Section supplies its own `^##` anchor, so the pattern is the fragment
+  # that follows it — passing a full heading regex matches nothing and throws.
+  $marker = Get-Section $p 'Trusting Context'
+
+  Assert "the marker section resolves, and to itself" {
+    if (-not $marker) { throw 'the marker section is gone' }
+    if ($marker -notmatch '(?is)two facts') { throw 'the marker still holds one fact' }
+    $true
+  }
+
+  Assert "the check compares both facts and states that no third condition exists" {
+    if ($marker -notmatch '(?is)commit == HEAD\s+AND\s+marker\.json tree ==') { throw 'the rule block compares one fact' }
+    if ($marker -notmatch '(?is)no third condition') { throw 'nothing rules out a further condition' }
+    $true
+  }
+
+  # The whole file, not the section: a clean-tree condition reintroduced in the
+  # report example is the same defect one line lower down, and that example was
+  # where it actually survived the first edit.
+  Assert "no clean-tree condition survives anywhere in the router" {
+    foreach ($sent in [regex]::Split($p, '(?<=\.)\s+')) {
+      if ($sent -match '(?i)(tree (is )?clean|clean tree|working tree carries no|no (uncommitted|local) changes)' -and
+          $sent -match '(?i)(trusted|no reading|skip|match)' -and
+          $sent -notmatch '(?i)(absent|unknown|falls back|same kind of value|no third condition)') {
+        throw "a clean-tree condition survives: $sent"
+      }
+    }
+    $true
+  }
+
+  Assert "the licence is bounded, and the stronger reading is refused by name" {
+    if ($marker -notmatch '(?is)drift reads may be skipped|two drift reads may be skipped') { throw 'the licence is unstated' }
+    if ($marker -notmatch '(?is)does\s+\*{0,2}not\*{0,2}\s+say any knowledge is correct') { throw 'the stronger reading is not refused' }
+    if ($marker -notmatch '(?is)verification at use is unaffected') { throw 'verification at use is not held harmless' }
+    $true
+  }
+
+  Assert "the re-stamp permission is stated with its condition and its refusal" {
+    if ($marker -notmatch '(?is)re-stamp the tree fact alone') { throw 'no re-stamp permission' }
+    if ($marker -notmatch '(?is)conditional on the dealing and never on the reading') { throw 'the condition is not the dealing' }
+    if ($marker -notmatch '(?is)neither healed nor discounted[^.]{0,80}re-stamps nothing') { throw 'the refusal is unstated' }
+    $true
+  }
+
+  Assert "an absent tree fact falls back rather than failing" {
+    if ($marker -notmatch '(?is)no tree fact means the tree is unknown') { throw 'the absent case is undefined' }
+    if ($marker -notmatch '(?is)read the tree live') { throw 'the fallback behaviour is unstated' }
+    $true
+  }
+
+  # The recipe has one home, in the tool guide. A router that inlined it would
+  # be the second home, and the one nobody updates when the invocation changes.
+  Assert "the fingerprint invocation is reached by pointer and restated nowhere" {
+    if ($marker -notmatch '(?is)\.claude/tools/git\.md') { throw 'the router does not point at the guide' }
+    if ($p -match '(?i)git write-tree|GIT_INDEX_FILE') { throw 'the router inlines the fingerprint invocation' }
+    $true
+  }
+}
+
+# --- ticket mechanics/08 — the index is generated, and review routes through it -
+
+# The regenerator lives here because the suite is what checks it, and it is
+# proved against a fixture directory rather than against `.claude/decisions/`:
+# this repository's ADRs gain their fields in `mechanics/12`, so a check written
+# against real data would pass vacuously until then — which is the shape of every
+# broken guard this file records.
+Describe-Ticket 'mechanics/08' 'the decisions index is generated, and review routes through it' {
+
+  $readFields = {
+    param([string]$Text)
+    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $fm.Success) { return $null }
+    $b = $fm.Groups[1].Value
+    $get = { param($n) $m = [regex]::Match($b, "(?m)^$n`:\s*(.*?)\s*$"); if ($m.Success) { $m.Groups[1].Value } else { $null } }
+    $lw = & $get 'load-when'
+    $st = & $get 'status'
+    if (-not $lw -or -not $st) { return $null }
+    $list = { param($n) $v = & $get $n; if ($null -eq $v) { @() } else { @($v.Trim('[', ']') -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } }
+    @{
+      LoadWhen     = $lw
+      Status       = $st
+      Sources      = & $list 'sources'
+      Supersedes   = & $list 'supersedes'
+      SupersededBy = & $list 'superseded-by'
+    }
+  }
+
+  # One row per file in numeric order — the order is part of the output, or two
+  # regenerations of one directory would differ and "byte-identical" would mean
+  # nothing.
+  $render = {
+    param([hashtable]$Docs)
+    $lines = @('# Decision map', '', '| ADR | Load when | Status | Sources |', '| --- | --- | --- | --- |')
+    foreach ($k in ($Docs.Keys | Sort-Object)) {
+      $d = $Docs[$k]
+      $src = if ($d.Sources.Count) { ($d.Sources | ForEach-Object { "``$_``" }) -join ', ' } else { '—' }
+      $lines += "| [$k]($($d.File)) | $($d.LoadWhen) | $($d.Status) | $src |"
+    }
+    ($lines -join "`n") + "`n"
+  }
+
+  # A fixture directory, built and torn down per run. Two ADRs, one superseding
+  # the other, both ends declared — the shape the checks below are about.
+  $mkFixture = {
+    $dir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+    New-Item -ItemType Directory -Path $dir | Out-Null
+    Set-Content (Join-Path $dir '0001-old.md') @"
+---
+status: superseded
+load-when: the old approach is in question
+sources: [skills/]
+supersedes: []
+superseded-by: [0002]
+---
+
+# Old
+"@
+    Set-Content (Join-Path $dir '0002-new.md') @"
+---
+status: accepted
+load-when: the new approach is in question
+sources: [agents/]
+supersedes: [0001]
+superseded-by: []
+---
+
+# New
+"@
+    $dir
+  }
+
+  $load = {
+    param([string]$Dir)
+    $docs = @{}
+    foreach ($f in Get-ChildItem $Dir -File -Filter '*.md' | Where-Object { $_.Name -ne 'map.md' }) {
+      $n = [regex]::Match($f.Name, '^(\d{4})-').Groups[1].Value
+      if (-not $n) { throw "$($f.Name) is not numbered" }
+      $d = & $readFields (Get-Content $f.FullName -Raw)
+      if ($null -eq $d) { throw "$($f.Name) declares no fields" }
+      $d.File = $f.Name
+      $docs[$n] = $d
+    }
+    $docs
+  }
+
+  Assert "regenerating over an unchanged directory produces a byte-identical file" {
+    $dir = & $mkFixture
+    try {
+      $first = & $render (& $load $dir)
+      Set-Content (Join-Path $dir 'map.md') $first -NoNewline
+      $second = & $render (& $load $dir)
+      $onDisk = Get-Content (Join-Path $dir 'map.md') -Raw
+      if ($second -ne $onDisk) { throw 'a regeneration differed from the file it had just written' }
+    } finally { Remove-Item $dir -Recurse -Force }
+    $true
+  }
+
+  Assert "a hand edit to a generated index is caught, and the file is named" {
+    $dir = & $mkFixture
+    try {
+      $gen = & $render (& $load $dir)
+      $map = Join-Path $dir 'map.md'
+      Set-Content $map ($gen -replace 'the new approach is in question', 'hand-written note') -NoNewline
+      $onDisk = Get-Content $map -Raw
+      if ($onDisk -eq (& $render (& $load $dir))) { throw 'a hand edit was not detected' }
+    } finally { Remove-Item $dir -Recurse -Force }
+    $true
+  }
+
+  Assert "a file carrying no declared fields is caught, and named" {
+    $dir = & $mkFixture
+    try {
+      Set-Content (Join-Path $dir '0003-bare.md') "# Bare`n`nNo frontmatter.`n"
+      $caught = $null
+      try { & $load $dir | Out-Null } catch { $caught = $_.Exception.Message }
+      if (-not $caught) { throw 'a fieldless ADR was accepted into the index' }
+      if ($caught -notmatch '0003-bare\.md') { throw "the failure does not name the file: $caught" }
+    } finally { Remove-Item $dir -Recurse -Force }
+    $true
+  }
+
+  # Symmetry, both directions. Checking only one leaves the other half of the
+  # graph unguarded, and the half that gets forgotten is the older file's.
+  Assert "a one-sided supersession is caught, and names both files" {
+    $check = {
+      param($Docs)
+      $bad = @()
+      foreach ($k in $Docs.Keys) {
+        foreach ($t in $Docs[$k].Supersedes) {
+          if (-not $Docs.ContainsKey($t)) { $bad += "$k names $t, which is not here"; continue }
+          if ($Docs[$t].SupersededBy -notcontains $k) { $bad += "$k supersedes $t and $t does not say so" }
+        }
+        foreach ($t in $Docs[$k].SupersededBy) {
+          if (-not $Docs.ContainsKey($t)) { $bad += "$k names $t, which is not here"; continue }
+          if ($Docs[$t].Supersedes -notcontains $k) { $bad += "$k is superseded by $t and $t does not say so" }
+        }
+      }
+      $bad
+    }
+    $dir = & $mkFixture
+    try {
+      if ((& $check (& $load $dir)).Count -ne 0) { throw 'a symmetric graph was reported broken' }
+      # Strip the old file's end only — the direction an author actually forgets.
+      $old = Join-Path $dir '0001-old.md'
+      Set-Content $old ((Get-Content $old -Raw) -replace 'superseded-by: \[0002\]', 'superseded-by: []')
+      $bad = & $check (& $load $dir)
+      if ($bad.Count -eq 0) { throw 'a one-sided supersession was accepted' }
+      if (($bad -join ' ') -notmatch '0002' -or ($bad -join ' ') -notmatch '0001') {
+        throw "the failure does not name both files: $($bad -join '; ')"
+      }
+    } finally { Remove-Item $dir -Recurse -Force }
+    $true
+  }
+
+  # The shipped router only. The installed one keeps routing at the directory
+  # until `mechanics/12` generates this repository's index — adopting the row
+  # first would point the router at a file that does not exist, which is a
+  # broken Source Pointer shipped to gain nothing. ADR 0025's ship-then-adopt
+  # order is not a formality here; it is what keeps the pointer resolvable.
+  # `mechanics/13` adopts it.
+  Assert "the shipped review row routes through the index rather than the directory" {
+    $f = Get-SkillFile 'configure/protocol.template.md'
+    $row = [regex]::Match($f, '(?m)^\|\s*`/review`\s*\|([^\r\n]*)')
+    if (-not $row.Success) { throw 'the review row is missing' }
+    $v = $row.Groups[1].Value
+    if ($v -notmatch 'decisions/map\.md') { throw 'the review row does not name the index' }
+    if ($v -match '`\.claude/decisions/`') { throw 'the review row still names the whole directory' }
+    $true
+  }
+
+  Assert "the decisions format shows the index it generates, with the status column" {
+    $d = Get-SkillFile 'configure/policies/decisions.template.md'
+    if ($d -notmatch '(?is)decisions/map\.md') { throw 'the index file is unnamed' }
+    if ($d -notmatch '(?is)\|\s*ADR\s*\|\s*Load when\s*\|\s*Status\s*\|\s*Sources\s*\|') { throw 'the index shape is not shown' }
+    if ($d -notmatch '(?is)opens only the ADRs it names') { throw 'nothing says a stage stops reading the directory whole' }
+    $true
+  }
+}
+
+# --- ticket mechanics/04 — /commit writes both, and the re-stamp has one home -
+
+Describe-Ticket 'mechanics/04' 'the commit stage writes both facts, and a stage may re-stamp the tree' {
+
+  $c = Get-SkillFile 'commit/SKILL.md'
+  $p = Get-SkillFile 'configure/protocol.template.md'
+
+  Assert "committing writes both facts, in one write" {
+    if ($c -notmatch '(?is)Write \*\*both facts\*\*') { throw 'the commit stage still writes one fact' }
+    if ($c -notmatch '(?is)"tree"') { throw 'the example marker carries no tree fact' }
+    if ($c -notmatch '(?is)written \*\*together\*\*') { throw 'nothing says the pair is written together' }
+    $true
+  }
+
+  # The failure a half-write produces is silent and downstream, so the reason is
+  # carried rather than the instruction alone.
+  Assert "a half-fresh pair is refused, with what it would cost" {
+    if ($c -notmatch '(?is)stale tree beside it') { throw 'the half-write case is unnamed' }
+    if ($c -notmatch '(?is)skip a drift read on the strength of it') { throw 'the consequence of a half-write is unstated' }
+    $true
+  }
+
+  Assert "the report says which happened to the drift, not merely that it was read" {
+    if ($p -notmatch '(?is)report says which happened to it') { throw 'the report obligation does not reach the disposal' }
+    if ($p -notmatch '(?is)healed, or discounted') { throw 'the two dispositions are unnamed' }
+    if ($p -notmatch '(?is)has not earned the re-stamp') { throw 'nothing ties the report to the permission' }
+    $true
+  }
+
+  # The behavioural pair the ticket is actually about, asserted over the rule
+  # rather than over a run: a matching tree skips the read, a changed one does
+  # not. Both directions, because a rule that only ever skips is not a cache.
+  Assert "an unchanged tree is read once and a changed one is read again" {
+    $marker = Get-Section $p 'Trusting Context'
+    if ($marker -notmatch '(?is)drift reads may be skipped') { throw 'a match does not skip the read' }
+    if ($marker -notmatch '(?is)otherwise\s*\r?\n\s*→ read the drift') { throw 'a mismatch does not read the drift' }
+    if ($marker -notmatch '(?is)dirty tree that has not changed since its drift was read matches') {
+      throw 'the case the second fact exists for is unstated'
+    }
+    $true
+  }
+
+  # Single home is enforced by the repository's own sweep, which now carries an
+  # entry for this permission; asserting it a second time here would be the
+  # duplication that sweep exists to catch. What is left for this ticket is that
+  # the permission is stated in the router at all — the sweep reports "stated
+  # nowhere" and "restated in" alike, and only one of those is this ticket's.
+  Assert "the permission is stated, and in the file that owns the Marker" {
+    $homes = Get-SkillFiles |
+      Where-Object { (Get-SkillText $_) -match '(?i)re-stamp the tree fact alone' } |
+      ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
+    if ($homes -notcontains 'configure/protocol.template.md') {
+      throw "the router does not state it; found in: $($homes -join ', ')"
+    }
+    $true
+  }
+}
+
+# --- ticket mechanics/12 — this repository's knowledge declares its fields ----
+
+# Unlike mechanics/07 and /08, these run against the real directories. That is
+# the point of this ticket: the machinery those two proved on fixtures now has
+# data, and a regression here is a knowledge file that stopped declaring fields
+# rather than a checker that stopped working.
+Describe-Ticket 'mechanics/12' 'this repository''s decisions and contexts declare their fields' {
+
+  $readFields = {
+    param([string]$Text)
+    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $fm.Success) { return $null }
+    $b = $fm.Groups[1].Value
+    $get = { param($n) $m = [regex]::Match($b, "(?m)^$n`:\s*(.*?)\s*$"); if ($m.Success) { $m.Groups[1].Value } else { $null } }
+    $lw = & $get 'load-when'
+    if (-not $lw) { return $null }
+    $list = { param($n) $v = & $get $n; if ($null -eq $v) { @() } else { @($v.Trim('[', ']') -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } }
+    @{ LoadWhen = $lw; Status = (& $get 'status'); Sources = (& $list 'sources')
+       Supersedes = (& $list 'supersedes'); SupersededBy = (& $list 'superseded-by') }
+  }
+  $fmtSrc = { param($s) if ($s.Count) { ($s | ForEach-Object { "``$_``" }) -join ', ' } else { '—' } }
+
+  $dDir = Join-Path $repo '.claude/decisions'
+  $cDir = Join-Path $repo '.claude/contexts'
+  $adrFiles = @(Get-ChildItem $dDir -File -Filter '*.md' | Where-Object { $_.Name -ne 'map.md' } | Sort-Object Name)
+  $ctxFiles = @(Get-ChildItem $cDir -File -Filter '*.md' | Where-Object { $_.Name -ne 'map.md' })
+
+  $adrs = @{}
+  foreach ($f in $adrFiles) { $adrs[$f.Name.Substring(0, 4)] = (& $readFields (Get-Content $f.FullName -Raw)) }
+
+  Assert "every Decision declares its fields, with its number and slug unchanged" {
+    foreach ($f in $adrFiles) {
+      if ($f.Name -notmatch '^\d{4}-[a-z0-9-]+\.md$') { throw "$($f.Name) was renamed out of the numbering convention" }
+      if ($null -eq $adrs[$f.Name.Substring(0, 4)]) { throw "$($f.Name) declares no fields" }
+    }
+    if ($adrFiles.Count -lt 50) { throw "only $($adrFiles.Count) decisions found — the directory looks truncated" }
+    $true
+  }
+
+  Assert "every Context declares its fields, and no prose source line survives" {
+    foreach ($f in $ctxFiles) {
+      $t = Get-Content $f.FullName -Raw
+      if ($null -eq (& $readFields $t)) { throw "$($f.Name) declares no fields" }
+      if ($t -cmatch '(?m)^Sources:\s') { throw "$($f.Name) still carries a prose Sources line" }
+      if ($t -match '(?m)^Load when\b') { throw "$($f.Name) still carries a prose load condition" }
+    }
+    $true
+  }
+
+  Assert "every declared source resolves" {
+    foreach ($set in @(@{ D = $dDir; F = $adrFiles }, @{ D = $cDir; F = $ctxFiles })) {
+      foreach ($f in $set.F) {
+        $d = & $readFields (Get-Content $f.FullName -Raw)
+        foreach ($s in $d.Sources) {
+          if (-not (Test-Path (Join-Path $repo $s))) { throw "$($f.Name) declares $s, which does not resolve" }
+        }
+      }
+    }
+    $true
+  }
+
+  # Regeneration, against the real directories. The renderers below are the ones
+  # that wrote the files; if they drift apart, this fails rather than the map
+  # going quietly stale.
+  Assert "both indexes regenerate byte-identically" {
+    $rows = foreach ($f in $adrFiles) {
+      $d = $adrs[$f.Name.Substring(0, 4)]
+      "| [$($f.Name.Substring(0,4))]($($f.Name)) | $($d.LoadWhen) | $($d.Status) | $(& $fmtSrc $d.Sources) |"
+    }
+    $want = ((@('# Decision map', '', '| ADR | Load when | Status | Sources |', '| --- | --- | --- | --- |') + $rows) -join "`n") + "`n"
+    $have = (Get-Content (Join-Path $dDir 'map.md') -Raw) -replace "`r`n", "`n"
+    if ($want -ne $have) { throw 'the decision index differs from a regeneration' }
+
+    $ordered = @($ctxFiles | Where-Object { $_.Name -eq 'repository.md' }) +
+               @($ctxFiles | Where-Object { $_.Name -ne 'repository.md' } | Sort-Object Name)
+    $crows = foreach ($f in $ordered) {
+      $d = & $readFields (Get-Content $f.FullName -Raw)
+      "| [$([System.IO.Path]::GetFileNameWithoutExtension($f.Name))]($($f.Name)) | $($d.LoadWhen) | $(& $fmtSrc $d.Sources) |"
+    }
+    $cwant = ((@('# Context map', '', '| Context | Load when | Sources |', '| --- | --- | --- |') + $crows) -join "`n") + "`n"
+    $chave = (Get-Content (Join-Path $cDir 'map.md') -Raw) -replace "`r`n", "`n"
+    if ($cwant -ne $chave) { throw 'the context index differs from a regeneration' }
+    $true
+  }
+
+  Assert "the supersession graph is symmetric in both directions" {
+    $bad = @()
+    foreach ($k in $adrs.Keys) {
+      foreach ($t in $adrs[$k].Supersedes) {
+        if (-not $adrs.ContainsKey($t)) { $bad += "$k names $t, which is not here"; continue }
+        if ($adrs[$t].SupersededBy -notcontains $k) { $bad += "$k supersedes $t and $t does not say so" }
+      }
+      foreach ($t in $adrs[$k].SupersededBy) {
+        if (-not $adrs.ContainsKey($t)) { $bad += "$k names $t, which is not here"; continue }
+        if ($adrs[$t].Supersedes -notcontains $k) { $bad += "$k is superseded by $t and $t does not say so" }
+      }
+    }
+    if ($bad.Count) { throw ($bad -join '; ') }
+    $true
+  }
+
+  # The two claims that existed as `status:` lines before this migration. Named
+  # explicitly so that dropping either shows up as this assertion rather than as
+  # a symmetric-but-empty graph, which the check above would pass.
+  Assert "the two pre-existing supersession claims are recorded at both ends" {
+    foreach ($pair in @(@('0003', '0006'), @('0005', '0010'))) {
+      $old, $new = $pair
+      if ($adrs[$old].SupersededBy -notcontains $new) { throw "$old does not record $new" }
+      if ($adrs[$new].Supersedes -notcontains $old) { throw "$new does not record $old" }
+      if ($adrs[$old].Status -ne 'superseded') { throw "$old is not marked superseded" }
+    }
+    $true
+  }
+
+  # A load condition that describes a topic passes every check above. Nothing
+  # mechanical separates a trigger from a subject, so this catches only the
+  # coarsest tell — a condition that is a bare noun phrase with no verb at all.
+  # The real check was reading all fifty-four; this stops the obvious relapse.
+  Assert "no load condition is a bare topic" {
+    foreach ($k in $adrs.Keys) {
+      $w = $adrs[$k].LoadWhen
+      if ($w -notmatch '\b(is|are|was|were|has|have|needs?|meets?|reaches?|touches?|conflicts?|disagrees?|differs?|moves?|stops?|fails?|omits?|ends?|declares?|writes?|reads?|wrote|found|being|about to|would|cannot|includes?)\b') {
+        throw "$k reads as a topic rather than a trigger: '$w'"
+      }
+    }
+    $true
+  }
+
+  Assert "the installed review row routes through the index that now exists" {
+    $c = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    $row = [regex]::Match($c, '(?m)^\|\s*`/review`\s*\|([^\r\n]*)')
+    if (-not $row.Success) { throw 'the review row is missing' }
+    if ($row.Groups[1].Value -notmatch 'decisions/map\.md') { throw 'the installed row does not name the index' }
+    if (-not (Test-Path (Join-Path $dDir 'map.md'))) { throw 'the row names an index that does not exist' }
+    $true
+  }
+}
+
+# --- ticket mechanics/13 — adopt the remaining changed templates here ---------
+
+# The installed-matches-template checks for this effort live here and nowhere
+# else, the way `scaffolding/05` owns the ones for its own effort. A second copy
+# in the ticket that *shipped* a template would fail for the whole window ADR
+# 0025 deliberately opens between shipping and adopting.
+Describe-Ticket 'mechanics/13' 'the changed templates are adopted here' {
+
+  $stripComments = { param($t) ($t -replace '(?s)<!--.*?-->', '').Trim() -replace "`r`n", "`n" }
+
+  foreach ($p in @('context', 'decisions')) {
+    Assert "the installed $p policy matches the template it was copied from" {
+      $t = & $stripComments (Get-SkillFile "configure/policies/$p.template.md")
+      $i = & $stripComments (Get-Content (Join-Path $repo ".claude/policies/$p.md") -Raw)
+      if ($t -ne $i) { throw 'the installed copy has diverged from its template' }
+      $true
+    }
+  }
+
+  Assert "the installed router matches the template it was copied from" {
+    $t = & $stripComments (Get-SkillFile 'configure/protocol.template.md')
+    $i = & $stripComments (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)
+    if ($t -ne $i) { throw 'the installed router has diverged from its template' }
+    $true
+  }
+
+  # The tool reference is *derived* rather than copied (ADR 0019), so this is
+  # not a text comparison: what must carry over is the entry and the two things
+  # about it that are not obvious from the commands.
+  Assert "the derived git guide carries the fingerprint entry, intact" {
+    $g = Get-Content (Join-Path $repo '.claude/tools/git.md') -Raw
+    if ($g -notmatch '(?im)^##\s+Fingerprint the working tree') { throw 'the entry did not carry over' }
+    if ($g -notmatch '(?i)stat cache') { throw 'the seeding rationale did not carry over' }
+    if ($g -notmatch '(?is)there is no ``?-u``?') { throw 'the stash rejection did not carry over' }
+    $true
+  }
+
+  Assert "every spine stage still has exactly one row, and the table lost nothing local" {
+    $proto = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    foreach ($s in @('configure', 'design', 'implement', 'review', 'research', 'prototype', 'commit')) {
+      $rows = [regex]::Matches($proto, "(?m)^\|\s*``/$s``\s*\|")
+      if ($rows.Count -ne 1) { throw "/$s has $($rows.Count) rows, not one" }
+    }
+    if ($proto -notmatch 'decisions/map\.md') { throw 'the review row lost its index routing in adoption' }
+    $true
+  }
+
+  # Position is per-clone, so nothing committed may depend on it. The marker is
+  # the one file this effort taught to hold more, which makes it the one worth
+  # re-checking against that invariant.
+  Assert "nothing committed depends on this clone's position state" {
+    & git -C $repo check-ignore -q '.claude/position/marker.json'
+    if ($LASTEXITCODE -ne 0) { throw 'the marker is not ignored — a clone would commit its own position' }
+    $tracked = & git -C $repo ls-files '.claude/position/'
+    if ($tracked) { throw "position state is tracked: $tracked" }
+    $true
+  }
+}
+
+# --- ticket mechanics/14 — the migration converts knowledge to declared fields -
+
+Describe-Ticket 'mechanics/14' 'the migration converts a repository''s knowledge to declared fields' {
+
+  $m = Get-SkillFile 'configure/MIGRATION.md'
+
+  Assert "the row exists, and recognition names both halves" {
+    if ($m -notmatch '(?im)^##\s+Knowledge that predates declared fields') { throw 'no row for the old shape' }
+    if ($m -notmatch '(?is)both halves') { throw 'recognition is not two-sided' }
+    if ($m -notmatch '(?is)decisions/``? is populated|decisions/`` is populated|is populated') {
+      throw 'the first half of recognition is unstated'
+    }
+    if ($m -notmatch '(?is)declare no frontmatter fields') { throw 'the second half of recognition is unstated' }
+    $true
+  }
+
+  Assert "the existing table is the conversion's input rather than something discarded" {
+    if ($m -notmatch '(?is)input, not its casualty') { throw 'the table is not named as the input' }
+    if ($m -notmatch '(?is)carry each onto the file it describes') { throw 'nothing says the sentences move onto the files' }
+    $true
+  }
+
+  # The failure this row can produce is invisible to every check the shape adds,
+  # so the warning is the deliverable — not a nicety attached to it.
+  Assert "the judgement is named, shown file by file, and its silent failure described" {
+    if ($m -notmatch '(?is)judgement, and it is the one output nothing can check') { throw 'the judgement is not named' }
+    if ($m -notmatch '(?is)file by file') { throw 'the row is not shown per file' }
+    if ($m -notmatch '(?is)never as a count') { throw 'nothing rules out reporting it as a count' }
+    if ($m -notmatch '(?is)passes every assertion') { throw 'the invisibility of the failure is unstated' }
+    $true
+  }
+
+  Assert "prose supersession is reported rather than promoted, with the reason" {
+    if ($m -notmatch '(?is)reported, never promoted') { throw 'prose supersession is not held back' }
+    if ($m -notmatch '(?is)guess about what its author meant') { throw 'the reason is unstated' }
+    # `\s+` rather than a literal space: these files are hard-wrapped, so any
+    # multi-word pattern that assumes single spaces fails on the wrap point
+    # rather than on the claim.
+    if ($m -notmatch '(?is)partial supersession is not a\s+supersession') { throw 'the partial case is not distinguished' }
+    $true
+  }
+
+  Assert "numbers and slugs are preserved by citation rather than by restatement" {
+    if ($m -notmatch '(?is)Filenames and numbers do not move') { throw 'the preservation is unstated' }
+    if ($m -notmatch '(?is)numbering section') { throw 'the rule is restated rather than cited' }
+    $true
+  }
+
+  Assert "a repository already on declared fields is recognised as current" {
+    if ($m -notmatch '(?is)already declaring fields is \*\*current\*\*') { throw 'the no-op case is unstated' }
+    $true
+  }
+}
+
+# --- ticket mechanics/15 — configure carries the rest, and names what needs nothing -
+
+Describe-Ticket 'mechanics/15' 'configure carries the remaining mechanics, and names what needs nothing' {
+
+  $m = Get-SkillFile 'configure/MIGRATION.md'
+  $s = Get-SkillFile 'configure/SKILL.md'
+
+  # The whole point of this ticket: three cases that look alike and are not.
+  # A page that described them in one register would invite a run to repair the
+  # one that must only be reported.
+  Assert "the three are labelled apart, not described alike" {
+    if ($m -notmatch '(?is)\*\*not the same kind of work\*\*') { throw 'nothing warns they differ in kind' }
+    if ($m -notmatch '(?is)is repaired') { throw 'the repaired case is unlabelled' }
+    if ($m -notmatch '(?is)reported, never repaired') { throw 'the reported case is unlabelled' }
+    if ($m -notmatch '(?is)needs no conversion') { throw 'the nothing-to-do case is unlabelled' }
+    $true
+  }
+
+  Assert "the audit repairs the stage table, deriving it and preserving what is local" {
+    if ($s -notmatch '(?is)stage table that predates the precedence rule') { throw 'the audit has no row for it' }
+    if ($s -notmatch '(?is)preserve the repository-specific rows') { throw 'local rows are not protected' }
+    $true
+  }
+
+  # Presence is symmetric with its negation: "add the missing guide" and
+  # "surface the missing guide" both read as present. The refusal is asserted.
+  Assert "a missing guide is surfaced and never added silently, with the reason" {
+    if ($s -notmatch '(?is)surfaced in the plan, never added silently') { throw 'the refusal is unstated' }
+    if ($s -notmatch '(?is)may have been deliberate') { throw 'the reason a silent add is wrong is unstated' }
+    $true
+  }
+
+  Assert "unmarked drift findings stay unmarked, and the reason is what marking would require knowing" {
+    if ($m -notmatch '(?is)Leave every unmarked\s*\r?\n?finding unmarked|leave every unmarked finding unmarked') {
+      throw 'nothing says the findings are left alone'
+    }
+    if ($m -notmatch '(?is)question about knowledge elsewhere') { throw 'the reason is not what marking would require knowing' }
+    if ($m -notmatch '(?is)safe direction') { throw 'the default is not justified as the safe one' }
+    $true
+  }
+
+  Assert "the Marker needs nothing, says why, and configure declines to stamp it" {
+    if ($m -notmatch '(?is)tree is unknown') { throw 'the fallback state is unnamed' }
+    if ($m -notmatch '(?is)does \*\*not\*\* write a tree fact') { throw 'configure does not decline to stamp' }
+    if ($m -notmatch '(?is)this stage did neither') { throw 'the reason it declines is unstated' }
+    $true
+  }
+
+  Assert "the shipped roles are excluded by citation rather than by a fresh argument" {
+    if ($m -notmatch '(?is)arrive with the plugin') { throw 'the roles case is unstated' }
+    if ($m -notmatch '(?is)already recorded twice above') { throw 'the exclusion re-argues rather than cites' }
+    $true
+  }
+}
+
+# --- ticket mechanics/16 — a spent worktree is removed ------------------------
+
+Describe-Ticket 'mechanics/16' 'a spent worktree is removed, and the orchestrator decides when' {
+
+  $s = Get-SkillFile 'implement/SKILL.md'
+  $g = Get-SkillFile 'configure/tools/git.md'
+
+  # Spent is defined by an event — the work landing — not by elapsed time or by
+  # the child exiting. A child exits on failure too, and that worktree is the
+  # one case that must survive.
+  Assert "spent is defined by the work landing, not by the child exiting" {
+    if ($s -notmatch '(?is)spent when the work it held has landed') { throw 'no definition of spent' }
+    if ($s -notmatch '(?is)recoverable from the branch') { throw 'nothing says why a spent worktree is safe to remove' }
+    if ($s -match '(?is)spent (when|once)[^.]{0,60}(child (has )?exit|time|age|old)') {
+      throw 'spent is defined by the child exiting or by age, which would reach the kept case'
+    }
+    $true
+  }
+
+  Assert "the determination is the orchestrator's, with why neither other party can make it" {
+    if ($s -notmatch '(?is)determination is this stage''s and nobody else''s') { throw 'the owner is unnamed' }
+    if ($s -notmatch '(?is)harness created the worktree and cannot tell') { throw 'the harness is not ruled out' }
+    if ($s -notmatch '(?is)gone by the time the question becomes answerable') { throw 'the child is not ruled out' }
+    $true
+  }
+
+  # The two rules must meet without overlapping: retention exists for the
+  # resumable case, and a removal rule that reached it would delete the work
+  # resumption depends on.
+  Assert "retention survives, and the two rules are stated as not reaching each other" {
+    if ($s -notmatch '(?is)its worktree is kept') { throw 'the set-axis retention rule is gone' }
+    if ($s -notmatch '(?is)the worktree stays') { throw 'the exhausted-cap retention rule is gone' }
+    if ($s -notmatch '(?is)neither reaches the other''s case') { throw 'the boundary between them is unstated' }
+    $true
+  }
+
+  # Presence is symmetric with its negation — "force it when it refuses" reads
+  # as present too — so the refusal is asserted as a reason rather than a note.
+  Assert "removal is never forced, and the refusal is given as a second opinion" {
+    if ($s -notmatch '(?is)Never force it') { throw 'forcing is not ruled out' }
+    if ($s -notmatch '(?is)second opinion on this stage''s judgement') { throw 'the refusal is framed as an obstacle rather than a check' }
+    if ($s -notmatch '(?is)destroys the evidence') { throw 'the cost of forcing is unstated' }
+    $true
+  }
+
+  Assert "the rule is stated as holding for both axes" {
+    if ($s -notmatch '(?is)holds for both axes') { throw 'the rule does not say it crosses the two axes' }
+    $true
+  }
+
+  Assert "the git guide carries the invocations, and what prune does not do" {
+    if ($g -notmatch '(?im)^##\s+Remove a spent worktree') { throw 'no worktree entry in the guide' }
+    if ($g -notmatch '(?i)git worktree remove') { throw 'the removal invocation is missing' }
+    if ($g -notmatch '(?i)git worktree list --porcelain') { throw 'the listing invocation is missing' }
+    if ($g -notmatch '(?is)deletes no working directory') { throw 'prune is not distinguished from remove' }
+    if ($g -notmatch '(?is)``?--force``? exists and is not used here') { throw 'the guide does not rule out forcing' }
+    $true
+  }
+
+  # The guide states invocations; a reader who trusts one that does not run is
+  # worse off than one who had none. Run against this repository.
+  Assert "the documented invocations run as written" {
+    $listed = & git -C $repo worktree list --porcelain
+    if ($LASTEXITCODE -ne 0) { throw 'git worktree list --porcelain failed' }
+    if (($listed -join "`n") -notmatch '(?m)^worktree ') { throw 'the porcelain listing has no worktree line' }
+    & git -C $repo worktree prune -n | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'git worktree prune failed' }
+    $true
+  }
+
+  Assert "the derived guide carries the entry too" {
+    $i = Get-Content (Join-Path $repo '.claude/tools/git.md') -Raw
+    if ($i -notmatch '(?im)^##\s+Remove a spent worktree') { throw 'the entry did not carry over' }
+    if ($i -notmatch '(?is)deletes no working directory') { throw 'the prune distinction did not carry over' }
     $true
   }
 }

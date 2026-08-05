@@ -86,13 +86,16 @@ What belongs to `/commit` is only the consequence: an amend rewrites the commit,
 
 Last, once the commit exists. **A commit cannot contain its own SHA** (ADR 0005) — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
 
-Write the new `HEAD` to the marker file — `.claude/tools/git.md` names its path, and it is the only file that does:
+Write **both facts** to the marker file — `.claude/tools/git.md` names its path, the read, and the invocation that builds the fingerprint, and it is the only file that does:
 
 ```json
-{ "commit": "8b2d417c9e1f4a6b0d3e2c5a7f9b1d4e6a8c0f2b" }
+{
+  "commit": "8b2d417c9e1f4a6b0d3e2c5a7f9b1d4e6a8c0f2b",
+  "tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+}
 ```
 
-That is the whole file. The Marker answers one question — what Context was last verified against — and a second field is a second answer nobody asked for.
+That is the whole file, and the two are written **together**. Writing the commit and leaving a stale tree beside it is worse than writing neither: the pair would then claim a tree nobody fingerprinted, and the next stage would skip a drift read on the strength of it.
 
 Confirm the marker file is gitignored **before** writing it. `/configure` puts the entry in `.claude/.gitignore`; a committed Marker always names the parent of the commit it describes, so every session afterwards opens by verifying drift that is not there.
 

@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a formatter's reach includes .claude/
+sources: [skills/configure/SKILL.md]
+supersedes: []
+superseded-by: []
+---
+
 # /configure writes the formatter exclusion outside `.claude/`
 
 ADR 0006 made "one directory" literal by keeping the workflow's ignore entries in `.claude/.gitignore` rather than the repository's root one, which git honours because git reads nested ignore files. Formatters offer no equivalent AEP can rely on — Prettier reads a single ignore file from the directory it runs in and resolves no nested ones — so the only way to stop a formatter rewriting knowledge is to write into configuration the repository owns. `/configure` does that, and it is the only thing it writes outside `.claude/` and `CLAUDE.md`.

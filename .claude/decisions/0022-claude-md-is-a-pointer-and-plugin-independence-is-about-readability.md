@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the entrypoint is being added to, or plugin independence is in question
+sources: [CLAUDE.md]
+supersedes: []
+superseded-by: []
+---
+
 # `CLAUDE.md` becomes a pointer, and plugin independence is restated as a property of the files
 
 `CLAUDE.md` drops to roughly 25 lines: what this repository is, the precedence ladder's location, and a pointer to `.claude/protocol.md`. The protocol file — renamed from `tenure.md` — becomes the router, holding the Marker, the drift reads, the verification report, and the table mapping each workflow stage to the policies it reads.

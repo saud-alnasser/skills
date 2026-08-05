@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a plan meets a decision only partial code can answer
+sources: [.claude/policies/tickets.md]
+supersedes: []
+superseded-by: []
+---
+
 # A build ticket may declare a design increment
 
 Amends `specs.md` §10 (version 1.2.0 → 1.3.0). Some decisions are answerable only once partial code exists — whether a surface reads as raised needs real rows; locale behaviour needs a populated table — and the workflow's phase split forced them into a guess recorded as settled or an unplanned `blocked` hand-back. We decided a build ticket MAY declare, **at design time only**, a *design increment*: the step, the question, and the type. `/implement` resolves AFK types (`research`, `task`) inline where the fact becomes measurable, and stops at HITL types (`grilling`, `prototype`) holding the claim — a scheduled session rather than an ambush, and not `blocked`, because the plan is right and only the human is absent. The map's exit condition relaxes to *every remaining decision settled or declared as a scoped increment*, which is what lets a map finish honestly.

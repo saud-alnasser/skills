@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: an instruction is being placed, or its per-turn cost is in question
+sources: [.claude/rules/, .claude/policies/]
+supersedes: []
+superseded-by: []
+---
+
 # Instructions load in three tiers, and the tier is a mechanism rather than a topic
 
 Instructions are placed by *how the harness selects them*, not by what they are about. `.claude/rules/` without `paths:` frontmatter loads on every turn and holds only what fires unconditionally. `.claude/rules/` with `paths:` loads when Claude reads a matching file and holds standards owned by part of the tree. `.claude/policies/` is reached by pointer and holds one repository aspect or workflow concern each.

@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the migration's own test strategy is in question
+sources: [skills/configure/MIGRATION.md]
+supersedes: []
+superseded-by: []
+---
+
 # A fixture tests the migration, and the revert is dropped
 
 Supersedes one consequence of `0025`, which held that ticket 01's entrypoint split had to be reverted so the migration would have a clean superseded layout to convert. Only that consequence is superseded — `0025`'s ordering decision stands: structural work lands in `skills/` first and this repository adopts in one later ticket.

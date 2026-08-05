@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: planning work is proposed outside /design
+sources: [skills/design/]
+supersedes: []
+superseded-by: []
+---
+
 # /design is the whole planning surface
 
 `/design <text>` owns everything between a request and a workable plan: grill the idea, discover the scope, decide which skills narrow it (`/research` for facts, `/prototype` for feel), and produce a spec and/or tickets when the scope warrants them. The user then calls `/implement`, which works the plan.

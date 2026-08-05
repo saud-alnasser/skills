@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a dispatched child meets a decision it cannot make
+sources: [.claude/policies/sub-agents.md]
+supersedes: []
+superseded-by: []
+---
+
 # A child that reaches a decision stops, because it cannot ask
 
 `AskUserQuestion`, `EnterPlanMode`, `ScheduleWakeup`, and `Workflow` are withheld from every sub-agent, and no message from any agent counts as another agent's consent for a permission prompt. AEP's human-authority principle — never silently decide architecture — therefore cannot be honoured inside a child by any amount of instruction: a child asked to present options has no surface to present them on.

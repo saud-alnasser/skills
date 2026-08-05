@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the specification's layout section is being amended
+sources: [specs.md]
+supersedes: []
+superseded-by: []
+---
+
 # Amendment: specification §21 gains `designs/` and the ignore file
 
 The canonical layout in `specs.md` §21 omitted two entries the templates have generated since before the specification was written: `.claude/designs/`, where the planning stage writes specs (the specs policy names it), and `.claude/.gitignore`, which carries the membership test for per-clone state. The implementation was right and the specification was behind — the divergence class the evolution rule exists for, resolved by amending the document rather than by narrowing the layout.

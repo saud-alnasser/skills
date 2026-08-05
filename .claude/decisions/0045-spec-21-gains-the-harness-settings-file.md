@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the specification's layout section is being amended
+sources: [specs.md]
+supersedes: []
+superseded-by: []
+---
+
 # Amendment: specification §21 gains `.claude/settings.json`
 
 Orchestration needs one piece of harness configuration to be true of every clone: a worktree-isolated child branches from the repository's default branch unless `worktree.baseRef` is `"head"`, so without it a child works a portion of a claimed ticket against a tree that does not contain the work it is extending — silently, producing plausible code. `/configure` therefore writes `.claude/settings.json`, and §21's canonical layout has to name a file the workflow generates into every repository it configures.

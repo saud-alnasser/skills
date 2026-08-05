@@ -1,6 +1,9 @@
-# Skill authoring
+---
+load-when: the request adds, renames, splits, or restructures a skill
+sources: [skills/, .claude/decisions/]
+---
 
-Sources: `skills/`, `.claude/decisions/`
+# Skill authoring
 
 How a skill in this repository is shaped, named, and placed. This is the domain with the most vocabulary of its own, because the product here *is* skills — a decision about where a sentence goes is an engineering decision, not an editorial one.
 

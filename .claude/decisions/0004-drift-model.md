@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: drift is being detected, or its scope decided
+sources: [.claude/protocol.md]
+supersedes: []
+superseded-by: []
+---
+
 # Drift is detected from two sources and repaired only where the request touches
 
 Context is maintained **inline**: while doing the work, Claude updates what moved and `/commit` records it. Pre-flight exists as a safety net for changes made outside Claude's sessions, so it is deliberately cheap.

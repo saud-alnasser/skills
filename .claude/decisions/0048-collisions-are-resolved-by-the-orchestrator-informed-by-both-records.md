@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: two children wrote the same path
+sources: [skills/implement/]
+supersedes: []
+superseded-by: []
+---
+
 # Collisions are resolved by the orchestrator, informed by both change records
 
 **Non-blocking is not non-overlapping.** Two tickets with no edge between them may still write the same file, and the orchestration effort is its own proof: all eight of its tickets appended to `scripts/verify.ps1`, and four of them — 03, 04, 05, 07 — had no edge between any pair. Dispatched in parallel, they would have produced four children rewriting one file from one base.

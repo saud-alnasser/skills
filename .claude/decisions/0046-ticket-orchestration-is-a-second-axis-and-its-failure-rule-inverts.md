@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: several tickets are to be built at once
+sources: [skills/implement/]
+supersedes: []
+superseded-by: []
+---
+
 # Ticket-level orchestration is a second axis, and its failure rule inverts
 
 The orchestration effort built one axis: a ticket divides into **portions**, each worked by a child owning declared files, all squashed into one commit, and **nothing lands if any child fails**. That last rule is right for portions — a partial set satisfies no acceptance criterion, so reviewing one would review a ticket nobody built.

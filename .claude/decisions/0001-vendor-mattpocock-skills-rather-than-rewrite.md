@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a shipped skill's derivation or attribution is in question
+sources: [skills/]
+supersedes: []
+superseded-by: []
+---
+
 # Vendor mattpocock's skills rather than rewrite them
 
 Tenure re-specifies several capabilities that mattpocock/skills already implements more thoroughly (grilling, tdd, code-review, prototype, research, domain-modeling). Rather than write thinner versions from scratch, we copy those skills into this repo and alter them to fit Tenure's vocabulary and layout, then uninstall the originals.

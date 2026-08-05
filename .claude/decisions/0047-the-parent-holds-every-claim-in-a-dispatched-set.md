@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: the branches for a dispatched set are being created
+sources: [skills/implement/]
+supersedes: []
+superseded-by: []
+---
+
 # The parent holds every claim in a dispatched set
 
 `.claude/policies/sub-agents.md` states that a child **claims nothing**. A child given a whole ticket appears to contradict that immediately: somebody holds that ticket's claim, and the claim is the branch.

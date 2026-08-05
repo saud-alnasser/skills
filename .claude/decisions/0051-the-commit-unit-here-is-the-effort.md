@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a branch or a commit is about to be created for a ticket
+sources: [.claude/policies/version-control.md]
+supersedes: []
+superseded-by: []
+---
+
 # The commit unit in this repository is the effort, not the ticket
 
 AEP's default is one ticket, one branch, one commit, amended. This repository departs from it: a directory under `.claude/tickets/` — its `spec.md` and its `issues/` together — is **one branch and one commit**, and every ticket in the effort amends it. ADR 0008 makes AEP's conventions defaults for when the repository is silent, and this is the repository declining to be silent. The argument is that `main` already demonstrates it: every commit there is one effort, squash-merged from one pull request, so the per-ticket commits existed only on branches and were collapsed on landing — the old convention produced a history shape no reader of the default branch ever saw. The branch is named for the effort, which also removes the collision the per-ticket name carried, since ticket numbers restart at `01` in every effort.

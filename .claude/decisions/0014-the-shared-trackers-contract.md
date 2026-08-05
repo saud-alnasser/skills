@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: something is about to be written to a tracker other people read
+sources: [.claude/policies/tracker.md]
+supersedes: []
+superseded-by: []
+---
+
 # What Tenure may write to a tracker other people read
 
 On a shared tracker, every write lands in someone else's workspace. Four rules bound what Tenure may do there.

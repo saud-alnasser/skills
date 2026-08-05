@@ -31,6 +31,49 @@ Either failure means the Marker is not a base you can diff from — a branch swi
 
 Quote `^{commit}` — bare `^` and `{` are metacharacters in PowerShell and in cmd.
 
+## Fingerprint the working tree
+
+The Marker's second fact. It answers *is this the same tree whose drift was already read* — an identity question, which is why it is a value rather than a clean/dirty flag.
+
+Ask git where the index is; never assume the path. In a worktree `.git` is a file pointing elsewhere, so a hardcoded `.git/index` reads the wrong repository's index or none at all — and `--path-format=absolute` removes the remaining dependency on the current directory:
+
+```
+git rev-parse --path-format=absolute --git-path index
+```
+
+Then build the tree through a **throwaway index seeded from that one**:
+
+```sh
+idx="$(git rev-parse --path-format=absolute --git-path index)"
+tmp="$(mktemp -u)"
+cp "$idx" "$tmp"
+GIT_INDEX_FILE="$tmp" git add -A
+GIT_INDEX_FILE="$tmp" git write-tree                  # → the fingerprint
+rm -f "$tmp"
+```
+
+```powershell
+$idx = git rev-parse --path-format=absolute --git-path index
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+Copy-Item $idx $tmp
+$env:GIT_INDEX_FILE = $tmp
+git add -A
+git write-tree                                        # → the fingerprint
+$env:GIT_INDEX_FILE = $null                           # or it leaks into the next command
+Remove-Item $tmp
+```
+
+**The seeding is not tidiness — it is what makes the check affordable.** A fresh temporary index has no stat cache, so `git add -A` re-hashes every file in the worktree on every stage. Seeded from the repository's own index, the stat cache comes with it and only genuinely changed files are re-hashed, which puts the cost beside `git status` rather than beside a full checkout.
+
+The real index is never written: the copy is what `GIT_INDEX_FILE` points at. Verified by hashing `.git/index` either side of a run — byte-identical.
+
+**What it covers**: file contents, tracked and untracked, with ignored files excluded because `git add -A` honours the ignore rules. A clean tree yields a value like any other, so there is no sentinel and no clean-versus-dirty branch for a caller to write.
+
+Two cheaper-looking forms, and why neither is used:
+
+- **`git stash create`** cannot see untracked files. Its usage line is `git stash create [<message>]` — there is no `-u`, and that is the whole argument: a newly added file would leave the fingerprint unchanged, which is false trust in exactly the case the drift read exists to catch.
+- **A digest of `git status --porcelain` output** records *which* files changed and never *what they now contain*, so editing an already-dirty file a second time leaves the digest byte-identical. Unsound, and unsound in the direction that matters.
+
 ## Read the Marker diff
 
 Committed drift: what changed in the Codebase since Context was last verified.
@@ -129,6 +172,22 @@ fatal: '<branch>' is already used by worktree at '<path>'
 ```
 
 That is exit 128 and it is the mechanism, not an error to work around. Report the path and stop — `/implement` has what to do next.
+
+## Remove a spent worktree
+
+The harness creates a worktree for an isolated child; nothing removes one unless the orchestrator does. When it is spent is `/implement`'s to say — this is only how to type it.
+
+```
+git worktree list --porcelain                     # what exists, and which branch each holds
+git worktree remove <path>                        # remove a spent one
+git worktree prune                                # bookkeeping only — see below
+```
+
+**`remove` refuses a worktree that is not clean**, and that refusal is the point: *"Only clean worktrees (no untracked files and no modification in tracked files) can be removed."* A worktree that will not come away is one still holding work, so the refusal is a second opinion on the decision to remove it.
+
+**`--force` exists and is not used here.** It removes an unclean worktree, and doubled (`--force --force`) removes a locked one. Reaching for it discards exactly the evidence that the judgement was wrong.
+
+**`prune` deletes no working directory.** It removes *"worktree information in `$GIT_DIR/worktrees` for worktrees whose working trees are missing"* — bookkeeping for directories already gone, and nothing else. A reader who assumes otherwise will believe stale checkouts were cleaned up when only their metadata was.
 
 ## Recover a broken Source Pointer
 

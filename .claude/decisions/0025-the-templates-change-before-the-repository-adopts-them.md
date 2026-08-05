@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a shipped template and its installed copy are both about to change
+sources: [skills/configure/]
+supersedes: []
+superseded-by: []
+---
+
 # The templates change before this repository adopts them
 
 Structural work in the streamline effort lands in `skills/` first. This repository moves onto the new layout in one later ticket, by running `/configure`'s migration branch, rather than being edited directly as each structural ticket goes by.

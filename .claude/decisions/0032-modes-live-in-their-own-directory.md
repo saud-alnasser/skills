@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: where a mode's text lives is in question
+sources: [.claude/modes/]
+supersedes: []
+superseded-by: []
+---
+
 # Amendment: modes move out of the protocol file into `.claude/modes/`
 
 The seven mode definitions shipped as `### Mode:` sections of the protocol file (ticket aep/03). This amendment moves them to `.claude/modes/`, one file per posture, and adds the directory to the canonical layout in `specs.md` §21. Specification version moves to 1.2.0-draft.

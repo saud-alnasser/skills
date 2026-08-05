@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a file under .claude/ is about to be committed or ignored
+sources: [.claude/.gitignore, .claude/position/]
+supersedes: []
+superseded-by: []
+---
+
 # Knowledge is shared; Position is per-clone
 
 A repository worked by several people, each running several instances, needs one answer to what belongs to the repository and what belongs to a working copy. **Knowledge is committed and reviewed like code. Position is per-clone and never committed.**

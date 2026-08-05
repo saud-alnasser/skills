@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: whether a stage should prompt before committing is in question
+sources: [skills/implement/]
+supersedes: []
+superseded-by: []
+---
+
 # `/implement` commits after `/review` without asking
 
 `/implement` runs `/review`, applies the fixes, and then commits through `/commit` — no "commit and resolve this ticket?" prompt. The standing prohibition on pushing, opening pull requests, and submitting stacks is unchanged and is what keeps this safe.

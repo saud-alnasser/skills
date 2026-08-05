@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: a rule is being placed
+sources: [.claude/rules/]
+supersedes: []
+superseded-by: []
+---
+
 # Tenure owns the engineering rules, and places each where it fires
 
 `workflow.md`'s nineteen Engineering Principles overlap heavily with the user's global `~/.claude/CLAUDE.md` — eight are near-verbatim duplicates. Rather than have Tenure skip rules the global file already states, the global file is trimmed and **Tenure becomes the single source of truth**. The rules then travel with the workflow into any repository instead of depending on one machine's personal configuration.

@@ -1,3 +1,11 @@
+---
+status: accepted
+load-when: what passes between an orchestrator and a child is being changed
+sources: [.claude/policies/sub-agents.md]
+supersedes: []
+superseded-by: []
+---
+
 # The brief is a template, and the return is a change record
 
 A sub-agent returns one text string. No first-party surface offers a schema-validated return except the `Workflow` tool, which ADR 0040 rejected for a different reason. The contract between parent and child therefore has to be carried as prose, which makes the prose a **template** rather than a habit: objective, inputs given as paths rather than pasted content, the files this child owns, the shape of what it returns, its done-criteria, and a cap.
