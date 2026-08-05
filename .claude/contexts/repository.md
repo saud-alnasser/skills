@@ -79,6 +79,10 @@ _Avoid_: tree hash, working-tree state, dirty flag
 A routing table produced from fields the routed files declare, rather than written. Cannot disagree with its directory, which is why the audit obligation a hand-written one carries does not apply to it (ADR 0053).
 _Avoid_: manifest, generated map, derived table
 
+**Declared Field**:
+A fact stated in frontmatter because something acts on it — a generated index, the configuration stage's derivation, or an assertion. A fact only a human reads stays prose. On what AEP ships the fields ride the harness's own `metadata` map rather than bare keys (ADR 0055), and whether a field restates its own path depends on how wide the index over it is (ADR 0056).
+_Avoid_: metadata, header, tag, attribute
+
 ## Boundaries
 
 - **`skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in the shipped surfaces. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.

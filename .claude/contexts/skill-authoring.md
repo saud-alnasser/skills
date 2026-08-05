@@ -30,8 +30,8 @@ A skill reached only by the user typing it, marked `disable-model-invocation: tr
 _Avoid_: command-only skill, manual skill
 
 **Load-Bearing Frontmatter**:
-The rule that a frontmatter field exists only if something acts on it. Fields that were merely descriptive — `tags` above all — were removed rather than maintained, because a field that has to be read to be useful loses to a table that is read once.
-_Avoid_: metadata, header
+The rule that a frontmatter field exists only if something acts on it. Fields that were merely descriptive — `tags` above all — were removed rather than maintained, because a field that has to be read to be useful loses to a table that is read once. The harness's `metadata:` map is the sanctioned home for AEP's own fields on what it ships (ADR 0055) and is not an exception to the rule: what rides it is read by the configuration stage and the suite.
+_Avoid_: header, tag — and *metadata* as a word for the concept, which now names a specific harness field
 
 **Progressive Disclosure**:
 Keeping a skill's entrypoint to what every run needs and putting the rest behind a pointer, so a branch that does not fire is not paid for. A pointer earns its place when the branch behind it is genuinely conditional.
