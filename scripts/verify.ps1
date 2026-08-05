@@ -638,6 +638,222 @@ $rulePattern = [ordered]@{
   'the drift-finding contents'            = '(?is)against\s+which\s+commit'
   'the drift-finding index line'          = '(?is)task.list\s+line|checked\s+off\s+when\s+the\s+healing'
   'the decision-drift never-inline rule'  = '(?is)(decision|adr)s?\b.{0,60}heal(ed|s|ing)?\s+inline|heal(ed|s|ing)?\s+inline.{0,60}\b(decision|adr)s?\b'
+  # orchestration/02. The sub-agent policy owns the dispatch contract, so each
+  # rule it places gets one home and the dispatching stages point rather than
+  # restate.
+  #
+  # Every one of these was written twice. The first set was transcribed from the
+  # policy's own sentences, and a review planted six restatements in a spawner's
+  # voice that all six guards let through — the exact failure the authoring
+  # standards describe, produced while believing the opposite. What killed the
+  # first set is that its mutation test was written *from* the patterns, so the
+  # plants matched by construction. These are anchored on the subject each rule
+  # turns on: whose consent, which conduit, what a missing part means, what the
+  # record is checked against. Each carries an alternation because a faithful
+  # restatement reorders the subject as often as it rewords it.
+  'the consent boundary'                  = '(?i)another agent.?s consent|\b(sub-?agent|child|agent)\b[^.]{0,100}(consent|approv\w+)[^.]{0,60}(another|other|behalf|parent|session)'
+  'the brief completeness rule'           = '(?i)brief[^.]{0,80}(missing|omits|lacks|without)[^.]{0,60}\b(one|any)\b|(missing|omit\w*|lack\w*)[^.]{0,40}(part|six)[^.]{0,60}(incomplete|defect)'
+  'the only parent-to-child channel'      = '(?i)(only|sole|single)\s+(channel|route|conduit|way|means|path)[^.]{0,60}(parent|child|sub-?agent)|(parent|child|sub-?agent)[^.]{0,40}(only|sole)\s+(channel|route|conduit)'
+  'a child records a decision and stops'  = '(?i)\b(child|sub-?agent)\b[^.]{0,100}decision[^.]{0,100}(stop|halt|never (takes|decides))|decision[^.]{0,60}\b(child|sub-?agent)\b[^.]{0,100}(stop|halt)'
+  'the record-is-a-manifest rule'         = '(?i)(manifest|enumerat\w+)[^.]{0,80}(not|rather than|never)[^.]{0,40}(report|summary|narrative)|(not|rather than)[^.]{0,30}an? (report|summary|narrative)[^.]{0,60}(manifest|enumerat)'
+  # The record subject is required in two of the three branches: without it,
+  # `resolving-merge-conflicts` ("a text diff could not reconcile") is a second
+  # home for a rule it has nothing to do with.
+  'the record reconciliation bar'         = '(?i)(record|manifest)[^.]{0,80}reconcil\w+[^.]{0,60}diff|reconcil\w+[^.]{0,60}(record|manifest)[^.]{0,60}diff|reconcil\w+ against[^.]{0,60}diff'
+  # These three are sentence-scoped conjunctions rather than sequences. A
+  # restatement reorders a rule at least as often as it rewords one, and an
+  # alternation per ordering is a combinatorial way of saying "unordered" — the
+  # lookaheads say it directly, and stay anchored to the subject because the
+  # match itself is the child, or the record.
+  'a child writes no knowledge layer'     = '(?is)\b(child|sub-?agent)\b(?=[^.]{0,160}(writes?|records?|adds?))(?=[^.]{0,160}\b(no|nothing|never|not)\b)(?=[^.]{0,160}(knowledge|Context|Decision))'
+  # The negation has to govern the verb. As a sentence-scoped conjunction this
+  # also matched "a child based on anything but the claim is not integrated" —
+  # a rule about what the *orchestrator* refuses, in the passive, which is a
+  # different rule in a different file and not a second home for this one.
+  # Two shapes of negation, because English has two: the negation after the
+  # verb ("claims nothing") and before it ("never claims", "does not claim").
+  # Keyed to the first alone it lost "never claims a ticket and never lands its
+  # own work"; keyed to a sentence-scoped conjunction it gained the passive "a
+  # child … is not integrated", which is the orchestrator's rule and not this
+  # one. The bounded gap before the verb is what separates them.
+  # The subject governs both shapes. Lifted out of the group, the second one
+  # matched "never push" in the always-on rules and nine files besides — a
+  # probe for a rule about children that had stopped mentioning children.
+  # `integrates?` with a closing boundary is also what keeps the passive "is
+  # not integrated" out: that sentence says *integrated*, and the rule here is
+  # about a child that does not integrate.
+  'a child claims and integrates nothing' = '(?i)\b(child|sub-?agent)\b[^.]{0,120}((claims?|commits?|pushes|integrates?|merges?|lands?)\s+(nothing|no\b|none)|\b(no|never|not)\s+(\w+\s+){0,2}(claims?|commits?|push(es)?|integrates?|merges?|lands?)\b)'
+  'the change record is Position'         = '(?is)(change )?record\b(?=[^.]{0,160}\bPosition\b)|\bPosition\b(?=[^.]{0,120}change record)'
+  # Adjacency is load-bearing here, unlike its neighbours: the negation has to
+  # attach to the dispatching verb. Written as a sentence-scoped conjunction it
+  # matches `/review`'s "before two subagents are spawned to review nothing",
+  # which is a warning about an empty diff and not a second home for this rule.
+  'a child dispatches nobody'             = '(?i)\b(child|sub-?agent)\b[^.]{0,80}(dispatch(es)?|spawn(s)?)\s+(nobody|no one|no-one|nothing|none)|(never|not|no)\s+(dispatch|spawn)\w*[^.]{0,60}\b(child|sub-?agent)'
+  # parallel-tickets/02. The broker's rules, each anchored on the thing that
+  # would have to change for the rule to stop holding: the menu's closure, the
+  # direction each obligation runs in, the budget a request draws on, and the
+  # outcome that is not an ending.
+  # Written twice, and the second time from the rule rather than from my own
+  # sentence. The first set transcribed the policy's new wording — `travels
+  # attributed`, `costs what work costs` — and a review restated all six in
+  # other words with every one staying green. The comment block above records
+  # the same failure from an earlier ticket, which is the reason these are
+  # keyed on what each rule is *about*: which things may be asked, who learns
+  # who asked, what may not happen to a reply, what asking draws on, and what a
+  # return of waiting does not mean.
+  'the request menu is closed'            = '(?i)(menu|list|set)[^.]{0,60}(request|ask)\w*[^.]{0,60}(closed|fixed|bounded|two)|(request|ask)\w*[^.]{0,60}(menu|list)[^.]{0,40}(closed|fixed|bounded)|(refused|declined|turned down)[^.]{0,50}(without being weighed|without being considered|flat|outright)'
+  'the question travels attributed'       = '(?i)(question|ask\w*)[^.]{0,80}(attributed|which child|who is asking|names the (child|ticket))|(human|reader)[^.]{0,60}(sees|knows|learns)[^.]{0,50}(which child|who asked|who is asking|raised it)'
+  'the answer travels verbatim'           = '(?i)(answer|reply|response)[^.]{0,80}(verbatim|word for word|as given|unchanged)|(answer|reply|response)[^.]{0,60}(not|never|may not)[^.]{0,50}(summaris|summariz|condens|paraphras|reword)|(not|never|may not)[^.]{0,50}(summaris|summariz|condens|paraphras|reword)\w*[^.]{0,40}(answer|reply|response)'
+  'a request spends the cap'              = '(?i)(request|ask\w*)[^.]{0,80}(spends?|costs?|draws on|counts against)[^.]{0,50}(cap|budget|allowance)|(cap|budget|allowance)[^.]{0,60}(a request|asking)'
+  'waiting is not an ending'              = '(?i)waiting[^.]{0,80}(not an ending|not finished|has not finished|mid-conversation|still)|(not|never)[^.]{0,40}(an ending|finished)[^.]{0,50}waiting'
+  # parallel-tickets/04. The build stage owns both, because it is the stage that
+  # would breach either: which frontier tickets make up a dispatched set, and
+  # that the plan it states is not a gate. The tickets template is the likeliest
+  # second home for the first — it owns the edges the rule reads — so each is
+  # anchored on what the rule turns on rather than on the sentence written here:
+  # the edges as the sole input, and approval as the thing not waited for.
+  # Sentence-scoped conjunctions, like the record and consent rules above: a
+  # restatement reorders the subject as readily as it rewords it, so ordering the
+  # alternations would be a combinatorial way of saying "unordered". Three
+  # subjects have to co-occur for the first — the set, the edges, and the
+  # exclusivity that is the whole rule — because the maps template speaks of a
+  # set of tickets and their edges in one sentence while stating something else
+  # entirely, and that sentence is not a second home for this.
+  # The exclusivity alternation carries `alone`, `nothing else` and `follows
+  # from` because a review restated the rule without any of the first six —
+  # "membership follows from the edges alone, and from nothing else about a
+  # ticket" — and the entry let it through.
+  'the set is computed from edges'        = '(?is)\b(set|members?(hip)?)\b(?=[^.]{0,200}\bedges?\b)(?=[^.]{0,200}(comput\w+|read off|determin\w+|follows? from|exactly|permit|only what|never widen|\balone\b|nothing else|solely|sole input))'
+  # `gated` is deliberately not in the second: a set's tickets *gate* each other,
+  # which is the edge relation and not approval, and keying on the word made the
+  # ticket-builder role a second home for a rule about the human.
+  # `agree` and `confirm` for the same reason: the restatement that got through
+  # was "the plan is told, not asked: nothing waits on the human agreeing before
+  # the branches exist", which names no approval at all.
+  'the stated plan is not a gate'         = '(?is)\b(plan|set)\b(?=[^.]{0,160}\b(not|never|without|nothing)\b)(?=[^.]{0,160}(approval|approved|sign-?off|agree\w*|confirm\w*|told, not asked))|(does not|never|nothing)\s+\w*\s?(stop|wait|pause)\w*[^.]{0,40}(approval|agree\w*|confirm\w*)'
+
+  # parallel-tickets/05. Integration is the dispatching stage's, so both rules
+  # about a collision are homed there. Each requires the collision subject
+  # explicitly: `resolving-merge-conflicts` is a whole skill about reconciling
+  # two versions of a file, and a pattern keyed on merging alone would make that
+  # skill a second home for a rule about two children of one set.
+  # Both were written sentence-scoped with `[^.]`, and both were wrong for it:
+  # every pointer in this workflow is a path with dots in it, so the scope ended
+  # at `.claude` and the lookahead never reached the policy it was looking for.
+  # The mechanism entry matched *nothing* in the file that owns the rule — its
+  # one home was an unrelated sentence in /configure, so the single-home sweep
+  # was green and the mutation that planted a restatement elsewhere was killed
+  # for making it two homes rather than for finding the restatement. Line-scoped
+  # now, and the second alternation of each carries the subject spelled out,
+  # because a faithful restatement says "two children wrote the same path"
+  # without ever using the word.
+  'a collision is the orchestrator to resolve' = '(?is)\bcollision\b(?=[^\r\n]{0,300}(orchestrator|parent|this stage))(?=[^\r\n]{0,300}(resolv|settl|reconcil))|(?is)(two|both) children[^\r\n]{0,120}(same|one) path(?=[^\r\n]{0,200}(orchestrator|parent|this stage))'
+  'the collision mechanism is the repository own' = '(?is)(names? no merge strateg|no merge strateg\w+ of its own|merge strateg\w+[^\r\n]{0,100}(comes from|from the|taken from|the repositor)|(never|not|no)[^\r\n]{0,40}(name|choose|pick|state)\w*[^\r\n]{0,40}merge strateg)'
+  # parallel-tickets/06. Failure and review both invert between the axes, and
+  # the dispatching stage owns both inversions. Line-scoped from the start, for
+  # the reason the 05 pair had to be repaired: a sentence-scoped lookahead dies
+  # at the first dot, and every pointer here is a path full of them.
+  # Both alternations first required the author's own nouns, and a review
+  # restated the rule without any of them — "when one ticket of a set cannot be
+  # finished, every other ticket that did finish is still integrated" — so the
+  # subject groups carry the paraphrases a restatement actually reaches for.
+  'failure in a set is per ticket'  = '(?is)(fail\w*|stop(s|ped|ping)?|cannot be finished|broke|breaks)[^\r\n]{0,160}(sibling|the rest|other members|every other|the others|that did finish)[^\r\n]{0,100}(land|stay|remain|in place|unaffected|integrat)|(sibling|the rest|other members|the others)[^\r\n]{0,80}(land|stay|remain|integrat)[^\r\n]{0,100}(fail|stop)'
+  # `you` in the subject group because a role is written in the second person,
+  # and that is the register a restatement arrives in there: "you request your
+  # own review, and the findings return to you" says the whole rule without ever
+  # using the word `child`. `asks for` and `what comes back` for the same reason
+  # — a review reached both without using `requests` or `findings`.
+  'a set child requests its own review' = '(?is)\b(child|member|you)\b[^\r\n]{0,60}(requests?|asks? for)[^\r\n]{0,40}((its|your) own )?review|\breview\b[^\r\n]{0,80}request\w*[^\r\n]{0,40}by[^\r\n]{0,30}(the )?child|(findings|the review)[^\r\n]{0,80}(back to|reach|return to|goes? to)[^\r\n]{0,60}(the )?(child|requester|you\b|one that wrote)'
+  # Deliberately absent from this table: what bounds a ticket child, and what it
+  # does with a declaration it cannot execute. Both are homed in
+  # `agents/ticket-builder.md`, and this table is swept two ways — tenure/02
+  # requires one home under `skills/`, orchestration/07 requires that no role
+  # match any entry at all. A rule homed in a role fails both at once: stated
+  # nowhere, and restated by the file that states it. Naming one here needs the
+  # sweeps to accept `agents/` as a home, which is shared machinery and no
+  # ticket's yet. parallel-tickets/03 asserts them literally instead.
+  'a ticket child owns its ticket'        = '(?i)(ticket child|whole ticket)[^.]{0,60}owns?[^.]{0,40}ticket|owns?[^.]{0,80}(the files, for a portion|files for a portion)|what (it|a child) owns[^.]{0,80}(portion|ticket)'
+  # orchestration/04. The declaration's home is the tickets template; the
+  # guardrail's is the stage that would breach it, exactly as the increment
+  # pair is split.
+  #
+  # Written twice, like the 02 set and for the same reason. The first three
+  # keyed on the templates' own verbs — `invent`, `design time only`,
+  # `overlapping ownership` — and a review paragraph restating all three in
+  # other words ("may not conjure a fan-out of its own", "settled while the
+  # ticket is still being planned", "two roles never touch the same file")
+  # passed every one. These pair the subject with any verb that carries it.
+  'the fan-out never-invented guardrail'  = '(?i)(never|not|no)[^.]{0,60}(invent|conjur|creat|devis|make|cut)\w*[^.]{0,40}fan.out|fan.out[^.]{0,60}(never|not)[^.]{0,40}(invent|conjur|creat|devis)'
+  'the fan-out declaration timing rule'   = '(?i)(design time|planning|planned)[^.]{0,140}(never|not|nothing)[^.]{0,60}(during the build|once the build|after the build|mid-build)|(never|not|nothing)[^.]{0,60}(during the build|once the build)[^.]{0,100}(design time|planned)'
+  # Deliberately does NOT match the fenced placeholder `<the files this portion
+  # owns>`. It did, and deleting the ownership rule outright left the guard
+  # green on the template block alone — the rule travelling with its own
+  # example.
+  'the portion ownership rule'            = '(?i)overlapping ownership|(two|both)[^.]{0,30}(portions?|roles?|children)[^.]{0,50}(never|not|no)[^.]{0,40}(touch|writ|own|claim)\w*[^.]{0,30}same file|(never|no)[^.]{0,40}(two|another)[^.]{0,40}(portion|role|child)[^.]{0,60}same file'
+  # Both placed by 04 with no guard until review found them stated twice.
+  # Verb-free on purpose. Keyed to "dividing" and its synonyms, it missed
+  # "Carving a ticket into portions… is an architecture decision" — the subject
+  # is the pairing of a split with the word architecture, not the verb chosen
+  # to describe it.
+  'the parallel-split-is-architecture rationale' = '(?i)(portions?|parallel)[^.]{0,80}architecture decision|architecture decision[^.]{0,80}(portions?|parallel)'
+  'the fan-out increment ordering rule'   = '(?i)(resolves?|resolved)[^.]{0,60}before anything is dispatched|before anything is dispatched[^.]{0,60}(resolv|parent)'
+  # orchestration/05. The setting and its reasoning belong to /configure; the
+  # check that does not trust the setting belongs to the integrator. Anchored
+  # on the silent-default subject — a worktree taking the default branch where
+  # the parent's head was meant — rather than on either file's verbs.
+  # Both were written from my own sentences and both were nearly blind. The
+  # base-ref probe caught one restatement in six and fired on an unrelated
+  # rebase instruction; the base check caught none of five. What each rule is
+  # actually about is a pairing — an isolated branch's origin against the
+  # parent's position, and a child's base against the moment of integration —
+  # so the vocabulary on each side is what varies and the pairing is what does not.
+  # `main` is excluded only where it is not a branch. Requiring `off|from|onto`
+  # before it was the first fix and it cost the probe four of five restatements
+  # — "defaults to main", "starts at main rather than at the claim". The
+  # exclusion belongs on the noun that follows, which is the thing that made
+  # "the main checkout" a different subject.
+  # The `/` exclusion is not decoration: `main` inside a docs URL sat 80
+  # characters from an unrelated "not", and the probe read a link as a
+  # statement about where a worktree starts.
+  'the worktree base-ref obligation'      = '(?i)(isolat\w+|worktree|baseRef)[^.]{0,120}(default branch|trunk|\bmain\b(?!\s*/)(?!\s+(checkout|thread|process|session|conversation)))|(default branch|trunk|\bmain\b(?!\s*/)(?!\s+checkout))[^.]{0,80}(not|rather than|instead of)[^.]{0,60}(parent|session|head|claim|working)'
+  # Placed by the sub-agent policy; orchestration/06 restated it in the stage
+  # and nothing caught it, because no entry existed. Keyed to the definitional
+  # form — how far the claim reaches — so that announcing the widening, which
+  # is the stage's own business, is not mistaken for redefining it.
+  'the claim widens over children'        = '(?i)claim[^.]{0,60}widens? to cover|widen\w*[^.]{0,40}(to )?cover[^.]{0,40}(child|children|beneath)|claim[^.]{0,60}covers? (every |each |all )?(child|children)|covers every child beneath'
+  'the child base check at the integrator' = '(?i)(confirm|check|verif\w+|establish|determin\w+)[^.]{0,60}(child|children)[^.]{0,40}(base|built on|branched)|(base|built on|branched)[^.]{0,60}(before|prior to)\s+(integrat|merg)\w*|claim[^.]{0,40}ancestor[^.]{0,60}(child|produced|built)'
+  # orchestration/06. The stage owns what it does with the artifacts; the policy
+  # owns what they contain, and the format owns what is declared. Each of these
+  # is a behaviour, which is why none of them reads like a restatement of either.
+  # All three were written from my own sentences and ten review restatements
+  # missed all three. The negation vocabulary is the recurring hole — `not`,
+  # `rather than`, `instead of`, `never` are one idea and a probe that knows
+  # only two of them is blind to half the ways the rule gets written. The
+  # one-commit probe was worse: its second branch was the diff's own sentence,
+  # verbatim, which is the failure the authoring standards name by example.
+  'integration is record-driven'          = '(?i)(integrat\w+|work\w*|proceed\w*)[^.]{0,60}(record|manifest)[^.]{0,80}(not|never|rather than|instead of)[^.]{0,40}(branch|diff)|(record|manifest)[^.]{0,80}(not|never|rather than|instead of)[^.]{0,40}(its |the )?branch'
+  # Both needed the subject putting back. Unanchored, "integrates nothing"
+  # matched the policy's rule about a *child*, and "stays one commit" matched
+  # git.md's rule about *amending* — two different rules that happen to share
+  # a phrase with this one.
+  'a partial fan-out integrates nothing'  = '(?i)(fan.out|children|portions?|sibling\w*|whole set)[^.]{0,120}(integrates? nothing|nothing (is |ever )?(integrated|lands|merges)|none of the work|no part)|(nothing (is )?integrated|none of the work|no part of it)[^.]{0,120}(sibling|portion|fan.out)|(one|any) (child|portion)[^.]{0,80}(fail|stop)\w*[^.]{0,80}(nothing|none)|all children or none'
+  'the fanned-out ticket is one commit'   = '(?i)(squash\w*|fan.out|fanned.out|children)[^.]{0,120}(one commit|single commit|indistinguishable)|(one commit|single commit)[^.]{0,100}(squash|fan.out|fanned.out|children)'
+  # orchestration/07 placed these two. Both were deferred by 02 because each
+  # had a second home the policy could not remove on its own: the inheritance
+  # fact was stated *backwards* in `codebase-design/DESIGN-IT-TWICE.md`, and
+  # the paths-not-pasted rule sat in `review/SKILL.md` with its argument.
+  # Anchored to the subject, so the false statement of the first would count as
+  # a second home exactly as the true one does — a rule contradicted elsewhere
+  # is not single-homed, it is disputed.
+  # The verb is not the subject. Keyed to inherit/arrive/hold, the first missed
+  # "starts with no Context of its own" and "come with the always-on tier
+  # already applied" — a one-word edit of the sentence this ticket deleted, and
+  # a plain restatement. What identifies the rule is a child paired with the
+  # tier it does or does not come holding, whichever verb carries it.
+  'what a child inherits'                 = '(?i)\b(child|sub-?agent)s?\b[^.]{0,140}(inherit\w*|arriv\w+|start\w*|come[sd]?|begin\w*|has no|have no|hold\w*|carr\w+|receiv\w+)[^.]{0,100}(entrypoint|always-on|unconditional tier|hierarchy|Context loaded|Context of its own|no Context|conversation)'
+  # Two sentences is the common shape — "Hand it a path. Never dump the file
+  # in." — so the negative half has to stand alone as well as paired.
+  'inputs by path, never pasted'          = '(?i)(paths?|by path)[^.]{0,60}(not|never|rather than|instead of)[^.]{0,40}(pasted|pasting|quoted|quoting|dump\w*|inlin\w+)|(not|never|rather than)[^.]{0,40}(paste|quote|dump|inline)\w*[^.]{0,60}(into the brief|in the brief|file|content|terms|vocabulary)'
 }
 
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
@@ -1213,10 +1429,43 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     -not (Test-UserInvoked 'review/SKILL.md')
   }
 
+  # orchestration/07 moved each axis's instructions out of this file and into
+  # the role the stage now dispatches by name. The guarantee is unchanged — the
+  # stage still runs both axes and both still state what they report — so these
+  # read the surface the behaviour lives on rather than the stage alone.
+  # Checking the stage by itself would fail on text that moved exactly as the
+  # ticket required, which is a guard punishing the change it asked for.
+  # One axis per helper, never both. Unioning the stage with *both* roles let a
+  # Standards guarantee be satisfied by the Spec role — a review proved it by
+  # deleting the smell-marking rule from the stage and from
+  # `standards-reviewer` and watching the assertion stay green on
+  # `spec-reviewer`'s copy. That is the failure this whole block exists to
+  # catch: the axes are supposed to stay apart, and a union cannot see one
+  # crossing.
+  $axisSurface = {
+    param([string]$Role)
+    $p = Join-Path $repo "agents/$Role.md"
+    if (-not (Test-Path $p)) { throw "agents/$Role.md is missing — the stage dispatches a role that does not ship" }
+    (Get-SkillFile 'review/SKILL.md') + "`n" + (Get-Content $p -Raw)
+  }
+
+  # The axes were `### ` headings until their content moved; what makes them two
+  # axes now is that the stage names two roles and each role ships. Asserted on
+  # the dispatch rather than on the layout, because the layout was never the
+  # claim.
   Assert "two axes — Spec and Standards" {
     $c = Get-SkillFile 'review/SKILL.md'
-    if ($c -notmatch '(?im)^##+\s.*\bSpec\b') { throw 'no Spec axis' }
-    $c -match '(?im)^##+\s.*\bStandards\b'
+    foreach ($axis in 'Spec', 'Standards') {
+      # Anchored to the definition list: a bare word boundary matched "a spec
+      # under .claude/designs/" and "this repository's own standards", so
+      # both axis bullets could be deleted with the guard still green.
+      if ($c -notmatch "(?m)^-\s+\*\*$axis\*\*") { throw "the $axis axis is not defined" }
+    }
+    foreach ($role in 'spec-reviewer', 'standards-reviewer') {
+      if ($c -notmatch [regex]::Escape($role)) { throw "the stage does not dispatch $role" }
+      if (-not (Test-Path (Join-Path $repo "agents/$role.md"))) { throw "$role does not ship" }
+    }
+    $true
   }
 
   # The acceptance criterion, and the reason: an axis that reads the other's
@@ -1262,19 +1511,19 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # appear elsewhere in the file, so a presence check stays green with the whole
   # architecture block deleted — which is the one thing this must catch.
   Assert "architecture reaches ownership boundaries, read from this repo's Context" {
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'standards-reviewer'
     $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/contexts/repository\.md'
   }
 
   Assert "architecture reaches abstraction the change did not require" {
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'standards-reviewer'
     $c -match '(?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction'
   }
 
   # Headline acceptance criterion: "A diff contradicting an existing ADR is
   # surfaced explicitly, not silently accepted."
   Assert "a diff contradicting an ADR is surfaced explicitly, never silently accepted" {
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'standards-reviewer'
     if ($c -notmatch '\.claude/decisions') { throw 'the decisions are never read' }
     $c -match '(?i)(contradict|conflict).{0,160}(surfac|report|explicit|say|flag)|(surfac|report|explicit|flag).{0,160}(contradict|conflict)'
   }
@@ -1350,7 +1599,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     if ($baseline -notmatch '(?i)judgement call') { throw 'the baseline does not label itself a judgement call' }
     # The distinction has to reach the finding, not just the baseline file —
     # an unmarked finding reads as a standard to whoever receives it.
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'standards-reviewer'
     $c -match '(?i)hard violation.{0,40}judgement call|judgement call.{0,40}hard violation'
   }
 
@@ -1359,7 +1608,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # repository documents neither — so they are not covered by the repo-first
   # ordering above, and nothing else in ./skills carries them.
   Assert "the comment and public-API rules ADR 0007 places here are carried" {
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'standards-reviewer'
     if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
     if ($c -notmatch '(?i)public (interface|api)') { throw 'the public-API rule is missing' }
     $c -match '(?i)ADR 0007|0007'
@@ -1405,7 +1654,7 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   }
 
   Assert "the Spec axis reaches missing requirements, scope creep, and wrong implementations" {
-    $c = Get-SkillFile 'review/SKILL.md'
+    $c = & $axisSurface 'spec-reviewer'
     if ($c -notmatch '(?i)(missing|partial)') { throw 'missing requirements are not reached' }
     if ($c -notmatch '(?i)scope creep|was ?n.t asked for|not asked for') { throw 'scope creep is not reached' }
     $c -match '(?i)(implemented but|looks? implemented|wrong).{0,120}(wrong|incorrect|does not)|(wrong|incorrectly).{0,60}implement'
@@ -1795,8 +2044,14 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
     $c -match '(?i)carries its citation'
   }
 
+  # orchestration/07 moved the source discipline into the `researcher` role the
+  # stage dispatches, so the surface is the stage plus that one role — not the
+  # stage alone, which would fail on the move, and not every role, which would
+  # let another role's text stand in for this one's.
   Assert "primary sources only — a secondary write-up is rejected, not just named" {
-    $c = Get-SkillFile 'research/SKILL.md'
+    $role = Join-Path $repo 'agents/researcher.md'
+    if (-not (Test-Path $role)) { throw 'the role /research dispatches does not ship' }
+    $c = (Get-SkillFile 'research/SKILL.md') + "`n" + (Get-Content $role -Raw)
     if ($c -notmatch '(?i)primary source') { throw 'primary sources are never required' }
     # Naming secondary sources is not rejecting them — the skill says elsewhere
     # what to do when one is unavoidable, which satisfies a bare presence check.
@@ -5705,7 +5960,15 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
   # Read off the generated tree itself. A count taken across the whole skill
   # would find every `.claude/x.md` it mentions in passing, most of which are
   # inside directories, and pass while the tree grew a second loose file.
-  Assert "the generated layout has exactly one file loose at the workflow root" {
+  # The criterion was "exactly one loose file", and it held while everything
+  # loose belonged to this workflow. ADR 0045 put `settings.json` in the layout:
+  # the harness reads it from that exact path, the same reason `.gitignore` sits
+  # there. So the criterion is now exactly one loose file *this workflow owns* —
+  # which is what it always meant, and what the count was standing in for. The
+  # exemption is a named list rather than a predicate, so adding to it is a
+  # decision somebody makes rather than a count quietly going up.
+  $harnessOwned = @('settings.json')
+  Assert "the generated layout has exactly one file loose that this workflow owns" {
     $tree = [regex]::Match((& $layout), '(?ms)^```\r?\n\.claude/\r?\n(.*?)^```')
     if (-not $tree.Success) { throw 'the generated layout is not shown' }
     $loose = @()
@@ -5716,8 +5979,9 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
       if ($entry -match '/$' -or $entry -like '.*') { continue }
       $loose += $entry
     }
-    if ($loose.Count -ne 1) { throw "loose at the root: $($loose -join ', ')" }
-    if ($loose[0] -ne 'protocol.md') { throw "the loose file is $($loose[0]), not the router" }
+    $owned = @($loose | Where-Object { $_ -notin $harnessOwned })
+    if ($owned.Count -ne 1) { throw "loose at the root: $($owned -join ', ')" }
+    if ($owned[0] -ne 'protocol.md') { throw "the loose file is $($owned[0]), not the router" }
     $true
   }
 
@@ -6699,9 +6963,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.4.0, not a draft" {
+  Assert "the specification is released at 1.7.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.4\.0\s*$') { throw 'the specification is not at a released 1.4.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.7\.0\s*$') { throw 'the specification is not at a released 1.7.0' }
     $true
   }
 
@@ -7192,6 +7456,1976 @@ Describe-Ticket 'scaffolding/05' 'adopt the changed templates here' {
     $c = Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw
     ($c -match $rulePattern['the design-PR exception']) -and
     ($c -match '(?is)every other protocol-only change rides')
+  }
+}
+
+# --- ticket orchestration/01 — the specification declares orchestration -------
+
+# Each claim below belongs to one numbered section. A file-wide match would pass
+# on the vocabulary that travels between them — §7 points at §20, and §20 points
+# back — so every assertion is scoped to the section that owns it.
+# The word boundary is load-bearing: Get-Section allows any prefix before the
+# pattern, so a bare "7\." also matches the "7." inside "## 17.".
+function Get-SpecSection {
+  param([string]$Number)
+  Get-Section (Get-Content (Join-Path $repo 'specs.md') -Raw) "\b$Number\.\s"
+}
+
+Describe-Ticket 'orchestration/01' 'the specification declares orchestration' {
+
+  # If a heading is renumbered or renamed, every assertion below degrades to
+  # "the text is missing" rather than to a pass. This one says which it was.
+  Assert "the three sections this ticket amends resolve, and to themselves" {
+    $expected = @{ 7 = 'Policies'; 20 = 'Multi-agent'; 22 = 'Harness binding' }
+    foreach ($n in 7, 20, 22) {
+      $s = Get-SpecSection $n
+      if ($s -notmatch "(?m)\A##[^\r\n]*$($expected[$n])") { throw "section $n resolved to the wrong heading" }
+    }
+    $true
+  }
+
+  # Each half is anchored to its own predicate. A bare "peer" near a bare
+  # "dispatch" is satisfied by the orchestration sentence by itself — it names
+  # the peer model in passing — which leaves the peer half deletable.
+  Assert "the multi-agent section separates orchestration from peer coordination" {
+    $s = Get-SpecSection 20
+    if ($s -notmatch '(?is)peer[^.;]{0,120}dispatch\w*\s+(?:nobody|no one|no-one|none)') {
+      throw 'the peer relationship is not defined as the one that dispatches nobody'
+    }
+    if ($s -notmatch '(?is)orchestration[^.]{0,80}dispatch\w*[^.]{0,80}integrat') {
+      throw 'orchestration is not defined as dispatching and integrating'
+    }
+    $true
+  }
+
+  Assert "the multi-agent section names the brief, the role, and the change record" {
+    $s = Get-SpecSection 20
+    foreach ($artifact in 'brief', 'role', 'change record') {
+      if ($s -notmatch "(?i)\*\*$artifact\*\*") { throw "the $artifact is not named as an artifact" }
+    }
+    $true
+  }
+
+  # The prohibition's own sentence closes by citing the design increment (§10)
+  # as the precedent, so it says "invents" twice. Matching either would keep
+  # this green with the fan-out's prohibition gone; the precedent is dropped
+  # first so only the fan-out's own can satisfy it.
+  Assert "the multi-agent section declares the fan-out and forbids a stage inventing one" {
+    $s = Get-SpecSection 20
+    if ($s -notmatch '(?i)\*\*fan-out\*\*') { throw 'the fan-out is not declared' }
+    $claim = $s -replace '(?i)never invents an? design increment', ''
+    if ($claim -notmatch '(?i)never invents') { throw 'nothing forbids a stage inventing a decomposition' }
+    $true
+  }
+
+  Assert "the multi-agent section makes the orchestrator the only integrator, reconciled against the diff" {
+    $s = Get-SpecSection 20
+    if ($s -notmatch '(?i)only integrator') { throw 'the integrator is not bounded' }
+    if ($s -notmatch '(?is)reconcil.{0,80}diff') { throw 'integration does not reconcile the record against the diff' }
+    $true
+  }
+
+  # The load-bearing one: the harness withholds the asking surface, so this is a
+  # constraint the specification records rather than a policy it chose.
+  Assert "the multi-agent section refuses to delegate human authority downward" {
+    $s = Get-SpecSection 20
+    if ($s -notmatch '(?is)authority is never delegated|never delegated downward') {
+      throw 'human authority is not bounded at the child'
+    }
+    if ($s -notmatch '(?is)records it and stops|reaches a decision.{0,80}stops') {
+      throw 'nothing says what a child does on reaching a decision'
+    }
+    $true
+  }
+
+  Assert "the harness binding states what a sub-agent inherits and what it does not" {
+    $s = Get-SpecSection 22
+    if ($s -notmatch '(?is)inherits the boot tier') { throw 'the inherited half is unstated' }
+    if ($s -notmatch '(?is)does not receive') { throw 'the un-inherited half is unstated' }
+    $true
+  }
+
+  # The falsified instruction this effort found shipped said the opposite. A
+  # reader reaching §22 must not be able to conclude a child starts bare.
+  Assert "the harness binding names the brief as the only channel, and has the child read" {
+    $s = Get-SpecSection 22
+    if ($s -notmatch '(?is)only parent-to-child channel') { throw 'the brief is not named as the only channel' }
+    if ($s -notmatch '(?is)because a child can read') { throw 'nothing corrects quoting pointer-tier material into a brief' }
+    $true
+  }
+
+  # Anchored inside the canonical-set sentence, not merely near it. The
+  # paragraph below also says "sub-agent contract", and it sits well within any
+  # character window wide enough to span the list — so the boundary has to be
+  # the sentence itself, or the guard stays green with the set unchanged.
+  Assert "the policy section names the sub-agent contract in the canonical set" {
+    $s = Get-SpecSection 7
+    if ($s -notmatch '(?is)canonical set[^.]{0,400}sub-agent contract') {
+      throw 'the canonical policy set omits the sub-agent contract'
+    }
+    $true
+  }
+
+  # The claim in the paragraph beside the canonical set, which the set's own
+  # guard cannot see: there is no second router for a child.
+  Assert "the policy section says why the contract is a policy and not a second router" {
+    $s = Get-SpecSection 7
+    if ($s -notmatch '(?is)second (?:protocol file|router|entrypoint|entry point)') {
+      throw 'nothing rules out a second protocol file for a dispatched child'
+    }
+    if ($s -notmatch '(?is)inherits the boot tier|same pointer chain') {
+      throw 'the reason — a child reaches the policy the way a session does — is unstated'
+    }
+    $true
+  }
+
+  # ADR 0029: an amendment is recorded as a Decision referencing the section it
+  # amends, and the version is bumped. The bump is guarded with the other two
+  # version sites; this is the referencing half.
+  #
+  # Scoped per section, not file-wide. ADR 0040 is cited from three sections, so
+  # a file-wide match keeps this green with the §20 citation — the one the ADR
+  # itself names as amended — deleted outright.
+  Assert "every decision this effort records is cited from each section it amends" {
+    $amends = @{ 40 = @(7, 20, 22); 41 = @(20); 42 = @(20); 43 = @(20); 44 = @(20) }
+    foreach ($adr in $amends.Keys) {
+      foreach ($n in $amends[$adr]) {
+        if ((Get-SpecSection $n) -notmatch "ADR 00$adr") {
+          throw "ADR 00$adr is not cited from section $n, which it amends"
+        }
+      }
+    }
+    $true
+  }
+}
+
+# --- ticket orchestration/02 — the sub-agent policy ships ---------------------
+
+Describe-Ticket 'orchestration/02' 'the sub-agent policy ships' {
+
+  $subagents = 'configure/policies/sub-agents.template.md'
+
+  Assert "the policy ships as a template /configure copies" {
+    if (-not (Get-SkillFile $subagents)) { throw 'the template is missing' }
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch '(?i)\.claude/policies/sub-agents\.md') { throw 'it does not name where it installs' }
+    if ($c -notmatch '(?i)copied as-is') { throw 'it does not say it is copied rather than derived' }
+    $true
+  }
+
+  # The count in the prose and the rows in the table are two statements of the
+  # same fact, and the prose is the half that goes stale silently.
+  Assert "the guide table carries it as copied, and the count beside the table moved with it" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch '(?im)^\|\s*`sub-agents\.md`\s*\|\s*copied\s*\|') { throw 'no row in the guide table' }
+    $copied = ([regex]::Matches($c, '(?im)^\|\s*`[a-z-]+\.md`\s*\|\s*copied\s*\|')).Count
+    if ($c -notmatch "(?i)eight describe the workflow and are copied") {
+      throw 'the prose count does not say eight'
+    }
+    if ($copied -ne 8) { throw "the table holds $copied copied guides, not 8" }
+    $true
+  }
+
+  # The row is the whole reachability mechanism: a guide with no row is
+  # unreachable, and a row on a stage that dispatches nobody is a cost that
+  # stage pays for nothing.
+  #
+  # The dispatching set is asserted whole, in both directions, rather than as a
+  # list of stages to check. Written the other way it hard-coded three stages
+  # and never mentioned `/implement` — so the table could claim "every row whose
+  # stage dispatches" while omitting the one ADR 0044 names by name, and the
+  # guard had nothing to say. `/design` was in that hard-coded list and reaches
+  # no spawner at all; `/implement` reaches `codebase-design`, whose design-it-
+  # twice fan-out is a dispatch today, before this effort adds another.
+  Assert "the router reaches the policy from exactly the stages that dispatch" {
+    $c = Get-SkillFile $protocolTemplate
+    $dispatches  = @('/implement', '/review', '/research')
+    $rows = @{}
+    foreach ($line in ($c -split '\r?\n')) {
+      if ($line -match '^\|\s*`(/[a-z]+)`\s*\|') { $rows[$Matches[1]] = $line }
+    }
+    foreach ($stage in @('/configure') + $dispatches + @('/design', '/prototype', '/commit')) {
+      if (-not $rows.ContainsKey($stage)) { throw "$stage has no row at all" }
+    }
+    # /configure is exempt in both directions: its row is the whole directory.
+    foreach ($stage in $rows.Keys) {
+      if ($stage -eq '/configure') { continue }
+      $carries = $rows[$stage] -match 'policies/sub-agents\.md'
+      if ($carries -and $stage -notin $dispatches) { throw "$stage dispatches nobody but reaches the policy" }
+      if (-not $carries -and $stage -in $dispatches) { throw "$stage dispatches but does not reach the policy" }
+    }
+    if ($c -notmatch '(?i)every row whose stage dispatches') { throw 'the table does not say which rows carry it' }
+    $true
+  }
+
+  # The falsified instruction this effort found shipped said the opposite, so
+  # both halves are asserted: what a child gets, and what it does not.
+  Assert "the policy states what a child inherits and what it does not" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch '(?i)inherits the entrypoint hierarchy') { throw 'the inherited half is unstated' }
+    if ($c -notmatch '(?is)does not get the conversation|not the parent.?s messages') { throw 'the un-inherited half is unstated' }
+    if ($c -notmatch '(?i)narrows what a child may do') { throw 'the policy does not say it narrows rather than bootstraps' }
+    $true
+  }
+
+  Assert "the policy says what a child may use, and holds it to verification at use" {
+    $c = Get-SkillFile $subagents
+    foreach ($layer in 'Codebase', 'Context', 'Decisions') {
+      if ($c -notmatch "(?i)\b$layer\b") { throw "$layer is not named as readable" }
+    }
+    if ($c -notmatch '(?i)verifies at use') { throw 'a child is not held to verification at use' }
+    if ($c -notmatch '(?i)drift finding') { throw 'falsified knowledge has no route out of a child' }
+    $true
+  }
+
+  Assert "the policy closes writing, claiming, committing, pushing, and integrating" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch '(?i)writes no knowledge layer') { throw 'a child is not barred from writing knowledge' }
+    foreach ($verb in 'claims nothing', 'commits nothing', 'pushes nothing', 'integrates nothing') {
+      if ($c -notmatch "(?i)$verb") { throw "the policy does not say a child $verb" }
+    }
+    $true
+  }
+
+  # The harness permits nesting, so a reader who checks the runtime and not this
+  # file would conclude a child may fan out. Both halves are asserted: the bound,
+  # and that it is the workflow's choice rather than a limit it inherited.
+  Assert "orchestration is one layer deep — a child dispatches nobody" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch $rulePattern['a child dispatches nobody']) { throw 'nothing stops a child fanning out' }
+    if ($c -notmatch '(?is)one layer deep') { throw 'the depth is not stated' }
+    # Two checks rather than an alternation. As one, inverting the claim — "the
+    # harness enforces it" — left the other phrasing standing and the guard
+    # green, which is a rule saying the opposite of what it was written to say.
+    if ($c -notmatch '(?is)nesting is available') { throw 'the policy does not say the runtime permits nesting' }
+    if ($c -notmatch '(?is)this workflow sets rather than') {
+      throw 'the bound reads as a harness limit rather than as this workflow choosing it'
+    }
+    $true
+  }
+
+  # Stated as a rule rather than as advice, which is the acceptance criterion:
+  # both halves are prohibitions, and the second is the one that gets softened.
+  Assert "the consent boundary is a rule — no consent for another, no denial routed around" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch $rulePattern['the consent boundary']) { throw 'consent is not bounded at the agent' }
+    if ($c -notmatch '(?is)denial is not routed around') { throw 'a denial may still be worked around' }
+    if ($c -notmatch '(?is)not re-asked|not retried') { throw 'the ways around a denial are not closed' }
+    $true
+  }
+
+  Assert "a decision a child reaches is recorded and stopped on" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch $rulePattern['a child records a decision and stops']) { throw 'the stop is not stated' }
+    if ($c -notmatch '(?is)no surface on which to ask') { throw 'the reason a child cannot decide is unstated' }
+    $true
+  }
+
+  Assert "the brief names all six parts, and a brief missing one is incomplete" {
+    $c = Get-SkillFile $subagents
+    foreach ($part in 'objective', 'inputs', 'what it owns', 'return shape', 'done-criteria', 'cap') {
+      if ($c -notmatch "(?im)^\|\s*$part\s*\|") { throw "the brief template omits: $part" }
+    }
+    if ($c -notmatch $rulePattern['the brief completeness rule']) { throw 'an incomplete brief is not identifiable' }
+    if ($c -notmatch $rulePattern['the only parent-to-child channel']) { throw 'the brief is not named as the only channel' }
+    $true
+  }
+
+  Assert "the change record names what changed, why, what was not done, and any decision stopped on" {
+    $c = Get-SkillFile $subagents
+    foreach ($item in 'what changed', 'why', 'what it could not do', 'any decision it stopped on') {
+      if ($c -notmatch "(?i)\*\*$([regex]::Escape($item))\*\*") { throw "the record format omits: $item" }
+    }
+    if ($c -notmatch '(?is)returns only its path and a compressed summary') { throw 'the return shape is not bounded' }
+    $true
+  }
+
+  # The bar, and what falling under it means. Without the second half a vague
+  # record reads as terse rather than as broken, which is the whole failure.
+  Assert "the record is a manifest, reconcilable against the diff, and a vague one is a defect" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch $rulePattern['the record-is-a-manifest rule']) { throw 'the record is described as a report' }
+    if ($c -notmatch $rulePattern['the record reconciliation bar']) { throw 'the format has no reconciliation bar' }
+    if ($c -notmatch '(?is)too vague to reconcile is a \*\*defect') { throw 'an unreconcilable record is not a defect' }
+    $true
+  }
+
+  # ADR 0012: Position is a directory plus a membership test, so a new per-clone
+  # artifact is covered by the test rather than by an entry added for it.
+  Assert "the record is Position, and the existing membership test covers it" {
+    $c = Get-SkillFile $subagents
+    if ($c -notmatch '(?i)change record is Position') { throw 'the record is not classified' }
+    if ($c -notmatch '(?i)`?\.claude/position/`?') { throw 'the policy does not say where it lives' }
+    if ($c -notmatch '(?is)no new exception') { throw 'the policy does not say the existing test covers it' }
+    $true
+  }
+}
+
+# --- ticket orchestration/03 — roles ship as named definitions -----------------
+
+# The second shipped surface. `Get-SkillFiles` walks `skills/` and stops there,
+# so every sweep in this file — single-home included — was blind to `agents/`
+# the moment it existed. This is what makes the sweeps below not optional: a
+# role restating a policy rule is exactly the drift the policy was written to
+# end, and nothing already here would have seen it.
+$agents = Join-Path $repo 'agents'
+function Get-RoleFiles {
+  if (-not (Test-Path $agents)) { return @() }
+  Get-ChildItem $agents -Recurse -File -Filter *.md
+}
+function Get-RoleFrontmatter {
+  param([System.IO.FileInfo]$File)
+  $c = Get-Content $File.FullName -Raw
+  $m = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
+  if (-not $m.Success) { throw "$($File.Name) has no frontmatter" }
+  $m.Groups[1].Value
+}
+
+Describe-Ticket 'orchestration/03' 'roles ship as named definitions' {
+
+  # The roster the ticket bounds: the two review axes, the research
+  # investigation, the build portion. Asserted as a set rather than a minimum,
+  # because "and nothing speculative" is the half that erodes.
+  # parallel-tickets/03 added the fifth. The set stays closed — that is the
+  # point of it — and grows only when a ticket says which role and why.
+  $roster = @('spec-reviewer', 'standards-reviewer', 'researcher', 'portion-builder', 'ticket-builder')
+
+  Assert "the roster is exactly the two review axes, the investigation, the portion, and the ticket" {
+    $found = @(Get-RoleFiles | ForEach-Object { $_.BaseName } | Sort-Object)
+    $want  = @($roster | Sort-Object)
+    if ($found.Count -eq 0) { throw 'no roles ship at all' }
+    $extra   = @($found | Where-Object { $_ -notin $want })
+    $missing = @($want  | Where-Object { $_ -notin $found })
+    if ($extra)   { throw "speculative roles: $($extra -join ', ')" }
+    if ($missing) { throw "missing roles: $($missing -join ', ')" }
+    $true
+  }
+
+  # A plugin's sub-directories become part of the agent's identifier, so a role
+  # filed one level down would be named by its path — which is the thing this
+  # ticket exists to avoid. Flat is the mechanism, not a tidiness preference.
+  Assert "identity comes from the name, so no role sits in a sub-directory" {
+    $nested = @(Get-RoleFiles | Where-Object { (Split-Path $_.DirectoryName -Leaf) -ne 'agents' })
+    if ($nested) { throw "path would leak into the identifier: $(($nested | ForEach-Object { $_.Name }) -join ', ')" }
+    $true
+  }
+
+  Assert "every role declares the name it is dispatched by, and it matches its file" {
+    foreach ($f in (Get-RoleFiles)) {
+      $fm = Get-RoleFrontmatter $f
+      $m = [regex]::Match($fm, '(?m)^name:\s*(\S+)\s*$')
+      if (-not $m.Success) { throw "$($f.Name) declares no name" }
+      if ($m.Groups[1].Value -ne $f.BaseName) { throw "$($f.Name) is dispatched as '$($m.Groups[1].Value)'" }
+      if ($fm -notmatch '(?m)^description:\s*\S') { throw "$($f.Name) has no description to select it by" }
+    }
+    $true
+  }
+
+  # A plugin silently ignores these three. A role relying on one would read as
+  # constrained and run unconstrained, with no error anywhere — which is why the
+  # constraint that needed `permissionMode` lives in the policy as an obligation.
+  Assert "no role relies on a frontmatter field a plugin ignores" {
+    foreach ($f in (Get-RoleFiles)) {
+      $fm = Get-RoleFrontmatter $f
+      foreach ($field in 'hooks', 'mcpServers', 'permissionMode') {
+        if ($fm -match "(?m)^$field\s*:") { throw "$($f.Name) sets $field, which a plugin's definitions ignore" }
+      }
+    }
+    $true
+  }
+
+  # Background is the default and background children keep a narrower built-in
+  # set, so a tool outside it means the definition resolves to two different
+  # agents depending on how it was dispatched — and nothing reports the
+  # difference. Asserted per role rather than once, so the failure names the file.
+  Assert "every role's tool list survives being dispatched in the background" {
+    $background = @('Read', 'Grep', 'Glob', 'Bash', 'PowerShell', 'Edit', 'Write',
+                    'NotebookEdit', 'WebFetch', 'WebSearch', 'TodoWrite', 'Skill',
+                    'ToolSearch', 'EnterWorktree', 'ExitWorktree', 'Monitor',
+                    'TaskStop', 'SendMessage', 'Artifact')
+    foreach ($f in (Get-RoleFiles)) {
+      $fm = Get-RoleFrontmatter $f
+      $m = [regex]::Match($fm, '(?m)^tools:\s*(.+)$')
+      if (-not $m.Success) { throw "$($f.Name) inherits every tool rather than naming its own" }
+      foreach ($tool in ($m.Groups[1].Value -split ',' | ForEach-Object { $_.Trim() })) {
+        if ($tool -notin $background) { throw "$($f.Name) lists $tool, which a background child does not keep" }
+      }
+    }
+    $true
+  }
+
+  # One layer, in the frontmatter rather than in the prose: a sentence telling a
+  # role not to dispatch is a second home for the policy's rule, and is advice
+  # where this is a denial. `disallowedTools` is applied before `tools`.
+  Assert "every role denies itself the tool that would let it dispatch further" {
+    foreach ($f in (Get-RoleFiles)) {
+      $fm = Get-RoleFrontmatter $f
+      $m = [regex]::Match($fm, '(?m)^disallowedTools:\s*(.+)$')
+      if (-not $m.Success) { throw "$($f.Name) does not deny anything" }
+      $denied = @($m.Groups[1].Value -split ',' | ForEach-Object { $_.Trim() })
+      if ('Agent' -notin $denied) { throw "$($f.Name) may spawn children of its own" }
+      if ($m.Groups[1].Value -match '\bAgent\s*\(') {
+        throw "$($f.Name) uses the Agent(type) form, whose type list is ignored in a definition"
+      }
+    }
+    $true
+  }
+
+  Assert "every role points at the sub-agent policy" {
+    foreach ($f in (Get-RoleFiles)) {
+      if ((Get-Content $f.FullName -Raw) -notmatch 'policies/sub-agents\.md') {
+        throw "$($f.Name) never reaches the contract it is bound by"
+      }
+    }
+    $true
+  }
+
+  # The single-home sweep in tenure/02 iterates `Get-SkillFiles`, which does not
+  # reach here. Without this, `agents/` is the one shipped surface where a rule
+  # may be restated for free.
+  Assert "no role restates a rule that has a home elsewhere" {
+    $restated = @()
+    foreach ($f in (Get-RoleFiles)) {
+      $c = Get-Content $f.FullName -Raw
+      foreach ($rule in $rulePattern.Keys) {
+        if ($c -match $rulePattern[$rule]) { $restated += "$($f.Name): $rule" }
+      }
+    }
+    if ($restated) { throw ($restated -join '; ') }
+    $true
+  }
+
+  # The other sweep `skills/` had and this surface did not. A role naming a
+  # pre-migration path is the same bug as a skill naming one, and the exemption
+  # that spares /configure's detection list has no analogue here — no role
+  # detects a layout, so none may name one.
+  Assert "no role references a pre-migration path" {
+    $stale = @('CONTEXT\.md', 'CONTEXT-MAP\.md', 'docs/adr/', '\.scratch/',
+               '\.claude/docs/', '\.claude/tenure\.md',
+               '\.claude/tracker\.md', '\.claude/version-control\.md')
+    $hits = @()
+    foreach ($f in (Get-RoleFiles)) {
+      $c = Get-Content $f.FullName -Raw
+      foreach ($p in $stale) { if ($c -cmatch $p) { $hits += "$($f.Name): $p" } }
+    }
+    if ($hits) { throw ($hits -join '; ') }
+    $true
+  }
+
+  # A licence obligation, and it follows the text rather than the artifact:
+  # three of these roles carry wording lifted from a derived skill, so the
+  # attribution has to travel with it. `portion-builder` is AEP's own.
+  Assert "a role carrying derived text carries its attribution" {
+    foreach ($role in 'spec-reviewer', 'standards-reviewer', 'researcher') {
+      $p = Join-Path $agents "$role.md"
+      if ((Get-Content $p -Raw) -notmatch 'mattpocock/skills') { throw "no attribution in $role.md" }
+    }
+    $true
+  }
+
+  # The authoring standards are path-scoped, so a shipped surface they do not
+  # name is one where they never load — the rules exist and simply do not fire.
+  Assert "the authoring standards load when a role is edited" {
+    $c = Get-Content (Join-Path $repo '.claude/rules/skills.md') -Raw
+    $fm = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $fm.Success) { throw 'the authoring rules carry no frontmatter' }
+    if ($fm.Groups[1].Value -notmatch '(?m)^\s*-\s*"agents/\*\*"') {
+      throw 'agents/ ships but the authoring standards are not scoped to it'
+    }
+    $true
+  }
+}
+
+# --- ticket orchestration/04 — a ticket may declare a fan-out ------------------
+
+Describe-Ticket 'orchestration/04' 'a ticket may declare a fan-out' {
+
+  $tickets = 'configure/policies/tickets.template.md'
+
+  # "Both the format and its template" is two files, not prose-plus-fence. The
+  # increment section this one parallels moved both in one commit, and an
+  # installed policy left a version behind is the drift the pair exists to
+  # prevent — this repository would be running a format it ships an amendment to.
+  Assert "the installed policy carries the section the template ships" {
+    $shipped   = Get-Section (Get-SkillFile $tickets) 'Declared fan-out'
+    $installed = Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw
+    if ($installed -notmatch '(?m)^## Declared fan-out') { throw 'the installed policy never gained the section' }
+    # Normalised the way scaffolding/05 compares a copied policy: the two files
+    # carry different line endings, and a raw comparison reports drift on every
+    # line of an identical section.
+    $here = Get-Section $installed 'Declared fan-out'
+    $norm = { param($t) ($t -replace '\r\n', "`n").Trim() }
+    if ((& $norm $here) -ne (& $norm $shipped)) { throw 'the installed section has drifted from the template' }
+    $true
+  }
+
+  # Both halves: the prose that says a ticket MAY carry one, and the fenced
+  # block a writer copies. The prose alone leaves the shape to be guessed, and
+  # the block alone is a snippet with no rule attached to it.
+  Assert "the ticket format carries the section, its shape, and its timing" {
+    $s = Get-Section (Get-SkillFile $tickets) 'Declared fan-out'
+    if ($s -notmatch '(?i)MAY carry one \*\*fan-out\*\*') { throw 'the section is not optional, or is not named' }
+    # The row, not just the fence: a block holding only a heading is a shape
+    # nobody can copy, and the guard that stopped at the heading passed on one.
+    if ($s -notmatch '(?ms)^```markdown\r?\n## Fan-out\r?\n\r?\n- <role>:') {
+      throw 'no template block a writer can copy'
+    }
+    if ($s -notmatch $rulePattern['the fan-out declaration timing rule']) { throw 'the design-time bound is missing' }
+    $true
+  }
+
+  Assert "the declaration names roles and ownership, and composes no brief" {
+    $s = Get-Section (Get-SkillFile $tickets) 'Declared fan-out'
+    if ($s -notmatch $rulePattern['the portion ownership rule']) { throw 'file ownership is not part of the declaration' }
+    if ($s -notmatch '(?is)does not compose a brief') { throw 'nothing stops the declaration composing a brief' }
+    if ($s -notmatch '(?is)at dispatch and not at design time') { throw 'the reason a brief waits for dispatch is unstated' }
+    $true
+  }
+
+  # The cost claim the ticket makes: a ticket without the section behaves as it
+  # did. Asserted as the absence of a requirement, since prose saying "optional"
+  # is exactly what a MUST elsewhere would quietly contradict.
+  Assert "a ticket with no declaration is unchanged" {
+    $s = Get-Section (Get-SkillFile $tickets) 'Declared fan-out'
+    if ($s -notmatch '(?is)no `?## Fan-out`? section[^.]{0,80}unchanged') {
+      throw 'the no-declaration case is not stated'
+    }
+    $fmt = Get-Section (Get-SkillFile $tickets) 'Format'
+    if ($fmt -match '(?i)fan.out') { throw 'the fan-out leaked into the required format' }
+    $true
+  }
+
+  # The guardrail lives with the stage that would breach it, not with the
+  # section — the same split the increment pair already uses. A guardrail in the
+  # format is a rule nobody reads at the moment it would be broken.
+  Assert "the build stage is barred from inventing a fan-out, where it would" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch $rulePattern['the fan-out never-invented guardrail']) { throw 'the build stage may invent one' }
+    if ($c -notmatch '(?is)not\*{0,2} re-partitioned in flight|never re-partitioned') {
+      throw 'a ticket that divides differently may be re-cut mid-build'
+    }
+    if ((Get-SkillFile $tickets) -match $rulePattern['the fan-out never-invented guardrail']) {
+      throw 'the guardrail has a second home in the format'
+    }
+    $true
+  }
+
+  # Scoped to the fan-out's own paragraph. `/design` already says it writes a
+  # discussion, in the same file — a file-wide match reported authorship of the
+  # declaration while the declaration's own sentence credited nobody.
+  Assert "the design stage says it writes the declaration" {
+    $para = @((Get-SkillFile 'design/SKILL.md') -split '\r?\n') |
+            Where-Object { $_ -match '(?i)\*\*fan-out\*\*' }
+    if (-not $para) { throw '/design never mentions a fan-out' }
+    if (($para -join ' ') -notmatch '(?is)`?/design`?[^.]{0,30}writes it') {
+      throw '/design does not claim authorship of the declaration'
+    }
+    $true
+  }
+
+  # ADR 0041. Both halves: the order, and the refusal — an order alone reads as
+  # a scheduling note, and a refusal alone leaves a legal ticket unbuildable.
+  Assert "a fan-out and a human-needing increment state which resolves first" {
+    $s = Get-Section (Get-SkillFile $tickets) 'Declared fan-out'
+    if ($s -notmatch '(?is)resolves first, in the parent, before anything is dispatched') {
+      throw 'the order is unstated'
+    }
+    if ($s -notmatch '(?is)refused rather than reordered') { throw 'the combination is not refused' }
+    if ($s -notmatch '(?is)ADR 0041') { throw 'the decision this follows is not cited' }
+    if ($s -notmatch '(?i)research.{0,20}task|AFK') { throw 'the increments that may sit in a portion are not distinguished' }
+    $true
+  }
+}
+
+# --- ticket orchestration/05 — configure writes the isolation obligation -------
+
+Describe-Ticket 'orchestration/05' 'configure writes the isolation obligation' {
+
+  # The value is asserted as JSON, parsed. A regex over the prose would pass on
+  # the sentence that names the key while the sample beside it said "fresh" —
+  # and the sample is the thing a reader copies.
+  Assert "the configure stage writes the setting, with the value that branches from the claim" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch '(?i)`\.claude/settings\.json`') { throw 'the file /configure writes is not named' }
+    $block = [regex]::Match($c, '(?s)```json\r?\n(\{[^`]*?"baseRef"[^`]*?\})\r?\n```')
+    if (-not $block.Success) { throw 'no JSON sample carrying baseRef' }
+    $parsed = $block.Groups[1].Value | ConvertFrom-Json
+    if ($parsed.worktree.baseRef -ne 'head') {
+      throw "the sample sets baseRef to '$($parsed.worktree.baseRef)', which branches from trunk"
+    }
+    $true
+  }
+
+  # "so a reader deleting it knows what they are deleting" — the reason is the
+  # deliverable here, not decoration. Both halves: where the default branches
+  # from, and that nothing reports the failure.
+  Assert "the obligation states why it exists — the default, and the silence" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch $rulePattern['the worktree base-ref obligation']) {
+      throw 'nothing says the default branches from somewhere other than the parent'
+    }
+    if ($c -notmatch '(?is)nothing reports it') { throw 'the failure does not read as silent' }
+    if ($c -notmatch '(?is)merge into an existing') { throw 'the harness-owned file may be replaced wholesale' }
+    $true
+  }
+
+  # ADR 0045. The first answer here was that the file could stay out of both
+  # the diagram and §21, on the argument that each lists what this workflow
+  # owns — falsified by §21 already listing `.gitignore`, which git owns, and
+  # which ADR 0031 put there rather than narrowing the layout to exclude it.
+  # `settings.local.json` is out of both because it is Position; a committed
+  # file has no such cover. So the file is in the layout, and the two `settings`
+  # files are distinguished rather than treated as one exemption.
+  Assert "the canonical layout carries the harness file, and says which case it is" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ((Get-Section $c 'Generate') -notmatch '(?m)^├── settings\.json') {
+      throw 'the generated tree omits a file /configure writes'
+    }
+    $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ((Get-Section $spec '\b21\.\s') -notmatch '(?m)^\s+settings\.json\s') {
+      throw 'the specification layout omits it, so the two disagree'
+    }
+    if ($c -notmatch '(?is)still not one case') { throw 'the two settings files are conflated' }
+    if ($c -notmatch '(?is)`settings\.local\.json` is per-clone') { throw 'the per-clone half is unstated' }
+    if ($c -notmatch '(?is)`settings\.json` is committed') { throw 'the committed half is unstated' }
+    $true
+  }
+
+  # An amendment is a Decision citing the section, plus the bump (ADR 0029).
+  # The bump is guarded with the other version sites; this is the citation half.
+  Assert "the layout amendment is recorded as a Decision the specification cites" {
+    $adr = Join-Path $repo '.claude/decisions/0045-spec-21-gains-the-harness-settings-file.md'
+    if (-not (Test-Path $adr)) { throw 'no Decision records the amendment' }
+    $c = Get-Content $adr -Raw
+    if ($c -notmatch '(?i)§21') { throw 'the Decision does not name the section it amends' }
+    if ($c -notmatch '(?i)1\.6\.0') { throw 'the Decision does not record the version it moved to' }
+    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)ADR 0045') { throw 'the layout does not cite it' }
+    $true
+  }
+
+  # Repairs rather than reports — the acceptance criterion, and the half a
+  # migration row loses first, since reporting is always the cheaper write.
+  Assert "the migration recognises the gap by content and repairs it" {
+    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'Orchestration without its isolation setting'
+    if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
+    if ($s -notmatch '(?is)sub-agents\.md.{0,200}(absent|missing|fresh)') { throw 'the two halves of the test are not both stated' }
+    if ($s -notmatch '(?is)repairs rather than reports') { throw 'the row reports instead of repairing' }
+    $true
+  }
+
+  Assert "the integrator confirms a child's base, and refuses by name" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch $rulePattern['the child base check at the integrator']) { throw 'nothing checks a child base' }
+    # Emphasis may fall on either word or across both, so the markup is
+    # skipped rather than matched — the claim is the refusal, not the bolding.
+    if ($c -notmatch '(?is)\bnot\s+\*{0,2}integrated\b') { throw 'a wrong base does not stop integration' }
+    if ($c -notmatch '(?is)names what it found') { throw 'the refusal is generic' }
+    if ($c -notmatch '(?is)base it has, and the base it should have had') { throw 'the refusal does not say what to name' }
+    $true
+  }
+
+  # The check exists because the setting cannot be trusted; a check that reads
+  # as belt-and-braces is one a later reader deletes as redundant.
+  Assert "the check says why configuration alone is not trusted" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?is)configured by hand or by an older version') {
+      throw 'the reason the setting is re-checked is unstated'
+    }
+    if ((Get-SkillFile 'configure/SKILL.md') -match $rulePattern['the child base check at the integrator']) {
+      throw 'the integrator check has a second home in /configure'
+    }
+    $true
+  }
+}
+
+# --- ticket orchestration/06 — the build stage dispatches and integrates -------
+
+# `Get-Section` matches `##(?!#)` on purpose, so a `###` subsection is invisible
+# to it — and this ticket's whole deliverable is one. Fenced regions are masked
+# the same way and for the same reason: a `###` inside a fence is sample content,
+# and letting it end the subsection would truncate the search silently.
+function Get-Subsection {
+  param([string]$Content, [string]$HeadingPattern)
+  $mask = [regex]::Replace($Content, '(?ms)^```.*?^```', {
+    param($f) ($f.Value -replace '[^\r\n]', '.')
+  })
+  # `(?!#)` for the reason `Get-Section` has it: without it a `#### ` heading
+  # matches as though it were the subsection itself.
+  $m = [regex]::Match($mask, "(?ims)^###(?!#)[^\r\n]*$HeadingPattern.*?(?=^#{1,3}\s|\z)")
+  if (-not $m.Success) { throw "no subsection matching '$HeadingPattern'" }
+  $Content.Substring($m.Index, $m.Length)
+}
+
+Describe-Ticket 'orchestration/06' 'the build stage dispatches, isolates, and integrates' {
+
+  $run = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'Running one' }
+
+  # The brief is composed at dispatch and its parts belong to the policy, so
+  # the stage pointing at the template is the correct shape — and listing the
+  # six here would be the second home the policy exists to prevent.
+  Assert "one child per declared role, briefed from the template rather than from the ticket" {
+    $s = & $run
+    if ($s -notmatch '(?i)one child per declared role') { throw 'the fan-out does not dispatch per role' }
+    if ($s -notmatch '(?is)brief built from the policy.s template') { throw 'the brief is not taken from the template' }
+    if ($s -notmatch '(?is)composed now rather than carried on the ticket') { throw 'when the brief is composed is unstated' }
+    if ($s -match $rulePattern['the brief completeness rule']) { throw 'the six parts are restated here' }
+    $true
+  }
+
+  # Isolation is asserted with its enforcement, because "runs in a worktree" is
+  # a description and "the harness refuses it" is the reason nothing has to be
+  # trusted — which is the whole claim ADR 0044 makes.
+  # ADR 0044: where a worktree is based is a configuration obligation "not a
+  # sentence in a skill anyone can forget". The first draft wrote that sentence
+  # here, which made the stage a third home beside `/configure` and specs §20 —
+  # and the base-ref probe was narrowed until it stopped noticing. So the stage
+  # states the isolation and defers the base, and the deferral is asserted.
+  Assert "each child is isolated, and where it is based is deferred rather than restated" {
+    $s = & $run
+    if ($s -notmatch '(?is)its own isolated worktree') { throw 'children are not isolated' }
+    if ($s -notmatch '(?is)version-control commands fail if they reach the main checkout') {
+      throw 'the boundary is unstated, or claims more than the harness enforces'
+    }
+    # Two shapes, because the base-ref probe only knows the negative form —
+    # default-branch-rather-than-parent. The positive one, "branched from the
+    # claim", is the sentence ADR 0044 names and it slips past that probe
+    # entirely, so it is excluded here on its own terms.
+    if ($s -match $rulePattern['the worktree base-ref obligation']) {
+      throw 'the stage restates where the worktree is based'
+    }
+    if ($s -match '(?i)(worktree|isolat\w+)[^.]{0,60}(branched|based)\s+(from|on)') {
+      throw 'the stage names what the worktree branches from'
+    }
+    if ($s -notmatch '(?is)configuration rather than anything this stage states') {
+      throw 'the deferral is not stated, so the omission reads as an oversight'
+    }
+    $true
+  }
+
+  # "when it creates them rather than when something breaks" is the criterion,
+  # so the timing is the assertion — presence alone would pass on a sentence
+  # buried in the failure path.
+  # The timing is the stage's; how far the claim widens is the policy's, and
+  # the first draft restated it here with no guard to notice.
+  Assert "the widened claim is announced as the children are created, and not redefined" {
+    $s = & $run
+    if ($s -notmatch '(?is)claim has widened') { throw 'the claim widening is not announced' }
+    if ($s -notmatch '(?is)as the children are created') { throw 'the timing is unstated' }
+    if ($s -match $rulePattern['the claim widens over children']) { throw 'the stage restates how far it widens' }
+    $true
+  }
+
+  Assert "integration is driven by the record, and the branch is not trusted alone" {
+    $s = & $run
+    if ($s -notmatch $rulePattern['integration is record-driven']) { throw 'the branch is integrated on trust' }
+    if ($s -notmatch '(?is)file-ownership half') { throw 'why the record is what gives ownership force is unstated' }
+    $true
+  }
+
+  # Both mismatches, both named, and the blast radius. A guard on one of the
+  # three passes while the other two are deleted, and each is a different way
+  # for the same manifest to be untrustworthy.
+  Assert "a mismatch stops the whole fan-out and names which kind it was" {
+    $s = & $run
+    if ($s -notmatch '(?i)\*\*undeclared\*\*') { throw 'the undeclared-path case is not named' }
+    if ($s -notmatch '(?i)\*\*unowned\*\*') { throw 'the unowned-path case is not named' }
+    if ($s -notmatch '(?is)stop the \*\*whole\*\* fan-out') { throw 'a mismatch does not stop the siblings' }
+    if ($s -notmatch '(?is)reported with the path') { throw 'the mismatch is not named with its path' }
+    $true
+  }
+
+  Assert "a fanned-out ticket still produces one commit" {
+    $s = & $run
+    if ($s -notmatch $rulePattern['the fanned-out ticket is one commit']) { throw 'the one-commit rule does not survive a fan-out' }
+    if ($s -notmatch '(?is)indistinguishable in history') { throw 'the reason a squash is used is unstated' }
+    $true
+  }
+
+  # The ticket binds two cases together — a child that fails and a child that
+  # stops — and the first draft gave the blast radius only to failure, leaving
+  # a reader free to integrate the siblings around a stopped child.
+  Assert "losing or stopping one child integrates none of them, and the survivors keep their work" {
+    $s = & $run
+    if ($s -notmatch $rulePattern['a partial fan-out integrates nothing']) { throw 'a partial set may still land' }
+    if ($s -notmatch '(?is)so does one child stopping') { throw 'a stopped child does not stop the set' }
+    if ($s -notmatch '(?is)not the failed or stopped portion, and not its siblings') { throw 'the blast radius is unstated' }
+    if ($s -notmatch '(?is)worktrees stay where they are') { throw 'the survivors lose their work' }
+    if ($s -notmatch '(?is)names the portion that failed and the decision') { throw 'the hand-back names one but not both' }
+    $true
+  }
+
+  # ADR 0041 from the parent's side, and the criterion asks for a closed path
+  # rather than a claim that one is closed. "No path exists" is a sentence; the
+  # route out is the enforcement, so the route is what is asserted — including
+  # the fence against the inline increment path, which was a live way for this
+  # stage to answer a child's question and nothing had shut it.
+  Assert "a child's decision has one route out, and the inline path is fenced off from it" {
+    $s = & $run
+    if ($s -notmatch '(?is)takes the hand-back below') { throw 'the decision has no stated route out' }
+    if ($s -notmatch '(?is)same event') { throw 'it is not tied to the undeclared-decision case' }
+    if ($s -notmatch '(?is)never one of those') { throw 'the inline resolution path is still open to a child question' }
+    if ($s -notmatch '(?is)deciding on a child.s behalf') { throw 'why the inline path is fenced is unstated' }
+    $true
+  }
+
+  Assert "review runs once, on the integrated result" {
+    $s = & $run
+    if ($s -notmatch '(?is)runs once, on the integrated result') { throw 'review may run per child' }
+    if ($s -notmatch '(?is)seam between them') { throw 'the reason per-child review is wrong is unstated' }
+    $true
+  }
+
+  # The cost claim: a ticket without a declaration is untouched. Asserted as
+  # containment — every sentence this ticket added sits inside its own section,
+  # so the path a normal ticket takes cannot have moved.
+  Assert "the single-instance path is untouched, because the fan-out is contained" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    $s = & $run
+    foreach ($phrase in 'one child per declared role', 'isolated worktree branched from the claim',
+                        'integrate from each child', 'raised, never resolved here') {
+      $all = ([regex]::Matches($c, [regex]::Escape($phrase), 'IgnoreCase')).Count
+      $here = ([regex]::Matches($s, [regex]::Escape($phrase), 'IgnoreCase')).Count
+      if ($all -ne $here) { throw "dispatch language leaked outside its section: $phrase" }
+    }
+    # The ordinary loop is the prose before the first subsection. Taking the
+    # whole of `## 2` instead sweeps in the fan-out subsections that correctly
+    # live under it, and reports the section for containing its own contents.
+    $build = (Get-Section $c '2 — Build') -split '(?m)^###\s', 2
+    if ($build[0] -match '(?i)fan-out|dispatch|\bchild\b') {
+      throw 'the loop a ticket without a declaration takes now mentions the fan-out'
+    }
+    $true
+  }
+}
+
+# --- ticket orchestration/07 — the existing spawners conform -------------------
+
+Describe-Ticket 'orchestration/07' 'the existing spawners conform to the policy' {
+
+  $spawners = @('review/SKILL.md', 'research/SKILL.md',
+                'codebase-design/DESIGN-IT-TWICE.md', 'survey/SKILL.md')
+
+  Assert "each of the four spawners reaches the sub-agent policy" {
+    foreach ($s in $spawners) {
+      if ((Get-SkillFile $s) -notmatch 'policies/sub-agents\.md') { throw "$s never reaches the contract" }
+    }
+    $true
+  }
+
+  # The whole point of the policy: reaching it and restating it are opposites.
+  # Swept per file so the failure names the spawner rather than the rule.
+  Assert "no spawner restates a rule the policy or another file owns" {
+    $restated = @()
+    foreach ($s in $spawners) {
+      $c = Get-SkillFile $s
+      foreach ($rule in $rulePattern.Keys) {
+        if ($c -match $rulePattern[$rule]) { $restated += "$s : $rule" }
+      }
+    }
+    if ($restated) { throw ($restated -join '; ') }
+    $true
+  }
+
+  # The reasoning the ticket protects: neither is a dispatch rule, both are
+  # claims about that stage's own correctness, and moving either would be the
+  # single-home rule misapplied. Asserted where they were, not merely present.
+  Assert "the reasoning that is each stage's own stayed with that stage" {
+    $r = Get-SkillFile 'review/SKILL.md'
+    if ($r -notmatch '(?is)an axis that can see the other') { throw 'why the axes must not converge left /review' }
+    if ($r -notmatch '(?is)cannot converge') { throw 'the conclusion of that reasoning is gone' }
+    $s = Get-SkillFile 'research/SKILL.md'
+    if ($s -notmatch '(?is)Isolation is not the same as not waiting') { throw 'the isolation-vs-blocking distinction left /research' }
+    $true
+  }
+
+  # The instruction this effort was founded on finding. Two halves: the false
+  # claim is gone, and nothing near it tells an author to quote a file's
+  # contents into a brief instead of naming the path.
+  Assert "the falsified brief-construction instruction is gone" {
+    $c = Get-SkillFile 'codebase-design/DESIGN-IT-TWICE.md'
+    if ($c -match '(?i)no Context loaded of its own') { throw 'the false claim about what a child holds is still shipped' }
+    if ($c -match '(?i)quote the terms it needs into the brief') { throw 'the instruction it justified is still shipped' }
+    if ($c -notmatch 'policies/sub-agents\.md') { throw 'nothing replaced it with a pointer at the truth' }
+    $true
+  }
+
+  # "Spawners covered by a shipped role name the role rather than retyping its
+  # brief." Both directions: the role is named, and the retyped brief is gone.
+  Assert "a spawner a role covers names the role instead of retyping its brief" {
+    $r = Get-SkillFile 'review/SKILL.md'
+    foreach ($role in 'spec-reviewer', 'standards-reviewer') {
+      if ($r -notmatch [regex]::Escape($role)) { throw "/review does not name $role" }
+    }
+    if ($r -match '(?im)^Brief:') { throw 'a brief is still typed at the call site' }
+    $c = Get-SkillFile 'research/SKILL.md'
+    if ($c -notmatch 'researcher') { throw '/research does not name its role' }
+    $true
+  }
+
+  # The ticket is the effort's own test of whether the design was additive:
+  # "If conforming these four requires changing what any of them does, the
+  # claim that orchestration is a system stages opt into was wrong." Each
+  # spawner still declares the same mode and still dispatches.
+  Assert "no spawner changed what it does" {
+    $modes = @{ 'review/SKILL.md' = 'review'; 'research/SKILL.md' = 'research'; 'survey/SKILL.md' = 'research' }
+    foreach ($f in $modes.Keys) {
+      if ((Get-SkillFile $f) -notmatch "(?m)^Mode:\s*$($modes[$f])\s*$") { throw "$f changed its mode" }
+    }
+    # Each spawner names the thing it dispatches. A bare `sub-?agent` probe
+    # passed on the pointer this ticket just added — `sub-agents.md` contains
+    # the word, so a spawner that had stopped dispatching entirely still read
+    # as one.
+    # Case-sensitive, and the harness agent in the backticks it is written with.
+    # Unanchored and case-insensitive, `Explore` matched the word "exploring"
+    # two paragraphs earlier — so the guard passed on a survey that had stopped
+    # naming the agent entirely.
+    $dispatches = @{
+      'review/SKILL.md'                    = 'spec-reviewer'
+      'research/SKILL.md'                  = 'researcher'
+      'codebase-design/DESIGN-IT-TWICE.md' = 'Agent tool'
+      'survey/SKILL.md'                    = '`Explore`'
+    }
+    foreach ($f in $dispatches.Keys) {
+      if ((Get-SkillFile $f) -cnotmatch [regex]::Escape($dispatches[$f])) {
+        throw "$f no longer names what it dispatches"
+      }
+    }
+    $true
+  }
+
+  # Criterion 6, and the reason both were deferred: each rule had a second home
+  # only this ticket could remove, so the guards land here with the removals.
+  Assert "the two rules deferred from 02 and 03 now carry single-home guards" {
+    foreach ($rule in 'what a child inherits', 'inputs by path, never pasted') {
+      if (-not $rulePattern.Contains($rule)) { throw "no guard was placed for: $rule" }
+    }
+    $true
+  }
+}
+
+# --- ticket orchestration/08 — adopt orchestration here ------------------------
+
+Describe-Ticket 'orchestration/08' 'adopt orchestration here' {
+
+  Assert "the sub-agent policy is installed here, and matches the template it was copied from" {
+    $p = Join-Path $repo '.claude/policies/sub-agents.md'
+    if (-not (Test-Path $p)) { throw 'the policy is not installed' }
+    # Compared on the body: the installed header says who installed it and why,
+    # which is not part of the guide — the same comparison scaffolding/05 makes.
+    $strip = { param($t) ($t -replace '(?s)<!--.*?-->', '').Trim() -replace '\r\n', "`n" }
+    if ((& $strip (Get-SkillFile 'configure/policies/sub-agents.template.md')) -ne (& $strip (Get-Content $p -Raw))) {
+      throw 'the installed policy has diverged from its template'
+    }
+    $true
+  }
+
+  # The installed router is this repository's own file, so it is checked
+  # independently of the template rather than assumed to have followed it.
+  # `/configure` is skipped because its row is the whole directory, not a list —
+  # the same exemption the declaration cross-check makes, and the reason the
+  # router's own sentence cannot say "only those" without qualification.
+  #
+  # The dispatching rows are asserted to *exist* before their contents are
+  # checked. Iterating the rows that are present passed with the `/research`
+  # row deleted outright, because a missing stage never reaches the comparison.
+  Assert "the installed router reaches the policy from exactly the stages that dispatch" {
+    $c = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    $dispatches = @('/implement', '/review', '/research')
+    $rows = @{}
+    foreach ($line in ($c -split '\r?\n')) {
+      if ($line -match '^\|\s*`(/[a-z]+)`\s*\|') { $rows[$Matches[1]] = $line }
+    }
+    foreach ($stage in @('/configure') + $dispatches + @('/design', '/prototype', '/commit')) {
+      if (-not $rows.ContainsKey($stage)) { throw "$stage has no row in the installed router" }
+    }
+    foreach ($stage in $rows.Keys) {
+      if ($stage -eq '/configure') { continue }
+      $carries = $rows[$stage] -match 'policies/sub-agents\.md'
+      if ($carries -and $stage -notin $dispatches) { throw "$stage dispatches nobody but reaches the policy" }
+      if (-not $carries -and $stage -in $dispatches) { throw "$stage dispatches but does not reach the policy" }
+    }
+    $true
+  }
+
+  # ADR 0044: a child branching from trunk builds against the wrong tree and
+  # does it silently. The value is parsed rather than matched, because the
+  # sentence naming the key stays true while the value flips.
+  Assert "the isolation setting is written here, and branches from the claim" {
+    $p = Join-Path $repo '.claude/settings.json'
+    if (-not (Test-Path $p)) { throw 'this repository dispatches children from trunk' }
+    $parsed = Get-Content $p -Raw | ConvertFrom-Json
+    if ($parsed.worktree.baseRef -ne 'head') {
+      throw "baseRef is '$($parsed.worktree.baseRef)', which branches from the default branch"
+    }
+    $true
+  }
+
+  # The Domain Context decision, checked as a decision rather than as a file:
+  # it exists, it is routed, and the vocabulary left the always-loaded surface
+  # rather than being copied off it.
+  # `Sources:` is the line that makes a Domain Context navigable, and no other
+  # assertion in the suite demands one — `skill-authoring.md` has had one since
+  # it was written, so nothing ever had to.
+  Assert "orchestration earns a Domain Context, routed and with its sources named" {
+    $dc = Join-Path $repo '.claude/contexts/orchestration.md'
+    if (-not (Test-Path $dc)) { throw 'no Domain Context was created' }
+    $c = Get-Content $dc -Raw
+    if ($c -notmatch '(?m)^Sources:\s*\S') { throw 'the Domain Context names no sources' }
+    # Whitespace-tolerant: the reasoning is prose and hard-wraps, so a literal
+    # space between two words matches only until someone reflows the paragraph.
+    if ($c -notmatch '(?is)more\s+specific\s+row\s+wins') { throw 'the placement table was not reckoned with' }
+    if ((Get-Content (Join-Path $repo '.claude/contexts/map.md') -Raw) -notmatch 'orchestration\.md') {
+      throw 'the Domain Context is unreachable — no routing row'
+    }
+    $true
+  }
+
+  # Moved, not copied. Anchored on the term rather than on the exact markup it
+  # was written with: pasting `**Role:**` back into the cross-cutting file — the
+  # colon inside the emphasis — left this green with the vocabulary in both.
+  Assert "the cross-cutting file gave the terms up rather than sharing them" {
+    $c     = Get-Content (Join-Path $repo '.claude/contexts/orchestration.md') -Raw
+    $cross = Get-Content (Join-Path $repo '.claude/contexts/repository.md') -Raw
+    foreach ($term in 'Orchestration', 'Orchestrator', 'Role', 'Brief', 'Change Record',
+                      'Fan-out', 'Dispatched Set', 'Brokered Request', 'Collision') {
+      $arrived = "(?m)^\*\*$([regex]::Escape($term))\*\*:"
+      $anywhere = "(?m)^\*{1,2}$([regex]::Escape($term))\*{0,2}:?\*{0,2}\s*$"
+      if ($c -notmatch $arrived)    { throw "$term did not arrive in the Domain Context" }
+      if ($cross -match $anywhere)  { throw "$term is defined in both files" }
+    }
+    $true
+  }
+
+  # The honesty criterion. Recorded on the ticket rather than in Context: a
+  # measurement of what past tickets touched is a finding, `/design` owns
+  # graduating one, and a constraint a refactor removes is not stable. Both
+  # review axes found it in Context on the first pass.
+  Assert "the fan-out measurement is recorded on the ticket, with its real cause" {
+    $t = Get-Content (Join-Path $repo '.claude/tickets/orchestration/issues/08-adopt-here.md') -Raw
+    if ($t -notmatch '(?is)scripts/verify\.ps1') { throw 'the file every ticket wrote is not named' }
+    # Anchored on the count, not on the sentence: `all seven` undercounted by
+    # one — this ticket writes the file too — and a guard keyed to the wording
+    # froze the error rather than catching it.
+    if ($t -notmatch '(?i)\ball eight\b') { throw 'the measurement is missing, or counts the wrong number' }
+    # Emphasis may fall anywhere across "only test runner"; the claim is the
+    # sole-runner cause, not the markup it is written with.
+    if ($t -notmatch '(?is)only\W{0,4}test runner') { throw 'the stated cause is the authoring rule, which does not explain ticket 01' }
+    if ($t -notmatch '(?is)not that the axis is') { throw 'the claim is stronger than the evidence supports' }
+    if ($t -notmatch '(?is)non-blocking is not non-overlapping') { throw 'the same bound on a dispatched set is unstated' }
+    $true
+  }
+
+  Assert "the migration names the repository that predates orchestration" {
+    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'A repository configured before orchestration existed'
+    if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
+    if ($s -notmatch '(?is)sub-agents\.md.{0,80}absent') { throw 'the second half of the test is unstated' }
+    if ($s -notmatch '(?is)belongs to the plugin') { throw 'the row does not say the roles are not installed' }
+    $true
+  }
+}
+
+# --- ticket parallel-tickets/01 — the specification declares the second axis ---
+
+Describe-Ticket 'parallel-tickets/01' 'the specification declares the second axis' {
+
+  $s20 = { Get-SpecSection 20 }
+
+  # The table is the artifact that makes a rule uncrossable: prose can say two
+  # axes differ while leaving a reader to guess which rule belongs where.
+  Assert "the multi-agent section names both axes and separates them row by row" {
+    $s = & $s20
+    if ($s -notmatch '(?i)\*\*dispatched set\*\*') { throw 'the second axis is not named' }
+    if ($s -notmatch '(?im)^\|\s*\|\s*Fan-out\s*\|\s*Dispatched set\s*\|') { throw 'the axes are not contrasted in a table' }
+    # Labels alone left the cells blankable: `| unit |  |  |` passed. Each row
+    # has to carry two sides, which is the only thing that makes it a contrast.
+    # Read off the row's own line and check its cells, rather than matching a
+    # pattern across the table: a character class excluding `|` still matches
+    # newlines, so a gutted row found its pipes on the row below and passed.
+    foreach ($row in 'unit', 'lands as', 'disjointness', 'review') {
+      $line = @($s -split '\r?\n') | Where-Object { $_ -match "^\|\s*$row\s*\|" } | Select-Object -First 1
+      if (-not $line) { throw "the table has no row for: $row" }
+      $cells = @($line.Trim('|') -split '\|') | ForEach-Object { $_.Trim() }
+      if ($cells.Count -lt 3) { throw "the $row row does not have two sides" }
+      if (-not $cells[1] -or -not $cells[2]) { throw "the table does not contrast: $row" }
+    }
+    $true
+  }
+
+  # The inversion is the whole reason the axes are named apart, so it is
+  # asserted as a contrast rather than as the presence of either half.
+  Assert "the failure rule is stated for each axis, and they invert" {
+    $s = & $s20
+    # Anchored to whole cells, not substrings within them. Matching "contains
+    # X" let the row be rewritten to say the opposite of itself while quoting
+    # both phrases — "siblings land, never nothing integrates" passed.
+    $row = [regex]::Match($s, '(?im)^\|\s*on one child failing\s*\|([^|]*)\|([^|]*)\|')
+    if (-not $row.Success) { throw 'the failure row is missing' }
+    $fanout, $set = $row.Groups[1].Value.Trim(), $row.Groups[2].Value.Trim()
+    if ($fanout -notmatch '(?i)^nothing integrates$') { throw "the fan-out cell reads '$fanout'" }
+    if ($set -notmatch '(?i)^siblings land;') { throw "the set cell reads '$set'" }
+    if ($s -notmatch '(?is)stops the whole fan-out') { throw 'the portion rule was lost while adding the set rule' }
+    $true
+  }
+
+  Assert "the parent holds every claim in a set, and a child still claims nothing" {
+    $s = & $s20
+    if ($s -notmatch '(?is)creates every branch in the set before dispatching') { throw 'the branches are not created up front' }
+    if ($s -notmatch '(?is)child still claims nothing') { throw 'the prohibition it preserves is unstated' }
+    if ($s -notmatch '(?is)computed rather than declared') { throw 'the set reads as a declaration, which would need a ticket section' }
+    $true
+  }
+
+  Assert "a fan-out on a dispatched ticket is declined, not honoured recursively" {
+    $s = & $s20
+    if ($s -notmatch '(?is)built alone by its child, which records that it declined') { throw 'the decline is unstated or unrecorded' }
+    if ($s -notmatch '(?is)one layer is one layer') { throw 'the reason is unstated' }
+    $true
+  }
+
+  # A collision has no analogue in a fan-out, so the guard checks the thing that
+  # makes it different — that edges never promised disjointness.
+  Assert "a collision is the orchestrator's to resolve, by the repository's own mechanism" {
+    $s = & $s20
+    if ($s -notmatch '(?is)\*\*collision\*\*') { throw 'the case is not named' }
+    if ($s -notmatch '(?is)an edge gates work and says nothing about files') { throw 'why edges do not prevent it is unstated' }
+    if ($s -notmatch '(?is)resolving it belongs to the orchestrator') { throw 'resolution has no owner' }
+    if ($s -notmatch '(?is)version-control model') { throw 'the mechanism is invented here rather than read' }
+    $true
+  }
+
+  Assert "brokering is stated with its bound, and the menu is closed" {
+    $s = & $s20
+    if ($s -notmatch '(?is)brokers what a child may not do') { throw 'brokering is unstated' }
+    if ($s -notmatch '(?is)at depth one, from the orchestrator') { throw 'the depth bound is not shown to survive' }
+    # The menu's *contents* are the safety property; guarding the adjective let
+    # a commit and a push be added to it while the sentence still said "closed".
+    if ($s -notmatch '(?is)menu is closed') { throw 'the request channel is unbounded' }
+    $menu = [regex]::Match($s, '(?is)\*\*The menu is closed\*\*[^
+]*?—(.{0,200}?)—')
+    if (-not $menu.Success) { throw 'the menu is named but never enumerated' }
+    foreach ($extra in 'commit', 'push', 'claim', 'integrat', 'merge') {
+      if ($menu.Groups[1].Value -match "(?i)$extra") { throw "the menu admits: $extra" }
+    }
+    if ($s -notmatch '(?is)refused without being weighed') { throw 'refusal reads as discretion' }
+    $true
+  }
+
+  # ADR 0041's principle survives ADR 0049 amending its consequence, so both
+  # halves are asserted together — the old sentence and the new outcome.
+  Assert "brokering moves nothing about who answers, and the return gains a fourth outcome" {
+    $s = & $s20
+    if ($s -notmatch '(?is)records it and stops') { throw "ADR 0041's consequence was replaced rather than amended" }
+    # `attributed` alone matched "unattributed", so the guard passed on the
+    # exact inversion of the rule it was written for.
+    if ($s -notmatch '(?is)travels \*\*attributed\*\*') { throw 'the outward obligation is unstated' }
+    if ($s -notmatch '(?is)travels \*\*verbatim\*\*') { throw 'the inward obligation is unstated' }
+    if ($s -notmatch '(?is)stops the child rather than reinterpreting') { throw 'an unrelayable answer has no stated outcome' }
+    if ($s -notmatch '(?is)done, failed, stopped, and \*\*waiting\*\*') { throw 'the four outcomes are not named' }
+    $true
+  }
+
+  Assert "every decision this effort records is cited from the section it amends" {
+    $s = & $s20
+    foreach ($adr in 46, 47, 48, 49) {
+      if ($s -notmatch "ADR 00$adr") { throw "ADR 00$adr is not cited from section 20, which it amends" }
+    }
+    $true
+  }
+}
+
+# --- ticket parallel-tickets/02 — the policy admits a whole-ticket child -------
+
+Describe-Ticket 'parallel-tickets/02' 'the policy admits a whole-ticket child, and states the broker contract' {
+
+  $policy = 'configure/policies/sub-agents.template.md'
+
+  Assert "a brief may carry a portion or a whole ticket, and the unit says what is owned" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch '(?is)portion of one ticket or a whole ticket') { throw 'the two units are not named' }
+    $row = [regex]::Match($c, '(?im)^\| what it owns \|([^|]*)\|')
+    if (-not $row.Success) { throw 'the brief does not say what a child owns' }
+    if ($row.Groups[1].Value -notmatch '(?i)portion') { throw 'the ownership row does not name the portion case' }
+    if ($row.Groups[1].Value -notmatch '(?i)ticket')  { throw 'the ownership row does not name the ticket case' }
+    if ($c -notmatch $rulePattern['a ticket child owns its ticket']) { throw 'the unit does not change what is owned' }
+    if ($c -notmatch '(?is)nobody hands it a file list') { throw 'why a ticket child has no file list is unstated' }
+    $true
+  }
+
+  Assert "a ticket child declines a declared fan-out and records the decline" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch '(?is)declines it and records the decline') { throw 'the decline is unstated or unrecorded' }
+    if ($c -notmatch '(?is)rather than a judgement about the work') { throw 'the decline reads as a choice about the work' }
+    $true
+  }
+
+  # The closure is the safety property, so the guard checks the property and
+  # not the adjective: the table's rows are what "exactly two" means.
+  Assert "the request menu is closed, enumerated, and reasoned" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch '(?is)exactly two things may be requested') { throw 'the menu is not bounded to two' }
+    # Counted as *rows of the menu table*, not as occurrences of the two known
+    # labels: matching the labels let a third row be added beside them, which
+    # is the one edit that turns a closed menu into an open one.
+    $table = [regex]::Match($c, '(?ms)^\| Request \| What comes back \|\r?\n\|[-\s|]+\r?\n((?:\|[^\r\n]*\r?\n)+)')
+    if (-not $table.Success) { throw 'the menu is not enumerated as a table' }
+    $rows = @($table.Groups[1].Value -split '\r?\n' | Where-Object { $_.Trim() })
+    if ($rows.Count -ne 2) { throw "the menu enumerates $($rows.Count) entries, not 2" }
+    if ($rows[0] -notmatch '(?i)capability that requires dispatch') { throw 'the first entry is not the dispatch capability' }
+    if ($rows[1] -notmatch '(?i)question put to the human') { throw 'the second entry is not the human question' }
+    if ($c -notmatch $rulePattern['the request menu is closed']) { throw 'nothing says what happens to a request outside it' }
+    if ($c -notmatch '(?is)would make every prohibition above advisory') { throw 'the reason the menu is closed is unstated' }
+    # Presence cannot tell a rule from its negation: "the menu is not closed"
+    # satisfies every probe written for "the menu is closed".
+    if ($c -match '(?is)menu is (not|no longer) closed|weighs? each request on its merits') {
+      throw 'the menu is stated open'
+    }
+    # And a table cannot see prose. An extra request kind named anywhere else in
+    # the policy widens the menu without touching the two rows.
+    foreach ($extra in 'create its branch', 'commit the finished', 'on the child.{0,3}s behalf', 'push', 'claim') {
+      if ($c -match "(?is)request[^.]{0,120}$extra|$extra[^.]{0,80}on request") {
+        throw "the menu is widened in prose: $extra"
+      }
+    }
+    $true
+  }
+
+  # ADR 0049 gives the party in the middle an obligation in each direction, and
+  # the inward one is the load-bearing half: it is the one that fails silently.
+  Assert "the human chain is stated with an obligation in each direction" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch '(?is)child → orchestrator → human → orchestrator → child') { throw 'the chain is not stated' }
+    if ($c -notmatch $rulePattern['the question travels attributed']) { throw 'the outward obligation is unstated' }
+    if ($c -notmatch $rulePattern['the answer travels verbatim']) { throw 'the inward obligation is unstated' }
+    # "verbatim where practical, unless a summary is clearer" satisfies the
+    # probe while granting exactly the discretion the rule exists to remove.
+    if ($c -match '(?is)verbatim where|unless the orchestrator judges|where practical') {
+      throw 'the inward obligation is qualified away'
+    }
+    if ($c -notmatch '(?is)fails \*{0,2}silently') { throw 'why a paraphrase is worse than a refusal is unstated' }
+    if ($c -notmatch '(?is)stops the child') { throw 'an unrelayable answer has no stated outcome' }
+    $true
+  }
+
+  Assert "a request spends the brief's cap, and adds no second budget" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch $rulePattern['a request spends the cap']) { throw 'a request costs nothing' }
+    if ($c -match '(?is)(question|request)s?[^.]{0,80}(exempt|do(es)? not count|free of|outside the cap)') {
+      throw 'a kind of request is exempted from the cap'
+    }
+    if ($c -notmatch '(?is)no second budget') { throw 'nothing rules out a separate request budget' }
+    $true
+  }
+
+  # `waiting` against `stopped` is the distinction anything reading a return
+  # has to make, so the guard asserts the distinction rather than the word.
+  Assert "the return names four outcomes, and waiting is distinguishable from stopped" {
+    $c = Get-SkillFile $policy
+    foreach ($o in 'done', 'failed', 'stopped', 'waiting') {
+      if ($c -notmatch "(?i)\*\*$o\*\*") { throw "the outcome is not named: $o" }
+    }
+    if ($c -notmatch $rulePattern['waiting is not an ending']) { throw 'waiting reads as an ending' }
+    if ($c -notmatch '(?is)resuming a .{0,20}waiting.{0,20} child and re-dispatching') {
+      throw 'nothing says why the two must be told apart'
+    }
+    $true
+  }
+
+  # The claim survives only because no shipped role can send: a role that could
+  # would make child-to-child traffic possible and invisible.
+  Assert "no shipped role can message anyone, which is what makes the chain the only path" {
+    $offenders = @()
+    foreach ($f in (Get-RoleFiles)) {
+      $fm = Get-RoleFrontmatter $f
+      if ($fm -match '(?im)^tools:.*\bSendMessage\b') { $offenders += $f.Name }
+    }
+    if ($offenders) { throw "roles that can message: $($offenders -join ', ')" }
+    $true
+  }
+
+  Assert "a ticket child neither creates nor commits to its branch, nor reviews itself unasked" {
+    $c = Get-SkillFile $policy
+    if ($c -notmatch '(?is)neither creates nor commits to the branch') { throw 'the branch prohibitions are unstated' }
+    if ($c -notmatch '(?is)parent created it') { throw 'who created the branch is unstated' }
+    if ($c -notmatch '(?is)review dispatches, and dispatching is closed to it') { throw 'why it cannot review itself is unstated' }
+    $true
+  }
+
+  # The amendment must not have restated what the policy already said once.
+  Assert "the prohibitions it preserves are still stated exactly once" {
+    $c = Get-SkillFile $policy
+    # The single-home probes are deliberately loose — they answer "is this rule
+    # stated here at all", which is what duplication detection needs. They are
+    # the wrong instrument for preservation: the claims probe is satisfied by
+    # "no claim of its own to widen" in the dispatch bullet, so the sentence it
+    # exists for could be deleted with the guard green. Preservation checks the
+    # sentence.
+    foreach ($verb in 'claims nothing', 'commits nothing', 'pushes nothing', 'integrates nothing') {
+      if ($c -notmatch "(?i)$verb") { throw "the amendment dropped: a child $verb" }
+    }
+    foreach ($rule in 'a child dispatches nobody', 'the consent boundary',
+                      'a child writes no knowledge layer') {
+      if ($c -notmatch $rulePattern[$rule]) { throw "the amendment dropped: $rule" }
+    }
+    if ($c -notmatch $rulePattern['the only parent-to-child channel']) { throw 'the brief is no longer the unasked-for channel' }
+    if ($c -notmatch '(?is)only because the child asked') { throw 'the second parent-to-child path is unacknowledged' }
+    $true
+  }
+
+
+}
+
+# --- ticket parallel-tickets/03 — a ticket-builder role ships ------------------
+
+Describe-Ticket 'parallel-tickets/03' 'a ticket-builder role ships' {
+
+  $role = Join-Path $repo 'agents/ticket-builder.md'
+
+  # Identity, the ignored frontmatter fields, the background tool set, the
+  # dispatch denial and the flat layout are swept for *every* role by
+  # orchestration/03. Repeating them here would be a second home for a check.
+  # What is asserted below is only what is true of this role and no other.
+  Assert "the role ships and is dispatched for a whole ticket, never a portion" {
+    if (-not (Test-Path $role)) { throw 'the role does not ship' }
+    $c = Get-Content $role -Raw
+    if ($c -notmatch '(?im)^description:[^\r\n]*whole ticket') { throw 'the description does not say what unit it takes' }
+    if ($c -notmatch '(?im)^description:[^\r\n]*never for a portion') { throw 'nothing stops it being dispatched for a portion' }
+    $true
+  }
+
+  Assert "the ticket bounds it, and its acceptance criteria are what done means" {
+    $c = Get-Content $role -Raw
+    if ($c -notmatch '(?is)acceptance criteria are what \*{0,2}done\*{0,2} means') { throw 'done is not tied to the criteria' }
+    if ($c -notmatch '(?is)the ticket bounds you') { throw 'nothing states what bounds this child' }
+    # What it *owns* is the policy's sentence, and the role restated it word for
+    # word under a paragraph claiming to repeat nothing. The role states the
+    # bound; the policy states the ownership.
+    if ($c -match '(?is)hands? (you|it) a file list') { throw "the role restates the policy's ownership sentence" }
+    if ($c -notmatch '(?is)and \*{0,2}your record saying which, one by one') {
+      throw 'where done is recorded is unstated'
+    }
+    if ($c -notmatch '(?is)reported as unmet, never quietly reinterpreted') {
+      throw 'an unmet criterion has no stated outcome, which is where a build reports success it did not earn'
+    }
+    $true
+  }
+
+  # Criterion 25 asked the role to state the decline; criterion 22 forbids it
+  # restating the policy, and orchestration/02 made the decline the policy's
+  # rule. Both are satisfied by the role carrying the *obligation* — say in the
+  # record that you declined — and pointing for the rule itself.
+  Assert "a declaration it cannot run is followed by the policy and reported in the record" {
+    $c = Get-Content $role -Raw
+    if ($c -notmatch '(?is)you do not run it') { throw 'the role may run a fan-out it cannot dispatch' }
+    if ($c -notmatch '(?is)do not work the portions yourself') { throw 'the role may work the portions by hand' }
+    if ($c -notmatch '(?is)build the ticket whole') { throw 'what it does instead is unstated' }
+    # "that you did" left the antecedent open — followed the policy, or
+    # declined? The record has to name the decline itself.
+    if ($c -notmatch '(?is)record that you declined') { throw 'the decline is not recorded' }
+    if ($c -notmatch 'policies/sub-agents\.md') { throw 'the rule is restated rather than pointed at' }
+    $true
+  }
+
+  Assert "it warns that siblings are other tickets, not other parts of this one" {
+    $c = Get-Content $role -Raw
+    if ($c -notmatch '(?is)build that ticket and nothing beside it') { throw 'the bound itself is unstated' }
+    if ($c -match '(?is)(make it while you are there|fix it while|improve it in passing)') {
+      throw 'the bound is stated and then licensed away'
+    }
+    if ($c -notmatch '(?is)siblings are other tickets') { throw 'the unit of its siblings is unstated' }
+    if ($c -notmatch '(?is)gate none of each other, not because they touch nothing') {
+      throw 'the role does not warn that ungated is not non-overlapping'
+    }
+    $true
+  }
+}
+
+# Both review axes broke the first version of every assertion below the same
+# way, and neither by deleting anything: they *added* a sentence. Every phrase
+# the guard required stayed exactly where it was, and a clause underneath it
+# reversed the rule — the named path widened into the frontier around it, the
+# stated plan held for the human, the lone ticket dispatched after all. A
+# presence check cannot see an addition, so the refusals below are scoped to the
+# paragraph carrying the rule, where an addition has to land to do its damage.
+function Get-Paragraph {
+  param([string]$Content, [string]$AnchorPattern)
+  foreach ($p in [regex]::Split($Content, '(?:\r?\n){2,}')) {
+    if ($p -match $AnchorPattern) { return $p }
+  }
+  throw "no paragraph matching '$AnchorPattern'"
+}
+
+Describe-Ticket 'parallel-tickets/04' 'the build stage computes and states the set' {
+
+  $mode = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'invocation decides the mode' }
+  $work = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'Working a set' }
+
+  # tenure/04 owns the single-ticket path — the frontier, the lowest-number rule,
+  # one ticket per invocation — and still asserts it, which is what "unchanged"
+  # means here. What this checks is the other half: that adding a second mode did
+  # not quietly let the named one dispatch.
+  Assert "an invocation naming a ticket builds that ticket, and dispatches nothing" {
+    $p = Get-Paragraph (& $mode) '(?i)Named a ticket'
+    if ($p -notmatch '(?is)named a ticket, the stage builds that one') { throw 'the named-ticket path is unstated' }
+    if ($p -notmatch '(?is)nothing below dispatches anything') { throw 'a named ticket may still dispatch' }
+    if ($p -notmatch '(?is)a named ticket is never joined by others') { throw 'nothing forbids the named path widening' }
+    foreach ($licence in @(
+      '(?i)\bwiden\w*'
+      '(?i)one child (for )?each'
+      '(?i)together with[^.]{0,60}(set|frontier|ticket)'
+      '(?i)dispatch\w*[^.]{0,80}\b(each|those|them|the rest)\b'
+    )) { if ($p -match $licence) { throw "the named-ticket path is widened anyway: $licence" } }
+    $true
+  }
+
+  # The rule /implement has always held is that it does not choose. Reading
+  # declared edges is not choosing, and that argument is the licence for the
+  # whole mode — so the guard fails if the bound it comes with is gone.
+  Assert "the set is computed from declared edges, and the edges are the only input" {
+    $p = Get-Paragraph (& $mode) '(?i)Computing a set is not choosing one'
+    if ($p -notmatch '(?is)computing a set is not choosing one') { throw 'computing is not distinguished from choosing' }
+    if ($p -notmatch '(?is)never widened, never reordered') { throw 'the set has no bound' }
+    if ($p -notmatch '(?is)no other property of a ticket is consulted') { throw 'something other than the edges may decide membership' }
+    foreach ($licence in @(
+      # Ungated is not the same as safe-alongside, and a stage allowed to judge
+      # the difference is a stage inventing a decomposition.
+      '(?i)\b(may|can|is free to)\b[^.]{0,60}(add|includ|join)'
+      '(?i)(use judgement|obviously safe|clearly do not interact|plainly cannot)'
+      # ADR 0048 rejects predicting overlap before dispatch outright, so file
+      # reasoning appearing here is that decision being reopened in prose.
+      '(?i)(same files?|file overlap|touch(es|ing)? the same)'
+    )) { if ($p -match $licence) { throw "membership is decided by something other than the edges: $licence" } }
+    $true
+  }
+
+  Assert "the plan is stated before anything is created, and names the tickets, the role, and the branch" {
+    $s = & $mode
+    if ($s -notmatch '(?is)state the plan before creating anything') { throw 'the plan is not stated first' }
+    if ($s -match '(?is)plan[^.]{0,60}\b(after|once)\b[^.]{0,40}branch') { throw 'the plan may be stated after the branches exist' }
+    $fence = [regex]::Match($s, '(?ms)^```\r?\n(.*?)^```')
+    if (-not $fence.Success) { throw 'the plan has no shape a reader can copy' }
+    $plan = $fence.Groups[1].Value
+    foreach ($part in @(
+      @{ p = '(?im)^\s*set from the frontier:'; what = 'which tickets' }
+      @{ p = '(?im)^\s*role\s';                 what = 'which role' }
+      @{ p = '(?im)^\s*branches\s';             what = 'the branch per ticket' }
+    )) {
+      if ($plan -notmatch $part.p) { throw "the stated plan does not name $($part.what)" }
+    }
+    if ($plan -notmatch '(?i)ticket-builder') { throw 'the role is named nowhere in the plan' }
+    $true
+  }
+
+  # Stating and gating are one word apart and opposite, and the gate goes back in
+  # as an addition rather than an edit — so the refusal is swept over the whole
+  # subsection, wherever the sentence that reinstalls it lands.
+  Assert "the plan does not stop for approval, and the stage says why not" {
+    $s = & $mode
+    if ($s -notmatch '(?is)stated, not gated') { throw 'the plan is not distinguished from a gate' }
+    if ($s -notmatch '(?is)does not stop for approval') { throw 'the stage may wait for approval' }
+    if ($s -notmatch '(?is)close-out below does not prompt') { throw 'why it need not be gated is neither stated nor reached' }
+    # `.claude/rules/engineering.md` owns the reversibility argument and the
+    # close-out already carries it for the commit. Restating it here was a second
+    # home the sweep missed, because that home is keyed on a different phrase.
+    if ($s -match '(?is)reversible in this clone') { throw 'the reversibility argument is restated rather than reached' }
+    foreach ($gate in @(
+      # Not `stop`: this subsection's own sentence is "does not stop for
+      # approval", and a verb list that matched it would fire on the rule.
+      '(?i)\b(hold|holds|halt|pause|wait)\w*[^.]{0,80}(confirm|approv|agree|sign-?off)'
+      '(?i)(ask|prompt)\w*[^.]{0,60}(human|user)[^.]{0,60}(confirm|approv|agree)'
+      '(?i)confirm the (plan|set)'
+      '(?i)until the (human|user)'
+    )) { if ($s -match $gate) { throw "the plan is stated and then gated anyway: $gate" } }
+    $true
+  }
+
+  Assert "every branch in the set exists before the first child is dispatched" {
+    $p = Get-Paragraph (& $mode) '(?i)Then create every branch'
+    if ($p -notmatch '(?is)all of them, before the first child is dispatched') { throw 'branches may be created as children start' }
+    if ($p -notmatch '(?is)the parent holds the whole set') { throw 'who holds the claims is unstated' }
+    # One refusal, two failures: the child-side prohibition is the sub-agent
+    # policy's and restating it here is a second home, while the inversion —
+    # each child creating its own branch — needs the same words to say it.
+    if ($p -match '(?is)(child|children)[^.]{0,60}creat\w*[^.]{0,40}branch') {
+      throw "branch creation is either handed to the children or restated from the policy"
+    }
+    $true
+  }
+
+  # Fan-out is expensive is the constraint this inherits: a child costs a full
+  # context, and with no sibling to run against there is nothing to buy with it.
+  Assert "a set of one is built in the parent, without dispatching" {
+    $p = Get-Paragraph (& $mode) '(?i)A set of one is a set'
+    if ($p -notmatch '(?is)a set of one is a set, and the parent builds it') { throw 'a set of one has no stated handling' }
+    if ($p -notmatch '(?is)spend a whole context') { throw 'the cost that makes a lone child wrong is unstated' }
+    foreach ($licence in @(
+      '(?i)a set of one is (still )?dispatched'
+      '(?i)\b(through|via|by) a (single |lone )?child'
+      '(?i)dispatch\w*[^.]{0,40}(anyway|even so|uniform)'
+      '(?i)\bunless\b[^.]{0,80}dispatch'
+    )) { if ($p -match $licence) { throw "a lone ticket is dispatched after all: $licence" } }
+    $true
+  }
+
+  # No new ticket metadata: the antichain is already in `Blocked by`, and a
+  # second declaration of the same fact goes stale against the first.
+  Assert "the ticket format gains nothing — the set is read off the edges already there" {
+    $s = & $mode
+    if ($s -notmatch '(?i)`Blocked by`') { throw 'the set is not tied to the edge that already encodes it' }
+    if ($s -notmatch '(?is)nothing is added to the ticket format') { throw 'the format is free to grow a section for this' }
+    $headings = [regex]::Matches((Get-SkillFile 'configure/policies/tickets.template.md'), '(?im)^#{2,4}\s+(.+)$') |
+      ForEach-Object { $_.Groups[1].Value }
+    $added = @($headings | Where-Object { $_ -match '(?i)\b(set|antichain|dispatch\w*|parallel\w*)\b' })
+    if ($added) { throw "the ticket format grew a section for the set: $($added -join ', ')" }
+    $true
+  }
+
+  Assert "a set dispatches one child per ticket, and inherits no rule from the fan-out unexamined" {
+    $s = & $work
+    if ($s -notmatch '(?is)no rule crosses from there to here without being restated') {
+      throw 'the fan-out rules are left applying to a set by default'
+    }
+    if ($s -notmatch '(?is)one child per ticket') { throw 'the unit of dispatch is unstated' }
+    if ($s -match '(?is)one child per (declared )?(role|portion)') { throw 'a set is dispatched by portion after all' }
+    if ($s -notmatch '(?is)in the role the plan named') { throw 'which role builds a member is unstated' }
+    # The role is named once, in the plan. Naming it again here is the second
+    # home, and the brief's parts belong to the policy exactly as they do for a
+    # fan-out — pointing is the whole shape of this subsection.
+    if ($s -match $rulePattern['the brief completeness rule']) { throw "the brief's parts are restated here" }
+    if ($s -notmatch 'policies/sub-agents\.md') { throw 'the contract is restated rather than pointed at' }
+    $true
+  }
+}
+
+# Three rounds of review broke every guard in this effort the same way, and not
+# once by deleting anything: a sentence appended to the rule's own paragraph,
+# permitting exactly what the sentence above it forbids. Twice the answer was to
+# blacklist the words the attack used, and twice the next round used different
+# ones — the last of them unconditional and unhedged ("a failure ends the run
+# before any sibling integrates"), which walks past a hedge list and a
+# conditional pattern alike. Blacklisting is the losing half of this game.
+#
+# So the test is inverted. A rule's paragraph is the **whole** disposition of its
+# act, and **every sentence in it** must be one the guard pinned. An addition
+# reversing the rule is a sentence, so it fails — whatever words it chose,
+# conditional or not, on whatever topic.
+#
+# The first version of this asked only that sentences *about the act* be pinned,
+# with the act given as a pattern. That was still a guess, and it leaked twice in
+# one run: "where two hunks disagree, take the later child's version" mentions no
+# merge, no mechanism and no record, and reverses the rule it sits under. Any
+# list of topic words is a list I have to have thought of. The sentence count is
+# not.
+#
+# The cost is real and deliberate: adding a sentence to one of these paragraphs
+# means adding its pattern here. A guard that has to be updated when its rule's
+# paragraph grows is the mechanism working, not friction.
+# `-Refused` is not redundant with the whitelist and the two catch different
+# things. The whitelist reads whole sentences, so a reversal spliced *into* a
+# pinned sentence — "the only correct base is that branch as it stood at
+# dispatch, or any ancestor of it, which counts equally" — leaves that sentence
+# still matching its pin and passes. A refusal is how an in-sentence reversal is
+# caught, and dropping them when the whitelist arrived reopened exactly that.
+function Assert-RuleParagraph {
+  param([string]$Paragraph, [hashtable[]]$Pinned, [string]$What, [hashtable[]]$Refused)
+  foreach ($pin in $Pinned) {
+    if ($Paragraph -notmatch $pin.p) { throw $pin.why }
+  }
+  foreach ($no in $Refused) {
+    if ($Paragraph -match $no.p) { throw $no.why }
+  }
+  # Backticked spans carry dotted paths, and a sentence split that trusted the
+  # dots would end a sentence inside `.claude/policies/version-control.md`.
+  $masked = [regex]::Replace($Paragraph, '`[^`]*`', { param($m) '#' * $m.Value.Length })
+  foreach ($b in [regex]::Matches($masked, '[^.!?]*[.!?]+[`"*)\]]*\s*')) {
+    $sentence = $Paragraph.Substring($b.Index, $b.Length)
+    if ($sentence -notmatch '[A-Za-z]') { continue }
+    $covered = $false
+    foreach ($pin in $Pinned) { if ($sentence -match $pin.p) { $covered = $true; break } }
+    if (-not $covered) { throw "$What gains an unpinned sentence: '$($sentence.Trim())'" }
+  }
+}
+
+Describe-Ticket 'parallel-tickets/05' 'each ticket lands on its own branch, and collisions are resolved' {
+
+  $work = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'Working a set' }
+
+  # orchestration/05 deferred which direction the base check runs, and
+  # orchestration/06 did not take it. A set closes it by construction: the parent
+  # chose the branch, so there is no ancestry to weigh.
+  #
+  # ADR 0047 says "as it stood at dispatch" and means it: this stage restacks, so
+  # a check against the branch's present tip inverts into refusing a correct
+  # child — the failure orchestration/05 recorded against the ancestry form,
+  # reintroduced by dropping four words.
+  Assert "a set child's base is checked for equality against the branch it was given" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)base is checked') @(
+      @{ p = '(?is)equality, and never for ancestry'; why = 'which direction the base check runs is unstated' }
+      @{ p = '(?is)the only correct base is \*{0,2}that branch as it stood at dispatch'
+         why = 'what the base must equal is unstated' }
+      @{ p = '(?is)nothing to weigh'; why = 'why a set has no ancestry question is unstated' }
+      @{ p = '(?is)because the tip moves'; why = 'the moving tip is unexplained, so the qualifier reads as decoration' }
+      @{ p = '(?is)the refusal names the same three things'; why = 'a refused base is reported without saying what was found' }
+    ) 'the base check' @(
+      # Not a bare `is`: this paragraph's own argument is "an ancestor of it *is*
+      # a child that started somewhere else", and a verb list that broad fires on
+      # the rule it guards.
+      @{ p = '(?i)\bancestor of\b[^.]{0,60}\b(counts|suffices|accepted|acceptable|allowed|enough|fine)\b'
+         why = 'ancestry is admitted beside equality' }
+      @{ p = '(?i)(descend\w+|anywhere) (from|under)[^.]{0,40}(branch|claim)[^.]{0,40}(accepted|allowed|fine)'
+         why = 'any descendant of the branch is accepted as a base' }
+    )
+    $true
+  }
+
+  # The bar a record has to meet is the policy's; when the check happens and what
+  # it does with the answer is this stage's. `unowned` is the half that cannot
+  # cross — a set makes no declaration for it to test.
+  Assert "the record is checked against the diff first, and only one of the two mismatches crosses" {
+    $p = Get-Paragraph (& $work) '(?i)before anything of its lands'
+    Assert-RuleParagraph $p @(
+      @{ p = '(?is)before anything of its lands'; why = 'the check may happen after the work has landed' }
+      @{ p = '(?is)\bundeclared\b'; why = 'the mismatch that does carry over is unnamed' }
+      @{ p = '(?is)unowned\*{0,2} tests a declaration a set never makes'
+         why = 'why unowned cannot cross is unstated, which leaves it looking like an omission' }
+      @{ p = '(?is)arrives instead as a collision'; why = 'what the missing check would have caught goes unrouted' }
+    ) 'the record check'
+    if ($p -match $rulePattern['the record reconciliation bar']) { throw "the policy's bar is restated rather than reached" }
+    # The policy's own sentence about what a ticket child is handed. Restating it
+    # here is the second home parallel-tickets/03 was caught making.
+    if ($p -match '(?i)file list') { throw "the policy's ownership sentence is restated" }
+    $true
+  }
+
+  # The policy routes this here by name — what an orchestrator does when
+  # reconciliation fails belongs to the stage that dispatched. The fan-out
+  # answers it and a set may not inherit that answer, so it answers separately.
+  Assert "a record that fails the check stops that ticket and no other" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)fails the check') @(
+      @{ p = '(?is)stops that ticket, and reaches no further'; why = 'a failed check has no stated consequence' }
+      @{ p = '(?is)the other members are other tickets'; why = 'why the refusal does not spread is unstated' }
+      @{ p = '(?is)the refusal is per ticket'; why = 'the per-ticket scope of the refusal is unstated' }
+    ) 'the per-ticket refusal'
+    $true
+  }
+
+  Assert "each ticket lands as one commit on its own branch, and nothing is squashed across children" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)lands as one commit') @(
+      @{ p = '(?is)one commit, on the branch named for its ticket'; why = 'where a landed ticket goes is unstated' }
+      @{ p = '(?is)nothing is squashed across children'; why = 'the set may be collapsed into one commit' }
+      @{ p = '(?is)indistinguishable in history from one built alone'; why = 'what one-commit-per-ticket buys is unstated' }
+    ) 'one commit per ticket' @(
+      @{ p = '(?i)(squash|collapse|fold)\w*[^.]{0,80}(the set|across the set|together|into one|into a single)'
+         why = 'the set is squashed across children after all' }
+      @{ p = '(?i)one commit for the (whole )?set'; why = 'the set collapses into a single commit' }
+    )
+    $true
+  }
+
+  Assert "the set is restacked in ticket order, and whether there is anything to restack is read" {
+    $p = Get-Paragraph (& $work) '(?i)restack the set'
+    Assert-RuleParagraph $p @(
+      @{ p = '(?is)restack the set in ticket order'; why = 'the order the set is restacked in is unstated' }
+      @{ p = '(?is)siblings while they ran'; why = 'that the members were not a stack while they ran is unstated' }
+      # Step 1 already made the reader take the version-control model. Naming the
+      # policy a second time in the same file is a second home, not a pointer.
+      @{ p = '(?is)version-control model step 1 already required reading'
+         why = 'whether the repository stacks is assumed rather than reached' }
+      @{ p = '(?is)where it does not, the branches were never stacked'
+         why = 'the plain-git case is unstated, so the rule reads as universal' }
+    ) 'the restack order'
+    # Ticket order is what makes a stack readable as the plan that produced it,
+    # and demoting it to a preference costs nothing to write. Both directions:
+    # the qualifier follows the noun ("order need not matter") or precedes it
+    # ("in whatever order they returned").
+    if ($p -match '(?i)(order|sequence)[^.]{0,60}(does not matter|need not|optional)|(whatever|any|whichever)\s+(order|sequence)') {
+      throw 'ticket order is stated and then made optional'
+    }
+    $true
+  }
+
+  # ADR 0048. The edges gate work and say nothing about files, so this is found
+  # at integration by design — and resolved, because the children are gone and a
+  # refusal hands the user two worktrees and a question.
+  Assert "a collision is the orchestrator's to resolve, and it is resolved rather than refused" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)is a collision') @(
+      @{ p = '(?is)two children writing one path is a collision, and the orchestrator resolves it'
+         why = 'who resolves a collision is unstated' }
+      @{ p = '(?is)an edge gates work, and says nothing about files'; why = 'why the edges did not prevent it is unstated' }
+      @{ p = '(?is)resolved rather than refused'; why = 'the stage may hand a collision back instead' }
+    ) 'the collision rule' @(
+      @{ p = '(?i)(predict|detect|check for)\w*[^.]{0,60}(overlap|collision)[^.]{0,60}before'
+         why = 'overlap is predicted before dispatch, which ADR 0048 rejected' }
+      @{ p = '(?i)(refus|reject|hand back|stop)\w*[^.]{0,60}collision'; why = 'a collision is handed back rather than resolved' }
+      @{ p = '(?i)the child(ren)? resolves? it'; why = 'resolution is handed to children that have finished' }
+    )
+    $true
+  }
+
+  Assert "the mechanism comes from the version-control policy, and the stage names none of its own" {
+    $p = Get-Paragraph (& $work) '(?i)The mechanism is the repository'
+    Assert-RuleParagraph $p @(
+      @{ p = [regex]::Escape($vcPolicy); why = 'where the mechanism comes from is unstated' }
+      @{ p = '(?is)this stage names no merge strategy'; why = 'the stage is free to name a merge strategy' }
+      @{ p = '(?is)both change records'; why = 'what the orchestrator brings that a merge tool does not is unstated' }
+    ) 'the no-strategy rule'
+    if ($p -notmatch '(?is)two intents|reconciling two hunks') { throw 'why both records matter is unstated' }
+    # A named strategy would be right on the repositories that matched it and
+    # silently wrong on the rest, which is the failure the pointer avoids.
+    foreach ($named in @('(?i)\bgit (merge|rebase|cherry-pick)\b', '(?i)\b(ours|theirs)\b', '(?i)`gt restack`')) {
+      if ($p -match $named) { throw "the stage names a mechanism of its own: $named" }
+    }
+    $true
+  }
+
+  Assert "a conflict of intent is raised rather than resolved, by the route already there" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)intents conflict') @(
+      @{ p = '(?is)this stage does not make it'; why = 'the stage may decide between two intents' }
+      @{ p = '(?is)not a merge problem in disguise'; why = 'why a text merge cannot settle it is unstated' }
+      @{ p = '(?is)route every decision this stage cannot make already takes'
+         why = 'an intent conflict gets a route of its own rather than the existing one' }
+    ) 'the intent-conflict rule' @(
+      @{ p = '(?i)(pick|choose|prefer|adopt)\w*[^.]{0,60}(intent|reading|child|the (better|stronger|narrower|newer|more recent))'
+         why = 'the stage picks between two intents' }
+      @{ p = '(?i)resolve\w*[^.]{0,40}intent'; why = 'an intent conflict is resolved rather than raised' }
+    )
+    $true
+  }
+}
+
+Describe-Ticket 'parallel-tickets/06' 'a failed sibling does not sink the set, and review reaches the child that asked' {
+
+  $work = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'Working a set' }
+  $run  = { Get-Subsection (Get-SkillFile 'implement/SKILL.md') 'Running one' }
+
+  # The inversion this ticket exists for. All-or-nothing is right for portions,
+  # which are one ticket between them, and would otherwise discard four finished
+  # tickets because a fifth unrelated one failed.
+  Assert "a failed or stopped child leaves its siblings landed, and its worktree is kept" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)leaves its siblings landed') @(
+      @{ p = '(?is)leaves its siblings landed'; why = 'a failure may still sink the set' }
+      @{ p = '(?is)verifiable on its own'; why = 'why a set inverts the rule is unstated' }
+      @{ p = '(?is)returns to the frontier'; why = 'the failed ticket has nowhere to go back to' }
+      @{ p = '(?is)its worktree is kept'; why = 'the worktree is not kept, so a resumed session rebuilds' }
+    ) 'the per-ticket failure rule' @(
+      @{ p = '(?i)(stop|sink|discard|abandon|reset)\w*[^.]{0,60}(the whole set|every sibling|all of them|every branch)'
+         why = "the fan-out's all-or-nothing rule crossed over" }
+      @{ p = '(?i)nothing (of the set )?(is )?(integrat|land)'; why = 'nothing lands when one member fails' }
+      @{ p = '(?i)worktree[^.]{0,40}(discard|delet|remov|clean)'; why = 'the failed worktree is thrown away' }
+    )
+    $true
+  }
+
+  # ADR 0049 adds `waiting` as a fourth return, and the policy is explicit that
+  # resuming a waiting child and re-dispatching a stopped one are different acts.
+  # The stage is the only reader of a return, so it is the only place that
+  # difference can be honoured — and conflating the two frontiers a ticket
+  # somebody is still holding.
+  Assert "the four outcomes are dispositioned, and waiting moves nothing" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)four outcomes') @(
+      @{ p = '(?is)only two move a ticket backwards'; why = 'how many outcomes end a ticket is unstated' }
+      @{ p = '(?is)`?waiting`?\*{0,2} moves nothing at all'; why = 'waiting is collapsed into an ending' }
+      @{ p = '(?is)read the fourth as an ending'; why = 'the cost of conflating waiting with stopped is unstated' }
+    ) 'the four outcomes'
+    $true
+  }
+
+  # A half-landed set is a state nothing else in this workflow produces, so there
+  # is no convention a reader can fall back on to interpret silence.
+  Assert "the run names which tickets landed and which did not, with a reason for each that did not" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)which of the set shipped') @(
+      @{ p = '(?is)which of the set shipped and which did not'; why = 'the run need not say what landed' }
+      @{ p = '(?is)why for each that did not'; why = 'a ticket may be reported missing with no reason' }
+      @{ p = '(?is)true about the three and false about the run'; why = 'why a bare done is a lie is unstated' }
+      # `reason` earns its place: "where the reason is obviously uninteresting,
+      # leave it out" mentions nothing else in this list, and is the whole rule
+      # undone.
+    ) 'the reporting obligation'
+    $true
+  }
+
+  # ADR 0049: the findings arrive "so it can fix them before its ticket lands".
+  # Reviewing after the commit is what that decision exists to replace — the
+  # child is finished by then and there is nobody left to act on a finding.
+  Assert "a set child requests its own review, and the findings reach that child before it lands" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)requests its own review') @(
+      @{ p = '(?is)requests its own review, and the findings come back to it'
+         why = 'who asks for review and who receives it is unstated' }
+      @{ p = '(?is)before that ticket lands'; why = 'review may happen after the ticket has landed, which ADR 0049 replaced' }
+      # The depth bound and what a request costs are the policy's, and an earlier
+      # version of this paragraph reproduced its closing clause word for word.
+      @{ p = '(?is)the policy has that bound and what a request costs'
+         why = 'the bound a child works under is restated rather than reached' }
+      @{ p = '(?is)which fixes them and returns again'; why = 'what the child does with the findings is unstated' }
+      @{ p = '(?is)author of a ticket it never claimed'; why = 'why the orchestrator may not apply them itself is unstated' }
+      @{ p = '(?is)reviewing after the commit would be worse'; why = 'the ordering this replaces is unstated' }
+    ) 'brokered review' @(
+      # Indicative only. This paragraph's own argument is "this stage *applying*
+      # them instead **would** make it the author of a ticket it never claimed",
+      # and a participle in the list fires on the rule rather than its breach.
+      @{ p = '(?i)(this stage|the orchestrator)[^.]{0,60}\b(applies|fixes|makes the correction|corrects|acts on)\b[^.]{0,40}(it|them|the finding)'
+         why = 'the stage applies the findings instead of the child' }
+      @{ p = '(?i)review[^.]{0,60}after (the set|everything|the commit) (has )?land'; why = 'review moves back to after the ticket lands' }
+      @{ p = '(?i)at depth one'; why = "the policy's depth clause is restated here" }
+    )    if ((Get-Paragraph (& $work) '(?i)requests its own review') -match '(?i)at depth one') {
+      throw "the policy's depth clause is restated here"
+    }
+    $true
+  }
+
+  # The cap is what keeps a broker from becoming an unbounded channel: a child
+  # that cannot converge ends rather than loops — and it ends as the failure
+  # above, not as a state of its own.
+  Assert "a child that exhausts its cap ends as a failed ticket rather than a loop" {
+    $p = Get-Paragraph (& $work) '(?i)exhausts its cap'
+    Assert-RuleParagraph $p @(
+      @{ p = '(?is)ends as a failed ticket'; why = 'running out of cap has no stated end' }
+      @{ p = '(?is)runs out rather than looping'; why = 'nothing stops a child asking forever' }
+      @{ p = '(?is)rather than a state of its own'; why = 'exhaustion becomes a fifth outcome nobody handles' }
+    ) 'the cap'
+    if ($p -match $rulePattern['a request spends the cap']) { throw "the policy's cap rule is restated rather than reached" }
+    $true
+  }
+
+  # Criterion: both rules coexist, and neither is stated twice. Asserted as
+  # exclusion in both directions — a rule present in the other subsection is the
+  # second home, whichever way round it happened. The set's side is checked by
+  # subject rather than by the fan-out's wording, because a paraphrase of the
+  # portion rule inside the set's subsection is the same defect.
+  Assert "the portion review rule is unchanged, and neither axis states the other's" {
+    $r = & $run
+    $w = & $work
+    if ($r -notmatch '(?is)`/review` runs once, on the integrated result') { throw "the fan-out's review rule is gone" }
+    if ($r -notmatch '(?is)would miss the only thing a fan-out newly risks') { throw "the fan-out's reason for it is gone" }
+    if ($w -match '(?is)review[^\r\n]{0,80}(runs? once|a single time|only once)|(?is)(once|a single time)[^\r\n]{0,60}(the integrated|every portion|all the portions)') {
+      throw "the fan-out's review rule is restated in the set's subsection"
+    }
+    if ($r -match $rulePattern['a set child requests its own review']) { throw "the set's review rule is restated in the fan-out's subsection" }
+    $true
+  }
+
+  Assert "what a child stopped on still reaches the human, brokered or not" {
+    Assert-RuleParagraph (Get-Paragraph (& $work) '(?i)still reaches the human') @(
+      @{ p = '(?is)still reaches the human'; why = 'a stopped question need not reach anybody' }
+      @{ p = '(?is)resumed with the answer and the run continues'; why = 'a brokered answer never gets back to the child' }
+      @{ p = '(?is)one it cannot carry travels in the report'; why = 'the unbrokerable case has no disposition' }
+      @{ p = '(?is)that ticket returns to the frontier'; why = 'the ticket behind an unanswered question is stranded' }
+      @{ p = '(?is)the human answers either way'; why = 'who answers is left open' }
+    ) 'the route to the human' @(
+      # The verb has to be this stage's own act on the question. Written loosely
+      # it fired on "a question this stage can carry … the answer", which is the
+      # rule rather than its breach.
+      @{ p = '(?i)(this stage|the orchestrator)\s+(answers|supplies|decides|settles)\b[^.]{0,40}\b(it|the answer|the question|instead)\b'
+         why = 'the stage answers for the human' }
+      @{ p = '(?i)(decide|resolve|settle)\w*[^.]{0,40}on (the|a) child.s behalf'; why = "the stage decides on a child's behalf" }
+    )
+    $true
+  }
+}
+
+Describe-Ticket 'parallel-tickets/07' 'adopt the second axis here' {
+
+  $ticket = Join-Path $repo '.claude/tickets/parallel-tickets/issues/07-adopt-the-second-axis-here.md'
+
+  # `orchestration/08` already asserts installed-equals-template on the body,
+  # and `parallel-tickets/02` asserts the template carries the second axis.
+  # Neither reads the installed file for that content, so a narrowing of either
+  # would leave this criterion untested by a composition nobody re-checked.
+  Assert "the amended policy is installed here, carrying the second axis and not only the first" {
+    $p = Join-Path $repo '.claude/policies/sub-agents.md'
+    if (-not (Test-Path $p)) { throw 'the policy is not installed' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?is)portion of one ticket or a whole ticket') { throw 'the installed policy knows only the portion unit' }
+    if ($c -notmatch '(?is)declines it and records the decline')     { throw 'the installed policy has no decline rule' }
+    if ($c -notmatch '(?is)exactly two things may be requested')     { throw 'the installed policy has no closed request menu' }
+    $true
+  }
+
+  # Same shape as orchestration/05's migration guard: by content, both halves,
+  # and repairing rather than reporting — the half a migration row loses first.
+  Assert "the migration recognises a first-axis repository by content, and repairs it" {
+    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'first axis without the second'
+    if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
+    if ($s -notmatch '(?is)the policy is present')     { throw 'the first half of the test is unstated' }
+    if ($s -notmatch '(?is)no whole-ticket child|admits no whole-ticket child') { throw 'the second half of the test is unstated' }
+    if ($s -notmatch '(?is)repairs rather than reports') { throw 'the row reports instead of repairing' }
+    $true
+  }
+
+  # The decision is checked as a decision: the reason is stated where a reader
+  # of the Domain Context finds it, and both halves are required. Either half
+  # alone is an assertion of taste — mutual definition without the routing
+  # argument does not explain why two files could not simply cross-reference.
+  Assert "the second axis earns no Domain Context of its own, with the reason stated" {
+    $c = Get-Content (Join-Path $repo '.claude/contexts/orchestration.md') -Raw
+    if ($c -notmatch '(?is)\bBoth axes live in this file\b') { throw 'the decision is not stated as a boundary' }
+    if ($c -notmatch '(?is)defined by what the other inverts') { throw 'the mutual-definition half of the reason is missing' }
+    if ($c -notmatch '(?is)after routing has already run') { throw 'the routing half of the reason is missing' }
+    $rows = [regex]::Matches((Get-Content (Join-Path $repo '.claude/contexts/map.md') -Raw), '(?im)^\|\s*\[([a-z-]+)\]')
+    $axis = @($rows | Where-Object { $_.Groups[1].Value -match 'set|dispatch|fan-?out|parallel' })
+    if ($axis.Count -gt 0) { throw "the map routes a second orchestration context: $($axis[0].Groups[1].Value)" }
+    $true
+  }
+
+  # The map and the file it routes to disagreed on sources until this ticket,
+  # and nothing would have caught it: every other guard reads one or the other.
+  # Compared as sets, because the order in a table cell carries no meaning.
+  Assert "the routing table and the Domain Context name the same sources" {
+    $paths = {
+      param($text)
+      @([regex]::Matches($text, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+    }
+    $dc = Get-Content (Join-Path $repo '.claude/contexts/orchestration.md') -Raw
+    $line = [regex]::Match($dc, '(?im)^Sources:(.+)$')
+    if (-not $line.Success) { throw 'the Domain Context names no sources' }
+    $row = [regex]::Match((Get-Content (Join-Path $repo '.claude/contexts/map.md') -Raw),
+                          '(?im)^\|\s*\[orchestration\][^|]*\|[^|]*\|([^|]*)\|')
+    if (-not $row.Success) { throw 'the map has no orchestration row' }
+    $inFile = & $paths $line.Groups[1].Value
+    $inMap  = & $paths $row.Groups[1].Value
+    if ("$inFile" -ne "$inMap") {
+      throw "sources disagree — file: $($inFile -join ', ') / map: $($inMap -join ', ')"
+    }
+    $true
+  }
+
+  # The acceptance asks for the chain *and* why it was one. Recording only the
+  # shape reads as an apology; the reason is the part a later effort can use.
+  Assert "the chain shape of this effort is recorded, with the reason it was a chain" {
+    $c = Get-Content $ticket -Raw
+    if ($c -notmatch '(?is)01\s*→\s*02\s*→\s*03\s*→\s*04\s*→\s*05\s*→\s*06\s*→\s*07') { throw 'the chain is not recorded' }
+    if ($c -notmatch '(?is)(largest|maximum) set[^.]{0,60}\bone\b') { throw 'the set size the chain permitted is unstated' }
+    # The criterion has two halves and the second is answerable by implication,
+    # which is how it goes unanswered: a chain says none could run together only
+    # to a reader who reasons it out.
+    if ($c -notmatch '(?is)could have run together[^.]{0,40}\bnone\b') { throw 'which could have run together is left to inference' }
+    if ($c -notmatch '(?is)genuine rather than conservative') { throw 'whether the edges were real is not settled' }
+    if ($c -notmatch '(?is)creates the surface the next one edits') { throw 'the reason it was a chain is unstated' }
+    $true
+  }
+
+  # The measured collision case, which is the criterion most likely to be met
+  # by naming `verify.ps1` and stopping — the four-way overlap is the obvious
+  # half, and the missing edge is the half that decides whether the optimistic
+  # dispatch was the right trade.
+  Assert "the measured collision case names the paths, and what the records would have had to carry" {
+    $c = Get-Content $ticket -Raw
+    # Scoped to the table's own first cell, not to the file. Every one of these
+    # paths is also named in the prose around the table, so a whole-file match
+    # stayed green with a row deleted — the guard was reading the argument
+    # rather than the measurement it exists to check.
+    $cells = @([regex]::Matches($c, '(?im)^\|\s*`([^`]+)`\s*\|') | ForEach-Object { $_.Groups[1].Value })
+    foreach ($p in 'scripts/verify.ps1', 'skills/implement/SKILL.md',
+                   'agents/researcher.md', 'agents/standards-reviewer.md') {
+      if ($p -notin $cells) { throw "the collision table omits $p" }
+    }
+    if ($c -notmatch '(?is)appended a new block[^.]{0,80}edited an existing one') {
+      throw 'what a record would have had to distinguish is unstated'
+    }
+    if ($c -notmatch '(?is)declares no edge on `?03`?, but edits two files') { throw 'the missing edge is not named' }
+    if ($c -notmatch '(?is)missing edge[^.]{0,120}no amount of change-record detail repairs') {
+      throw 'the limit of the change record is unstated'
+    }
+    $true
   }
 }
 

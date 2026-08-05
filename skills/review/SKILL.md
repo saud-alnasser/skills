@@ -6,7 +6,7 @@ description: Review a diff on two axes — does it implement what was asked, and
 # Review
 
 Mode: review
-Policies: `.claude/policies/decisions.md`
+Policies: `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`
 
 Two questions about one diff, asked independently:
 
@@ -75,28 +75,11 @@ Skip anything a linter, formatter, or type-checker already enforces. A finding a
 
 **In parallel, as two subagents**, spawned in a single message. Parallel is for latency; separate subagents are for correctness — an axis that can see the other's findings starts agreeing with them, and that pollution is invisible in the output. Two contexts that never touch cannot converge.
 
-Give each one the diff invocation and the commit list. Give each one **paths, not pasted content**, wherever the source is a file in the repository — a subagent can read, and pasting spends the parent's context on material only the child needs.
+Dispatch the shipped roles by name — **`spec-reviewer`** for the first axis, **`standards-reviewer`** for the second. Each carries what its axis reports and how, so nothing of that is retyped here; what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s, and this stage restates none of that either.
 
-### Spec
+What the brief adds is the subject, which is the part no role can know: the fixed point and both diff invocations, the commit list, where the spec is, and — for the Standards axis — [SMELLS.md](SMELLS.md) as the fallback baseline, since a role shipped to every repository cannot carry this one's.
 
-Brief: report (a) requirements the spec asked for that are **missing or partial**; (b) behaviour in the diff nobody asked for — **scope creep**; (c) requirements that look implemented but are **implemented wrongly**. Quote the spec line for each finding. Under 400 words.
-
-### Standards
-
-Brief: report where the diff breaches a documented standard, citing the file and the rule; and any baseline smell, naming it and quoting the hunk. **Every finding cites its source** — a finding with no citation is an opinion, and an opinion in a review is indistinguishable from a standard to the person receiving it.
-
-Architecture is part of this axis, not a third one, because boundaries and ownership are *this repository's* documented rules and not general engineering advice. Three questions it must reach:
-
-- Are the ownership boundaries in `.claude/contexts/repository.md` still respected?
-- Was an abstraction introduced that the change did not require?
-- Does the diff **contradict an ADR**? Say so explicitly — name the ADR and the line of the diff that contradicts it. A contradiction the reviewer notices and lets pass silently is worse than one it never saw, because the record now shows the decision was reviewed and upheld.
-
-Two rules are AEP's own and apply even where the repository documents neither (ADR 0007). `/implement` writes to them; this axis is where a breach is caught:
-
-- **Comments explain *why*, not *what*.** Flag a comment that would be unnecessary if the code named things honestly — the finding is the naming, not the comment.
-- **A public interface is documented; private implementation is not.** Flag an undocumented contract callers depend on, and documentation of internals that now has to be kept true for no caller.
-
-Mark each finding **hard violation** or **judgement call**. A documented standard can be breached hard; a baseline smell is always a judgement call.
+Cap each at **400 words for Spec, 500 for Standards**. Two axes reporting at length produce a review nobody finishes, and the second half of a long report is where the findings that mattered go to be skimmed.
 
 ## 5 — Report
 

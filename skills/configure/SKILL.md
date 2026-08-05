@@ -77,7 +77,8 @@ The shape being generated, so the tree reads as its own map — every category i
 
 ```
 .claude/
-├── protocol.md          the router — the only file loose here
+├── protocol.md          the router — the only loose file this workflow owns
+├── settings.json        the harness's, merged not replaced (ADR 0045)
 ├── rules/               always-on and path-scoped standards
 ├── modes/               one reasoning posture per file
 ├── policies/            one guide per workflow concern
@@ -93,6 +94,8 @@ The shape being generated, so the tree reads as its own map — every category i
 
 **A second loose file is a category nobody named.** When something does not fit a directory above, that is the finding — say so rather than dropping it at the root.
 
+The two `settings` files are the harness's, not this workflow's: it reads them from those exact paths and would not find them anywhere else. They are still not one case. `settings.local.json` is per-clone, which is the exemption `.claude/.gitignore` states and the reason it cannot move under `position/`, and it appears in neither the tree above nor the canonical layout. `settings.json` is committed, so it is in both (ADR 0045).
+
 The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope,discussions}/`, `.claude/tickets/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
 **`.claude/contexts/**`**, as three kinds of file: `.claude/contexts/map.md` holding the routing table alone, `.claude/contexts/repository.md` holding the vocabulary and boundaries that cross domains, and one file per domain that earns one. The format, the placement rule for a term, and the test a domain has to pass are in [policies/context.template.md](policies/context.template.md), which this run installs at `.claude/policies/context.md`; the compression test that gates every line is in `CLAUDE.md`.
@@ -107,7 +110,7 @@ What is `/configure`'s is the *sourcing*: these are generated from the repositor
 
 **`.claude/modes/`**, from [modes/](modes/), copied as-is — one file per reasoning posture, seven in all. A stage reads exactly the one its `Mode:` line declares, which is why they are files rather than sections of the router.
 
-**`.claude/policies/`**, one guide per workflow concern or repository aspect. Seven describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are (ADR 0019) — a copied guide would hand this repository somebody else's facts.
+**`.claude/policies/`**, one guide per workflow concern or repository aspect. Eight describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are (ADR 0019) — a copied guide would hand this repository somebody else's facts.
 
 | Guide | Source | Covers |
 | --- | --- | --- |
@@ -118,6 +121,7 @@ What is `/configure`'s is the *sourcing*: these are generated from the repositor
 | `specs.md` | copied | the spec sections and the status vocabulary |
 | `maps.md` | copied | the fog branch, worked before any spec exists |
 | `evidence.md` | copied | gating, and how a finding graduates into knowledge |
+| `sub-agents.md` | copied | what a dispatched child may use, what is closed to it, the brief and the change record |
 | `tracker.md` | **derived** | which tracker, and the label vocabulary behind each role |
 | `version-control.md` | **derived** | which model, the branch convention, how work lands |
 
@@ -162,6 +166,18 @@ settings.local.json
 ```
 
 It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets AEP be added or removed as one directory instead of leaking entries into a file the repository owns.
+
+**`.claude/settings.json`**, carrying the worktree base ref. A sub-agent given worktree isolation branches from the repository's **default branch, not the parent session's `HEAD`**. So a child working a portion of a claimed ticket builds against a tree that does not contain the work it is extending — and nothing reports it: the child succeeds, the integration reads as routine, and the result is wrong in a way no test on the child's side can reach. A sentence telling a caller to set this is not enough, because the caller who forgets produces no error.
+
+```json
+{
+  "worktree": {
+    "baseRef": "head"
+  }
+}
+```
+
+`"head"` branches from the current local `HEAD`; the default, `"fresh"`, branches from the default branch on the remote. **Merge into an existing `settings.json` rather than replacing it** — the file is the harness's, and a repository may already keep hooks, permissions, or environment there.
 
 **Whatever formats this repository is made to skip `.claude/`.** A formatter that reaches it rewrites knowledge on the formatter's schedule — prose reflowed, tables realigned, list markers renormalized — and a knowledge file whose diff is unreadable has lost the thing it was for.
 

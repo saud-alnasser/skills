@@ -27,7 +27,7 @@ Built on a shared vocabulary:
 
 Read the routing table in `.claude/contexts/map.md` and load the Domain Contexts for the area, plus the ADRs covering it, before exploring.
 
-Then walk the codebase with the `Explore` subagent — this is a survey, and reading every candidate file into the parent's context spends it on the ones that will not make the report. Note where you feel friction:
+Then walk the codebase with the `Explore` subagent — this is a survey, and reading every candidate file into the parent's context spends it on the ones that will not make the report. `Explore` is the harness's own agent rather than a shipped role, so there is no definition to name; what any dispatched child is bound by is `.claude/policies/sub-agents.md`'s. Note where you feel friction:
 
 - Where does understanding one concept mean bouncing between many small modules?
 - Where is a module **shallow** — its interface nearly as complex as its implementation?

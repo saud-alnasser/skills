@@ -101,6 +101,30 @@ Two older shapes exist, and recognition is by content in both. A repository conv
 
 The conversion brings either to the current layout: `.claude/modes/` is installed from the templates, one file per posture; any `### Mode:` sections found in the protocol file are removed in the same pass, because the directory is now their single home; and the routing table gains the mode column with the template's stage-to-mode assignments. Repository-specific rows — extra guides a row names, stages the repository added — are preserved, because they are the part the template cannot know. A file already on the current shape is current, and a re-run changes nothing.
 
+## A repository configured before orchestration existed
+
+A repository configured by an earlier release has `.claude/policies/` and no `sub-agents.md`, and a router whose table names no stage as dispatching. Recognition is by content and needs both halves, because either alone is an interrupted run rather than an older layout: the policies directory is populated, and `.claude/policies/sub-agents.md` is absent.
+
+The conversion is what the generate step writes anyway — the policy, and the routing rows for the stages that dispatch — so this row exists to *name* the case rather than to add work: a reader auditing an old repository should find the gap described, not infer it from a file that is merely missing.
+
+**The shipped roles are not part of it.** `agents/` belongs to the plugin, not to the configured repository, so a repository on an old release gains the roles by updating the plugin and nothing here installs them.
+
+## Orchestration without its isolation setting
+
+A repository configured before the worktree base ref was written has the sub-agent policy and no `worktree.baseRef`. That is the gap the generate step describes, already live in a repository rather than about to be prevented in one. Recognition is by content and needs both halves: `.claude/policies/sub-agents.md` present, and `.claude/settings.json` either absent, missing the key, or setting it to `"fresh"`.
+
+**This row repairs rather than reports.** The repair is one merged key — small enough that handing it back as a plan item costs more than doing it, and what it prevents is not something the next run would catch. The value goes in as `/configure` writes it; an existing `settings.json` is merged into, never replaced.
+
+A repository with no sub-agent policy is not on this row: it is a repository the current `/configure` has never finished, and the generate step writes both.
+
+## The first axis without the second
+
+A repository configured while orchestration had only one axis carries `.claude/policies/sub-agents.md` describing a child that works a *portion*, and nothing about one that works a whole ticket. Recognition is by content and needs both halves, because a policy that is merely absent is an unfinished run rather than an older layout: the policy is present, and it admits no whole-ticket child — no decline rule for a fan-out the child cannot itself run, and no closed menu of what a child may request.
+
+**This row repairs rather than reports**, and costs nothing extra by doing so: the policy is installed by copy, so the generate step replaces it with the current template entire and there is no repository-specific text in it to preserve. The row exists so that a reader auditing an old repository finds the gap named, rather than inferring it from a file that merely reads shorter than the one they know.
+
+**The build stage is not part of it**, for the reason the shipped roles above are not. What a migration can reach is the contract the children read; the stage that dispatches them arrives with the plugin.
+
 ## The Tenure → AEP rename
 
 The framework was called **Tenure** before it became AEP, and a repository configured under that name carries it in prose: the entrypoint, the protocol file, the policies, and the tool references say Tenure and name `/tenure:` commands. The layout may already be current — the name is a conversion of its own, and it applies on top of whichever layout migration the repository also needs.

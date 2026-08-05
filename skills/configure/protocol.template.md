@@ -90,13 +90,15 @@ Every stage also loads `.claude/contexts/repository.md` and routes from its tabl
 | --- | --- | --- |
 | `/configure` | maintenance | every guide in `.claude/policies/` — it writes them all, and an audit run reads each one back against the repository |
 | `/design` | design | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
-| `/implement` | implementation | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/tools/git.md`, the forge reference |
-| `/review` | review | `.claude/policies/decisions.md`, `.claude/rules/`, `.claude/decisions/`, `.claude/tools/git.md`, the forge reference |
-| `/research` | research | `.claude/policies/evidence.md` |
+| `/implement` | implementation | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/policies/sub-agents.md`, `.claude/tools/git.md`, the forge reference |
+| `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/rules/`, `.claude/decisions/`, `.claude/tools/git.md`, the forge reference |
+| `/research` | research | `.claude/policies/evidence.md`, `.claude/policies/sub-agents.md` |
 | `/prototype` | prototype | `.claude/policies/evidence.md`, `.claude/.gitignore` |
 | `/commit` | maintenance | `.claude/policies/specs.md`, `.claude/policies/knowledge.md`, `.claude/policies/version-control.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md` |
 
 **The forge reference is whichever of `github.md`, `gitlab.md`, or `graphite.md` this repository's `.claude/tools/` actually holds** — the row names a role because the file filling it is chosen per repository. A stage that finds no reference for an operation has hit a configuration gap and says so; it does not guess the flag.
+
+**`.claude/policies/sub-agents.md` appears on every row whose stage dispatches sub-agents**, and on no other row that names its guides one by one. It is the contract a child is bound by, so a stage that dispatches reads it and restates none of it; a stage that dispatches nobody never pays for it. `/configure` is the exception it always is — its row is the whole directory rather than a list.
 
 A stage reads its row and stops. Reading another stage's guides is the cost this table exists to remove, and a guide reached with no row naming it is either a missing row or a stage doing another stage's job.
 

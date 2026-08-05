@@ -6,7 +6,7 @@ description: Build one ticket end to end — verify, claim, drive tdd at the agr
 # Implement
 
 Mode: implementation
-Policies: `.claude/policies/context.md`, `.claude/policies/knowledge.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
+Policies: `.claude/policies/context.md`, `.claude/policies/knowledge.md`, `.claude/policies/sub-agents.md`, `.claude/policies/tickets.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`
 
 One ticket, built and closed out. `/design` always leaves at least one ticket on disk, so there is always something to read — and `/implement` reads the ticket, not the conversation.
 
@@ -45,7 +45,7 @@ The report **is** the enforcement: a rule that produces visible output is one wh
 
 ## 1 — Take one ticket
 
-**One ticket per invocation.** Never take a second, never start a blocked one.
+**One ticket per invocation, where the invocation named one.** Never take a second, never start a blocked one. Where none was named the unit is a set, computed below rather than chosen here.
 
 ```
 frontier = tickets open, unblocked, unclaimed
@@ -70,6 +70,28 @@ If the frontier is empty, say so rather than inventing work. If everything left 
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.
 
 Work with no ticket at all — hand-written edits, a change made outside this flow — is `/commit`'s.
+
+### The invocation decides the mode
+
+**Named a ticket, the stage builds that one**, and nothing below dispatches anything: one ticket, one claim, one commit, exactly as it has always run. **A named ticket is never joined by others.** The set exists for the invocation that named none, and a stage that answered a named ticket with several would be choosing work it was not given — which is the rule above, breached by the mode rather than by the pick.
+
+**Named nothing, the unit is a set.** The frontier regularly holds several tickets that gate none of each other, and taking them one invocation at a time makes each wait on the one before it for a reason neither ticket states. So the stage computes the **dispatched set** — the frontier tickets that no `Blocked by` edge orders against each other — and works all of it.
+
+Computing a set is not choosing one. The edges were declared by `/design`, and reading a declaration is the opposite of writing one, which is why this does not except the rule above so much as leave it standing. That also fixes the bound: **the set is exactly what the edges permit — never widened, never reordered.** A ticket that looks independent, or that would obviously be fine alongside, is not a member unless the edges say so; no other property of a ticket is consulted, and nothing is added to the ticket format to record one.
+
+**State the plan before creating anything** — which tickets, which role builds them, and the branch each is built on:
+
+```
+set from the frontier: 04, 05, 07 — no edge orders them against each other
+  role     ticket-builder, one child per ticket
+  branches 04-…, 05-…, 07-… — created by this stage, held by this stage
+```
+
+**Stated, not gated.** The stage does not stop for approval, for the same reason the close-out below does not prompt before committing — that argument is made there and is not remade here. What is this rule's own is what stating buys: a set in the transcript before it costs anything, rather than one reconstructed afterwards from the branches it left behind.
+
+**Then create every branch in the set — all of them, before the first child is dispatched.** Creating the branch is the claim, so the parent holds the whole set before any of it is worked; the check that a claim is free applies to each, as below. A branch made after its child started is a claim made after the race it existed to win.
+
+**A set of one is a set, and the parent builds it.** Where the frontier leaves a single ticket there is nothing to run alongside, and a child would spend a whole context producing work this instance is already positioned to do.
 
 ### The branch is the Claim
 
@@ -163,6 +185,77 @@ A build ticket may carry design increments — decisions only partial code can a
 - **HITL types** (`grilling`, `prototype`) stop the build at the declared step, **holding the claim** — the branch stays, the ticket stays open, and the session hands back naming the increment it stopped at. This is not `blocked`: the plan is right and only the human is absent. A declared stop is a session the human can schedule; a discovered one loses the run.
 
 **`/implement` never invents an increment.** The declaration is the licence, and only `/design` writes one. A decision discovered mid-build undeclared is what it always was — `blocked`, through the hand-back below.
+
+### A fan-out is declared, or there is none
+
+A build ticket may also carry a **fan-out**: the declaration that its work divides, and what each part of it may touch. The shape is `.claude/policies/tickets.md`'s; what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s.
+
+**`/implement` never invents a fan-out.** The declaration is the licence, and only `/design` writes one — why that is so belongs to the format. A ticket with no declaration is built by one instance, not by a split that looked obvious once the code was open.
+
+A ticket that turns out to divide differently than declared is the plan being wrong, and takes the hand-back below. It is **not** re-partitioned in flight: the portions were reviewed before code existed, and a split rewritten mid-build is one nobody saw.
+
+Where a fan-out and an increment needing a human meet, the format states the order and the case it refuses. Reaching such an increment after children are already running is the same event as discovering an undeclared decision.
+
+**Confirm a child's base before integrating anything of its.** The claim must be an ancestor of what the child built on; `.claude/tools/git.md` has the read. `/configure` writes the setting that makes this true, and this check exists because a repository can be configured by hand or by an older version — a setting nobody verified is a setting that is right until it is not.
+
+A child based on anything but the claim is **not integrated**. The refusal **names what it found** — which child, the base it has, and the base it should have had. A generic failure sends the reader into the diff, and the diff is the one place this defect does not show: the child's work is coherent, it is merely coherent with the wrong tree.
+
+### Running one
+
+`.claude/policies/sub-agents.md` says what a child may do and what its two artifacts contain; the declaration says which roles run and what each owns. Neither is repeated below. What follows is only what this stage does with them.
+
+**Dispatch one child per declared role.** Each gets a brief built from the policy's template, composed now rather than carried on the ticket, because only now has anything read the code. Each runs in its own isolated worktree, so no child can reach another's files — and an isolated child's version-control commands fail if they reach the main checkout, so the boundary holds whether or not a brief mentioned it. Where that worktree is based is configuration rather than anything this stage states (ADR 0044), which is why the base is checked above rather than asserted here.
+
+**Say that the claim has widened, as the children are created.** How far it widens is the policy's; what belongs here is that nobody learns of it at the collision that would otherwise be the first sign.
+
+**Integrate from each child's record, not from its branch.** The record names the workspace and what was done in it; taking the branch on trust would leave the declaration's file-ownership half as a comment nothing enforces. Two mismatches stop the **whole** fan-out, and each is reported with the path that caused it:
+
+- a path in the child's diff that its record never declared — **undeclared**
+- a path the child was never declared to own — **unowned**
+
+**One ticket is still one commit.** Children's work is squashed in, so a fanned-out ticket is indistinguishable in history from one built alone and the amend that keeps that rule true still applies.
+
+**One child failing stops the whole fan-out** — and so does one child stopping, which is the same event seen from the other side. Nothing is integrated: not the failed or stopped portion, and not its siblings. Together the portions are one ticket, so a partial set of them satisfies no acceptance criterion, and reviewing one would review a ticket nobody built. The surviving children's worktrees stay where they are, holding their work, so a resumed session continues instead of rebuilding; the hand-back names the portion that failed and the decision, if there was one.
+
+**What a child stopped on takes the hand-back below**, exactly as a decision discovered undeclared does — it is the same event, and it has one route out of this stage. The question reaches the human because the hand-back reaches the human; this stage has no other way to dispose of it.
+
+That is also the bound on the inline path above. `research` and `task` increments resolve inline because the parent reached them with a human available; **a question that came back from a child is never one of those**, whatever type it resembles. Answering it here would be this stage deciding on a child's behalf, which is the one thing the isolation was for.
+
+**`/review` runs once, on the integrated result.** Per-child review would review portions nobody ships and would miss the only thing a fan-out newly risks, which is the seam between them.
+
+### Working a set
+
+Everything under the two headings above is a fan-out's. A set is the other axis, and its unit is a whole ticket rather than a portion, so **no rule crosses from there to here without being restated** — the two agree on what a child is and disagree on nearly everything done with one. What `.claude/policies/sub-agents.md` says about a child holds for both and is repeated in neither.
+
+**One child per ticket, in the role the plan named**, briefed from the policy's template exactly as a portion child is, and each working an isolated worktree on the branch this stage already created for its ticket. Nothing here reads a declaration: the members were computed from edges, and a fan-out one of them declares is not this stage's to run.
+
+**A set child's base is checked for equality, and never for ancestry.** The parent created that ticket's branch and handed the child that branch, so the only correct base is **that branch as it stood at dispatch** — with the base chosen rather than inherited there is nothing to weigh, and an ancestor of it is a child that started somewhere else and will land work its ticket's own history cannot explain. **As it stood at dispatch**, because the tip moves: this stage restacks below, and a check against the branch's current tip would refuse a late child for a base that was right when it was given one. `.claude/tools/git.md` has the read, and the refusal names the same three things it names for a portion.
+
+**Check each child's record against that child's diff before anything of its lands**, by the same read a portion's gets and at the bar the policy sets for one. Of the two mismatches named there, one carries over and one has nothing to test: **undeclared** is the same question here, while **unowned** tests a declaration a set never makes. What that second check would have caught arrives instead as a collision, below.
+
+**A record that fails the check stops that ticket, and reaches no further.** The whole fan-out stops because its portions are one ticket between them; here the other members are other tickets, and a manifest nobody could trust says nothing about any of them. So the refusal is per ticket — named with the path that caused it, as a portion's is.
+
+**A set child requests its own review, and the findings come back to it — before that ticket lands.** Review dispatches, so a child cannot run it; the policy has that bound and what a request costs. What belongs to this axis is where the findings go: to the child that wrote the code, which fixes them and returns again. This stage applying them instead would make it the author of a ticket it never claimed, and would leave the party answering for the code the one party that never read it. Reviewing after the commit would be worse still — the child is finished, and there is nobody left to act on a finding.
+
+**Each child's work lands as one commit, on the branch named for its ticket.** Nothing is squashed across children: a fan-out squashes because its portions are one ticket between them, and here each child *is* a ticket and already holds a branch of its own. A ticket built in a set is therefore indistinguishable in history from one built alone — which is what keeps a branch name enough to recover a ticket from.
+
+**Then restack the set in ticket order.** The members were siblings while they ran — that is what let them run at once — and become a stack only once they have landed. Whether there is anything to restack follows from the version-control model step 1 already required reading: where the repository stacks, each landed branch is rebased onto the one before it and the tool guide has the invocation; where it does not, the branches were never stacked and there is nothing to repair.
+
+**Two children writing one path is a collision, and the orchestrator resolves it.** The edges never promised against this — an edge gates work, and says nothing about files — so it is discovered at integration rather than predicted before dispatch. It is resolved rather than refused: the children are finished, and a stage that stopped here would hand back two worktrees and a question.
+
+**The mechanism is the repository's own**, and comes from `.claude/policies/version-control.md`. **This stage names no merge strategy**: one chosen here would be right on the repositories that happened to match it and silently wrong on the rest. What the orchestrator has that no merge tool has is **both change records** — it knows what each child believed it was doing, which is the difference between reconciling two intents and reconciling two hunks.
+
+**Where the intents conflict rather than the text, that is a decision, and this stage does not make it.** Two children that each did what their ticket asked, in ways that cannot both stand, is not a merge problem in disguise. It takes the route every decision this stage cannot make already takes.
+
+**A child that comes back failed or stopped leaves its siblings landed.** The fan-out stops whole because its portions are one ticket between them; a member of a set is verifiable on its own, so discarding four finished tickets over a fifth unrelated one would throw away work nobody found fault with. That ticket returns to the frontier and **its worktree is kept**, so a resumed session continues from where the child got to rather than rebuilding from nothing.
+
+**Of the four outcomes a return names, only two move a ticket backwards.** `done` lands it; `failed` and `stopped` put it back on the frontier; **`waiting` moves nothing at all**, because the child is holding the work while its question is carried. A stage that read the fourth as an ending would re-dispatch a ticket somebody is in the middle of.
+
+**Report which of the set shipped and which did not, and why for each that did not.** Nothing else in this workflow ends with some of its units landed and the rest returned, so a reader has no habit to fall back on here: a run that said *done* having landed three of five would be true about the three and false about the run.
+
+**A child that exhausts its cap on requests ends as a failed ticket.** One that cannot converge therefore runs out rather than looping, and running out is the failure above rather than a state of its own: the ticket goes back to the frontier, the worktree stays.
+
+**What a child stopped on still reaches the human.** A question this stage can carry goes to the human, and the child is resumed with the answer and the run continues. One it cannot carry travels in the report above, and that ticket returns to the frontier like any other that did not land. The human answers either way — neither disposition is this stage answering on a child's behalf.
 
 ## 3 — When the plan turns out wrong
 

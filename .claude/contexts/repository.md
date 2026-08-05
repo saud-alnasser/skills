@@ -68,7 +68,7 @@ _Avoid_: drift report, drift issue
 
 ## Boundaries
 
-- **`skills/` is what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in `skills/`. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.
+- **`skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in the shipped surfaces. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.
 - **A rule has exactly one home**, and the home is determined by when the rule must fire, not by what it is about. Restating a rule where it reads well is the failure this framework exists to prevent.
 - **The Spine owns stages; Primitives own none.** A Primitive that acquires a stage has become a Spine command and needs a Decision saying so. Both terms are `contexts/skill-authoring.md`'s.
 - **AEP's templates are not this repository's configuration.** `skills/configure/*.template.md` describes what gets installed elsewhere; the installed copies here are ordinary files that this repository owns and may heal.
