@@ -24,7 +24,7 @@
 
 ## Rules that always apply
 
-`.claude/rules/precedence.md` and `.claude/rules/engineering.md` are always-on and never restated here — a standard with two homes drifts at one of them. The rest of that directory is path-scoped by `paths:` frontmatter.
+`.claude/rules/precedence.md`, `.claude/rules/engineering.md`, and `.claude/rules/placement.md` are always-on and never restated here — a standard with two homes drifts at one of them. The rest of that directory is path-scoped by `paths:` frontmatter.
 
 ## Knowledge layers
 

@@ -14,8 +14,9 @@
   needed the file rather than by the build.
 
 .PARAMETER Repo
-  Repository root — the directory holding `.claude/`. Defaults to the parent of
-  this script's own directory, so the script works from any working directory.
+  Repository root — the directory holding `.claude/`. Defaults to this script's
+  grandparent, since the script lives at `.claude/scripts/`, so it works from any
+  working directory.
 
 .OUTPUTS
   Nothing. Each index is written to its own directory and the path reported.
@@ -27,16 +28,16 @@
   one that does.
 
 .EXAMPLE
-  pwsh -NoProfile -File scripts/regenerate-indexes.ps1
+  pwsh -NoProfile -File .claude/scripts/regenerate-indexes.ps1
   Rewrites every index in place.
 
 .EXAMPLE
-  pwsh -NoProfile -File scripts/regenerate-indexes.ps1 -Repo /tmp/fixture
+  pwsh -NoProfile -File .claude/scripts/regenerate-indexes.ps1 -Repo /tmp/fixture
   Rewrites the indexes of some other tree — how the suite exercises this.
 #>
 [CmdletBinding()]
 param(
-  [string]$Repo = (Split-Path -Parent $PSScriptRoot)
+  [string]$Repo = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
 )
 
 Set-StrictMode -Version Latest
@@ -94,20 +95,19 @@ function Get-DeclaredField {
 
 # An inline `[a, b]` list, and nothing else. A block list is the shape specs use
 # and is outside what the two indexed families declare, so it is refused rather
-# than read as empty: the empty reading renders a row claiming the file points
-# at nothing, which is a wrong answer that looks like a right one. `[]` is the
-# way a file says it points at nothing, and it survives this.
-# The single home for both refusals, absent and malformed. They were briefly
-# split across here and `Read-IndexedDocument`'s required-field list, and a
-# mutation removing either one left the other refusing the same file — two
-# guards where neither could be shown to do anything.
+# than read as empty: the empty reading renders a row claiming the file points at
+# nothing, which is a wrong answer that looks like a right one. `[]` is how a file
+# says it points at nothing, and it survives this.
 #
-# $Subject names the file and the field, because a refusal that says only which
-# field was wrong sends the reader through a directory looking for it.
-# $Value is deliberately untyped: `[string]` coerces $null to the empty string,
-# which collapses "absent" and "declared as a block list" into one case and made
-# the first refusal below unreachable. A mutation removing it changed nothing,
-# which is how the dead branch was found.
+# Both refusals live here rather than being split with `Read-IndexedDocument`'s
+# required-field list — while they were split, a mutation removing either left the
+# other refusing the same file, so neither could be shown to do anything.
+#
+# $Subject names the file and the field: a refusal that says only which field was
+# wrong sends the reader through a directory looking for it. $Value is untyped
+# because `[string]` coerces $null to the empty string, collapsing "absent" into
+# "block list" and making the first refusal unreachable — a mutation removing it
+# changed nothing, which is how that dead branch was found.
 function Split-DeclaredList {
   param([string]$Subject, $Value)
   if ($null -eq $Value) { throw "$Subject is not declared" }

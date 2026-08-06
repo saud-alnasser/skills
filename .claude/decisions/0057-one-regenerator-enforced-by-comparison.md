@@ -1,7 +1,7 @@
 ---
 status: accepted
 load-when: a generated index needs to be produced, or something proposes to maintain one
-sources: [scripts/, .claude/policies/context.md]
+sources: [.claude/scripts/, .claude/policies/context.md]
 supersedes: []
 superseded-by: []
 ---
