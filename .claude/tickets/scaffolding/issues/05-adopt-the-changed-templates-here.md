@@ -1,8 +1,9 @@
-# 05 — feat(skills): adopt the changed templates here
-
-Status: resolved
-Blocked by: 01, 02, 03, 04
-Part of: scaffolding
+---
+title: feat(skills): adopt the changed templates here
+status: resolved
+blocked-by: [01, 02, 03, 04]
+part-of: scaffolding
+---
 
 ## Problem
 

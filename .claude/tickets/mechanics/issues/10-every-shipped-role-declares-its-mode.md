@@ -1,8 +1,9 @@
-# 10 — feat(agents): every shipped role declares its mode
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(agents): every shipped role declares its mode
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

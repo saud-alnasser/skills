@@ -1,7 +1,17 @@
-# feat(skills): place work by checked facts — findings from the first external field run
+---
+status: accepted
+sources:
+  - .claude/evidence/research/2026-08-03-rentable-field-run.md
+  - skills/configure/policies/maps.template.md
+  - skills/configure/policies/tickets.template.md
+  - skills/configure/policies/tracker.template.md
+  - skills/configure/tools/github.md
+  - skills/configure/tools/git.md
+  - skills/design/SKILL.md
+  - skills/implement/SKILL.md
+---
 
-Status: accepted
-Sources: .claude/evidence/research/2026-08-03-rentable-field-run.md, skills/configure/policies/maps.template.md, skills/configure/policies/tickets.template.md, skills/configure/policies/tracker.template.md, skills/configure/tools/github.md, skills/configure/tools/git.md, skills/design/SKILL.md, skills/implement/SKILL.md
+# feat(skills): place work by checked facts — findings from the first external field run
 
 ## Problem
 

@@ -4,7 +4,7 @@ How work moves from a ticket to a landed change here. `.claude/policies/tracker.
 
 ## Which model
 
-**Stacked changes.** `Blocked by: 03` in a ticket means *stack on top of 03* — not *wait until it is resolved*.
+**Stacked changes.** `blocked-by: [03]` in a ticket means *stack on top of 03* — not *wait until it is resolved*.
 
 Confirm before relying on it. It is one read:
 
@@ -32,6 +32,8 @@ It is also what `main` already demonstrates. Every commit there is one effort, s
 ```
 
 The branch is named for the directory under `.claude/tickets/`, so it is reproducible from the effort alone and the effort is recoverable from the branch by reading it.
+
+**The effort identifies the claim; any prefix a tool adds is transport.** A stacking tool configured with a branch prefix produces `<prefix>/<effort>` from the same input, so a claim checked under one form and created under the other is not an exclusion at all. Check `refs/heads/<effort>` **and** `refs/heads/*/<effort>`, and never conclude a branch is free from one read.
 
 This removes the collision the per-ticket convention carried: ticket numbers restart at `01` in every effort, so `01-` had already meant two different tickets and two efforts in flight together would have needed the effort in the name anyway. Naming the branch for the effort is what the id was standing in for.
 

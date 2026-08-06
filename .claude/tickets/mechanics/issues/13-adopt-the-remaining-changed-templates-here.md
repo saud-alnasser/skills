@@ -1,8 +1,9 @@
-# 13 — chore(skills): adopt the remaining changed templates here
-
-Status: resolved
-Blocked by: 04, 09, 11
-Part of: mechanics
+---
+title: chore(skills): adopt the remaining changed templates here
+status: resolved
+blocked-by: [04, 09, 11]
+part-of: mechanics
+---
 
 ## Problem
 

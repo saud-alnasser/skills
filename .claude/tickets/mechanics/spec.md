@@ -1,7 +1,22 @@
-# feat(skills): the mechanics declare what they know, and indexes stop being hand-written
+---
+status: implemented
+sources:
+  - specs.md §5, §8, §9, §11, §19, §22, §24
+  - .claude/protocol.md
+  - .claude/position/marker.json
+  - skills/configure/SKILL.md
+  - skills/configure/MIGRATION.md
+  - skills/configure/protocol.template.md
+  - skills/configure/tools/git.md
+  - skills/configure/policies/context.template.md
+  - skills/configure/policies/decisions.template.md
+  - skills/configure/policies/evidence.template.md
+  - agents/
+  - scripts/verify.ps1
+  - .claude/decisions/0002, 0021, 0025, 0051
+---
 
-Status: implemented
-Sources: `specs.md` §5, §8, §9, §11, §19, §22, §24; `.claude/protocol.md`; `.claude/position/marker.json`; `skills/configure/SKILL.md`; `skills/configure/MIGRATION.md`; `skills/configure/protocol.template.md`; `skills/configure/tools/git.md`; `skills/configure/policies/context.template.md`; `skills/configure/policies/decisions.template.md`; `skills/configure/policies/evidence.template.md`; `agents/`; `scripts/verify.ps1`; `.claude/decisions/0002`, `0021`, `0025`, `0051`
+# feat(skills): the mechanics declare what they know, and indexes stop being hand-written
 
 ## Problem
 

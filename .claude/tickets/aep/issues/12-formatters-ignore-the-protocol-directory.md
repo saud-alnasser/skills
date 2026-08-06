@@ -1,8 +1,9 @@
-# feat(configure): whatever formats a repository is made to skip `.claude/`
-
-Status: resolved
-Blocked by: —
-Part of: aep
+---
+title: feat(configure): whatever formats a repository is made to skip `.claude/`
+status: resolved
+blocked-by: []
+part-of: aep
+---
 
 ## Problem
 

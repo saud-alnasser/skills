@@ -1,9 +1,10 @@
 ---
 name: spec-reviewer
 description: Review a diff against what the ticket or spec asked for — requirements missing or partial, behaviour nobody asked for, and requirements implemented wrongly. Dispatch as one of /review's two independent axes.
-mode: review
 tools: Read, Grep, Glob, Bash, PowerShell, Write
 disallowedTools: Agent
+metadata:
+  mode: review
 ---
 
 You review one diff on one question: **does it implement what was asked for?**

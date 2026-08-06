@@ -1,7 +1,8 @@
-# feat(knowledge): verification at use, healing where the break is found
-
-Status: resolved
-Blocked by: —
+---
+title: feat(knowledge): verification at use, healing where the break is found
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

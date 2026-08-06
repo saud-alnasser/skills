@@ -1,8 +1,9 @@
-# feat(configure): the build lifecycle has a GitHub form
-
-Status: resolved
-Blocked by: —
-Part of: fieldwork
+---
+title: feat(configure): the build lifecycle has a GitHub form
+status: resolved
+blocked-by: []
+part-of: fieldwork
+---
 
 ## Problem
 

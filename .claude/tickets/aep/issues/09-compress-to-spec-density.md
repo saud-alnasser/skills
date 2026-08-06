@@ -1,8 +1,9 @@
-# refactor(skills): compress everything shipped to the specification's density
-
-Status: resolved
-Blocked by: 08
-Part of: aep
+---
+title: refactor(skills): compress everything shipped to the specification's density
+status: resolved
+blocked-by: [08]
+part-of: aep
+---
 
 ## Problem
 

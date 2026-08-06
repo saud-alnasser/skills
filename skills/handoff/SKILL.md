@@ -3,11 +3,11 @@ name: handoff
 description: Compact this conversation into a handoff document a fresh agent can start from.
 argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
+metadata:
+  mode: maintenance
 ---
 
 # Handoff
-
-Mode: maintenance
 
 A bridge between context windows. Write a document that lets a fresh agent continue this work, and save it to the **operating system's temporary directory — never into the workspace**. A handoff is scaffolding for one session; committed, it becomes a stale account of a repository that has since moved.
 

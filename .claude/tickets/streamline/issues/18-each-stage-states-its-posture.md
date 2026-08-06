@@ -1,9 +1,10 @@
-# feat(skills): each stage states the tradeoffs it accepts
-
-Status: superseded
-Superseded by: aep/03 (ADR 0030)
-Blocked by: 06
-Part of: streamline
+---
+title: feat(skills): each stage states the tradeoffs it accepts
+status: superseded
+blocked-by: [06]
+part-of: streamline
+superseded-by: aep/03 (ADR 0030)
+---
 
 ## Problem
 

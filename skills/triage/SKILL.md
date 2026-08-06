@@ -2,12 +2,12 @@
 name: triage
 description: Move incoming issues and external pull requests through the triage roles — categorise, verify the claim, grill what is vague, and leave an agent-ready brief.
 disable-model-invocation: true
+metadata:
+  mode: review
+  policies: [tracker]
 ---
 
 # Triage
-
-Mode: review
-Policies: `.claude/policies/tracker.md`
 
 The on-ramp for work **Claude did not create**. `/design` cuts tickets that are agent-ready by construction; this is for everything that arrives from outside and has to be made agent-ready first.
 
@@ -51,7 +51,7 @@ The canonical names above are what this skill says; the strings the tracker actu
 1. **List what exists** — `gh label list`, or the repository's own label file.
 2. **Map onto an existing label.** The expected outcome — a repository triaged by humans usually already has a word for every role, and inventing a parallel one leaves the maintainer with two.
 3. **Create only when nothing fits**, matching the style already there: the prefix convention (`type:`, `kind/`, or bare), the casing, the separator, the colour family.
-4. **Never create a label for workflow state a `Status:` already carries.** That is a second answer to the same question, and the two will disagree.
+4. **Never create a label for workflow state the ticket's own status already carries.** That is a second answer to the same question, and the two will disagree.
 
 Record whatever is created back into `.claude/policies/tracker.md`, or the next session creates it again.
 

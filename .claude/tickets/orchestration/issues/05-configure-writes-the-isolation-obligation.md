@@ -1,8 +1,9 @@
-# feat(skills): configure writes the isolation obligation
-
-Status: resolved
-Blocked by: 02
-Part of: orchestration
+---
+title: feat(skills): configure writes the isolation obligation
+status: resolved
+blocked-by: [02]
+part-of: orchestration
+---
 
 ## Problem
 

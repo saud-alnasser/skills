@@ -1,7 +1,8 @@
-# chore(skills): vendor the gap-fillers
-
-Status: resolved
-Blocked by: —
+---
+title: chore(skills): vendor the gap-fillers
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

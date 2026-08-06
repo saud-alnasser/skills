@@ -1,7 +1,14 @@
-# refactor(skills): declare AEP's own facts as fields, not prose
+---
+status: accepted
+sources:
+  - skills/
+  - agents/
+  - scripts/verify.ps1
+  - .claude/protocol.md
+  - .claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md
+---
 
-Status: accepted
-Sources: skills/, agents/, scripts/verify.ps1, .claude/protocol.md, .claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md
+# refactor(skills): declare AEP's own facts as fields, not prose
 
 ## Problem
 

@@ -2,11 +2,11 @@
 name: help
 description: Ask which command fits the situation you are in. A router over AEP's skills, organised by how work arrives.
 disable-model-invocation: true
+metadata:
+  mode: discussion
 ---
 
 # Help
-
-Mode: discussion
 
 Say what you are trying to do; this says where to start. Everything is grouped by **how the work arrived**, because that is what you know at the moment you need to choose.
 

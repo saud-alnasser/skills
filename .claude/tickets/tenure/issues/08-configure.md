@@ -1,7 +1,8 @@
-# feat(configure): initialize or migrate a repository onto Tenure
-
-Status: resolved
-Blocked by: 02, 03, 13
+---
+title: feat(configure): initialize or migrate a repository onto Tenure
+status: resolved
+blocked-by: [02, 03, 13]
+---
 
 ## Problem
 

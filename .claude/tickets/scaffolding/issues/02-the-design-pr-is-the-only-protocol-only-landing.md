@@ -1,8 +1,9 @@
-# 02 — feat(configure): the design PR is the only protocol-only landing
-
-Status: resolved
-Blocked by: —
-Part of: scaffolding
+---
+title: feat(configure): the design PR is the only protocol-only landing
+status: resolved
+blocked-by: []
+part-of: scaffolding
+---
 
 ## Problem
 

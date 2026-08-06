@@ -167,7 +167,7 @@ A skill is a lightweight entry point to a capability. It contains very little sh
 - its **dependencies**: the policies, contexts, and tool guides it reads,
 - its **constraints** and completion criteria.
 
-A skill NEVER restates what a policy, mode, or guide already owns; it points. Dependency declarations are prose lines in the skill body — read by the only reader there is, and asserted by the verification suite — not a parallel manifest.
+A skill NEVER restates what a policy, mode, or guide already owns; it points. Mode and dependency declarations are **fields** under the frontmatter `metadata:` map the harness reserves for third-party data — read by the configuration stage's derivation and asserted by the verification suite, not a parallel manifest. The mode is one posture name, resolving against the modes directory; the dependencies are bare guide names resolving against the policies directory, with `*` meaning the whole of it. Both were prose lines in the body until the harness was found to document that map (ADR 0055); the reason to move was that a prose line is matched in running text and survives only until the paragraph around it is reflowed.
 
 **A skill's declaration is the framework's default, and the protocol table is the instance** (§5). These are two homes for related facts, which single-home would otherwise forbid, and what makes it survivable is that **each can state something the other cannot**: a skill shipping in the framework cannot know a repository's local guides, and a repository cannot ship into the framework. Where that asymmetry is absent, a second home is duplication and this is not a precedent for it. The instance governs on conflict, and the containment runs one way: the table carries at least what the skill declares.
 
@@ -215,7 +215,9 @@ Question → Discussion → Research → Prototype (optional) → Design
         → Repository knowledge
 ```
 
-Evidence — discussions, research, prototype write-ups, out-of-scope records, and drift findings — shares one property nothing else has: it records what was verified and when, and nothing revalidates it afterwards. A **drift finding** records a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies — written by whoever finds it; a falsified decision is the one drift never healed inline, and the finding waits in evidence until a design run heals it. (ADR 0039.) Knowledge that proves durable **graduates out of evidence into context**, and that graduation is stated once, in the evidence policy. This is what makes the lifecycle traceable from the original question to the final implementation.
+Evidence — discussions, research, prototype write-ups, out-of-scope records, and drift findings — shares one property nothing else has: it records what was verified and when, and nothing revalidates it afterwards. A **drift finding** records a knowledge statement checked in passing and found false — what was checked, against which commit, what it falsifies — written by whoever finds it; a falsified decision is the one drift never healed inline, and the finding waits in evidence until a design run heals it. (ADR 0039.)
+
+Every evidence file **declares its kind and what it falsifies as fields**, and the five kinds share **one generated index at the family root** rather than one beneath each: the obligation it serves — read the directory before producing more — is cross-kind, which is what makes the kind column carry information rather than restate the path (ADR 0056). A kind earns its directory when it has a file, so an index is generated over the kinds present and never over a fixed list. Knowledge that proves durable **graduates out of evidence into context**, and that graduation is stated once, in the evidence policy. This is what makes the lifecycle traceable from the original question to the final implementation.
 
 Maintenance is incremental, never repository-wide: when knowledge changes, only affected artifacts are updated. There is no synchronization pass (§19).
 
@@ -313,17 +315,25 @@ specs.md                     this specification (framework repository only)
     repository.md            cross-cutting vocabulary
     <domain>.md              loaded only when routed to
   decisions/                 append-only decision records
-  designs/                   specs written by the planning stage
+  designs/
+    map.md                   the design index, where specs are flat
+    <slug>.md                specs written by the planning stage
   evidence/
+    map.md                   the evidence index — one row per finding, every kind
     discussions/  research/  prototypes/  out-of-scope/  drift/
   tools/                     tool guides, derived per repository
-  tickets/<effort>/          spec.md + issues/NN-*.md per effort
+  scripts/                   scripts serving the workflow's own process, derived
+  tickets/
+    map.md                   the design index — one row per effort's spec
+    <effort>/                spec.md + issues/NN-*.md + map.md, per effort
   position/                  per-clone state — gitignored, never depended on
   worktrees/                 the harness's isolated child checkouts — gitignored
   .gitignore                 what per-clone means, and the membership test
 ```
 
 Knowledge layers are visible in the tree; per-clone state is structurally separated; every category is a directory rather than a naming convention.
+
+**An artefact is placed by its scope.** What is per-effort — a spec, its issues, and the fog map that charts it — lives in that effort's directory; what spans every effort lives at the root of `tickets/`. The layout names both, because a layout that named neither is what let two artefacts arrive at one path with nobody noticing (ADR 0059).
 
 ## 22. Harness binding — Claude Code
 

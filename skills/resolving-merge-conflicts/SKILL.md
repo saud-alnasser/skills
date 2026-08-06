@@ -1,11 +1,11 @@
 ---
 name: resolving-merge-conflicts
 description: Resolve an in-progress merge or rebase conflict by recovering what each side was trying to do. Use when git reports conflicts.
+metadata:
+  mode: maintenance
 ---
 
 # Resolving merge conflicts
-
-Mode: maintenance
 
 A conflict is two intents that a text diff could not reconcile. Recovering both intents is the work; editing the markers out is not.
 

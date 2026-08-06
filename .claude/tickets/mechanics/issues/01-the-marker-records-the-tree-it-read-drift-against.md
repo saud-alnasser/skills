@@ -1,8 +1,9 @@
-# 01 — feat(specs): the marker records the tree it read drift against
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(specs): the marker records the tree it read drift against
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

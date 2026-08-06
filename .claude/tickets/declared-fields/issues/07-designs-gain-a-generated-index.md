@@ -1,8 +1,9 @@
-# feat(knowledge): designs gain a generated index where the directory is flat
-
-Status: open
-Blocked by: 04, 05
-Part of: declared-fields
+---
+title: feat(knowledge): designs gain a generated index where the directory is flat
+status: resolved
+blocked-by: [04, 05, 10]
+part-of: declared-fields
+---
 
 ## Problem
 
@@ -25,3 +26,46 @@ Templates first, per ADR 0025.
 - A spec that declares no fields cannot appear in a regeneration.
 - This repository's own specs are indexed by the same mechanism, wherever its tracker policy says they live — no second format for the repository that builds the framework.
 - The configured-repository path is exercised, not assumed: the templates produce a working index in a tree where the designs directory is flat.
+
+## Blocked
+
+**The index has nowhere to go that this ticket is allowed to choose.** Acceptance says this repository's specs are indexed *"wherever its tracker policy says they live"*. `.claude/policies/tracker.md` says specs live at `.claude/tickets/<effort>/spec.md` and says nothing about an index. The obvious path — `.claude/tickets/map.md`, matching `contexts/map.md` and `decisions/map.md` — **is already assigned to a different artefact**: `.claude/policies/maps.md` line 30, and identically in the shipped `maps.template.md`, gives that exact path to the fog map, whose format is `# map: <effort>` with Destination and Decisions-so-far sections.
+
+The build wrote a `# Design map` there anyway. Both review axes found it independently. The consequences are not cosmetic: a fog map created by `/design` would be destroyed by the next `/commit` regeneration, and until then would fail the suite as a hand-edited index.
+
+**This is a Decision, and this stage may not make it.** `.claude/tickets/declared-fields/spec.md` already records the neighbouring question — indexing tickets at all — as out of scope, real, and *"its own Decision"*. Choosing a path here settles it by fiat. Two alternatives were put to the user and both were declined in favour of routing it: `.claude/designs/map.md` regardless of where the specs sit, which costs "the index lives beside the specs"; and `.claude/tickets/designs.md`, which costs the `map.md` naming every other generated index uses.
+
+**The branch was kept**, contrary to the usual hand-back: it is the effort's branch and carries tickets 01 through 05, already landed. Nothing of this ticket was committed. The partial build was left in the working tree as the sharper evidence of why the plan could not proceed, and was later saved as a patch and cleared so ticket 10 could be built — it overlapped in `scripts/verify.ps1`, which every ticket here touches.
+
+### What review found besides, so a rebuild does not rediscover it
+
+- **Three reintroductions left all six assertions green.** Removing `status` from the design reader's required fields — nothing covers a spec that declares `sources` and no `status`, which is the column the index exists for. Turning the bare-`sources:` refusal into an empty list — the exact "reads as empty, a wrong answer that looks like a right one" case the code's own comment claims to hold. And deleting `Sort-Object Label`, which is dead because both producers already sort, leaving "in name order" unenforced.
+- **Deleting one assertion during the build lost real coverage.** It was cut as a weaker restatement of two others. Review then mutated the block-list reader to split entries on commas and regenerated: six passed, while `specs.md §5, §8` fragmented in the committed index. The flat fixture's only entry is comma-free, and the byte comparison compares against a file the mutation had just rewritten. The comma is the entire reason block form exists.
+- **A comment asserts what the code contradicts three lines later.** It claims both layouts are indexed where both exist and that "a repository has one or the other"; the code silently prefers the flat directory, so this repository is one `mkdir .claude/designs` away from dropping all eleven rows and reporting it as a stale index. The same comment claims reading the tracker policy would be a coupling that breaks on a rewording — but the script hardcodes the same paths that policy states, so the coupling moved rather than went.
+- **`Get-FrontmatterBlock` duplicates `Get-DeclaredField`'s extraction character for character**, and `New-DesignIndex` reads each spec file twice.
+- **The templates are not exercised, only the layout.** Acceptance asks that *the templates* produce a working index; the fixture hand-writes four files encoding the shape the author believed the template prescribes, and nothing derives it from `specs.template.md` or runs `/configure` into the tree. If the template's shape drifted, the fixture would still pass.
+
+`Split-DeclaredBlockList` and the rewritten write loop were confirmed by both axes as genuinely required rather than scope creep: a block-form `sources` is invisible to the existing reader by construction, and a third index with its own directory forced the loop.
+
+## Re-planned
+
+**Unblocked, with an edge rather than a redesign.** The `/design` run found the root cause one level below where the build hit it: the path was not scarce, it was stale. The fog map is per effort and was parked at a repository-wide path, so two concurrently mapped efforts already collided with each other before any index existed — and `specs.md` §21 named neither artefact, which is how the mismatch survived. ADR 0059 places both by scope; ticket **10** vacates the path.
+
+Nothing about this ticket's own outcome or acceptance moves. It gains `Blocked by: 10` and takes `.claude/tickets/map.md` once that lands. Two alternatives were weighed and rejected in the ADR — `.claude/designs/map.md` everywhere, and `.claude/tickets/designs.md` — both of which would have left the map defect standing.
+
+## Rebuilt
+
+**Built on the freed path, and the first pass answered two of the six findings above.** Both review axes said so independently, and they were right: I wrote that the findings were the checklist and then reproduced four of them. What follows is what the second pass did about it.
+
+- **The two refusals in the block-list reader had no fixture — fixed.** Review mutated each to an empty list and *all 1025 assertions stayed green*, which is the checklist's own item 1(b) reappearing verbatim. There is now one fixture per refusal: a spec that omits `sources`, and one that declares `sources:` with nothing under it, which is YAML null rather than the empty list `[]` expresses. A single fixture would have left whichever refusal it did not reach exactly as unheld as before.
+- **`Sort-Object Label` was dead again — removed.** Both producers already emit in name order, so it sorted a sorted list. Checklist item 1(c), reintroduced word for word.
+- **`Get-FrontmatterBlock` duplicated the extraction character for character, and each spec was read twice — fixed.** The extraction now has one home and `Get-DeclaredField` calls it; `New-DesignIndex` reads each file once and feeds both the field map and the block list from it. Checklist item 4.
+- **The fixtures still proved the regenerator rather than the template — fixed.** They hand-write frontmatter, which is unavoidable, but the keys they declare are now read out of `specs.template.md`'s own example and compared, so a template whose shape drifted fails here instead of passing silently. Checklist item 6, and the criterion that says the configured-repository path is *exercised, not assumed*.
+- **`specs.md` §21 did not name the flat layout's index — fixed.** It named `contexts/`, `evidence/` and `tickets/` indexes and not `designs/`, while this ticket makes `.claude/designs/map.md` real for every configured repository.
+- **A sentence attributed something to the tracker policy that it does not say — fixed.** It claimed `.claude/policies/tracker.md` states both layouts; it states only the effort path, and the shipped `tracker.template.md` says nothing about specs at all. The shipped template would have sent a reader to a file that does not answer.
+- **A refusal named `spec.md` in both layouts — fixed.** In a flat directory the file is `<slug>.md`, so the message sent a reader looking for a path their tree does not have.
+- **Two comments were corrected**: one claimed both refusals held when neither did, and one was left stacked above an assertion that no longer said what it described.
+
+**One criterion remains unmet and is recorded rather than papered over.** *"`MIGRATION.md` ... the migration is exercised rather than asserted in prose"* — inherited from ticket 10 and still true here: there is no migration fixture anywhere in this suite, and the only enforcement any row has is a prose regex. The assertion that used to hide behind a vacuous pass now fails when the index is absent rather than returning true.
+
+**The six findings above are the rebuild's checklist, not history.** Three guards that could not fire, one deletion that lost the comma coverage block form exists for, a comment contradicting its own code, and a fixture that exercises the layout while claiming to exercise the templates — none of it is fixed by moving the path, and all of it applies to whatever is written next. The rebuild starts from these rather than from the patch: only `Split-DeclaredBlockList` survived review as required rather than creep.

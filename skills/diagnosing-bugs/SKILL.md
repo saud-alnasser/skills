@@ -1,11 +1,11 @@
 ---
 name: diagnosing-bugs
 description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose" or "debug this", or reports something broken, throwing, failing, or slow.
+metadata:
+  mode: research
 ---
 
 # Diagnosing Bugs
-
-Mode: research
 
 A discipline for hard bugs. Skip a phase only with a stated reason.
 

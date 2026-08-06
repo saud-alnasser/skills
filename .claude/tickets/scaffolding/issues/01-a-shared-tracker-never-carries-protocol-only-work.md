@@ -1,8 +1,9 @@
-# 01 — feat(configure): a shared tracker never carries protocol-only work
-
-Status: resolved
-Blocked by: —
-Part of: scaffolding
+---
+title: feat(configure): a shared tracker never carries protocol-only work
+status: resolved
+blocked-by: []
+part-of: scaffolding
+---
 
 ## Problem
 

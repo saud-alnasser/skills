@@ -1,8 +1,9 @@
-# feat(specs): the specification declares the second axis
-
-Status: resolved
-Blocked by: —
-Part of: parallel-tickets
+---
+title: feat(specs): the specification declares the second axis
+status: resolved
+blocked-by: []
+part-of: parallel-tickets
+---
 
 ## Problem
 

@@ -1,7 +1,8 @@
-# refactor(knowledge): derive this repository's own tool references
-
-Status: resolved
-Blocked by: 03
+---
+title: refactor(knowledge): derive this repository's own tool references
+status: resolved
+blocked-by: [03]
+---
 
 ## Problem
 

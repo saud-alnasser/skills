@@ -1,8 +1,9 @@
-# 07 — feat(skills): contexts declare their sources and their load condition
-
-Status: resolved
-Blocked by: 05
-Part of: mechanics
+---
+title: feat(skills): contexts declare their sources and their load condition
+status: resolved
+blocked-by: [05]
+part-of: mechanics
+---
 
 ## Problem
 

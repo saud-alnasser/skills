@@ -1,7 +1,18 @@
-# fix(skills): the ignore rule covers the harness's child workspaces
+---
+status: implemented
+sources:
+  - skills/configure/SKILL.md
+  - skills/configure/MIGRATION.md
+  - specs.md §21
+  - .claude/.gitignore
+  - .claude/policies/sub-agents.md
+  - .claude/decisions/0006
+  - .claude/decisions/0012
+  - .claude/decisions/0045
+  - scripts/verify.ps1
+---
 
-Status: implemented
-Sources: `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `specs.md` §21, `.claude/.gitignore`, `.claude/policies/sub-agents.md`, `.claude/decisions/0006`, `.claude/decisions/0012`, `.claude/decisions/0045`, `scripts/verify.ps1`
+# fix(skills): the ignore rule covers the harness's child workspaces
 
 ## Problem
 

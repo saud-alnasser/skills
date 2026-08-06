@@ -1,3 +1,8 @@
+---
+kind: research
+falsifies: []
+---
+
 # How do agent frameworks in the wild structure orchestration, and what makes it additive?
 
 Verified against: `mattpocock/skills` @ `main` (fetched 2026-08-05); Anthropic engineering posts *Building effective agents* and *How we built our multi-agent research system* (fetched 2026-08-05); Claude Code docs `code.claude.com/docs/en/{sub-agents,agent-teams,costs}` (pages self-date to v2.1.178–v2.1.218, fetched 2026-08-05); LangGraph docs `docs.langchain.com/oss/python/langgraph/{graph-api,use-graph-api,use-subgraphs}` (fetched 2026-08-05); CrewAI docs `docs.crewai.com/en/concepts/{crews,tasks,agents,flows}` (fetched 2026-08-05); Microsoft AutoGen `stable` docs (fetched 2026-08-05); `openai/swarm` README @ `main` and OpenAI Agents SDK docs `openai.github.io/openai-agents-python/{multi_agent,tools,results}` (fetched 2026-08-05). As of 2026-08-05.

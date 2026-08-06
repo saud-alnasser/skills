@@ -1,7 +1,8 @@
-# chore(skills): vendor /research and /prototype
-
-Status: resolved
-Blocked by: —
+---
+title: chore(skills): vendor /research and /prototype
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

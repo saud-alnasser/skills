@@ -1,7 +1,8 @@
-# feat(implement): build, and record what moved
-
-Status: resolved
-Blocked by: 01
+---
+title: feat(implement): build, and record what moved
+status: resolved
+blocked-by: [01]
+---
 
 ## Problem
 

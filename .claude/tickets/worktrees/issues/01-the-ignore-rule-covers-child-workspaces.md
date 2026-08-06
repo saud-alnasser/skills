@@ -1,8 +1,9 @@
-# fix(skills): the ignore rule covers the harness's child workspaces
-
-Status: resolved
-Blocked by: —
-Part of: worktrees
+---
+title: fix(skills): the ignore rule covers the harness's child workspaces
+status: resolved
+blocked-by: []
+part-of: worktrees
+---
 
 ## Problem
 

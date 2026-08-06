@@ -1,8 +1,9 @@
-# feat(implement): the build stage computes and states the set before dispatching
-
-Status: resolved
-Blocked by: 03
-Part of: parallel-tickets
+---
+title: feat(implement): the build stage computes and states the set before dispatching
+status: resolved
+blocked-by: [03]
+part-of: parallel-tickets
+---
 
 ## Problem
 

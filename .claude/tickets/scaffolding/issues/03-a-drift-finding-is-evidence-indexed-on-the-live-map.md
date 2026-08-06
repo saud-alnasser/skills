@@ -1,8 +1,9 @@
-# 03 — feat(configure): a drift finding is evidence, indexed on the live map
-
-Status: resolved
-Blocked by: —
-Part of: scaffolding
+---
+title: feat(configure): a drift finding is evidence, indexed on the live map
+status: resolved
+blocked-by: []
+part-of: scaffolding
+---
 
 ## Problem
 

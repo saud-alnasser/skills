@@ -1,7 +1,8 @@
-# feat(skills): router over the Tenure skill set
-
-Status: resolved
-Blocked by: 03, 06, 08, 09
+---
+title: feat(skills): router over the Tenure skill set
+status: resolved
+blocked-by: [03, 06, 08, 09]
+---
 
 ## Problem
 

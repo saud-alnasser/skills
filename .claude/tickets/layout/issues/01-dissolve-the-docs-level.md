@@ -1,7 +1,8 @@
-# refactor(layout): dissolve the docs level in the shipped layout
-
-Status: resolved
-Blocked by: —
+---
+title: refactor(layout): dissolve the docs level in the shipped layout
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

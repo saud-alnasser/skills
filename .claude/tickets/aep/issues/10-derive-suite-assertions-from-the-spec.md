@@ -1,8 +1,9 @@
-# test(verify): derive the suite's general assertions from specs.md
-
-Status: resolved
-Blocked by: 09
-Part of: aep
+---
+title: test(verify): derive the suite's general assertions from specs.md
+status: resolved
+blocked-by: [09]
+part-of: aep
+---
 
 ## Problem
 

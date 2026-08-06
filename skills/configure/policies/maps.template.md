@@ -27,7 +27,9 @@ Every session orients to it before choosing a ticket.
 
 ## The map file
 
-The map lives beside the tickets, wherever `.claude/policies/tracker.md` says those are: `.claude/tickets/map.md` on a local-markdown tracker, a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
+The map lives **inside the effort it charts**, wherever `.claude/policies/tracker.md` says efforts are: `.claude/tickets/<effort>/map.md` on a local-markdown tracker, beside that effort's own spec and issues; a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
+
+It goes inside the effort rather than at the root of the tickets directory because there is **one map per effort** — the title below names one — and a shared path is one file for an artefact that comes one per effort, so two efforts mapped at once would contend for it. The root of the tickets directory carries what spans every effort instead (ADR 0059).
 
 Until the map exists in that form, the design document holds the proposal and *is* the map; once created, the created map supersedes it. The proposal is not mirrored onto the map afterwards — that would be the second copy the rule below exists to prevent.
 
@@ -64,6 +66,8 @@ Open tickets are **not** listed. They carry `Part of: map` and are found by quer
 ## Decision tickets
 
 Same file and format as any other ticket (see `.claude/policies/tickets.md`), with three differences: the body is a question, the ticket carries a type, and the title's commit is not code. The title rule in `.claude/policies/tickets.md` holds unchanged, because a decision ticket is not commitless — it records the answer as an ADR or a design-document change, usually `docs:`, and that is the commit the title writes.
+
+A decision ticket is a **section of the design document**, not a file, so it carries these facts as lines rather than as frontmatter: `.claude/policies/tickets.md`'s fields belong to a file, and a section has nowhere to put them. That is the one place the two forms differ, and it differs because the artefact does.
 
 ```markdown
 # <NN> — type(scope): summary — e.g. docs(checkout): settle the retry flow

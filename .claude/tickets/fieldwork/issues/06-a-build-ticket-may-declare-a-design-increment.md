@@ -1,8 +1,9 @@
-# feat(skills): a build ticket may declare a design increment
-
-Status: resolved
-Blocked by: 01
-Part of: fieldwork
+---
+title: feat(skills): a build ticket may declare a design increment
+status: resolved
+blocked-by: [01]
+part-of: fieldwork
+---
 
 ## Problem
 

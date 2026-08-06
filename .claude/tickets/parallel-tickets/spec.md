@@ -1,7 +1,17 @@
-# feat(skills): the build stage dispatches whole tickets, not only portions
+---
+status: implemented
+sources:
+  - specs.md §20
+  - skills/implement/SKILL.md
+  - skills/configure/policies/sub-agents.template.md
+  - skills/configure/policies/tickets.template.md
+  - .claude/policies/version-control.md
+  - agents/portion-builder.md
+  - .claude/decisions/0040–0048
+  - .claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md
+---
 
-Status: implemented
-Sources: `specs.md` §20, `skills/implement/SKILL.md`, `skills/configure/policies/sub-agents.template.md`, `skills/configure/policies/tickets.template.md`, `.claude/policies/version-control.md`, `agents/portion-builder.md`, `.claude/decisions/0040`–`0048`, `.claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md`
+# feat(skills): the build stage dispatches whole tickets, not only portions
 
 ## Problem
 

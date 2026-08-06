@@ -1,3 +1,8 @@
+---
+kind: research
+falsifies: []
+---
+
 # How do Anthropic's first-party orchestration surfaces structure multi-agent work?
 
 Verified against: Claude Code 2.1.222 (`claude --version`), code.claude.com as of 2026-08-05

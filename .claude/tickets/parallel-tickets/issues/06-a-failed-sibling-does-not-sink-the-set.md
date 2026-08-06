@@ -1,8 +1,9 @@
-# feat(implement): a failed sibling does not sink the set, and review reaches the child that asked
-
-Status: resolved
-Blocked by: 05
-Part of: parallel-tickets
+---
+title: feat(implement): a failed sibling does not sink the set, and review reaches the child that asked
+status: resolved
+blocked-by: [05]
+part-of: parallel-tickets
+---
 
 ## Problem
 

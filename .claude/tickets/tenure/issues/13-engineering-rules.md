@@ -1,7 +1,8 @@
-# feat(rules): distribute the engineering rules across the workflow
-
-Status: resolved
-Blocked by: —
+---
+title: feat(rules): distribute the engineering rules across the workflow
+status: resolved
+blocked-by: []
+---
 
 ## Problem
 

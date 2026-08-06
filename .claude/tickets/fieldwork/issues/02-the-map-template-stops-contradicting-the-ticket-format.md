@@ -1,8 +1,9 @@
-# fix(configure): the map template stops contradicting the ticket format
-
-Status: resolved
-Blocked by: 01
-Part of: fieldwork
+---
+title: fix(configure): the map template stops contradicting the ticket format
+status: resolved
+blocked-by: [01]
+part-of: fieldwork
+---
 
 ## Problem
 

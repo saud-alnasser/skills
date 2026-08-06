@@ -1,8 +1,9 @@
-# test(verify): re-anchor the suite to the AEP shape, close coverage, and assert the budget
-
-Status: resolved
-Blocked by: 07
-Part of: aep
+---
+title: test(verify): re-anchor the suite to the AEP shape, close coverage, and assert the budget
+status: resolved
+blocked-by: [07]
+part-of: aep
+---
 
 ## Problem
 

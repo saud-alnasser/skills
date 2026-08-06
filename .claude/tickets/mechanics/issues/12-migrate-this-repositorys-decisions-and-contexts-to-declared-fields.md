@@ -1,8 +1,9 @@
-# 12 — chore(skills): migrate this repository's decisions and contexts to declared fields
-
-Status: resolved
-Blocked by: 08
-Part of: mechanics
+---
+title: chore(skills): migrate this repository's decisions and contexts to declared fields
+status: resolved
+blocked-by: [08]
+part-of: mechanics
+---
 
 ## Problem
 

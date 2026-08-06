@@ -1,8 +1,9 @@
-# feat(skills): ship the modes, and have every skill declare exactly one
-
-Status: resolved
-Blocked by: 02
-Part of: aep
+---
+title: feat(skills): ship the modes, and have every skill declare exactly one
+status: resolved
+blocked-by: [02]
+part-of: aep
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# chore(configure): close the graphite configuration gap
-
-Status: resolved
-Blocked by: —
-Part of: fieldwork
+---
+title: chore(configure): close the graphite configuration gap
+status: resolved
+blocked-by: []
+part-of: fieldwork
+---
 
 ## Problem
 

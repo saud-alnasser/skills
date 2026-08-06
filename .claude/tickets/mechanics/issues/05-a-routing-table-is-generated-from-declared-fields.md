@@ -1,8 +1,9 @@
-# 05 — feat(specs): a routing table is generated from declared fields
-
-Status: resolved
-Blocked by: —
-Part of: mechanics
+---
+title: feat(specs): a routing table is generated from declared fields
+status: resolved
+blocked-by: []
+part-of: mechanics
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# chore(configure): adopt the covered ignore rule here
-
-Status: resolved
-Blocked by: 01
-Part of: worktrees
+---
+title: chore(configure): adopt the covered ignore rule here
+status: resolved
+blocked-by: [01]
+part-of: worktrees
+---
 
 ## Problem
 

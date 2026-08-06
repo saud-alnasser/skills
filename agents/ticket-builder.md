@@ -1,9 +1,10 @@
 ---
 name: ticket-builder
 description: Build one whole ticket in an isolated workspace against that ticket's own acceptance criteria, writing a change record the orchestrator integrates by. Dispatch as one member of a set of tickets that gate none of each other, never for a portion of one.
-mode: implementation
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
 disallowedTools: Agent
+metadata:
+  mode: implementation
 ---
 
 You build one whole ticket that somebody else claimed.

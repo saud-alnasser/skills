@@ -26,6 +26,32 @@ It is not a knowledge layer, and the difference is the whole reason it has its o
 | discussions | `.claude/evidence/discussions/` | `/design` |
 | drift findings | `.claude/evidence/drift/` | whoever finds the drift |
 
+## Declared fields, and the one index
+
+Every evidence file declares these two fields:
+
+```yaml
+---
+kind: drift
+falsifies: [.claude/policies/tracker.md]
+---
+```
+
+| Field | Holds | Read by |
+| --- | --- | --- |
+| `kind` | which of the five this is | the index |
+| `falsifies` | what the finding contradicts — `[]` where it contradicts nothing | the index, and whoever heals it |
+
+**One index at `.claude/evidence/map.md`, spanning all five kinds** — not one beneath each (ADR 0056). The governing obligation is *read the directory before producing more*, and that obligation is cross-kind: a question already answered by research is not answered again by reading only `research/`. That width is also what makes `kind` a real column rather than a restatement of the path the file sits in.
+
+Rows are in filename order, which is date order, with `kind` breaking a tie. Chronology is what a reader of accumulated evidence wants first, and grouping by kind would make the column decorative.
+
+**It is generated, never hand-edited**, and enforced by regenerating and comparing. A file declaring no fields cannot appear in a regeneration.
+
+**The account itself is frozen.** The fields sit beside it, never inside it: nothing about what was checked, when, or against which commit moves once a finding is written.
+
+**A kind earns its directory when it has a file.** An empty `prototypes/` is a claim that prototyping happened.
+
 ## Discussions
 
 A discussion records the grill that ended without a decision: what was asked, what was assumed, what was weighed, and what stayed open. **The open half is required, not optional** — a discussion with nothing open is a decision that has not been written down yet, and says so instead of being filed here.

@@ -1,7 +1,18 @@
-# feat(skills): sub-agent orchestration becomes a system stages opt into
+---
+status: implemented
+sources:
+  - specs.md
+  - skills/review/SKILL.md
+  - skills/research/SKILL.md
+  - skills/codebase-design/DESIGN-IT-TWICE.md
+  - skills/implement/SKILL.md
+  - .claude/policies/tickets.md
+  - .claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md
+  - .claude/evidence/research/2026-08-05-anthropic-first-party-orchestration-surfaces.md
+  - .claude/evidence/research/2026-08-05-market-orchestration-patterns.md
+---
 
-Status: implemented
-Sources: `specs.md`, `skills/review/SKILL.md`, `skills/research/SKILL.md`, `skills/codebase-design/DESIGN-IT-TWICE.md`, `skills/implement/SKILL.md`, `.claude/policies/tickets.md`, `.claude/evidence/research/2026-08-05-claude-code-subagent-orchestration-primitives.md`, `.claude/evidence/research/2026-08-05-anthropic-first-party-orchestration-surfaces.md`, `.claude/evidence/research/2026-08-05-market-orchestration-patterns.md`
+# feat(skills): sub-agent orchestration becomes a system stages opt into
 
 ## Problem
 

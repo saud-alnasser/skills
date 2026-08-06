@@ -1,7 +1,16 @@
-# feat(skills): protocol scaffolding is never its own unit of work
+---
+status: implemented
+sources:
+  - skills/configure/policies/tickets.template.md
+  - skills/configure/policies/version-control.template.md
+  - skills/configure/policies/maps.template.md
+  - skills/configure/policies/evidence.template.md
+  - skills/configure/policies/knowledge.template.md
+  - skills/design/SKILL.md
+  - specs.md
+---
 
-Status: implemented
-Sources: skills/configure/policies/tickets.template.md, skills/configure/policies/version-control.template.md, skills/configure/policies/maps.template.md, skills/configure/policies/evidence.template.md, skills/configure/policies/knowledge.template.md, skills/design/SKILL.md, specs.md
+# feat(skills): protocol scaffolding is never its own unit of work
 
 ## Problem
 

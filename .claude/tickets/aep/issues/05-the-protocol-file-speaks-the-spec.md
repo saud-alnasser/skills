@@ -1,8 +1,9 @@
-# refactor(configure): align the protocol file and the entrypoint with the specification
-
-Status: resolved
-Blocked by: 03, 04
-Part of: aep
+---
+title: refactor(configure): align the protocol file and the entrypoint with the specification
+status: resolved
+blocked-by: [03, 04]
+part-of: aep
+---
 
 ## Problem
 

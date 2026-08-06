@@ -7,10 +7,14 @@ A spec is the reasoning behind the tickets — the thing that lets someone judge
 ## Template
 
 ```markdown
-# type(scope): summary
+---
+status: draft
+sources:
+  - <a path worth starting from>
+  - <another>
+---
 
-Status: draft
-Sources: <paths worth starting from>
+# type(scope): summary
 
 ## Problem
 
@@ -60,9 +64,30 @@ What this deliberately does not do. The explicit no-s stop the scope
 creeping back in during review.
 ```
 
+## The index
+
+`map.md` beside the specs, generated from the fields above — one row per spec, in name order:
+
+```md
+# Design map
+
+| Design | Status | Sources |
+| --- | --- | --- |
+| [caching](caching.md) | accepted | `src/cache/` |
+| [retries](retries.md) | implemented | — |
+```
+
+The status column is what makes the index answer *which of these is live* without opening one, which is the question a reader of a directory of accumulated specs asks first.
+
+**It is generated, never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it. A spec declaring no status stops the regeneration and is named, so a row is never a second statement of the directory's contents.
+
+The index sits beside the specs it indexes, in whichever of the two layouts this repository uses: flat in the designs directory, or one spec per effort beside the tickets it governs. **The two layouts are exclusive** — a tree holding both is refused rather than having one silently preferred, because preferring one drops every row of the other and reports it as a stale index.
+
 ## Rules
 
-- **No file paths outside `Sources:`, and no code.** Both go stale, and inside a spec they read as commitments. The exception is a snippet from a prototype that encodes a decision more precisely than prose can — a state machine, a reducer, a schema, a type shape. Inline it, say it came from a prototype, trim it to the decision-rich part.
+- **`sources` is a list, one entry per line.** An entry may carry a section reference or a range alongside its path, and those contain commas — in YAML's inline `[a, b]` form the comma would split one pointer into two, silently.
+- **A spec with nothing to point at declares `sources: []`**, rather than leaving the field out. Absent and empty are the same fact, and only one of them can be told apart from a spec that lost its sources.
+- **No file paths outside the `sources` field, and no code.** Both go stale, and inside a spec they read as commitments. The exception is a snippet from a prototype that encodes a decision more precisely than prose can — a state machine, a reducer, a schema, a type shape. Inline it, say it came from a prototype, trim it to the decision-rich part.
 - **Use the repository's vocabulary.** Terms come from `.claude/contexts/repository.md` and the Domain Contexts the work touches. A spec that invents its own words for existing concepts forces every reader to translate.
 - **A section with nothing to say gets deleted, not padded.** Filler trains the reader to skim, and the sections that matter are the casualty.
 - **The spec is not the decision record.** When the grill produced something that passes the 3-of-3 test, it becomes an ADR in `.claude/decisions/` and the spec links to it. A spec is superseded by the next spec; an ADR is not.
@@ -71,6 +96,8 @@ creeping back in during review.
 
 `draft` while the grill is still running, `accepted` when the user approves it and the tickets are cut, `implemented` when a commit completes the last acceptance criterion, `superseded by <path>` when a later spec replaces it, `abandoned` when the work is dropped. A spec that shipped stays on disk — it is the record of why the tickets looked like that.
 
-**Only the status line ever moves.** The reasoning is frozen the moment the spec is accepted: a spec edited afterwards to match what shipped stops being evidence of what was intended, which is the only thing it was kept for. Correct a spec by superseding it, never by rewriting it.
+**Only the status field ever moves.** The reasoning is frozen the moment the spec is accepted: a spec edited afterwards to match what shipped stops being evidence of what was intended, which is the only thing it was kept for. Correct a spec by superseding it, never by rewriting it.
 
 `implemented` is the one status set outside conversation — `/commit` writes it, because only the last commit of a change knows every criterion is met.
+
+It is a field rather than a line because a stage writes it, and a stage that writes by matching running text breaks the first time somebody reflows the paragraph around it — the same reason contexts and decisions declare theirs.

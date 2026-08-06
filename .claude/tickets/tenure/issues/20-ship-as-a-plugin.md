@@ -1,7 +1,8 @@
-# feat(dist): ship tenure as a plugin, and shorten the names people type
-
-Status: resolved
-Blocked by: 16, 17, 18, 19
+---
+title: feat(dist): ship tenure as a plugin, and shorten the names people type
+status: resolved
+blocked-by: [16, 17, 18, 19]
+---
 
 ## Problem
 

@@ -1,8 +1,9 @@
-# feat(configure): record the discussion that produced no decision
-
-Status: resolved
-Blocked by: 02
-Part of: aep
+---
+title: feat(configure): record the discussion that produced no decision
+status: resolved
+blocked-by: [02]
+part-of: aep
+---
 
 ## Problem
 

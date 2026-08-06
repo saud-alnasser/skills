@@ -1,8 +1,9 @@
-# refactor(configure): the protocol becomes the router, and the entrypoint becomes a pointer
-
-Status: resolved
-Blocked by: —
-Part of: streamline
+---
+title: refactor(configure): the protocol becomes the router, and the entrypoint becomes a pointer
+status: resolved
+blocked-by: []
+part-of: streamline
+---
 
 ## Problem
 
