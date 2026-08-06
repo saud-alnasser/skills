@@ -56,3 +56,7 @@
 | [0052](0052-the-marker-records-the-tree-and-claims-only-that-drift-was-read.md) | the Marker's contents, or what a match licenses, is in question | accepted | `.claude/protocol.md` |
 | [0053](0053-a-routing-table-is-generated-from-fields-the-routed-file-declares.md) | a routing table or a declared field is being changed | accepted | `.claude/policies/context.md` |
 | [0054](0054-the-stage-dependency-set-has-two-homes-and-the-protocol-table-wins.md) | a stage's dependencies are stated in more than one place | accepted | `.claude/protocol.md` |
+| [0055](0055-aep-fields-ride-the-harness-metadata-map.md) | AEP needs a field of its own on something it ships, or a shipped fact is stated as a body line | accepted | `skills/`, `agents/`, `.claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md` |
+| [0056](0056-one-generated-index-per-family-not-per-directory.md) | an index is being added for a directory, or a declared field looks like it restates a path | accepted | `.claude/evidence/`, `.claude/policies/evidence.md` |
+| [0057](0057-one-regenerator-enforced-by-comparison.md) | a generated index needs to be produced, or something proposes to maintain one | accepted | `scripts/`, `.claude/policies/context.md` |
+| [0058](0058-a-local-ticket-declares-its-facts-a-forge-issue-does-not.md) | a ticket's lifecycle facts are being read or written, or the two tracker forms look inconsistent | accepted | `.claude/policies/tickets.md`, `.claude/tickets/` |
