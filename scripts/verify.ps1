@@ -594,6 +594,12 @@ $rulePattern = [ordered]@{
   # had this reasoning in the regenerator's own doc-comment as well, which is a
   # home no reader of the format would think to check for a contradiction.
   'the label-row rule'                 = '(?i)a claim its directory never made'
+  # The placement rule. Added after review appended a restatement of it to
+  # `configure/SKILL.md` and every assertion in the `placement` block stayed
+  # green — the rule was shipped unguarded against the one failure this table
+  # exists to catch. Anchored on the removal question, which is the rule's test
+  # rather than a phrase that would travel with a summary of it.
+  'the placement rule'                 = '(?i)were AEP removed'
   # `tdd` owns the loop, so it owns why a guessed test command wrecks it. This
   # reasoning had reached four files before the guard existed.
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
@@ -2749,7 +2755,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # link is what a reader follows, so checking the bare filename would pass on a
   # link that resolves nowhere.
   foreach ($t in @('CLAUDE.template.md', 'protocol.template.md',
-                   'precedence.template.md', 'engineering.template.md',
+                   'precedence.template.md', 'engineering.template.md', 'placement.template.md',
                    'policies/tracker.template.md', 'policies/version-control.template.md')) {
     Assert "$t is reached from the skill that installs it" {
       if (-not (Test-Path (Join-Path $skills "configure/$t"))) { throw "configure/$t is missing" }
@@ -6828,8 +6834,19 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   # 5,800 for the eighth directive, forbidding `.claude/` file references from
   # comments and repository documentation: measured 5,725, and the raise is
   # recorded here rather than absorbed, exactly as the last one was.
+  #
+  # 7,100 for `placement.md`, a third always-on rule the user asked for: every
+  # file AEP owns is in the plugin or under `.claude/`, and only `CLAUDE.md` at
+  # the root. It is unconditional because it governs where a file is *created*,
+  # and a scoped rule arrives only after a covered file has been read — too late
+  # to inform the decision. Measured 7,039. This is the largest single raise the
+  # ratchet has taken, and it was paid down twice before being made: the rule was
+  # compressed from 1,661 characters, and the paragraph restating ADR 0006's
+  # reasoning about the root namespace was cut for deciding nothing the rule
+  # above it had not already decided. It is a deliberate act with a diff, and the
+  # cost buys a placement answer on the turn a file is created.
   Assert "the always-on load is under the stated ceiling, measured rather than described" {
-    $ceiling = 5800
+    $ceiling = 7100
     $total = 0
     $unscoped = @('CLAUDE.md')
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
@@ -6842,11 +6859,14 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   }
 
   # Adding a rules/ file without paths: frontmatter is a permanent per-turn
-  # tax; the two named here are the only ones that earn it.
-  Assert "every rule beyond the two unconditional ones is path-scoped" {
+  # tax; the three named here are the only ones that earn it. `placement.md`
+  # joined them because it governs where a file is *created*, and a scoped rule
+  # loads only after a covered file has been read — which is after the placement
+  # decision it exists to inform has already been made.
+  Assert "every rule beyond the three unconditional ones is path-scoped" {
     $offenders = @()
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
-      if (@('precedence.md', 'engineering.md') -contains $f.Name) { continue }
+      if (@('precedence.md', 'engineering.md', 'placement.md') -contains $f.Name) { continue }
       $c = Get-Content $f.FullName -Raw
       if ($c -notmatch '(?ms)\A---\r?\n.*?^paths:') { $offenders += $f.Name }
     }
@@ -10600,7 +10620,7 @@ Describe-Ticket 'mechanics/03' 'the protocol template compares both marker facts
 # fixture because a symmetric tree cannot demonstrate the asymmetry it catches.
 #
 # The renderer this block used to carry is gone: `declared-fields/05` moved
-# index generation into `scripts/regenerate-indexes.ps1`, and ADR 0057 says a
+# index generation into `.claude/scripts/regenerate-indexes.ps1`, and ADR 0057 says a
 # single deterministic script produces every index. A second renderer here,
 # with its own copy of the header row, the ordering and the em-dash rule, was
 # the shape that decision rejected — and its assertions were checking a
@@ -11437,7 +11457,7 @@ Describe-Ticket 'declared-fields/04' 'a spec declares its status and its sources
 
 # --- ticket declared-fields/05 — one regenerator, checked by comparison -------
 
-$regenerator = Join-Path $repo 'scripts/regenerate-indexes.ps1'
+$regenerator = Join-Path $repo '.claude/scripts/regenerate-indexes.ps1'
 
 # A tree with just enough shape for the script: `.claude/<family>/` and nothing
 # else. Built and torn down per assertion, because several of these deliberately
@@ -11463,7 +11483,7 @@ $runRegenerator = {
 Describe-Ticket 'declared-fields/05' 'one regenerator produces every index, and the suite compares' {
 
   Assert "the regenerator ships as a committed script" {
-    if (-not (Test-Path $regenerator)) { throw 'scripts/regenerate-indexes.ps1 is missing' }
+    if (-not (Test-Path $regenerator)) { throw '.claude/scripts/regenerate-indexes.ps1 is missing' }
     $true
   }
 
@@ -11632,7 +11652,7 @@ Describe-Ticket 'declared-fields/05' 'one regenerator produces every index, and 
   # step carries and this is the orderable fact underneath it.
   Assert "/commit regenerates the indexes, and does it before the commit is made" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    if ($c -notmatch [regex]::Escape('scripts/regenerate-indexes.ps1')) {
+    if ($c -notmatch [regex]::Escape('.claude/scripts/regenerate-indexes.ps1')) {
       throw '/commit never invokes the regenerator'
     }
     $regen = [regex]::Match($c, '(?im)^#{2,}\s.*regenerate')
@@ -12332,6 +12352,80 @@ Describe-Ticket 'declared-fields/08' 'a local ticket declares its lifecycle fact
         }
       }
     }
+    $true
+  }
+}
+
+# --- placement — everything AEP owns lives under .claude/ ---------------------
+
+# No ticket, and that is the policy rather than an omission: this is a convention
+# changed in conversation, which `.claude/policies/version-control.md` names as
+# the second caller `/commit` serves — a branch and a commit like any other,
+# carrying no `Refs:` because there is no ticket file to cite. The id below is
+# therefore the change's name, not a ticket's.
+Describe-Ticket 'placement' 'everything AEP owns lives under .claude/, and only CLAUDE.md at the root' {
+
+  # Copied as-is, like the other two unconditional rules. Compared whole rather
+  # than by a phrase: the point of an as-is copy is that there is no filling in,
+  # and a phrase check would pass on an installed copy that had quietly diverged.
+  Assert "the placement rule ships as a template and is installed unchanged" {
+    $template = Get-SkillFile 'configure/placement.template.md'
+    $installed = Get-Content (Join-Path $repo '.claude/rules/placement.md') -Raw
+    if (($template -replace "`r", '') -cne ($installed -replace "`r", '')) {
+      throw 'the installed rule and its template have diverged'
+    }
+    $true
+  }
+
+  # Anchored on the three nouns the rule is *about* rather than on the sentences
+  # this pass happened to write, which review named as the shape that can only
+  # detect a rewording of itself. Both homes, because the first version of this
+  # rule named one — it said everything AEP owns is under `.claude/`, and its own
+  # removal test then classified `skills/` and `agents/` as owing a move. This
+  # repository would have loaded a rule its own tree violates, every turn.
+  Assert "the rule names both homes and CLAUDE.md as the only entry outside them" {
+    $c = Get-SkillFile 'configure/placement.template.md'
+    # Not `$home` — PowerShell reserves it, and the failure reads as a variable
+    # error rather than as the assertion this is.
+    foreach ($place in 'plugin', '`\.claude/`') {
+      if ($c -notmatch "(?i)$place") { throw "the rule does not name the $($place -replace '\\|`', '') home" }
+    }
+    if ($c -notmatch 'CLAUDE\.md') { throw 'the root entry is not named' }
+    if ($c -notmatch '(?i)only entry|only .{0,30}outside|one exception') {
+      throw 'the root entry is not stated as the only one'
+    }
+    $true
+  }
+
+  # The distinction the rule turns on, and the one a reader is most likely to get
+  # wrong: a file is placed by whose process it serves, not by what it is.
+  # `scripts/verify.ps1` stays where it is because it tests what this repository
+  # builds — it would still have a reason to exist with AEP removed.
+  Assert "the rule places a file by whose process it serves" {
+    $c = Get-SkillFile 'configure/placement.template.md'
+    if ($c -notmatch '(?i)whose process') { throw 'the test is not stated' }
+    if ($c -notmatch '(?i)were AEP removed|if AEP were removed') { throw 'the removal question is not stated' }
+    $true
+  }
+
+  Assert "AEP's own script lives under .claude/scripts/, not at the root" {
+    if (-not (Test-Path (Join-Path $repo '.claude/scripts/regenerate-indexes.ps1'))) {
+      throw 'the regenerator is not under .claude/scripts/'
+    }
+    if (Test-Path (Join-Path $repo 'scripts/regenerate-indexes.ps1')) {
+      throw 'the regenerator is still at the root'
+    }
+    $true
+  }
+
+  # The regression guard. Each of these is a directory or file AEP installs, and
+  # finding one at the root means a copy was created there rather than moved —
+  # the failure this rule exists to make loud.
+  Assert "no directory AEP owns has appeared at the repository root" {
+    $owned = @('protocol.md', 'rules', 'contexts', 'decisions', 'policies',
+               'modes', 'tools', 'evidence', 'tickets', 'designs', 'position')
+    $offenders = @($owned | Where-Object { Test-Path (Join-Path $repo $_) })
+    if ($offenders) { throw "AEP-owned entries at the root: $($offenders -join ', ')" }
     $true
   }
 }

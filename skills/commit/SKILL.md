@@ -62,7 +62,7 @@ Do this **before staging**, not after committing — the spec is a tracked file,
 ## 4 — Regenerate the generated indexes
 
 ```
-pwsh -NoProfile -File scripts/regenerate-indexes.ps1
+pwsh -NoProfile -File .claude/scripts/regenerate-indexes.ps1
 ```
 
 Every generated index is produced from the fields its directory declares, and this is where they are produced (ADR 0057). Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.

@@ -9,7 +9,7 @@ part-of: declared-fields
 
 ADR 0057 states a consequence no ticket in this effort delivers: *"The script is committed and runnable without the plugin, like the suite it is checked by. A repository configured by AEP gets the script, not a promise that some agent will remember."*
 
-Ticket 05 built `scripts/regenerate-indexes.ps1` for this repository and its acceptance says only that the script runs without the plugin — which it does. But `/configure` installs nothing from `scripts/`, and `scripts/` holds only this repository's own build check. So in every repository but this one, `/commit` names an invocation that is not there, and the generated indexes AEP ships the *format* for have nothing to produce them.
+Ticket 05 built `.claude/scripts/regenerate-indexes.ps1` for this repository and its acceptance says only that the script runs without the plugin — which it does. But `/configure` installs nothing executable. So in every repository but this one, `/commit` names an invocation that is not there, and the generated indexes AEP ships the *format* for have nothing to produce them.
 
 The shipped `/commit` handles the absence in one line rather than failing, so nothing breaks loudly. That is the shape of the problem: the guarantee ADR 0057 records is quietly unavailable everywhere it was written for.
 

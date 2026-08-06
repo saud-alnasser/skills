@@ -116,7 +116,9 @@ What is `/configure`'s is the *sourcing*: these are generated from the repositor
 
 **`CLAUDE.md`** at the root, from [CLAUDE.template.md](CLAUDE.template.md). Fill the placeholders; do not rewrite the rules. **Preserve the user's existing sections** — a repository's `CLAUDE.md` usually already carries instructions somebody wrote deliberately, and replacing the file wholesale destroys them. Merge into it.
 
-**`.claude/rules/precedence.md`** and **`.claude/rules/engineering.md`**, from [precedence.template.md](precedence.template.md) and [engineering.template.md](engineering.template.md), copied as-is — the workflow's standards, nothing to fill in. Neither carries `paths:` frontmatter, which is what makes the harness load them on every turn: these are the rules `CLAUDE.md` stopped stating so that it could stay a pointer.
+**`.claude/rules/precedence.md`**, **`.claude/rules/engineering.md`**, and **`.claude/rules/placement.md`**, from [precedence.template.md](precedence.template.md), [engineering.template.md](engineering.template.md) and [placement.template.md](placement.template.md), copied as-is — the workflow's standards, nothing to fill in. None carries `paths:` frontmatter, which is what makes the harness load them on every turn: these are the rules `CLAUDE.md` stopped stating so that it could stay a pointer.
+
+`placement.md` is unconditional rather than scoped because it governs where a file is *created*, and a scoped rule arrives only once a covered file has been read — after the decision it exists to inform.
 
 **`.claude/protocol.md`**, from [protocol.template.md](protocol.template.md), copied as-is. The router rather than a rule — the Marker, the drift reads, the verification report, and the table saying which guides each stage reads — so it is reached by pointer and a question turn does not pay for it.
 

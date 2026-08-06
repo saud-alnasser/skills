@@ -43,8 +43,11 @@ skills/                  the plugin's skills — the whole framework
 scripts/verify.ps1       asserts the build tickets' acceptance criteria against ./skills
 .claude/                 this repository's own knowledge, written by AEP
 ├── decisions/           the decisions behind the framework
+├── scripts/             scripts serving AEP's own process
 └── tickets/<effort>/    each effort's spec and build tickets
 ```
+
+Where AEP's own files go — and why `scripts/verify.ps1` is not one of them — is `.claude/rules/placement.md`.
 
 This repository is itself configured by AEP, so `.claude/` here is an example of the output as well as the input to it. `skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.
 

@@ -88,6 +88,13 @@ effort-long branch. The test is the **diff, never a
 label or commit type** — nothing mechanical marks a design PR except what
 its diff touches.
 
+**A diff confined to `.claude/scripts/` is code, not scaffolding.** The
+workflow's own scripts live under the protocol directory, so they read as
+protocol-only by the test above and are not. Nothing about the test changes —
+such a diff fails it and rides its consumer, exactly as any other code change
+does — but the reason it fails is worth stating, because "protocol scaffolding
+is never its own unit of work" does not obviously reach executable content.
+
 Publishing is the human's call: `.claude/rules/engineering.md` carries that as
 a standing rule and this section does not repeat it. What belongs here is what
 actually happens in this repository once the work is ready, which is a fact

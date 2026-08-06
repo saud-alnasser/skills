@@ -63,4 +63,6 @@ Where efforts stack — one built on another's branch before either has landed �
 
 One pull request kind is allowed to change nothing outside `.claude/`: the **design PR** — a single design run's deliverable, its entire diff under the protocol directory, one per run. Approving it is approving the plan before anyone builds, which is what makes it reviewable where other protocol-only pull requests are not. It is the only one: every other protocol-only change rides the build pull request that consumes it, and a multi-session design effort lands one small design PR per session rather than holding an effort-long branch. The test is the **diff, never a label or commit type**.
 
+**A diff confined to `.claude/scripts/` is code, not scaffolding.** AEP's own scripts live under the protocol directory, so they read as protocol-only by the diff test above and are not. Nothing about the test changes — such a diff fails it and rides its consumer, exactly as any other code change does — but the reason it fails is worth stating, because "protocol scaffolding is never its own unit of work" does not obviously reach executable content.
+
 Publishing is the human's call. `.claude/rules/engineering.md` carries that as a standing rule and this section does not repeat it; what is recorded here is only what happens once the work is ready.

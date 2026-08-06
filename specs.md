@@ -333,6 +333,8 @@ specs.md                     this specification (framework repository only)
 
 Knowledge layers are visible in the tree; per-clone state is structurally separated; every category is a directory rather than a naming convention.
 
+**Everything the workflow owns sits in the plugin or under `.claude/`, and `CLAUDE.md` is the only entry it adds at the repository root.** The plugin holds what ships; `.claude/` holds what a repository runs on, including executable content — a script serving the workflow's own process lives in `.claude/scripts/`, while a script that builds or tests what the repository exists to produce is the repository's and stays where that repository keeps it. The test is whose process the file serves, never what it is made of. The always-on rules carry it, so the answer is available on the turn a file is created rather than the turn after.
+
 **An artefact is placed by its scope.** What is per-effort — a spec, its issues, and the fog map that charts it — lives in that effort's directory; what spans every effort lives at the root of `tickets/`. The layout names both, because a layout that named neither is what let two artefacts arrive at one path with nobody noticing (ADR 0059).
 
 ## 22. Harness binding — Claude Code
