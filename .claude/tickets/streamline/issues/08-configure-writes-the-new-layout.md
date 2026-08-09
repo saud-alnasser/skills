@@ -1,8 +1,9 @@
 ---
 title: feat(configure): the migration converts the superseded layout
-status: open
+status: superseded
 blocked-by: [05, 06, 07]
 part-of: streamline
+superseded-by: layout/06 (ADR 0063)
 ---
 
 ## Problem
@@ -35,3 +36,12 @@ This ticket was originally the whole of onboarding's catch-up, cut when the effo
 It is still the ticket whose errors are invisible here and visible in somebody else's repository, which is why the fixture belongs to this ticket rather than to the one that adopts. A migration first exercised while converting something that matters is being debugged, not tested.
 
 The pre-effort tree is at `087ab58`, recoverable with `git show` or a throwaway worktree. `.claude/decisions/0026-a-fixture-tests-the-migration-and-the-revert-is-dropped.md` has why the fixture beats the live tree on every axis, including repeatability and coverage.
+
+**Superseded by the `layout` effort.** This ticket was cut when the templates
+generated a layout the migration branch did not yet know how to convert. The
+`layout` effort then rebuilt that surface directly, and `/configure`'s migration
+now recognises the superseded shape by content — which is the outcome this
+ticket was written to reach. It is left on disk rather than deleted, because a
+deleted ticket loses the reason it existed; it is marked rather than left open,
+because it was unblocked and the next build naming no ticket would have claimed
+work already done.

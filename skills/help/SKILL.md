@@ -1,16 +1,21 @@
 ---
 name: help
-description: Ask which command fits the situation you are in. A router over AEP's skills, organised by how work arrives.
-disable-model-invocation: true
+description: Explain how this workflow is used — what each skill is for, which two a human still types, and how everything else is reached by describing the work. Use when the question is about the workflow itself. Not for a question about this repository's own code or architecture, which is answered directly.
 metadata:
   mode: discussion
 ---
 
 # Help
 
-Say what you are trying to do; this says where to start. Everything is grouped by **how the work arrived**, because that is what you know at the moment you need to choose.
+What each part of this workflow is for. Everything is grouped by **how the work arrived**, because that is what the workflow itself routes on.
 
 AEP ships as a plugin, so every command below is namespaced to it — `/aep:design`, `/aep:implement`, and this one as `/aep:help`. The short forms are used throughout for readability.
+
+## You describe the work; the workflow picks the stage
+
+**Naming a command is not how work starts here.** Describe what you want and the entry rule in `CLAUDE.md` states which stage it enters, then enters it — a bug report reaches diagnosis, an unplanned change reaches `/design`, an issue from outside reaches `/triage`. The route is announced in one line before anything is touched, so a wrong guess costs you a correction rather than a wasted stage.
+
+**Two things stay typed, and it is the same reason twice: their subject is not the repository.** `/configure` acts on the workflow's own installation; `/handoff` acts on this conversation. Neither is implied by describing a problem, because the thing they operate on is not the thing you are describing. Everything else below is reachable by saying what you need — typing its name is a shortcut, never a requirement (ADR 0063).
 
 **First, once: `/configure`.** Nothing below works properly until it has run — it writes the tracker configuration, this repository's own tool commands, and the knowledge everything else reads. See **Knowledge** for what a later run does.
 
@@ -27,7 +32,7 @@ Most work travels this route.
 - **`/review`** — when you want a diff reviewed against a fixed point you name. The Spine runs it for you before it asks to commit; reach for it directly for a branch or a PR.
 - **`/commit`** — when work is finished and ready to land. Reach for it directly when the work arrived without a ticket.
 
-Only `/design` and `/help` are typed by habit. The rest are reachable, and the Spine pulls them in on its own.
+None of these four is typed by habit. Describing the work reaches the first of them, and the Spine pulls in the rest on its own.
 
 ### The two detours
 

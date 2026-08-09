@@ -1,3 +1,7 @@
+---
+aep-version: 1.13.0
+---
+
 # Workflow protocol
 
 This repository runs the **Agentic Engineering Protocol**; this file is its per-repository router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted.
@@ -82,6 +86,12 @@ That report is the only evidence the discipline ran. Verification is never best-
 
 **Where drift was read, the report says which happened to it** — healed, or discounted as outside what the work touches. That is not a second obligation: it is the same sentence the stage was already writing, and it is what makes the re-stamp above auditable rather than asserted. A report that says drift was read and stops has not earned the re-stamp, and the gap between the two reads as a stage that looked and moved on.
 
+## The release this protocol was written by
+
+The `aep-version` field above declares which release of the workflow wrote this file. `/configure` sets it, and nothing else changes it.
+
+**Nothing here compares it.** The comparison needs the *running* release, and that is reachable only from what the framework ships — the harness exports the plugin's own root to a hook process and not to a stage's shell. So it is made once per session, by a hook the plugin carries, which says one line when the two differ and nothing when they match. A file declaring no version is **unknown rather than stale**, and a reader without the plugin loses a notification rather than a rule.
+
 ## Recovering a broken Source Pointer
 
 A pointer says *start investigating here* — never what exists there. When one no longer resolves, search for where the concept moved and repair the pointer where it stands; **never invent a replacement path**. One that cannot be recovered by searching is reported broken, not guessed at. `.claude/tools/git.md` has the two commands that find where a concept went.
@@ -108,11 +118,12 @@ A mode is the reasoning posture a stage runs under: what it optimises for, what 
 
 ## Which guides each stage reads
 
-Every stage also loads `.claude/contexts/repository.md` and routes from its table to the Domain Contexts the request touches. That is knowledge rather than a guide, and it is the same for all seven, so it is stated once here instead of once per row. The mode column names the posture the stage runs under, defined in `.claude/modes/`.
+Every stage also loads `.claude/contexts/repository.md` and routes from its table to the Domain Contexts the request touches. That is knowledge rather than a guide, and it is the same for all eight, so it is stated once here instead of once per row. The mode column names the posture the stage runs under, defined in `.claude/modes/`.
 
 | Stage | Mode | Guides it reads |
 | --- | --- | --- |
 | `/configure` | maintenance | every guide in `.claude/policies/` — it writes them all, and an audit run reads each one back against the repository |
+| `/triage` | review | `.claude/policies/tracker.md`, the forge reference |
 | `/design` | design | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
 | `/implement` | implementation | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/policies/sub-agents.md`, `.claude/tools/git.md`, the forge reference |
 | `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/rules/`, `.claude/decisions/map.md` and the Decisions it routes to, `.claude/tools/git.md`, the forge reference |

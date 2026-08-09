@@ -14,8 +14,16 @@ The seven commands that own the workflow's stages — `/configure`, `/design`, `
 _Avoid_: core, pipeline, main flow
 
 **Primitive**:
-A model-invoked skill with no stage of its own, existing to be composed by the Spine — `grilling`, `tdd`, `codebase-design`, `domain-modeling`. Four: `tools` was one until ADR 0019 replaced it with a directory `/configure` derives, on the ground that a reference reachable only through the plugin is unreachable to a teammate without it.
+A model-invoked skill with no stage of its own, **reached from inside a running stage** and existing to be composed by the Spine — `grilling`, `tdd`, `codebase-design`, `domain-modeling`. Four: `tools` was one until ADR 0019 replaced it with a directory `/configure` derives, on the ground that a reference reachable only through the plugin is unreachable to a teammate without it.
 _Avoid_: helper, sub-skill, utility
+
+**On-ramp**:
+A skill for work that arrives **outside a plan**, which ends by handing to the Spine rather than being composed by it — `triage`, `diagnosing-bugs`, `resolving-merge-conflicts`, `survey`, `handoff`. Five. What separates it from a Primitive is direction: a Primitive is reached from inside a running stage, an On-ramp reaches one.
+_Avoid_: entry point, gateway, intake
+
+**Router**:
+`help`, alone: the skill that explains the workflow rather than performing any part of it. A category of one, and it stays one because the thing that makes it odd is unrepeatable — it is the only skill whose subject is the framework itself, and ADR 0015 already made it the only one whose name could not be the framework's.
+_Avoid_: index, guide, docs skill
 
 **Vendored Skill**:
 A skill copied from mattpocock/skills into this repository and altered to fit AEP, rather than invoked in place.
