@@ -615,6 +615,14 @@ $rulePattern = [ordered]@{
   # that agree today. Anchored on the topic-versus-trigger claim rather than on
   # the field name, since both files have a legitimate reason to name the field.
   'the load-condition rule'            = '(?i)never what it is about|never a description of what'
+  # axis/01. What keeps a skill on the typed side, phrased as a test so it can be
+  # failed rather than joined. The router explains it to a human and is the one
+  # home under `./skills`; ADR 0063 records why it was chosen and `specs.md`
+  # states it normatively, and neither is a second home for the same reason the
+  # spec and a Decision are never one — they answer *why* and *what conforms*.
+  # Anchored on the test itself, because a guard written from the two exempt
+  # names would go green the moment a third borrowed the reasoning.
+  'the axis exemption test'            = '(?i)subject is not the repositor'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
   # entry/01. The always-on tier owns the rule that a route is entered rather than
   # named for the user to type (ADR 0061); every stage obeys it and none restates
@@ -2466,10 +2474,14 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # satisfy the rule. The test that decides the axis is stated in
   # `.claude/contexts/skill-authoring.md` and deliberately not restated here —
   # it was recorded only in this comment until entry/01 gave it a home.
+  # ADR 0063 moved `triage` and `survey` onto the selected side, leaving `handoff`
+  # as the only on-ramp a human types. What separates it is not how expensive it
+  # is but what it acts on — the conversation rather than the repository — so no
+  # description of a repository problem could select it correctly.
   $axis = @{
-    'triage'                        = $true
+    'triage'                        = $false
     'handoff'                       = $true
-    'survey' = $true
+    'survey'                        = $false
     'diagnosing-bugs'               = $false
     'resolving-merge-conflicts'     = $false
   }
@@ -3185,8 +3197,14 @@ Describe-Ticket 'tenure/10' 'router over the Tenure skill set' {
     $fm -match '(?m)^name:\s*help\s*$'
   }
 
-  Assert "/help is user-invoked — it is the human's index, and nothing else should load it" {
-    Test-UserInvoked $router
+  # Was "/help is user-invoked — it is the human's index". ADR 0063 crossed it:
+  # the index became an explanation once routing moved to the boot tier, and a
+  # question about the workflow is a description like any other. What the
+  # criterion was protecting — that nothing *else* loads it as a router — is now
+  # held by axis/02's exclusion assertion instead.
+  Assert "/help is model-invoked — asking how the workflow is used reaches it" {
+    if (Test-UserInvoked $router) { throw 'still withheld from selection' }
+    $true
   }
 
   # "Every skill in ./skills appears exactly once." Counted as *entries* — the
@@ -6349,7 +6367,10 @@ Describe-Ticket 'streamline/06' 'each skill declares the guides it reads' {
   # `/configure` is exempt and says why in its own declaration: it reads every
   # guide, so listing them would be a tenth thing to update when a tenth guide
   # is written.
-  foreach ($stage in @('design', 'implement', 'review', 'research', 'prototype', 'commit')) {
+  # `triage` joined this list with ADR 0063. It is not a spine stage, but it
+  # declares a guide and is an entry destination, and the gap between those two
+  # facts is precisely what let it sit in the table with no row at all.
+  foreach ($stage in @('design', 'implement', 'review', 'research', 'prototype', 'commit', 'triage')) {
     Assert "/$stage declares exactly what the routing table routes to it" {
       $declared = Get-Declared "$stage/SKILL.md"
       $routed = Get-RoutedFor $stage
@@ -7206,9 +7227,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.12.0, not a draft" {
+  Assert "the specification is released at 1.13.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.12\.0\s*$') { throw 'the specification is not at a released 1.12.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.13\.0\s*$') { throw 'the specification is not at a released 1.13.0' }
     $true
   }
 
@@ -10132,26 +10153,13 @@ Describe-Ticket 'mechanics/09' 'the stage-dependency set has two homes, and the 
     $true
   }
 
-  # The containment, in the direction the rule declares: the table carries at
-  # least what the skill declares. Asserted per stage so a failure names the
-  # stage and the guide, rather than reporting that something somewhere differs.
-  Assert "the table carries at least every policy its stage's skill declares" {
-    $proto = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
-    foreach ($s in $spine) {
-      $sk = Get-SkillFile "$s/SKILL.md"
-      $m = [regex]::Match($sk, '(?m)^Policies:\s*([^\r\n]*)')
-      if (-not $m.Success) { continue }
-      $declared = @([regex]::Matches($m.Groups[1].Value, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value })
-      $row = [regex]::Match($proto, "(?m)^\|\s*``/$s``\s*\|([^\r\n]*)")
-      if (-not $row.Success) { throw "/$s declares policies and has no row" }
-      foreach ($g in $declared) {
-        if ($row.Groups[1].Value -notmatch [regex]::Escape($g)) {
-          throw "/$s declares $g and its row omits it"
-        }
-      }
-    }
-    $true
-  }
+  # The containment assertion that stood here matched a prose `Policies:` line
+  # in the skill body. `declared-fields/02` moved that fact into `metadata:` and
+  # deleted the prose form from every skill, which left this iterating seven
+  # stages, hitting its `continue` on all seven, and returning success — a green
+  # result that measured nothing. It is deleted rather than ported because the
+  # bidirectional check at "declares exactly what the routing table routes to it"
+  # already does the same job against the field form, in both directions.
 
   Assert "a Decision records the pair, and why neither home could be deleted" {
     $p = Join-Path $repo '.claude/decisions/0054-the-stage-dependency-set-has-two-homes-and-the-protocol-table-wins.md'
@@ -12629,7 +12637,7 @@ Describe-Ticket 'entry/02' 'the build runs on to the next unblocked ticket' {
     $c = Get-Content (Join-Path $repo 'specs.md') -Raw
     if ($c -notmatch '(?i)runs on past the one it delivered') { throw 'the spec does not describe continuation' }
     if ($c -notmatch 'ADR 0062') { throw 'the spec does not reference the Decision that amended it' }
-    if ($c -notmatch '(?im)^\*\*Version:\*\*\s*1\.12\.0\s*$') { throw 'the version was not bumped for the amendment' }
+    if ($c -notmatch '(?im)^\*\*Version:\*\*\s*1\.13\.0\s*$') { throw 'the version was not bumped for the amendment' }
     $true
   }
 
@@ -12646,6 +12654,345 @@ Describe-Ticket 'entry/02' 'the build runs on to the next unblocked ticket' {
         if ($fm -notmatch "(?m)^$field\s*:") { throw "$n declares no $field" }
       }
     }
+    $true
+  }
+}
+
+# --- ticket axis/01 — work arriving from outside reaches its stage unasked ----
+
+Describe-Ticket 'axis/01' 'work arriving from outside reaches its stage unasked' {
+
+  foreach ($s in 'triage', 'survey') {
+    Assert "/$s is model-invoked — it is reached by describing the problem" {
+      if (Test-UserInvoked "$s/SKILL.md") { throw 'still withheld from selection' }
+      $true
+    }
+  }
+
+  # The guard whose absence made ADR 0063 necessary. The entry table and the
+  # invocation axis were two expressions of one fact and nothing compared them,
+  # so a row could name a destination the model is structurally unable to enter
+  # — which is exactly what shipped. Read from the template, because that is the
+  # copy every configured repository receives.
+  Assert "every destination the entry table names is one the model may select" {
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which stage a request enters'
+    if (-not $section) { throw 'the entry table is gone' }
+    $withheld = @()
+    foreach ($line in [regex]::Matches($section, '(?m)^\|[^|\r\n]*\|([^|\r\n]*)\|\s*$')) {
+      foreach ($d in [regex]::Matches($line.Groups[1].Value, '`/([a-z-]+)`')) {
+        $name = $d.Groups[1].Value
+        # A destination with no skill of that name is a different defect and is
+        # reported as one, rather than passing because Test-UserInvoked said no.
+        if (-not (Test-Path (Join-Path $skills "$name/SKILL.md"))) { $withheld += "$name (no such skill)" }
+        elseif (Test-UserInvoked "$name/SKILL.md") { $withheld += $name }
+      }
+    }
+    if ($withheld) { throw "named as a destination but unenterable: $(($withheld | Sort-Object -Unique) -join ', ')" }
+    $true
+  }
+
+  Assert "the installed entry table names the same destinations as the shipped one" {
+    $a = Get-Section (Get-SkillFile $protocolTemplate) 'Which stage a request enters'
+    $b = Get-Section (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw) 'Which stage a request enters'
+    if (-not $b) { throw 'the installed copy has no entry table' }
+    $names = { param($t) ,@([regex]::Matches($t, '`/([a-z-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) }
+    if (((& $names $a) -join ',') -ne ((& $names $b) -join ',')) { throw 'the two tables route differently' }
+    $true
+  }
+
+  # Triage declared a guide and had no row. The containment check that should
+  # have caught it iterates the spine, and triage is not part of it — so the
+  # declaration and the table drifted with nothing watching.
+  Assert "the router's stage table carries a row for triage" {
+    foreach ($t in @($protocolTemplate, $null)) {
+      $text = if ($t) { Get-SkillFile $t } else { Get-Content (Join-Path $repo '.claude/protocol.md') -Raw }
+      $section = Get-Section $text 'Which guides each stage reads'
+      $row = [regex]::Match($section, '(?m)^\|\s*`/triage`\s*\|([^|\r\n]*)\|([^\r\n]*)\|\s*$')
+      if (-not $row.Success) { throw "no /triage row in $(if ($t) { 'the template' } else { 'the installed copy' })" }
+      if ($row.Groups[2].Value -notmatch 'tracker\.md') { throw 'the row omits the guide triage declares' }
+    }
+    $true
+  }
+
+  # For a model-invoked skill the description is the whole basis of selection,
+  # and the two crossings sit next to stages that answer adjacent questions. A
+  # description that says only when to fire will fire on the neighbour too.
+  foreach ($s in 'triage', 'survey') {
+    Assert "/$s says what it is not for, not only what it is for" {
+      $d = [regex]::Match((Get-SkillFile "$s/SKILL.md"), '(?m)^description:\s*(.+)$')
+      if (-not $d.Success) { throw 'no description' }
+      if ($d.Groups[1].Value -notmatch '(?i)\bnot for\b') { throw 'the description states no exclusion' }
+      if ($d.Groups[1].Value -notmatch '/design') { throw 'the neighbouring stage is not named' }
+      $true
+    }
+  }
+
+  Assert "a Decision records the reversal, its source, and the test that exempts the rest" {
+    $p = Join-Path $repo '.claude/decisions/0063-two-on-ramps-cross-to-selection-and-the-exemption-is-one-test.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch [regex]::Escape('.claude/tickets/entry/spec.md')) { throw 'it does not cite the spec line it reverses' }
+    if ($c -notmatch '(?is)Considered Options') { throw 'it weighs no alternatives' }
+    if ($c -notmatch '(?is)subject is not the repository') { throw 'the exemption is a list rather than a test' }
+    $true
+  }
+}
+
+# --- ticket axis/02 — the router explains the workflow instead of routing -----
+
+Describe-Ticket 'axis/02' 'the router explains the workflow instead of routing to it' {
+
+  $rt = Get-SkillFile 'help/SKILL.md'
+
+  # The failure mode this crossing newly risks. "How does this work" and "how do
+  # I use this" are one sentence apart, and the second is the only one it should
+  # answer — a description that says when to fire and not when to stay out will
+  # open an explanation of the workflow every time somebody asks about the code.
+  Assert "/help's description excludes questions about the repository itself" {
+    $d = [regex]::Match($rt, '(?m)^description:\s*(.+)$')
+    if (-not $d.Success) { throw 'no description' }
+    $v = $d.Groups[1].Value
+    if ($v -notmatch '(?i)\bnot for\b') { throw 'no exclusion is stated' }
+    if ($v -notmatch '(?i)(repositor|code|architecture)') { throw 'the exclusion does not name what it excludes' }
+    $true
+  }
+
+  # The claim the boot tier took over. Left standing, the file tells a reader to
+  # type the one command the entry rule exists to make unnecessary — and it said
+  # exactly that until this ticket, having gone stale the day planning crossed.
+  Assert "nothing in the router claims a stage is typed by habit" {
+    if ($rt -match '(?i)typed by habit') {
+      $line = @(($rt -split '\r?\n') | Where-Object { $_ -match '(?i)typed by habit' })
+      foreach ($l in $line) {
+        if ($l -match '(?i)/design|/help') { throw "a superseded claim survives: $($l.Trim())" }
+      }
+    }
+    $true
+  }
+
+  Assert "the router states that describing the work reaches the stage" {
+    # Bounded by the line rather than the sentence: a filename in the span ends
+    # a `[^.]` window early, and the sentence this looks for cites `CLAUDE.md`.
+    if ($rt -notmatch '(?i)\bdescrib\w+[^\r\n]{0,220}\b(enters|routes|reaches)\b') {
+      throw 'the router never says work routes itself'
+    }
+    $true
+  }
+
+  # Named, and named with the test rather than as a pair — a list of two invites
+  # a third that resembles them, and the whole point of ADR 0063's phrasing is
+  # that an exemption can be failed rather than joined.
+  Assert "the two skills that stay typed are named with the test that exempts them" {
+    foreach ($s in '/configure', '/handoff') {
+      if ($rt -notmatch [regex]::Escape($s)) { throw "$s is not named as typed" }
+    }
+    if ($rt -notmatch '(?is)subject is not the repository') { throw 'the exemption is a list, not a test' }
+    $true
+  }
+
+  # The router indexes every skill, and two of them just moved across the axis.
+  # An entry that still reads as "type this" for a skill the workflow now selects
+  # is the same staleness this ticket removed from one line, surviving in another.
+  Assert "no entry instructs the reader to type a skill the workflow now selects" {
+    $selected = @('triage', 'survey', 'design')
+    $entries = @(($rt -split '\r?\n') | Where-Object { $_ -match '^- \*\*' })
+    foreach ($s in $selected) {
+      $e = @($entries | Where-Object { $_ -match [regex]::Escape("/$s``") })
+      foreach ($line in $e) {
+        if ($line -match '(?i)\btype (it|this|/)') { throw "/$s's entry still tells the reader to type it" }
+      }
+    }
+    $true
+  }
+}
+
+# --- ticket axis/03 — the taxonomy names its categories, and a spent guard goes --
+
+Describe-Ticket 'axis/03' 'the taxonomy names its third category, and a spent guard goes' {
+
+  $ctx = Get-Content (Join-Path $repo '.claude/contexts/skill-authoring.md') -Raw
+
+  foreach ($term in 'Spine', 'Primitive', 'On-ramp', 'Router') {
+    Assert "the knowledge layer defines $term" {
+      if ($ctx -notmatch "(?m)^\*\*$([regex]::Escape($term))\*\*:") { throw "$term is not defined" }
+      $true
+    }
+  }
+
+  # The check the missing definition made impossible. A category that exists only
+  # in a ticket and a status file has nothing to be measured against, which is
+  # how one of them came to answer the invocation question two different ways.
+  Assert "every skill in the tree belongs to exactly one named category" {
+    $named = @{}
+    foreach ($term in 'Spine', 'Primitive', 'On-ramp', 'Router') {
+      $def = [regex]::Match($ctx, "(?ms)^\*\*$([regex]::Escape($term))\*\*:\r?\n(.*?)(?=^_Avoid_)")
+      if (-not $def.Success) { throw "$term has no body" }
+      # The membership list is the first sentence; everything after it is
+      # commentary that names other skills in passing. Reading the whole body
+      # filed `/configure` under Primitive, off a clause about the directory
+      # that replaced the `tools` primitive.
+      $enumeration = ($def.Groups[1].Value -split '(?<=\.)[\s]', 2)[0]
+      foreach ($m in [regex]::Matches($enumeration, '`/?([a-z][a-z-]+)`')) {
+        $n = $m.Groups[1].Value
+        if (Test-Path (Join-Path $skills "$n/SKILL.md")) {
+          if ($named.ContainsKey($n)) { $named[$n] += ", $term" } else { $named[$n] = $term }
+        }
+      }
+    }
+    $all = @(Get-ChildItem $skills -Directory |
+      Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') } | ForEach-Object { $_.Name })
+    $unfiled = @($all | Where-Object { -not $named.ContainsKey($_) })
+    $twice = @($named.Keys | Where-Object { $named[$_] -match ',' } | ForEach-Object { "$_ ($($named[$_]))" })
+    if ($unfiled) { throw "in no category: $($unfiled -join ', ')" }
+    if ($twice) { throw "in two categories: $($twice -join '; ')" }
+    $true
+  }
+
+  # `declared-fields/02` deleted the prose form from every skill and left the
+  # containment assertion that read it in place, iterating seven stages, hitting
+  # its `continue` on all seven and returning success. Anchored to that check by
+  # name rather than to the pattern: one *live* guard still matches the prose
+  # form deliberately, to keep it from coming back, and a pattern-wide ban would
+  # delete the guard along with the corpse.
+  Assert "the dead containment assertion is gone, and its live successor is not" {
+    $self = Get-Content (Join-Path $repo 'scripts/verify.ps1') -Raw
+    # Assembled at runtime from halves. A guard that searches this file for a
+    # literal finds its own search string and passes forever — which is the same
+    # class of silently-green check the deleted assertion was.
+    $dead = 'the table carries at least ' + 'every policy'
+    $live = 'declares exactly what the routing ' + 'table routes to it'
+    if ($self -match [regex]::Escape($dead)) {
+      throw 'the assertion that measured nothing is still here'
+    }
+    if ($self -notmatch [regex]::Escape($live)) {
+      throw 'the successor that replaced it is gone too'
+    }
+    $true
+  }
+
+  Assert "streamline/08 is superseded with a reason, and not deleted" {
+    $p = Join-Path $repo '.claude/tickets/streamline/issues/08-configure-writes-the-new-layout.md'
+    if (-not (Test-Path $p)) { throw 'the ticket was deleted rather than marked' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?m)^status:\s*superseded\s*$') { throw 'it is not marked superseded' }
+    if ($c -notmatch '(?is)superseded by[^.]{0,80}layout') { throw 'no reason names what superseded it' }
+    $true
+  }
+
+  Assert "no ticket is left open and unblocked outside the live effort" {
+    $stale = @()
+    foreach ($f in Get-ChildItem (Join-Path $repo '.claude/tickets') -Recurse -Filter '*.md') {
+      if ($f.FullName -notmatch 'issues') { continue }
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?m)^status:\s*open\s*$') { continue }
+      if ($c -match '(?m)^part-of:\s*axis\s*$') { continue }
+      $stale += $f.Name
+    }
+    if ($stale) { throw "open outside the live effort: $($stale -join ', ')" }
+    $true
+  }
+}
+
+# --- ticket axis/04 — the protocol records the release it was written by ------
+
+Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
+
+  $hookDir = Join-Path $repo 'hooks'
+  $script  = Join-Path $hookDir 'check-version.js'
+
+  Assert "both protocol copies declare the release as a field" {
+    foreach ($p in @((Join-Path $repo '.claude/protocol.md'), (Join-Path $skills 'configure/protocol.template.md'))) {
+      $c = Get-Content $p -Raw
+      $m = [regex]::Match($c, '(?ms)\A---\r?\n(.*?)\r?\n---')
+      if (-not $m.Success) { throw "$(Split-Path -Leaf $p) has no frontmatter" }
+      if ($m.Groups[1].Value -notmatch '(?m)^aep-version:[ \t]*(\S+)[ \t]*$') { throw "$(Split-Path -Leaf $p) declares no aep-version" }
+    }
+    $true
+  }
+
+  # The three version literals are one fact. A release that moves the manifest
+  # and not the template ships a plugin that stamps every repository it
+  # configures with a release that is already behind — and the hook would then
+  # warn about a repository it had just written.
+  Assert "the manifest, the specification and the template agree on the release" {
+    $manifest = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+    $spec = [regex]::Match((Get-Content (Join-Path $repo 'specs.md') -Raw), '(?m)^\*\*Version:\*\*\s*(\S+)\s*$').Groups[1].Value
+    $tpl = [regex]::Match((Get-SkillFile 'configure/protocol.template.md'), '(?m)^aep-version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+    $seen = @($manifest, $spec, $tpl) | Sort-Object -Unique
+    if ($seen.Count -ne 1) { throw "manifest $manifest, spec $spec, template $tpl" }
+    $true
+  }
+
+  Assert "the hook is registered on SessionStart, in exec form" {
+    $p = Join-Path $hookDir 'hooks.json'
+    if (-not (Test-Path $p)) { throw 'hooks/hooks.json is missing' }
+    $h = Get-Content $p -Raw | ConvertFrom-Json
+    $entry = $h.hooks.SessionStart[0].hooks[0]
+    if (-not $entry) { throw 'no SessionStart hook is registered' }
+    # Exec form, and `node` specifically. Shell form resolves to `sh -c` on Unix
+    # and Git Bash *or* PowerShell on Windows, so one script could not serve both.
+    if ($entry.command -ne 'node') { throw "spawns '$($entry.command)', not node — shell form is not portable here" }
+    if (-not $entry.args) { throw 'no args array, which makes this shell form' }
+    if ($entry.args[0] -notmatch '\$\{CLAUDE_PLUGIN_ROOT\}') { throw 'the script path is not anchored to the plugin root' }
+    $true
+  }
+
+  Assert "the hook ships inside the plugin and installs nothing into a repository" {
+    if (-not (Test-Path $script)) { throw 'hooks/check-version.js is missing' }
+    # ADR 0060: a configured repository must stay useful without the plugin, so
+    # nothing may be copied in and nothing committed may point at the plugin.
+    $proto = Get-Content (Join-Path $repo '.claude/protocol.md') -Raw
+    if ($proto -match 'CLAUDE_PLUGIN_ROOT') { throw 'the installed protocol names a plugin path' }
+    if (Test-Path (Join-Path $repo '.claude/scripts/check-version.js')) { throw 'the hook was installed into the repository' }
+    $true
+  }
+
+  # Behaviour, run rather than read. Each branch is a real invocation against a
+  # temporary tree, because the whole value of this hook is that it stays quiet —
+  # and a check that only reads the source cannot tell silence from absence.
+  Assert "the hook is silent when the releases match, and speaks when they differ" {
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'node is not on PATH; the exec-form hook cannot run' }
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+    New-Item -ItemType Directory -Path (Join-Path $tmp '.claude') -Force | Out-Null
+    try {
+      $run = {
+        param($declared)
+        if ($null -eq $declared) { "# no frontmatter" | Set-Content (Join-Path $tmp '.claude/protocol.md') }
+        else { "---`naep-version: $declared`n---`n" | Set-Content (Join-Path $tmp '.claude/protocol.md') }
+        $env:CLAUDE_PLUGIN_ROOT = $repo
+        $env:CLAUDE_PROJECT_DIR = $tmp
+        $out = & node $script 2>&1 | Out-String
+        $env:CLAUDE_PLUGIN_ROOT = $null
+        $env:CLAUDE_PROJECT_DIR = $null
+        $out.Trim()
+      }
+      $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+      if ((& $run $running) -ne '') { throw 'it spoke when the releases matched' }
+      if ((& $run $null) -ne '') { throw 'an undeclared release was treated as stale rather than unknown' }
+      $stale = & $run '0.0.1'
+      if ($stale -eq '') { throw 'it stayed silent on a stale repository' }
+      if ($stale -notmatch 'SessionStart') { throw 'the output is not a SessionStart hook payload' }
+      if ($stale -notmatch 'configure') { throw 'it does not name the command that repairs it' }
+    } finally {
+      Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $true
+  }
+
+  Assert "a Decision records why this is a hook rather than a step in a stage" {
+    $p = Join-Path $repo '.claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $c = Get-Content $p -Raw
+    if ($c -notmatch '(?is)Considered Options') { throw 'it weighs no alternatives' }
+    if ($c -notmatch '(?is)single.home') { throw 'it does not state the reason a stage-level check was refused' }
+    if ($c -notmatch 'ADR 0060') { throw 'it does not reconcile with the plugin-independence Decision' }
+    $true
+  }
+
+  Assert "the audit re-stamps the field, so a repaired repository stops warning" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch '(?i)re-stamp') { throw 'the audit has no row for the field' }
+    if ($c -notmatch '(?is)aep-version') { throw 'the audit does not name the field' }
     $true
   }
 }

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 sources:
   - specs.md
   - .claude/tickets/streamline/spec.md

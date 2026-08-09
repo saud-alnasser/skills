@@ -1,7 +1,6 @@
 ---
 name: triage
-description: Move incoming issues and external pull requests through the triage roles — categorise, verify the claim, grill what is vague, and leave an agent-ready brief.
-disable-model-invocation: true
+description: Move an issue or external pull request that arrived from outside through the triage roles — categorise it, verify the claim, grill what is vague, and leave an agent-ready brief. Use when work arrives that nobody here planned. Not for a ticket /design produced, which is agent-ready already, and not for a change the user is describing themselves — that is /design's.
 metadata:
   mode: review
   policies: [tracker]

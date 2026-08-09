@@ -1,7 +1,6 @@
 ---
 name: survey
-description: Survey a codebase for deepening opportunities and present them as a visual report, then hand the chosen one to /design. Use when the user wants to know where the architecture is costing them.
-disable-model-invocation: true
+description: Survey a codebase for deepening opportunities and present them as a visual report, then hand the chosen one to /design. Use when the question is where the architecture is costing you — what resists change, what cannot be tested, what is hard to navigate. Not for a specific bug, and not for a change already described, which is /design's.
 metadata:
   mode: research
 ---

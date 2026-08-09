@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - .claude/evidence/research/2026-08-03-rentable-field-run.md
   - skills/configure/policies/maps.template.md

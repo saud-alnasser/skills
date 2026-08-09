@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - skills/
   - agents/

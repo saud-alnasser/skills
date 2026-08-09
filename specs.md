@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.12.0
+**Version:** 1.13.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -179,7 +179,9 @@ A skill NEVER restates what a policy, mode, or guide already owns; it points. Mo
 
 **A skill's declaration is the framework's default, and the protocol table is the instance** (§5). These are two homes for related facts, which single-home would otherwise forbid, and what makes it survivable is that **each can state something the other cannot**: a skill shipping in the framework cannot know a repository's local guides, and a repository cannot ship into the framework. Where that asymmetry is absent, a second home is duplication and this is not a precedent for it. The instance governs on conflict, and the containment runs one way: the table carries at least what the skill declares.
 
-Skills divide into the **spine** (the seven workflow stages), the **primitives** composed by spine stages (test-driven development, bug diagnosis, merge-conflict resolution, codebase design vocabulary), and **on-ramps** (grilling a plan, domain modeling, triage, survey, handoff, help). Derived skills carry their upstream attribution; that is a license obligation and survives every rewrite.
+Skills divide into four groups, separated by **direction of reach** rather than by subject. The **spine** is the seven workflow stages. **Primitives** are reached from inside a running stage and composed by it — grilling a plan, test-driven development, codebase design vocabulary, domain modeling. **On-ramps** carry work that arrived outside a plan and end by handing it to a stage — triage, bug diagnosis, merge-conflict resolution, survey, handoff. The **router** is the single skill that explains the workflow rather than performing any part of it. Derived skills carry their upstream attribution; that is a license obligation and survives every rewrite.
+
+A skill is either **selectable**, chosen by the model from its description — which is then the entire basis of selection — or **typed**, reached only when a human names it. Typed is the exception, and it is held by one test rather than by a list: **the skill's subject is not the repository.** Configuring acts on the framework's own installation and handing off on the conversation, so neither can be implied by a description of a repository problem. Every stage a request MAY enter under §5 MUST be selectable; a destination the model cannot select is one the routing rule cannot enter, which reduces that row to the round trip the rule exists to remove (ADR 0063).
 
 ## 12. Tool guides
 
@@ -358,6 +360,8 @@ Claude Code auto-loads exactly two things: `CLAUDE.md` and `.claude/rules/**`. E
 **A sub-agent inherits the boot tier and none of the conversation.** A dispatched child receives the entrypoint hierarchy the parent loaded — including the unconditional rules — alongside its own system prompt and the brief. It does not receive the parent's conversation, tool results, or system prompt. So the three tiers above describe a child as well as a session, and a child arrives already bound by the boot tier: the sub-agent contract (§20) narrows what it may do rather than bootstrapping what it knows (ADR 0040). Two consequences the tiers alone do not give. Anything a child needs from the *conversation* is written into the brief, because the brief is the only parent-to-child channel. And pointer-tier material is reached by the child rather than quoted into the brief, because a child can read — quoting it spends the parent's window to buy nothing.
 
 Placement is by loading mechanism, never by topic — a mechanism is observable, a discipline is not. The framework ships as a plugin (`aep`); slash commands are the skills; nothing *committed* requires the plugin — a reader without it follows the same pointers and reads the same files. Only invoking the stages needs it.
+
+**One behaviour binds to a harness event rather than to a file.** The protocol file declares the release that wrote it, and a `SessionStart` hook the plugin ships compares that against the running release, saying one line when they differ and nothing when they match. It is a hook because the running release is reachable only from shipped content — the harness exports the plugin's own root to a hook process and to skill content, never to a stage's shell — and because the alternative states the same sentence in every stage that should warn. The property above survives it: a repository without the plugin loses a notification, not a rule, and a protocol file declaring no release is unknown rather than stale.
 
 ## 23. Conventions
 
