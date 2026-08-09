@@ -80,6 +80,14 @@ git diff --name-only <marker>..HEAD -- . ":(exclude).claude/"
 
 Two dots, not three. `<marker>..HEAD` is "what HEAD has that the Marker doesn't"; three dots would fold the Marker's own side back in.
 
+How far HEAD has moved, for the position report's own verdict line — the same range, counted rather than listed:
+
+```
+git rev-list --count <marker>..HEAD
+```
+
+`--count` is in `git rev-list -h`'s option list, and returns `0` for an empty range rather than printing nothing.
+
 Exclude the knowledge paths. A commit that only edited `.claude/contexts/` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
 
 ## Read uncommitted drift

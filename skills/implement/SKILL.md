@@ -19,25 +19,36 @@ Open with the verification report. Not conditional on tier, size, or the work lo
 The rule and both drift reads live in `.claude/protocol.md`; `.claude/tools/git.md` has the invocations.
 
 ```
-Verification
-  marker a3f91c2, HEAD 8b2d417 — 14 files changed
-  working tree: 2 files edited outside this session
+Position
+  marker  a3f91c2  HEAD 8b2d417   14 commits ahead
+  tree    9f1d2af  live 3a1c802   tree differs
+  drift   6 committed, 2 uncommitted
+            src/db/schema.ts
+            src/db/migrate.ts
+  mode    session 468b4f04
+
   contexts touched by this ticket: database
-  → 3 pointers checked, 1 stale:
+  3 pointers checked, 1 stale:
       contexts/database.md  src/db/ → src/persistence/  repaired
-  → 1 claim contradicted by source:
+  1 claim contradicted by source:
       "migrations are transactional" — they are not. corrected.
 ```
 
-Nothing to verify still prints:
+**Everything above the blank line is the script's output, quoted.** Everything below is this stage's, and no script can produce it — the split is `.claude/protocol.md`'s, and it is what makes the first half checkable at all.
+
+Nothing to verify still prints, and the judgement half still says what it found:
 
 ```
-Verification
-  marker a3f91c2, tree clean — nothing has moved
-  → context trusted as-is
+Position
+  marker  a3f91c2  HEAD a3f91c2   commit match
+  tree    9f1d2af  live 9f1d2af   tree match
+  drift   reads skipped
+  mode    session 468b4f04
+
+  contexts touched by this ticket: database — trusted as-is
 ```
 
-The report **is** the enforcement: a rule that produces visible output is one whose absence is noticeable.
+**The position half is attested and the judgement half is not.** The same run writes the Receipt `/commit` refuses without, so a stage that never computed the position cannot reach a commit — and nothing here claims more than that: what was done with the report is still only visible in the report.
 
 **Completion criterion:** no source is read through a Source Pointer that has not been verified this session, and no Context statement is acted on before it has been checked against source. A pointer that cannot be recovered by searching is reported — the recovery rule is in `.claude/protocol.md`.
 

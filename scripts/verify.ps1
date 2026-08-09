@@ -1398,7 +1398,15 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
     $c = Get-SkillFile 'implement/SKILL.md'
     if ($c -notmatch '(?i)verification report') { throw 'no verification report named' }
     if ($c -notmatch '(?i)every invocation|no exceptions') { throw 'the report is left conditional' }
-    $c -match '(?ms)^```\s*$.*?Verification.*?^```\s*$'
+    # Anchored to the report's own lines rather than to the word "Verification"
+    # standing at the top of the block. The report gained a computed half whose
+    # first line is the script's, so the literal it used to match moved out of
+    # the fence while the thing being asserted — that step 0 shows a report —
+    # stayed exactly as true.
+    if ($c -notmatch '(?ms)^```\s*$.*?^  marker\s.*?^  mode\s.*?^```\s*$') {
+      throw 'step 0 shows no verification report'
+    }
+    $true
   }
 
   # A pointer says where to start looking, never what is there. Reading source
@@ -12409,8 +12417,12 @@ Describe-Ticket 'declared-fields/09' 'a configured repository gets the regenerat
     if ((Get-SkillFile 'configure/MIGRATION.md') -match '(?i)regenerate-indexes') {
       throw 'the migration converts a script no earlier version ever installed'
     }
-    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)no row for it') {
-      throw '/configure does not say the migration carries no row'
+    # Anchored to the subject — the migration file and the absent row — rather
+    # than to the pronoun it originally matched, which broke the moment a second
+    # script made "it" into "them". A guard written from its author's wording
+    # tracks the wording, not the claim.
+    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)MIGRATION\.md[^\r\n]*no row') {
+      throw '/configure does not say the migration carries no row for the derived scripts'
     }
     $true
   }
@@ -13667,6 +13679,651 @@ Describe-Ticket 'attribution/01' 'attribution follows the vendored set' {
       if ($t -notmatch 'mattpocock') { continue }
       if ($t -match '-(lt|le|gt|ge)\s+\d+') {
         throw "attribution is gated on a count at line $($call.Extent.StartLineNumber): $($call.CommandElements[1].Extent.Text.Trim(""'""))"
+      }
+    }
+    $true
+  }
+}
+
+# --- ticket receipt/01 — the position report is specified as behaviour --------
+
+Describe-Ticket 'receipt/01' 'the position report is specified, with a fixture' {
+
+  $page = 'configure/SCRIPTS.md'
+  $pageText = { (Get-SkillFile $page) -replace "`r", '' }
+
+  # Every fenced block whose first line is the report's own heading. Both report
+  # shapes and all three refusals are these; the discriminator below is the arrow,
+  # which only a refusal carries.
+  #
+  # Scoped to one section rather than the page, because the fixture restates
+  # these shapes as its expected output — an unscoped read counted a fixture case
+  # as a fourth refusal, and would equally have let the fixture alone satisfy an
+  # assertion about what the specification states.
+  # What the position script's specification states, with its fixture excluded.
+  # The fixture restates the report's shapes and vocabulary as expected output, so
+  # a whole-page read lets the fixture satisfy an assertion about the contract —
+  # the "reads it makes" guard passed with a read deleted for exactly that reason.
+  $positionSpec = {
+    $m = [regex]::Match((& $pageText), "(?ms)^## The position report\r?\n(.*?)^### The position report's fixture")
+    if (-not $m.Success) { throw 'the page has no position specification ahead of its fixture' }
+    $m.Groups[1].Value
+  }
+
+  $blocksUnder = {
+    param($heading)
+    $m = [regex]::Match((& $pageText), "(?ms)^### $([regex]::Escape($heading))\r?\n(.*?)(?=^#{1,3} |\z)")
+    if (-not $m.Success) { throw "the page has no section headed '$heading'" }
+    @([regex]::Matches($m.Groups[1].Value, '(?ms)^```\r?\n(Position\r?\n.*?)^```') |
+        ForEach-Object { $_.Groups[1].Value })
+  }
+
+  Assert "the page specifies where each script it names is written" {
+    $c = & $pageText
+    foreach ($s in 'regenerate-indexes', 'report-position') {
+      if ($c -notmatch [regex]::Escape(".claude/scripts/$s.")) {
+        throw "the page does not say where $s is written"
+      }
+    }
+    $true
+  }
+
+  # Single-home, checked by counting rather than by reading. A page covering two
+  # scripts is where a shared rule most plausibly gets restated per script, and a
+  # restated rule drifts at one of them — so the test is that it appears once,
+  # not that a section with some particular name exists.
+  Assert "an obligation shared by both scripts is stated once, not per script" {
+    $c = & $pageText
+    foreach ($rule in 'byte-order mark', 'one check whose answer was not produced') {
+      $n = ([regex]::Matches($c, [regex]::Escape($rule))).Count
+      if ($n -ne 1) { throw "'$rule' is stated $n times; a shared obligation is stated once" }
+    }
+    $true
+  }
+
+  Assert "the position report specifies the reads it makes" {
+    $c = & $positionSpec
+    foreach ($read in 'marker file', 'HEAD', 'ancestor', 'fingerprint', 'untracked') {
+      if ($c -notmatch [regex]::Escape($read)) { throw "the page does not specify the read: $read" }
+    }
+    # The marker's path has one live home and this page is not it, so the reads
+    # are specified by naming the file and pointing at the guide that holds the
+    # invocations — a page restating the path is a second home for it.
+    if ($c -notmatch [regex]::Escape('.claude/tools/git.md')) {
+      throw 'the page does not point at the guide holding the invocations'
+    }
+    if ($c -match [regex]::Escape('.claude/position/marker.json')) {
+      throw 'the page restates the marker path, which has its home in the tool guide'
+    }
+    # The whole value of the Marker is that a match licenses skipping the drift
+    # reads. A specification that omits it derives a script costing more than the
+    # reads it replaced.
+    if ($c -notmatch '(?i)skipp?(ing|ed)') { throw 'the page does not say a match skips the drift reads' }
+    $true
+  }
+
+  Assert "the report is specified for the matching case and the differing case" {
+    $blocks = & $blocksUnder 'The report, exactly'
+    if (-not ($blocks | Where-Object { $_ -match 'commit match' -and $_ -match 'tree match' })) {
+      throw 'no specified report shows both identities matching'
+    }
+    $differing = @($blocks | Where-Object { $_ -match 'tree differs' -and $_ -match 'uncommitted' })
+    if (-not $differing) { throw 'no specified report shows a differing tree with its drift paths' }
+    # A count alone says something moved and never what, which is the read the
+    # stage is about to need — so the differing shape has to carry paths.
+    if ($differing[0] -notmatch '(?m)^\s{10,}\S+/') {
+      throw 'the differing report states counts without listing the paths beneath them'
+    }
+    $true
+  }
+
+  # Each refusal has to say what it does *not* license. A refusal that reports
+  # only what it found reads as a smaller problem than it is — the stage carries
+  # on with knowledge nobody checked.
+  Assert "all three refusals are specified, and none of them reports only what it found" {
+    $refusals = @((& $blocksUnder 'The three refusals') | Where-Object { $_ -match '-> ' })
+    if ($refusals.Count -ne 3) { throw "the page specifies $($refusals.Count) refusals, expected 3" }
+    foreach ($r in $refusals) {
+      if ($r -notmatch '(?i)unverified') {
+        throw "a refusal does not say what it leaves unverified: $($r -replace '\s+', ' ')"
+      }
+    }
+    $true
+  }
+
+  # Read from the shape the page publishes rather than from a list here, so a
+  # field added to the page without a reader is caught by the same assertion that
+  # catches one removed.
+  Assert "the receipt declares exactly the fields something reads" {
+    $c = & $pageText
+    $json = @([regex]::Matches((& $positionSpec), '(?ms)^```json\r?\n(.*?)^```') |
+        ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -match '"mode"' })
+    if ($json.Count -ne 1) { throw "the page carries $($json.Count) receipt shapes, expected 1" }
+    $keys = @([regex]::Matches($json[0], '"(\w+)"\s*:') | ForEach-Object { $_.Groups[1].Value }) | Sort-Object
+    $want = @('head', 'mode', 'run', 'tree')
+    if (($keys -join ',') -ne ($want -join ',')) {
+      throw "the receipt declares $($keys -join ', '); expected $($want -join ', ')"
+    }
+    # The live values, never the marker's — a receipt echoing the marker answers a
+    # different question than the one the commit stage asks.
+    if ($c -notmatch '(?i)observed') { throw 'the page does not say the receipt holds what was observed' }
+    $true
+  }
+
+  Assert "the fallback is specified in both directions, and names the mode it ran in" {
+    $c = & $positionSpec
+    foreach ($mode in 'session', 'commit-only') {
+      if ($c -notmatch [regex]::Escape($mode)) { throw "the page does not specify the mode: $mode" }
+    }
+    if ($c -notmatch '(?i)not (documented|stated)|observed rather than documented') {
+      throw 'the page does not record that the run identity is undocumented'
+    }
+    # The mitigation is the whole reason the mode is a field. A fallback that
+    # downgrades silently is the failure, not a lesser form of it.
+    if ($c -notmatch '(?i)downgrade') { throw 'the page does not say an unstated downgrade is undetectable' }
+    $true
+  }
+
+  Assert "the script's half is specified, and the stage's half is named as not its own" {
+    $c = & $positionSpec
+    if ($c -notmatch '(?i)judge?ment') { throw 'the page does not name the judgement half' }
+    if ($c -notmatch '(?i)(never|not) the judge?ment half') {
+      throw 'the page does not say the script leaves the judgement half alone'
+    }
+    foreach ($j in 'Source Pointer', 'route') {
+      if ($c -notmatch [regex]::Escape($j)) { throw "the page does not name what the judgement half covers: $j" }
+    }
+    $true
+  }
+
+  # The fixture is the only check this script will ever have, so it has to reach
+  # every branch the report specifies. Read from the fixture's own expected
+  # outputs rather than from a count of cases, which a renamed case would break
+  # and a missing branch would not.
+  Assert "the fixture covers every branch the report specifies" {
+    $c = & $pageText
+    $fixture = [regex]::Match($c, '(?ms)^### The position report''s fixture\r?\n(.*?)^### ')
+    if (-not $fixture.Success) { throw 'the page carries no position fixture' }
+    $f = $fixture.Groups[1].Value
+    # Every verdict and every refusal, because the fixture is this script's only
+    # check — a branch it never reaches is a branch nothing checks at all. The
+    # two present-but-unrelated refusals are listed separately from the absent
+    # one: they are the pair a derivation most plausibly collapses into one.
+    foreach ($branch in 'commit match', 'tree differs', 'absent', 'gone from this clone',
+                        'not an ancestor', 'commit-only', 'session ') {
+      if ($f -notmatch [regex]::Escape($branch)) { throw "the fixture never reaches: $branch" }
+    }
+    # An object name cannot be a literal here, so the expected output is stated
+    # with substitutions — a fixture carrying a real sha would be one nobody else
+    # could run.
+    if ($f -notmatch '<head7>|<tree7>') { throw 'the fixture states object names as literals, which no second run reproduces' }
+    $true
+  }
+
+  # Ticket 01 shipped the contract with no implementation beside it, because a
+  # reference implementation becomes the de facto contract and ambiguities get
+  # settled by reading code nobody promised to keep aligned. That was a property
+  # of one ticket's diff and not of the tree — an effort is one commit here, so
+  # ticket 02 amends this same commit and the implementation is in it. What
+  # survives as a checkable property is the agreement below, in receipt/02.
+}
+
+# --- ticket receipt/02 — this repository derives the position script -----------
+
+Describe-Ticket 'receipt/02' 'this repository derives the position script' {
+
+  $page = 'configure/SCRIPTS.md'
+  $script = Join-Path $repo '.claude/scripts/report-position.ps1'
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  # Both halves are read out of the page. Transcribing the expected output into
+  # this file would check the script against a copy nobody promised to keep
+  # aligned with the contract — which is the horn the derive-don't-ship decision
+  # rejected, reintroduced one level down in the suite.
+  $fixtureSection = {
+    $c = (Get-SkillFile $page) -replace "`r", ''
+    $m = [regex]::Match($c, "(?ms)^### The position report's fixture\r?\n(.*?)(?=^### )")
+    if (-not $m.Success) { throw 'the page carries no position fixture' }
+    $m.Groups[1].Value
+  }
+  $expectedBlocks = {
+    @([regex]::Matches((& $fixtureSection), '(?ms)^```\r?\n(Position\r?\n.*?)^```') |
+        ForEach-Object { $_.Groups[1].Value.TrimEnd("`n") })
+  }
+
+  # A repository with one commit of one file, plus the fingerprint of its clean
+  # tree — the two values every expected block is stated in terms of.
+  $mkRepo = {
+    $root = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
+    $null = New-Item -ItemType Directory -Path $root
+    $null = & git -C $root init -q 2>&1
+    $null = & git -C $root config user.email 'fixture@example.invalid' 2>&1
+    $null = & git -C $root config user.name 'Fixture' 2>&1
+    Set-Content -Path (Join-Path $root 'seed.txt') -Value 'seed' -Encoding utf8NoBOM
+    # Position is ignored, as it is in every configured repository. Without this
+    # no case can pass: the script writes the receipt into that directory during
+    # the run, so a tree counting it reports a fingerprint its own attestation
+    # then invalidates, and the marker could never match the tree it came from.
+    Set-Content -Path (Join-Path $root '.gitignore') -Value '.claude/position/' -Encoding utf8NoBOM
+    $null = & git -C $root add seed.txt .gitignore 2>&1
+    $null = & git -C $root commit -q -m 'seed' 2>&1
+    $null = New-Item -ItemType Directory -Path (Join-Path $root '.claude/position') -Force
+    $root
+  }
+  $fingerprint = {
+    param($root)
+    $idx = & git -C $root rev-parse --path-format=absolute --git-path index
+    $tmp = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
+    Copy-Item $idx $tmp
+    try {
+      $env:GIT_INDEX_FILE = $tmp
+      $null = & git -C $root add -A 2>&1
+      (& git -C $root write-tree).Trim()
+    } finally { $env:GIT_INDEX_FILE = $null; Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+  }
+  $run = {
+    param($root, $runId)
+    $had = $env:CLAUDE_CODE_SESSION_ID
+    try {
+      if ($runId) { $env:CLAUDE_CODE_SESSION_ID = $runId } else { $env:CLAUDE_CODE_SESSION_ID = $null }
+      (& pwsh -NoProfile -File $script -Repo $root 2>&1 | Out-String) -replace "`r", '' -replace "`n+$", ''
+    } finally { $env:CLAUDE_CODE_SESSION_ID = $had }
+  }
+  $writeMarker = {
+    param($root, $commit, $tree)
+    Set-Content -Path (Join-Path $root '.claude/position/marker.json') `
+      -Value (@{ commit = $commit; tree = $tree } | ConvertTo-Json) -Encoding utf8NoBOM
+  }
+
+  Assert "the derived script exists where the page says it is written" {
+    if (-not (Test-Path $script)) { throw '.claude/scripts/report-position.ps1 is missing' }
+    $true
+  }
+
+  # The both-directions check the derive-don't-ship decision needs: a script the
+  # page never specified is as wrong as a specified one nobody wrote, and only the
+  # first of those looks like a passing build.
+  Assert "every script the page specifies is derived, and no script is derived that it does not" {
+    $c = Get-SkillFile $page
+    $specified = @([regex]::Matches($c, '`\.claude/scripts/([a-z-]+)\.<ext>`') |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+    if (-not $specified) { throw 'no script is specified by the page' }
+    $derived = @(Get-ChildItem -Path (Join-Path $repo '.claude/scripts') -File |
+        ForEach-Object { $_.BaseName }) | Sort-Object -Unique
+    $missing = @($specified | Where-Object { $derived -notcontains $_ })
+    if ($missing) { throw "the page specifies a script nothing derived: $($missing -join ', ')" }
+    $extra = @($derived | Where-Object { $specified -notcontains $_ })
+    if ($extra) { throw "a script is derived that the page does not specify: $($extra -join ', ')" }
+    $true
+  }
+
+  Assert "every case the fixture states produces the page's exact expected output" {
+    $blocks = & $expectedBlocks
+    if ($blocks.Count -ne 5) { throw "the fixture states $($blocks.Count) expected outputs, expected 5" }
+    $root = & $mkRepo
+    try {
+      $head = (& git -C $root rev-parse HEAD).Trim()
+      $tree = & $fingerprint $root
+      & $writeMarker $root $head $tree
+
+      $subst = {
+        param($b, $live)
+        $b -replace '<head7>', $head.Substring(0, 7) -replace '<tree7>', $tree.Substring(0, 7) `
+           -replace '<live7>', $live
+      }
+
+      # A — both identities match.
+      $got = & $run $root $null
+      $want = (& $subst $blocks[0] '').TrimEnd("`n")
+      if ($got -ne $want) { throw "case A differs.`nexpected:`n$want`ngot:`n$got" }
+
+      # B — one untracked file. The fingerprint must move, which is the whole
+      # reason this case exists: a read blind to an untracked file is the defect
+      # the tree fact was added to catch.
+      Set-Content -Path (Join-Path $root 'a.txt') -Value 'a' -Encoding utf8NoBOM
+      $live = (& $fingerprint $root).Substring(0, 7)
+      if ($live -eq $tree.Substring(0, 7)) { throw 'the fingerprint did not move for an untracked file' }
+      $got = & $run $root $null
+      $want = (& $subst $blocks[1] $live).TrimEnd("`n")
+      if ($got -ne $want) { throw "case B differs.`nexpected:`n$want`ngot:`n$got" }
+
+      # C — no marker file.
+      Remove-Item (Join-Path $root '.claude/position/marker.json') -Force
+      $got = & $run $root $null
+      $want = (& $subst $blocks[2] '').TrimEnd("`n")
+      if ($got -ne $want) { throw "case C differs.`nexpected:`n$want`ngot:`n$got" }
+      Remove-Item (Join-Path $root 'a.txt') -Force
+
+      # E — a well-formed object name naming no object here.
+      $gone = '0' * 40
+      & $writeMarker $root $gone $tree
+      $got = & $run $root $null
+      $want = ((& $subst $blocks[3] '') -replace '<gone7>', $gone.Substring(0, 7)).TrimEnd("`n")
+      if ($got -ne $want) { throw "case E differs.`nexpected:`n$want`ngot:`n$got" }
+
+      # F — a commit that exists and is unrelated. Distinct from E in the
+      # question asked and in what it leaves unverified, and the two are what a
+      # derivation most plausibly collapses together.
+      $null = & git -C $root switch -q -c sideline 2>&1
+      Set-Content -Path (Join-Path $root 'side.txt') -Value 'side' -Encoding utf8NoBOM
+      $null = & git -C $root add side.txt 2>&1
+      $null = & git -C $root commit -q -m 'sideline' 2>&1
+      $other = (& git -C $root rev-parse HEAD).Trim()
+      $null = & git -C $root switch -q - 2>&1
+      & $writeMarker $root $other $tree
+      $got = & $run $root $null
+      $want = ((& $subst $blocks[4] '') -replace '<other7>', $other.Substring(0, 7)).TrimEnd("`n")
+      if ($got -ne $want) { throw "case F differs.`nexpected:`n$want`ngot:`n$got" }
+    }
+    finally { Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue }
+    $true
+  }
+
+  Assert "with the run identity present, only the mode line changes" {
+    $wantLine = [regex]::Match((& $fixtureSection), '`(\s*mode\s+session [^`]+)`')
+    if (-not $wantLine.Success) { throw 'the fixture does not state the mode line for a present identity' }
+    $id = ($wantLine.Groups[1].Value -split '\s+')[-1]
+    $root = & $mkRepo
+    try {
+      $head = (& git -C $root rev-parse HEAD).Trim()
+      $tree = & $fingerprint $root
+      & $writeMarker $root $head $tree
+      $without = (& $run $root $null) -split "`n"
+      $with = (& $run $root $id) -split "`n"
+      if ($without.Count -ne $with.Count) { throw 'the identity changed more than the mode line' }
+      for ($i = 0; $i -lt $without.Count - 1; $i++) {
+        if ($without[$i] -ne $with[$i]) { throw "line $($i + 1) changed with the identity present: $($with[$i])" }
+      }
+      if ($with[-1].Trim() -ne $wantLine.Groups[1].Value.Trim()) {
+        throw "the mode line reads '$($with[-1])'; the fixture states '$($wantLine.Groups[1].Value)'"
+      }
+    }
+    finally { Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue }
+    $true
+  }
+
+  # The downgrade is the whole risk this design accepted, so the report saying
+  # which mode it ran in is the mitigation and not a nicety. A run that attests on
+  # the commit alone and does not say so is indistinguishable from the stronger one.
+  Assert "every report states the mode it ran in, in both directions" {
+    $root = & $mkRepo
+    try {
+      $head = (& git -C $root rev-parse HEAD).Trim()
+      & $writeMarker $root $head (& $fingerprint $root)
+      $weak = (& $run $root $null) -split "`n"
+      if ($weak[-1] -notmatch 'commit-only') { throw "the weaker run does not name its mode: $($weak[-1])" }
+      $strong = (& $run $root 'test-run-id') -split "`n"
+      if ($strong[-1] -notmatch 'session') { throw "the stronger run does not name its mode: $($strong[-1])" }
+    }
+    finally { Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue }
+    $true
+  }
+
+  Assert "the receipt records what was observed, and which mode observed it" {
+    $root = & $mkRepo
+    try {
+      $head = (& git -C $root rev-parse HEAD).Trim()
+      $tree = & $fingerprint $root
+      # The marker deliberately holds a tree that is not the live one. Writing a
+      # marker that agrees with the tree makes the two indistinguishable, and a
+      # receipt echoing the marker would pass — which is the whole distinction
+      # this assertion exists to draw, and it was vacuous until the fire-check
+      # perturbed the script to echo the marker and nothing went red.
+      & $writeMarker $root $head 'a-tree-the-clone-does-not-have'
+      $null = & $run $root 'test-run-id'
+      $r = Get-Content (Join-Path $root '.claude/position/receipt.json') -Raw | ConvertFrom-Json
+      if ($r.head -ne $head) { throw "the receipt holds head '$($r.head)', observed '$head'" }
+      if ($r.tree -ne $tree) { throw "the receipt holds tree '$($r.tree)', observed '$tree'" }
+      if ($r.run -ne 'test-run-id') { throw "the receipt holds run '$($r.run)'" }
+      if ($r.mode -ne 'session') { throw "the receipt holds mode '$($r.mode)'" }
+
+      # A refusal is a computed position whose answer is *unverified*, so it is
+      # attested like any other — a clone with no marker must still be able to
+      # commit, and a receipt withheld here would make that impossible.
+      Remove-Item (Join-Path $root '.claude/position/marker.json') -Force
+      Remove-Item (Join-Path $root '.claude/position/receipt.json') -Force
+      $null = & $run $root $null
+      $r = Get-Content (Join-Path $root '.claude/position/receipt.json') -Raw | ConvertFrom-Json
+      if ($r.mode -ne 'commit-only') { throw "a refusal recorded mode '$($r.mode)'" }
+      if ($null -ne $r.run) { throw 'a run without the identity recorded one anyway' }
+      if ($r.head -ne $head) { throw 'a refusal did not record the position it observed' }
+    }
+    finally { Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue }
+    $true
+  }
+
+  # Found by the fixture and by nothing else: the refusal lines carried an arrow,
+  # and a console codepage that is not UTF-8 delivered it as `?` in a report that
+  # still read correctly. Written output is compared as bytes; emitted output goes
+  # through whatever encoding the shell has, so the two obligations differ.
+  Assert "what the script emits is ASCII, and the page says why" {
+    $c = Get-SkillFile $page
+    if ($c -notmatch '(?i)ASCII') { throw 'the page does not state that emitted output is ASCII' }
+    $nonAscii = @((& $expectedBlocks) | Where-Object { $_ -match '[^\x00-\x7F]' })
+    if ($nonAscii) { throw "a fixture's expected output is not ASCII: $($nonAscii[0])" }
+
+    $root = & $mkRepo
+    try {
+      $head = (& git -C $root rev-parse HEAD).Trim()
+      & $writeMarker $root $head 'not-the-live-tree'
+      foreach ($out in @((& $run $root $null), (& $run $root 'test-run-id'))) {
+        if ($out -match '[^\x00-\x7F]') {
+          $bad = [regex]::Match($out, '[^\x00-\x7F]').Value
+          throw ("the script emitted U+{0:X4}, which does not survive a non-UTF-8 console" -f [int][char]$bad)
+        }
+      }
+      # And the refusal path, which is where the arrow lived.
+      Remove-Item (Join-Path $root '.claude/position/marker.json') -Force
+      $out = & $run $root $null
+      if ($out -match '[^\x00-\x7F]') { throw 'a refusal emitted a character that is not ASCII' }
+    }
+    finally { Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue }
+    $true
+  }
+
+  Assert "the tool guide names the script for the composite read, and keeps the invocations" {
+    $g = Get-RepoText '.claude/tools/git.md'
+    if ($g -notmatch [regex]::Escape('.claude/scripts/report-position.ps1')) {
+      throw 'the guide does not name the script'
+    }
+    # A reader without the script still needs these, and the script is derived
+    # from a specification rather than copied — so naming it never replaces them.
+    foreach ($read in 'cat-file -e', 'merge-base --is-ancestor', 'write-tree', 'rev-list --count') {
+      if ($g -notmatch [regex]::Escape($read)) { throw "the guide dropped the invocation: $read" }
+    }
+    $true
+  }
+}
+
+# --- ticket receipt/03 — configure derives every specified script --------------
+
+Describe-Ticket 'receipt/03' 'configure derives every script the page specifies' {
+
+  $page = 'configure/SCRIPTS.md'
+  $skill = 'configure/SKILL.md'
+
+  # Both directions, read from the artefacts rather than from a list here. A
+  # stage that names its scripts individually is right until the page grows a
+  # section, and what that produces is a configured repository whose commit gate
+  # has no input — a failure that surfaces in a stage that cannot fix it.
+  Assert "the stage derives from the page, and names no script the page does not specify" {
+    $c = Get-SkillFile $skill
+    $specified = @([regex]::Matches((Get-SkillFile $page), '`\.claude/scripts/([a-z-]+)\.<ext>`') |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+    if (-not $specified) { throw 'no script is specified by the page' }
+    $named = @([regex]::Matches($c, '\.claude/scripts/([a-z-]+)\.') |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+    $invented = @($named | Where-Object { $specified -notcontains $_ })
+    if ($invented) { throw "/configure names a script the page does not specify: $($invented -join ', ')" }
+    # Naming the directory and the page is what makes the derivation total; a
+    # stage naming one script by hand is the list this guard exists to refuse.
+    if ($c -notmatch [regex]::Escape('.claude/scripts/')) { throw '/configure does not name the scripts directory' }
+    if ($c -notmatch [regex]::Escape('SCRIPTS.md')) { throw '/configure does not point at the derivation page' }
+    $true
+  }
+
+  Assert "a script that fails its own fixture stops the stage" {
+    $c = Get-SkillFile $skill
+    if ($c -notmatch '(?i)fixture') { throw '/configure does not mention the fixture' }
+    if ($c -notmatch '(?i)stops this stage|stops the stage') {
+      throw '/configure does not say a fixture mismatch stops it'
+    }
+    # Reported-and-passed is the failure mode, not silence: a stage that says
+    # "the fixture did not match" and installs the script anyway has told the
+    # truth and done the wrong thing.
+    if ($c -notmatch '(?i)not reported and passed|rather than being reported and passed') {
+      throw '/configure does not refuse the reported-and-passed path'
+    }
+    $true
+  }
+
+  Assert "the audit covers the scripts directory against the page, in both directions" {
+    $audit = Get-Section (Get-SkillFile $skill) 'Audit, where AEP is already here'
+    if ($audit -notmatch [regex]::Escape('.claude/scripts/')) {
+      throw 'the audit branch never re-checks the scripts directory'
+    }
+    if ($audit -notmatch '(?i)both directions') {
+      throw 'the audit does not state that the check runs in both directions'
+    }
+    if ($audit -notmatch '(?i)fixture') {
+      throw 'the audit re-checks which scripts exist but never that they still derive correctly'
+    }
+    $true
+  }
+
+  # The category rule is what `0012` named the category for: a fourth Position
+  # file would otherwise be a fourth exception for this stage to be told about,
+  # and the one nobody remembers is the one that gets committed.
+  Assert "the receipt is ignored by the category, with nothing naming it individually" {
+    $ignore = Get-Content (Join-Path $repo '.claude/.gitignore') -Raw
+    if ($ignore -match '(?i)receipt') { throw 'the ignore file names the receipt individually' }
+    $covered = & git -C $repo check-ignore -q '.claude/position/receipt.json' 2>$null; $ok = ($LASTEXITCODE -eq 0)
+    if (-not $ok) { throw 'the receipt is not ignored — a Position file would be committed' }
+    if ((Get-SkillFile $skill) -notmatch '(?i)states the category, not a list') {
+      throw '/configure does not require the ignore file to state the category'
+    }
+    $true
+  }
+}
+
+# --- ticket receipt/04 — commit refuses an unattested position ----------------
+
+Describe-Ticket 'receipt/04' 'commit refuses an unattested position, and the protocol stops overclaiming' {
+
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  # Both ends: the shipped template is what every other repository is configured
+  # from, and the installed copy is what this one reads. A correction to one is a
+  # correction nobody else gets, or one this repository never applies.
+  # Scoped to the section that makes the claim, not the file. Unscoped, the
+  # receipt guard matched a sentence about verification at use that has sat
+  # further up since the Marker gained its tree fact — so deleting the claim
+  # being asserted left it green, which is the fifth guard in this effort found
+  # reading a wider region than the claim it was making.
+  $protocols = @{
+    'skills/configure/protocol.template.md' = { Get-Section (Get-SkillFile 'configure/protocol.template.md') 'Reported, every time' }
+    '.claude/protocol.md'                   = { Get-Section (Get-RepoText '.claude/protocol.md') 'Reported, every time' }
+  }
+
+  Assert "no protocol claims that reporting makes a lapse visible" {
+    foreach ($name in $protocols.Keys) {
+      $c = & $protocols[$name]
+      if ($c -match '(?i)makes a lapse visible') {
+        throw "$name still claims reporting makes a lapse visible — a well-formed report is producible without doing the work"
+      }
+      if ($c -match '(?i)the only evidence the discipline ran') {
+        throw "$name still calls the report the only evidence the discipline ran"
+      }
+    }
+    $true
+  }
+
+  Assert "every protocol separates the computed half from the judged half" {
+    foreach ($name in $protocols.Keys) {
+      $c = & $protocols[$name]
+      if ($c -notmatch '(?i)judge?ment') { throw "$name does not name the judgement half" }
+      if ($c -notmatch '(?i)no script can produce it|cannot be (mechanised|computed)') {
+        throw "$name does not say the judgement half is beyond a script"
+      }
+      if ($c -notmatch '(?i)quotes? that output') {
+        throw "$name does not say the stage quotes the computed output rather than composing one"
+      }
+    }
+    $true
+  }
+
+  # The narrowing is the decision, not an omission from it. A guard whose claim is
+  # read wider than it holds is the failure this repository has shipped more than
+  # once, and this is the sentence that stops the Receipt being read that way.
+  Assert "every protocol states what a receipt does not attest" {
+    foreach ($name in $protocols.Keys) {
+      $c = & $protocols[$name]
+      if ($c -notmatch '(?i)receipt') { throw "$name never mentions the Receipt" }
+      if ($c -notmatch '(?i)never that the stage read it|not that the stage') {
+        throw "$name does not state that attestation stops at computation"
+      }
+      if ($c -notmatch '(?i)verification at use is (untouched|unaffected)') {
+        throw "$name does not say verification at use is unaffected by the Receipt"
+      }
+    }
+    $true
+  }
+
+  Assert "the commit stage refuses a position no receipt attests, recoverably" {
+    $s = Get-Section (Get-SkillFile 'commit/SKILL.md') 'Confirm the stages ran'
+    if ($s -notmatch '(?i)receipt') { throw 'the commit stage never reads the Receipt' }
+    # Recoverable, because a skipped verification and a deleted Position directory
+    # leave the same absence and only one is a defect.
+    if ($s -notmatch '(?i)name the script|names? the script to run') {
+      throw 'the refusal does not name the script to run'
+    }
+    if ($s -notmatch '(?i)recoverable') { throw 'the refusal is not stated as recoverable' }
+    $true
+  }
+
+  Assert "the weaker attestation is accepted saying so, never passed as the stronger one" {
+    $s = Get-Section (Get-SkillFile 'commit/SKILL.md') 'Confirm the stages ran'
+    if ($s -notmatch '(?i)run identity') { throw 'the commit stage does not distinguish the two modes' }
+    if ($s -notmatch '(?i)silent downgrade|passing it as though|as though it were the stronger') {
+      throw 'the commit stage does not refuse to pass the weaker attestation as the stronger'
+    }
+    $true
+  }
+
+  Assert "the check reads state and re-executes nothing" {
+    $s = Get-Section (Get-SkillFile 'commit/SKILL.md') 'Confirm the stages ran'
+    if ($s -notmatch '(?i)none re-executes anything') { throw 'the stage no longer says it re-executes nothing' }
+    if ($s -notmatch '(?i)nothing to recompute|recomputing would defeat') {
+      throw 'the position question does not say why recomputing it here would answer about itself'
+    }
+    $true
+  }
+
+  # The examples are what a reader copies. One showing the two halves run together
+  # teaches the shape this effort exists to take apart — and its computed half has
+  # to be the script's real output, not a sketch of it.
+  Assert "every stage's report example shows the computed half in the script's own shape" {
+    foreach ($f in 'implement/SKILL.md', 'commit/SKILL.md') {
+      $c = (Get-SkillFile $f) -replace "`r", ''
+      $blocks = @([regex]::Matches($c, '(?ms)^```\r?\n(Position\r?\n.*?)^```') |
+          ForEach-Object { $_.Groups[1].Value })
+      if (-not $blocks) { throw "$f shows no position report" }
+      foreach ($b in $blocks) {
+        foreach ($label in 'marker', 'tree', 'drift', 'mode') {
+          if ($b -notmatch "(?m)^  $label\s") { throw "$f's report example has no '$label' line" }
+        }
+        if ($b -match '(?m)^\s*→') { throw "$f's example uses an arrow the report no longer emits" }
       }
     }
     $true

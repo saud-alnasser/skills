@@ -80,9 +80,17 @@ See `.claude/tools/git.md` for the exact invocations and for how `--porcelain` o
 
 ## Reported, every time
 
-Every skill that relies on Context opens with a one-line verification report. **Including when there was nothing to verify.** "Marker matches on both facts — drift reads skipped" is a statement; silence is indistinguishable from the check never having run.
+Every skill that relies on Context opens with a verification report. **Including when there was nothing to verify** — silence is indistinguishable from the check never having run.
 
-That report is the only evidence the discipline ran. Verification is never best-effort; this is what makes a lapse visible rather than silent.
+**The report has two halves, and they are not the same kind of statement.**
+
+*Position* is computed — the Marker's two facts against the live two, and the drift lists when they differ. A script derived into `.claude/scripts/` produces it, and the stage **quotes that output rather than composing its own**: the invocations are recorded once in `.claude/tools/`, and reproducing them per stage gives one procedure as many homes as there are stages.
+
+*Judgement* is the stage's own — which Domain Contexts the request routes to, whether a Source Pointer still resolves, whether a Context statement is contradicted by source, and what was done about each. **No script can produce it**, and the stage prints it beneath.
+
+**The position half is attested; the judgement half is not.** The run that computes the position also writes a **Receipt** recording what was seen and which mode it was seen in, and `/commit` refuses a position no Receipt attests. Drawing the boundary is what makes any of this enforceable: the half that can be checked was previously not separated from the half that cannot, which is why the whole report read as something nobody could verify.
+
+**What that does not cover, stated rather than left to inference.** A Receipt proves the position was **computed**, never that the stage read it or acted on it. Verification at use is untouched and unenforced by this — a statement about to be relied on is still checked against the Codebase at the moment of reliance, whatever any Receipt says.
 
 **Where drift was read, the report says which happened to it** — healed, or discounted as outside what the work touches. That is not a second obligation: it is the same sentence the stage was already writing, and it is what makes the re-stamp above auditable rather than asserted. A report that says drift was read and stops has not earned the re-stamp, and the gap between the two reads as a stage that looked and moved on.
 
