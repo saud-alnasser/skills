@@ -52,7 +52,22 @@ function Describe-Ticket {
   $script:CurrentTicket = $Id
   Write-Host ""
   Write-Host "ticket $Id — $Name" -ForegroundColor Cyan
-  & $Body
+  # `Assert` catches what its own condition throws. Nothing caught what the rest
+  # of a section threw, and a section is where a file is read once and asserted
+  # against many times — so a missing file or a renamed heading raised from that
+  # hoisted read, outside any condition, ended the entire run: no summary, no
+  # failure list, and no word about the assertions that had already passed. On
+  # the only guard this repository has against a broken build, one bad file made
+  # the other eleven hundred assertions silent rather than failing.
+  #
+  # Caught here rather than by rewriting those reads into the conditions that
+  # use them: reading a file once per section is the right shape, and pushing
+  # the read inside every `Assert` would re-read it per assertion to buy nothing.
+  try { & $Body }
+  catch {
+    $script:Failures += "[$Id] section aborted, its remaining assertions did not run — $($_.Exception.Message)"
+    Write-Host "  ABORT $($_.Exception.Message)" -ForegroundColor Red
+  }
 }
 
 function Assert {
@@ -272,7 +287,8 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
 
   foreach ($p in $primitives) {
     Assert "$p is vendored into ./skills" {
-      Test-Path (Join-Path $skills "$p/SKILL.md")
+      if (-not (Test-Path (Join-Path $skills "$p/SKILL.md"))) { throw ('nothing at ' + (Join-Path $skills "$p/SKILL.md")) }
+      $true
     }
   }
 
@@ -341,7 +357,8 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
 
   Assert "domain-modeling groups multi-context repos as directories under contexts/" {
     $fmt = Get-SkillFile 'configure/policies/context.template.md'
-    $fmt -match 'contexts/'
+    if (-not ($fmt -match 'contexts/')) { throw 'configure/policies/context.template.md does not match: contexts/' }
+    $true
   }
 
   Assert "ADR-FORMAT keeps the strict 3-of-3 test" {
@@ -361,7 +378,9 @@ Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
   # would be the second home this table exists to prevent.
   Assert "ADR-FORMAT states the supersession rule, with the reasoning frozen" {
     $adr = Get-SkillFile 'configure/policies/decisions.template.md'
-    ($adr -match '(?i)supersed') -and ($adr -match '(?i)frozen')
+    if (-not ($adr -match '(?i)supersed')) { throw 'configure/policies/decisions.template.md does not match: (?i)supersed' }
+    if (-not ($adr -match '(?i)frozen')) { throw 'configure/policies/decisions.template.md does not match: (?i)frozen' }
+    $true
   }
 
   Assert "attribution to mattpocock/skills is present in every vendored primitive" {
@@ -401,7 +420,8 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   # the same text, now source material rather than a skill.
   foreach ($f in $tools.Keys) {
     Assert "$f.md ships as /configure's source material" {
-      Test-Path (Join-Path $skills "configure/tools/$f.md")
+      if (-not (Test-Path (Join-Path $skills "configure/tools/$f.md"))) { throw ('nothing at ' + (Join-Path $skills "configure/tools/$f.md")) }
+      $true
     }
   }
 
@@ -449,7 +469,8 @@ Describe-Ticket 'tenure/15' 'tool reference — how to drive every tool the work
   # unverifiable claim silently. A file written without the tool present says so.
   Assert "gitlab.md declares that its entries were not verified against an installed glab" {
     $c = Get-SkillFile 'configure/tools/gitlab.md'
-    $c -match '(?i)not verified|without a `?glab`? on the machine'
+    if (-not ($c -match '(?i)not verified|without a `?glab`? on the machine')) { throw 'configure/tools/gitlab.md does not match: (?i)not verified|without a `?glab`? on the machine' }
+    $true
   }
 
   Assert "git.md carries the operations Tenure depends on and gets wrong easily" {
@@ -992,7 +1013,8 @@ $rulePattern = [ordered]@{
 Describe-Ticket 'tenure/02' 'verification at use, healing where the break is found' {
 
   Assert "the always-on rules ship as the CLAUDE.md template /configure installs" {
-    Test-Path (Join-Path $skills $claudeTemplate)
+    if (-not (Test-Path (Join-Path $skills $claudeTemplate))) { throw ('nothing at ' + (Join-Path $skills $claudeTemplate)) }
+    $true
   }
 
   Assert "CLAUDE.md stays an entrypoint, not a manual — under 200 lines" {
@@ -1014,7 +1036,8 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
   # this asserts — is that no *drift* is read on that path.
   Assert "the matching path costs git reads and no drift reading" {
     $c = Get-SkillFile $protocolTemplate
-    $c -match '(?i)(no drift reading|no reading|without reading|read nothing)'
+    if (-not ($c -match '(?i)(no drift reading|no reading|without reading|read nothing)')) { throw ($protocolTemplate + ' does not match: (?i)(no drift reading|no reading|without reading|read nothing)') }
+    $true
   }
 
   Assert "both drift sources are named, with the command that reads each" {
@@ -1028,23 +1051,29 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
 
   Assert "the non-ancestor case is covered — a moved HEAD makes the diff meaningless" {
     $c = Get-SkillFile $protocolTemplate
-    ($c -match '(?i)ancestor') -and ($c -match '(?i)rebase|branch switch|switched branch')
+    if (-not ($c -match '(?i)ancestor')) { throw ($protocolTemplate + ' does not match: (?i)ancestor') }
+    if (-not ($c -match '(?i)rebase|branch switch|switched branch')) { throw ($protocolTemplate + ' does not match: (?i)rebase|branch switch|switched branch') }
+    $true
   }
 
   Assert "verification is at use — never a startup scan, never a phase" {
     $c = Get-SkillFile $claudeTemplate
-    ($c -match '(?i)never a scan|no startup scan|never scan') -and
-    ($c -match '(?i)about to (rely|be relied)|at the point of use|where it is used')
+    if (-not ($c -match '(?i)never a scan|no startup scan|never scan')) { throw ($claudeTemplate + ' does not match: (?i)never a scan|no startup scan|never scan') }
+    if (-not ($c -match '(?i)about to (rely|be relied)|at the point of use|where it is used')) { throw ($claudeTemplate + ' does not match: (?i)about to (rely|be relied)|at the point of use|where it is used') }
+    $true
   }
 
   Assert "a broken Source Pointer is recovered by searching, never invented" {
     $c = Get-SkillFile $claudeTemplate
-    ($c -match 'Source Pointer') -and ($c -match '(?i)never invent|not invent|rather than invent')
+    if (-not ($c -match 'Source Pointer')) { throw ($claudeTemplate + ' does not match: Source Pointer') }
+    if (-not ($c -match '(?i)never invent|not invent|rather than invent')) { throw ($claudeTemplate + ' does not match: (?i)never invent|not invent|rather than invent') }
+    $true
   }
 
   Assert "healing happens in place — no queue, no deferred pass" {
     $c = Get-SkillFile $claudeTemplate
-    $c -match '(?i)where you find it|in the same breath|no deferred|no queue'
+    if (-not ($c -match '(?i)where you find it|in the same breath|no deferred|no queue')) { throw ($claudeTemplate + ' does not match: (?i)where you find it|in the same breath|no deferred|no queue') }
+    $true
   }
 
   # Rewritten by mechanics/03 rather than repointed: the rule itself changed.
@@ -1063,7 +1092,8 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
 
   Assert "the Marker is machine-local — a teammate's verification is not Claude's" {
     $c = Get-SkillFile $protocolTemplate
-    $c -match '(?i)gitignored|machine-local|per-clone|not committed'
+    if (-not ($c -match '(?i)gitignored|machine-local|per-clone|not committed')) { throw ($protocolTemplate + ' does not match: (?i)gitignored|machine-local|per-clone|not committed') }
+    $true
   }
 
   # "Every rule here has exactly one home." Duplication is the failure mode
@@ -1165,7 +1195,8 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
 Describe-Ticket 'tenure/03' 'the whole planning surface' {
 
   Assert "/design ships as a skill" {
-    Test-Path (Join-Path $skills 'design/SKILL.md')
+    if (-not (Test-Path (Join-Path $skills 'design/SKILL.md'))) { throw ('nothing at ' + (Join-Path $skills 'design/SKILL.md')) }
+    $true
   }
 
   # entry/01 moved planning across the invocation axis (ADR 0061). The reason the
@@ -1261,13 +1292,15 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
   }
 
   Assert "options are presented whenever more than one reasonable approach exists, not only on request" {
-    (Get-SkillFile 'design/SKILL.md') -match '(?i)more than one (reasonable )?approach'
+    if (-not ((Get-SkillFile 'design/SKILL.md') -match '(?i)more than one (reasonable )?approach')) { throw 'design/SKILL.md does not match: (?i)more than one (reasonable )?approach' }
+    $true
   }
 
   Assert "every run leaves at least one ticket on disk" {
     $c = Get-SkillFile 'design/SKILL.md'
-    ($c -match '(?i)at least one ticket|always .{0,20}one ticket') -and
-    ($c -match '(?i)(nothing|never) lives only in the conversation')
+    if (-not ($c -match '(?i)at least one ticket|always .{0,20}one ticket')) { throw 'design/SKILL.md does not match: (?i)at least one ticket|always .{0,20}one ticket' }
+    if (-not ($c -match '(?i)(nothing|never) lives only in the conversation')) { throw 'design/SKILL.md does not match: (?i)(nothing|never) lives only in the conversation' }
+    $true
   }
 
   Assert "the tier is max(Floor, Gates) and gates only raise" {
@@ -1304,7 +1337,9 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
 
   Assert "a re-plan marks superseded tickets obsolete — never deletes, never leaves them open" {
     $c = Get-SkillFile 'design/SKILL.md'
-    ($c -match '(?i)obsolete') -and ($c -match '(?i)never deleted|not deleted')
+    if (-not ($c -match '(?i)obsolete')) { throw 'design/SKILL.md does not match: (?i)obsolete' }
+    if (-not ($c -match '(?i)never deleted|not deleted')) { throw 'design/SKILL.md does not match: (?i)never deleted|not deleted' }
+    $true
   }
 
   # "SKILL.md carries no deliverable-format detail." MAP.md is the clearest
@@ -1345,14 +1380,16 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
 Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "/implement ships as a skill" {
-    Test-Path (Join-Path $skills 'implement/SKILL.md')
+    if (-not (Test-Path (Join-Path $skills 'implement/SKILL.md'))) { throw ('nothing at ' + (Join-Path $skills 'implement/SKILL.md')) }
+    $true
   }
 
   # Spec, Scope: the spine is model-invoked. Not, as ticket 04 claims, so
   # /design can reach it — ticket 03 forbids exactly that. The router (10) is
   # the caller this is actually for.
   Assert "/implement is model-invoked — the spine is reachable" {
-    -not (Test-UserInvoked 'implement/SKILL.md')
+    if (-not (-not (Test-UserInvoked 'implement/SKILL.md'))) { throw 'implement/SKILL.md still satisfies Test-UserInvoked, and must not' }
+    $true
   }
 
   # Ticket 02 deferred this criterion to here: the discipline is only real if
@@ -1368,14 +1405,17 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
   # through an unchecked one is how a stale belief becomes a wrong edit.
   Assert "no source is read through a Source Pointer that has not been verified this session" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    ($c -match '(?i)source pointer') -and ($c -match '(?i)before (it is |it.s )?relied on|verified this session')
+    if (-not ($c -match '(?i)source pointer')) { throw 'implement/SKILL.md does not match: (?i)source pointer' }
+    if (-not ($c -match '(?i)before (it is |it.s )?relied on|verified this session')) { throw 'implement/SKILL.md does not match: (?i)before (it is |it.s )?relied on|verified this session' }
+    $true
   }
 
   # A filename is not a contract. This is the half of the pointer rule that
   # bites during a build, and it is /implement's — CLAUDE.md owns recovery.
   Assert "an API is never inferred from a filename" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)never infer an API from a filename'
+    if (-not ($c -match '(?i)never infer an API from a filename')) { throw 'implement/SKILL.md does not match: (?i)never infer an API from a filename' }
+    $true
   }
 
   # The whole point of a deterministic frontier is that two sessions on the same
@@ -1390,13 +1430,15 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "claiming is the first write, before any work — that is what stops a double claim" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)(claim[a-z]*).{0,60}before any work|before any work.{0,60}claim'
+    if (-not ($c -match '(?i)(claim[a-z]*).{0,60}before any work|before any work.{0,60}claim')) { throw 'implement/SKILL.md does not match: (?i)(claim[a-z]*).{0,60}before any work|before any work.{0,60}claim' }
+    $true
   }
 
   Assert "one ticket per invocation — never a second, never a blocked one" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    ($c -match '(?i)one ticket per invocation') -and
-    ($c -match '(?i)never (take |start )')
+    if (-not ($c -match '(?i)one ticket per invocation')) { throw 'implement/SKILL.md does not match: (?i)one ticket per invocation' }
+    if (-not ($c -match '(?i)never (take |start )')) { throw 'implement/SKILL.md does not match: (?i)never (take |start )' }
+    $true
   }
 
   # The headline acceptance criterion. A prohibition a reader can only find by
@@ -1433,7 +1475,8 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "the Marker re-advances on every amend, not only on the first commit" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)marker.{0,120}(every |each )amend|(every |each )amend.{0,120}marker'
+    if (-not ($c -match '(?i)marker.{0,120}(every |each )amend|(every |each )amend.{0,120}marker')) { throw 'implement/SKILL.md does not match: (?i)marker.{0,120}(every |each )amend|(every |each )amend.{0,120}marker' }
+    $true
   }
 
   # Ticket 06: "/commit is the shared implementation both paths use", and the
@@ -1488,12 +1531,14 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "harder than expected is not a wrong plan" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)harder than expected\*{0,2} is not a wrong plan'
+    if (-not ($c -match '(?i)harder than expected\*{0,2} is not a wrong plan')) { throw 'implement/SKILL.md does not match: (?i)harder than expected\*{0,2} is not a wrong plan' }
+    $true
   }
 
   Assert "a deviation that changes architecture goes back to /design, not into the diff" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)changes architecture.{0,60}/design'
+    if (-not ($c -match '(?i)changes architecture.{0,60}/design')) { throw 'implement/SKILL.md does not match: (?i)changes architecture.{0,60}/design' }
+    $true
   }
 
   # ADR 0007 places these in /implement and /review both — the skill that
@@ -1520,12 +1565,15 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 
   Assert "a ticket left claimed is resumed, not skipped" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    ($c -match '(?i)resum') -and ($c -match '(?i)claimed')
+    if (-not ($c -match '(?i)resum')) { throw 'implement/SKILL.md does not match: (?i)resum' }
+    if (-not ($c -match '(?i)claimed')) { throw 'implement/SKILL.md does not match: (?i)claimed' }
+    $true
   }
 
   Assert "work with no ticket is /commit's, not /implement's" {
     $c = Get-SkillFile 'implement/SKILL.md'
-    $c -match '(?i)(no ticket|without a ticket).{0,140}/commit'
+    if (-not ($c -match '(?i)(no ticket|without a ticket).{0,140}/commit')) { throw 'implement/SKILL.md does not match: (?i)(no ticket|without a ticket).{0,140}/commit' }
+    $true
   }
 
   # matt's core, retained: the loop is the point, and the full suite runs once.
@@ -1569,7 +1617,8 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
   }
 
   Assert "a change that moves no concept writes nothing — silence is the correct output" {
-    (Get-SkillFile $knowledgeTemplate) -match '(?i)silence is the correct output'
+    if (-not ((Get-SkillFile $knowledgeTemplate) -match '(?i)silence is the correct output')) { throw ($knowledgeTemplate + ' does not match: (?i)silence is the correct output') }
+    $true
   }
 
   # ADR 0005: vocabulary and decisions crystallise in conversation, and that
@@ -1599,7 +1648,8 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
 Describe-Ticket 'tenure/05' 'review axes for Tenure' {
 
   Assert "/review ships as a skill" {
-    Test-Path (Join-Path $skills 'review/SKILL.md')
+    if (-not (Test-Path (Join-Path $skills 'review/SKILL.md'))) { throw ('nothing at ' + (Join-Path $skills 'review/SKILL.md')) }
+    $true
   }
 
   # Decision 13 chose `code-review` so the skill would not shadow the built-in
@@ -1616,7 +1666,8 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # Spec, Scope: model-invoked, because /implement closes out through it and
   # /commit confirms it ran.
   Assert "/review is model-invoked — /implement and /commit can reach it" {
-    -not (Test-UserInvoked 'review/SKILL.md')
+    if (-not (-not (Test-UserInvoked 'review/SKILL.md'))) { throw 'review/SKILL.md still satisfies Test-UserInvoked, and must not' }
+    $true
   }
 
   # orchestration/07 moved each axis's instructions out of this file and into
@@ -1702,12 +1753,14 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # architecture block deleted — which is the one thing this must catch.
   Assert "architecture reaches ownership boundaries, read from this repo's Context" {
     $c = & $axisSurface 'standards-reviewer'
-    $c -match '(?i)ownership boundar[a-z]+ in `?\.claude/contexts/repository\.md'
+    if (-not ($c -match '(?i)ownership boundar[a-z]+ in `?\.claude/contexts/repository\.md')) { throw '$c does not match: (?i)ownership boundar[a-z]+ in `?\.claude/contexts/repository\.md' }
+    $true
   }
 
   Assert "architecture reaches abstraction the change did not require" {
     $c = & $axisSurface 'standards-reviewer'
-    $c -match '(?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction'
+    if (-not ($c -match '(?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction')) { throw '$c does not match: (?i)abstraction.{0,120}(did ?n.t|did not|does ?n.t|does not|no[t]? .{0,20}require|unnecessary)|(unnecessary|speculative).{0,40}abstraction' }
+    $true
   }
 
   # Headline acceptance criterion: "A diff contradicting an existing ADR is
@@ -1740,7 +1793,8 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
 
   Assert "acceptance is the user's call, never the reviewer's" {
     $c = Get-SkillFile 'review/SKILL.md'
-    $c -match "(?i)accept.{0,80}(user's call|user decides|never the reviewer)|the user.{0,60}accept"
+    if (-not ($c -match "(?i)accept.{0,80}(user's call|user decides|never the reviewer)|the user.{0,60}accept")) { throw 'review/SKILL.md does not match: "(?i)accept.{0,80}(user''s call|user decides|never the reviewer)|the user.{0,60}accept"' }
+    $true
   }
 
   # Decision 21. A review is about a diff; once merged its subject is gone.
@@ -1843,7 +1897,8 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
 
   Assert "the two axes are reported separately, never merged or reranked" {
     $c = Get-SkillFile 'review/SKILL.md'
-    $c -match '(?i)(never|not|do not|don.t) (merge|rerank|re-rank)|(merge|rerank|re-rank).{0,60}(defeats|masks|is the)'
+    if (-not ($c -match '(?i)(never|not|do not|don.t) (merge|rerank|re-rank)|(merge|rerank|re-rank).{0,60}(defeats|masks|is the)')) { throw 'review/SKILL.md does not match: (?i)(never|not|do not|don.t) (merge|rerank|re-rank)|(merge|rerank|re-rank).{0,60}(defeats|masks|is the)' }
+    $true
   }
 
   Assert "the Spec axis reaches missing requirements, scope creep, and wrong implementations" {
@@ -1873,13 +1928,15 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
   # is clean" restates CLAUDE.template.md's rule without repeating its symbols.
   Assert "/review does not restate the Marker rule" {
     $c = Get-SkillFile 'review/SKILL.md'
-    $c -notmatch '(?i)marker.{0,80}(==|matches|equals|is the same as).{0,40}HEAD'
+    if (-not ($c -notmatch '(?i)marker.{0,80}(==|matches|equals|is the same as).{0,40}HEAD')) { throw 'review/SKILL.md still matches what it must not: (?i)marker.{0,80}(==|matches|equals|is the same as).{0,40}HEAD' }
+    $true
   }
 
   # ADR 0001. Every skill derived from matt's says so.
   Assert "attribution to mattpocock survives" {
     $c = Get-SkillFile 'review/SKILL.md'
-    $c -match '(?i)mattpocock/skills'
+    if (-not ($c -match '(?i)mattpocock/skills')) { throw 'review/SKILL.md does not match: (?i)mattpocock/skills' }
+    $true
   }
 }
 
@@ -1888,7 +1945,8 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
 Describe-Ticket 'tenure/06' 'the transaction boundary' {
 
   Assert "/commit ships as a skill" {
-    Test-Path (Join-Path $skills 'commit/SKILL.md')
+    if (-not (Test-Path (Join-Path $skills 'commit/SKILL.md'))) { throw ('nothing at ' + (Join-Path $skills 'commit/SKILL.md')) }
+    $true
   }
 
   # Spec, Scope: "/commit is model-invoked because /implement closes out
@@ -1901,7 +1959,8 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
 
   Assert "work with no ticket is /commit's — the direct-invocation path is stated" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?i)(no ticket|without a ticket|hand-written)'
+    if (-not ($c -match '(?i)(no ticket|without a ticket|hand-written)')) { throw 'commit/SKILL.md does not match: (?i)(no ticket|without a ticket|hand-written)' }
+    $true
   }
 
   # It reads Context to ask the diff-vs-knowledge question, so the always-on
@@ -1983,7 +2042,8 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
 
   Assert "a diff that contradicts Context blocks the commit until Context is corrected" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?i)(contradict|disagree)[a-z]*.{0,200}(block|stop|not commit|before commit)|(block|stop)[a-z]*.{0,200}contradict'
+    if (-not ($c -match '(?i)(contradict|disagree)[a-z]*.{0,200}(block|stop|not commit|before commit)|(block|stop)[a-z]*.{0,200}contradict')) { throw 'commit/SKILL.md does not match: (?i)(contradict|disagree)[a-z]*.{0,200}(block|stop|not commit|before commit)|(block|stop)[a-z]*.{0,200}contradict' }
+    $true
   }
 
   # ADR 0005 leaves authorship with /implement and /design. What /commit does
@@ -2114,7 +2174,8 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # reference, and the writer reaches it by pointer while keeping the payload.
   Assert "the Marker's shape is defined, since /commit is its only writer" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?ms)^```\s*json\s*$.*?commit.*?^```\s*$'
+    if (-not ($c -match '(?ms)^```\s*json\s*$.*?commit.*?^```\s*$')) { throw 'commit/SKILL.md does not match: (?ms)^```\s*json\s*$.*?commit.*?^```\s*$' }
+    $true
   }
 
   # A Marker that is not ignored gets committed, and then it points at the
@@ -2122,14 +2183,16 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # made the file machine-local to avoid.
   Assert "the Marker is confirmed gitignored before it is written" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?i)(ignored|gitignore).{0,200}(before|check|confirm)|(before|check|confirm)[a-z]*.{0,200}(ignored|gitignore)'
+    if (-not ($c -match '(?i)(ignored|gitignore).{0,200}(before|check|confirm)|(before|check|confirm)[a-z]*.{0,200}(ignored|gitignore)')) { throw 'commit/SKILL.md does not match: (?i)(ignored|gitignore).{0,200}(before|check|confirm)|(before|check|confirm)[a-z]*.{0,200}(ignored|gitignore)' }
+    $true
   }
 
   # Acceptance: "The Marker equals HEAD after a successful commit, so the next
   # verification is a single git check and nothing more."
   Assert "the Marker equals HEAD after a successful commit" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?i)marker.{0,120}(==|equals|matches).{0,40}HEAD|HEAD.{0,40}(==|equals|matches).{0,120}marker'
+    if (-not ($c -match '(?i)marker.{0,120}(==|equals|matches).{0,40}HEAD|HEAD.{0,40}(==|equals|matches).{0,120}marker')) { throw 'commit/SKILL.md does not match: (?i)marker.{0,120}(==|equals|matches).{0,40}HEAD|HEAD.{0,40}(==|equals|matches).{0,120}marker' }
+    $true
   }
 
   # Ticket 04: "the Marker re-advances on every amend — through /commit,
@@ -2165,7 +2228,8 @@ Describe-Ticket 'tenure/06' 'the transaction boundary' {
   # was refused.
   Assert "/commit does not resolve tickets — that stays /implement's" {
     $c = Get-SkillFile 'commit/SKILL.md'
-    $c -match '(?i)(does not|never) (resolve|set).{0,80}(ticket|status: resolved)|resolv[a-z]*.{0,80}(stays|remains|is) /implement'
+    if (-not ($c -match '(?i)(does not|never) (resolve|set).{0,80}(ticket|status: resolved)|resolv[a-z]*.{0,80}(stays|remains|is) /implement')) { throw 'commit/SKILL.md does not match: (?i)(does not|never) (resolve|set).{0,80}(ticket|status: resolved)|resolv[a-z]*.{0,80}(stays|remains|is) /implement' }
+    $true
   }
 
   # This repository is the case: no .claude/ at all until ticket 12 runs.
@@ -2205,7 +2269,8 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
 
   foreach ($s in @('research', 'prototype')) {
     Assert "/$s ships as a skill" {
-      Test-Path (Join-Path $skills "$s/SKILL.md")
+      if (-not (Test-Path (Join-Path $skills "$s/SKILL.md"))) { throw ('nothing at ' + (Join-Path $skills "$s/SKILL.md")) }
+      $true
     }
 
     # Acceptance: "Neither is user-invoked — /design must be able to reach both."
@@ -2361,7 +2426,8 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
     $c = Get-SkillFile 'prototype/SKILL.md'
     # Bound to the directory. `.claude/.gitignore` is named in the same
     # paragraph, so a bare `gitignor` match survives the rule being cut.
-    $c -match '(?i)`\.claude/position/prototypes/`[^\n]{0,40}\*{0,2}gitignored'
+    if (-not ($c -match '(?i)`\.claude/position/prototypes/`[^\n]{0,40}\*{0,2}gitignored')) { throw 'prototype/SKILL.md does not match: (?i)`\.claude/position/prototypes/`[^\n]{0,40}\*{0,2}gitignored' }
+    $true
   }
 
   # The ordering is the whole mechanism: deleting code that took real effort is
@@ -2369,7 +2435,8 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
   # comes first.
   Assert "the write-up is written before the code is deleted" {
     $c = Get-SkillFile 'prototype/SKILL.md'
-    $c -match '(?i)(written|write it|record[a-z]*)[^.]{0,80}before[^.]{0,60}delet|not finished until'
+    if (-not ($c -match '(?i)(written|write it|record[a-z]*)[^.]{0,80}before[^.]{0,60}delet|not finished until')) { throw 'prototype/SKILL.md does not match: (?i)(written|write it|record[a-z]*)[^.]{0,80}before[^.]{0,60}delet|not finished until' }
+    $true
   }
 
   # Against the template, not the file. Every one of these words also occurs in
@@ -2427,7 +2494,8 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
 
   Assert "reuse operates on the write-up, not on code that no longer exists" {
     $c = Get-SkillFile 'prototype/SKILL.md'
-    $c -match '(?i)reuse[^.]{0,120}write-?up'
+    if (-not ($c -match '(?i)reuse[^.]{0,120}write-?up')) { throw 'prototype/SKILL.md does not match: (?i)reuse[^.]{0,120}write-?up' }
+    $true
   }
 
   Assert "promotion is a fresh implementation effort, not a file move" {
@@ -2498,7 +2566,8 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
 
   foreach ($s in $onramps) {
     Assert "$s is vendored into ./skills" {
-      Test-Path (Join-Path $skills "$s/SKILL.md")
+      if (-not (Test-Path (Join-Path $skills "$s/SKILL.md"))) { throw ('nothing at ' + (Join-Path $skills "$s/SKILL.md")) }
+      $true
     }
   }
 
@@ -2557,7 +2626,8 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   # template, exactly as tenure/02 placed CLAUDE.template.md before tenure/08.
   Assert "the tracker template ships, and names $trackerPolicy as its home" {
     $t = Get-SkillFile 'configure/policies/tracker.template.md'
-    $t -match [regex]::Escape($trackerPolicy)
+    if (-not ($t -match [regex]::Escape($trackerPolicy))) { throw 'configure/policies/tracker.template.md does not match: [regex]::Escape($trackerPolicy)' }
+    $true
   }
 
   # Decision 35: GitHub and local markdown are both first-class. A template
@@ -2729,7 +2799,8 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
 
   Assert "a handoff is written outside the workspace" {
     $c = Get-SkillFile 'handoff/SKILL.md'
-    $c -match '(?i)(temp|temporary)[^\n]{0,60}director|not[^\n]{0,40}(workspace|repository)'
+    if (-not ($c -match '(?i)(temp|temporary)[^\n]{0,60}director|not[^\n]{0,40}(workspace|repository)')) { throw 'handoff/SKILL.md does not match: (?i)(temp|temporary)[^\n]{0,60}director|not[^\n]{0,40}(workspace|repository)' }
+    $true
   }
 
   # In Tenure most of the state a next session needs is already on disk. A
@@ -2742,7 +2813,8 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
 
   Assert "a handoff redacts secrets before it is written" {
     $c = Get-SkillFile 'handoff/SKILL.md'
-    $c -match '(?i)redact'
+    if (-not ($c -match '(?i)redact')) { throw 'handoff/SKILL.md does not match: (?i)redact' }
+    $true
   }
 
   # --- survey ----------------------------------------------------------------
@@ -2805,11 +2877,13 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   $cfg = 'configure/SKILL.md'
 
   Assert "/configure ships as a skill" {
-    Test-Path (Join-Path $skills $cfg)
+    if (-not (Test-Path (Join-Path $skills $cfg))) { throw ('nothing at ' + (Join-Path $skills $cfg)) }
+    $true
   }
 
   Assert "/configure is user-invoked — a repository joins Tenure because the user asked" {
-    Test-UserInvoked $cfg
+    if (-not (Test-UserInvoked $cfg)) { throw ($cfg + ' does not declare disable-model-invocation: true, so the model can select it') }
+    $true
   }
 
   # Both halves of the name. Existence plus a mention is not disclosure — the
@@ -2934,7 +3008,8 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
 
   Assert "the full move list is confirmed before anything is touched" {
     $s = Get-Section (Get-SkillFile $cfg) 'Plan'
-    $s -match '(?i)before (touching|changing|writing|moving) anything|nothing is (touched|moved|written) (until|before)'
+    if (-not ($s -match '(?i)before (touching|changing|writing|moving) anything|nothing is (touched|moved|written) (until|before)')) { throw ($cfg + ' does not match: (?i)before (touching|changing|writing|moving) anything|nothing is (touched|moved|written) (until|before)') }
+    $true
   }
 
   # "No documentation is deleted without appearing in the confirmed plan."
@@ -2943,7 +3018,8 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # any loose deleted-near-plan pattern while the rule itself is gone.
   Assert "nothing is deleted that did not appear in the confirmed plan" {
     $s = Get-Section (Get-SkillFile $cfg) 'Plan'
-    $s -match '(?is)\b(nothing|never|no)\b[^.]{0,60}delet[^.]{0,80}(confirmed|approved) plan'
+    if (-not ($s -match '(?is)\b(nothing|never|no)\b[^.]{0,60}delet[^.]{0,80}(confirmed|approved) plan')) { throw ($cfg + ' does not match: (?is)\b(nothing|never|no)\b[^.]{0,60}delet[^.]{0,80}(confirmed|approved) plan') }
+    $true
   }
 
   # --- migration ------------------------------------------------------------
@@ -3054,7 +3130,8 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # replaces — a broken link is the failure, so the rule has to name it.
   Assert "a converted file still referenced elsewhere leaves a pointer at the old path" {
     $s = Get-Section (Get-MigrationText) 'pointer'
-    $s -match '(?is)leave[^.]{0,60}pointer[^.]{0,60}old path[^.]{0,60}broken link'
+    if (-not ($s -match '(?is)leave[^.]{0,60}pointer[^.]{0,60}old path[^.]{0,60}broken link')) { throw '$s does not match: (?is)leave[^.]{0,60}pointer[^.]{0,60}old path[^.]{0,60}broken link' }
+    $true
   }
 
   # --- generate -------------------------------------------------------------
@@ -3074,7 +3151,8 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # sends the highest-volume caller to a file that forwards on.
   Assert "the compression test is cited where it lives, not where it used to" {
     $c = Get-SkillFile $cfg
-    $c -match '(?is)compression test[^.]{0,60}`CLAUDE\.md`'
+    if (-not ($c -match '(?is)compression test[^.]{0,60}`CLAUDE\.md`')) { throw ($cfg + ' does not match: (?is)compression test[^.]{0,60}`CLAUDE\.md`') }
+    $true
   }
 
   Assert "CLAUDE.md is written from the template, and the user's existing sections survive" {
@@ -3085,7 +3163,9 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
 
   Assert "repo-discovered standards are emitted as path-scoped .claude/rules/*.md" {
     $c = Get-SkillFile $cfg
-    ($c -match '\.claude/rules/') -and ($c -match '(?i)path-scoped|scoped to')
+    if (-not ($c -match '\.claude/rules/')) { throw ($cfg + ' does not match: \.claude/rules/') }
+    if (-not ($c -match '(?i)path-scoped|scoped to')) { throw ($cfg + ' does not match: (?i)path-scoped|scoped to') }
+    $true
   }
 
   # The mapping, not the word "remote". And the ambiguous case explicitly: a
@@ -3503,7 +3583,8 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
   # nothing unless something says to go and look for the ones without.
   Assert "the edges are scanned for strays, which is what makes the rule checkable" {
     $c = Get-SkillFile $tickets
-    $c -match '(?is)scan the set[^.]{0,160}(stray|edgeless|neither the root)'
+    if (-not ($c -match '(?is)scan the set[^.]{0,160}(stray|edgeless|neither the root)')) { throw ($tickets + ' does not match: (?is)scan the set[^.]{0,160}(stray|edgeless|neither the root)') }
+    $true
   }
 
   # --- relationships, on both trackers --------------------------------------
@@ -3581,7 +3662,9 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
   # unnecessary from being built anyway, so the reason is not optional.
   Assert "obsolete requires a reason and is never deleted" {
     $s = Get-Section (Get-SkillFile $tickets) 'obsolete'
-    ($s -match '(?i)one-line reason') -and ($s -match '(?i)never delet')
+    if (-not ($s -match '(?i)one-line reason')) { throw ($tickets + ' does not match: (?i)one-line reason') }
+    if (-not ($s -match '(?i)never delet')) { throw ($tickets + ' does not match: (?i)never delet') }
+    $true
   }
 
   # ADR 0007. /implement selects from the frontier, so it owns what the
@@ -3749,7 +3832,8 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   foreach ($principle in $placed.Keys) {
     $where = $placed[$principle]
     Assert "principle $principle is placed in $($where.file)" {
-      (Get-SkillFile $where.file) -match $where.pattern
+      if (-not ((Get-SkillFile $where.file) -match $where.pattern)) { throw ($where + ' does not match: $where.pattern') }
+      $true
     }
   }
 
@@ -3757,7 +3841,8 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   # that does not exist is a broken Source Pointer, which is the failure this
   # framework spends most of its always-on budget preventing.
   Assert "the section /implement points at exists in codebase-design" {
-    (Get-SkillFile 'codebase-design/SKILL.md') -match '(?m)^## Files and names\s*$'
+    if (-not ((Get-SkillFile 'codebase-design/SKILL.md') -match '(?m)^## Files and names\s*$')) { throw 'codebase-design/SKILL.md does not match: (?m)^## Files and names\s*$' }
+    $true
   }
 
   # 2 — cut. Neither is checkable, and both are no-ops against the model's own
@@ -3818,9 +3903,10 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
     # prose that happens to name a tier. And `only raise` alone would subsume
     # any alternation put beside it, so the pattern carries the half that makes
     # the gate one-way.
-    ($c -match '(?im)^\|[^|\r\n]*\|\s*Express\s*\|') -and
-    ($c -match '(?im)^\|[^|\r\n]*\|\s*Heavyweight\s*\|') -and
-    ($c -match '(?i)only raise[^\r\n]{0,20}never lower')
+    if (-not ($c -match '(?im)^\|[^|\r\n]*\|\s*Express\s*\|')) { throw 'design/SKILL.md does not match: (?im)^\|[^|\r\n]*\|\s*Express\s*\|' }
+    if (-not ($c -match '(?im)^\|[^|\r\n]*\|\s*Heavyweight\s*\|')) { throw 'design/SKILL.md does not match: (?im)^\|[^|\r\n]*\|\s*Heavyweight\s*\|' }
+    if (-not ($c -match '(?i)only raise[^\r\n]{0,20}never lower')) { throw 'design/SKILL.md does not match: (?i)only raise[^\r\n]{0,20}never lower' }
+    $true
   }
 
   # A rule reached by pointer is not a second home. These two skills lost a
@@ -4175,7 +4261,8 @@ Describe-Ticket 'tenure/17' 'assignment, claim, and the branch as the lock' {
   # exists to preserve.
   Assert "releasing a claim keeps the branch when there is a commit on it" {
     $c = Get-SkillFile $imp
-    $c -match '(?i)partial commit exists[^\r\n]{0,80}keep the branch'
+    if (-not ($c -match '(?i)partial commit exists[^\r\n]{0,80}keep the branch')) { throw ($imp + ' does not match: (?i)partial commit exists[^\r\n]{0,80}keep the branch') }
+    $true
   }
 }
 
@@ -4648,7 +4735,8 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   foreach ($file in $homes.Keys) {
     $path = $homes[$file]
     Assert "$file writes to $($path -replace '\\','')" {
-      (Get-SkillFile $file) -match $path
+      if (-not ((Get-SkillFile $file) -match $path)) { throw ($file + ' does not match: $path') }
+      $true
     }
   }
 
@@ -4766,7 +4854,8 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # ticket that introduced the second site.
   Assert "the layout migration points at the numbering rule instead of restating it" {
     $mig = Get-SkillFile 'configure/MIGRATION.md'
-    $mig -match '\.claude/policies/decisions\.md'
+    if (-not ($mig -match '\.claude/policies/decisions\.md')) { throw 'configure/MIGRATION.md does not match: \.claude/policies/decisions\.md' }
+    $true
   }
 
   # The layout migration's risk is the opposite of the mattpocock migration's:
@@ -4775,7 +4864,8 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # leaves the repository half-migrated and passing.
   Assert "the migration repairs what pointed at the old locations" {
     $mig = Get-SkillFile 'configure/MIGRATION.md'
-    $mig -match '(?is)(Source Pointer|referenc)[^.]{0,300}(broken|update|repair)'
+    if (-not ($mig -match '(?is)(Source Pointer|referenc)[^.]{0,300}(broken|update|repair)')) { throw 'configure/MIGRATION.md does not match: (?is)(Source Pointer|referenc)[^.]{0,300}(broken|update|repair)' }
+    $true
   }
 
   # /configure has to *find* a repository on the old layout, or the branch it
@@ -4784,7 +4874,8 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # file-wide search passes while nothing ever looks for it.
   Assert "detection finds a Tenure repository still on the superseded layout" {
     $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Detect'
-    $s -match '\.claude/docs/'
+    if (-not ($s -match '\.claude/docs/')) { throw 'configure/SKILL.md does not match: \.claude/docs/' }
+    $true
   }
 
   # --- still lazy -----------------------------------------------------------
@@ -5045,7 +5136,8 @@ Describe-Ticket 'layout/03' 'derive tool references per repository, and delete t
   # dropped while its neighbours survive.
   Assert "the single-file test command is still the one entry that must not be missing" {
     $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate'
-    $s -match '(?is)single-file test command[^.]{0,120}(must not be missing|not be missing)'
+    if (-not ($s -match '(?is)single-file test command[^.]{0,120}(must not be missing|not be missing)')) { throw 'configure/SKILL.md does not match: (?is)single-file test command[^.]{0,120}(must not be missing|not be missing)' }
+    $true
   }
 
   # Criterion 5. The gap this whole ticket exists to close: the always-on file
@@ -6224,7 +6316,8 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
   }
 
   Assert "a second loose file is named as a finding rather than tolerated" {
-    (& $layout) -match '(?i)second loose file|category nobody named'
+    if (-not ((& $layout) -match '(?i)second loose file|category nobody named')) { throw '& $layout does not match: (?i)second loose file|category nobody named' }
+    $true
   }
 
   # --- criterion 2: per-clone state has one directory -----------------------
@@ -6323,7 +6416,8 @@ Describe-Ticket 'streamline/05' 'every main directory at the root, and per-clone
   # --- criterion 6: the repository's own ignore file is untouched -----------
 
   Assert "the root ignore file is still left alone" {
-    (Get-SkillFile 'configure/SKILL.md') -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root'
+    if (-not ((Get-SkillFile 'configure/SKILL.md') -match '(?i)root[^\r\n]{0,60}\.gitignore|repository''s own ignore|leav[^\r\n]{0,40}root')) { throw 'configure/SKILL.md does not match: (?i)root[^\r\n]{0,60}\.gitignore|repository''''s own ignore|leav[^\r\n]{0,40}root' }
+    $true
   }
 }
 
@@ -6838,7 +6932,8 @@ Describe-Ticket 'aep/04' 'a discussion is a fourth kind of evidence' {
 Describe-Ticket 'aep/05' 'the protocol file and the entrypoint speak the spec' {
 
   Assert "the protocol file names the protocol it implements" {
-    (Get-SkillFile 'configure/protocol.template.md') -match 'Agentic Engineering Protocol'
+    if (-not ((Get-SkillFile 'configure/protocol.template.md') -match 'Agentic Engineering Protocol')) { throw 'configure/protocol.template.md does not match: Agentic Engineering Protocol' }
+    $true
   }
 
   Assert "the entrypoint places by the specification's tiers" {
@@ -7152,7 +7247,8 @@ Describe-Ticket 'aep/12' 'whatever formats a repository is made to skip .claude/
   # overrides has done the work and not the job.
   Assert "step 6 validates that nothing formatting the repository reaches .claude/" {
     $validate = Get-Section (Get-SkillFile 'configure/SKILL.md') '6 — Validate'
-    $validate -match '(?i)nothing that formats this repository reaches `\.claude/`'
+    if (-not ($validate -match '(?i)nothing that formats this repository reaches `\.claude/`')) { throw 'configure/SKILL.md does not match: (?i)nothing that formats this repository reaches `\.claude/`' }
+    $true
   }
 
   # The reasoning is recorded here and the bound travels in the shipped prose,
@@ -7168,7 +7264,8 @@ Describe-Ticket 'aep/12' 'whatever formats a repository is made to skip .claude/
   # ADR 0006 is bounded, not overturned. Asserted here as well as at its own
   # ticket because this is the change that would have overturned it.
   Assert "ADR 0006's root-ignore rule still stands beside the exception" {
-    (Get-SkillFile 'configure/SKILL.md') -match '(?i)root `?\.gitignore`? is left alone'
+    if (-not ((Get-SkillFile 'configure/SKILL.md') -match '(?i)root `?\.gitignore`? is left alone')) { throw 'configure/SKILL.md does not match: (?i)root `?\.gitignore`? is left alone' }
+    $true
   }
 }
 
@@ -7296,7 +7393,8 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   }
 
   Assert "the audit branch heals an installed protocol file that predates the rename" {
-    (Get-AuditReach) -match "(?s)(?i)framework's name"
+    if (-not ((Get-AuditReach) -match "(?s)(?i)framework's name")) { throw 'Get-AuditReach does not match: "(?s)(?i)framework''s name"' }
+    $true
   }
 }
 
@@ -7309,15 +7407,17 @@ Describe-Ticket 'fieldwork/01' 'the tracker declares what a ticket is, and the m
 
   Assert "the tracker template declares what a ticket is, and carries the detect test" {
     $s = Get-Section (Get-SkillFile $trackerTemplate) 'What a ticket is'
-    ($s -match '(?i)branch-bound') -and
-    ($s -match '(?i)tracked intent') -and
-    ($s -match $rulePattern['the ticket-branch detect test'])
+    if (-not ($s -match '(?i)branch-bound')) { throw ($trackerTemplate + ' does not match: (?i)branch-bound') }
+    if (-not ($s -match '(?i)tracked intent')) { throw ($trackerTemplate + ' does not match: (?i)tracked intent') }
+    if (-not ($s -match $rulePattern['the ticket-branch detect test'])) { throw ($trackerTemplate + ' does not match: $rulePattern[''the ticket-branch detect test'']') }
+    $true
   }
 
   Assert "the maps template places decision work by reading the declaration" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'Where decision work lives'
-    ($s -match '(?i)what a ticket is') -and
-    ($s -match '(?i)design document')
+    if (-not ($s -match '(?i)what a ticket is')) { throw ($mapsTemplate + ' does not match: (?i)what a ticket is') }
+    if (-not ($s -match '(?i)design document')) { throw ($mapsTemplate + ' does not match: (?i)design document') }
+    $true
   }
 
   # The defect that produced the field damage: an unconditional claim that
@@ -7331,17 +7431,21 @@ Describe-Ticket 'fieldwork/01' 'the tracker declares what a ticket is, and the m
 
   Assert "a tracker policy that predates the declaration is a stated configuration gap, not a guess" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'Where decision work lives'
-    ($s -match '(?i)predates') -and ($s -match '(?i)configuration gap')
+    if (-not ($s -match '(?i)predates')) { throw ($mapsTemplate + ' does not match: (?i)predates') }
+    if (-not ($s -match '(?i)configuration gap')) { throw ($mapsTemplate + ' does not match: (?i)configuration gap') }
+    $true
   }
 
   Assert "/configure derives the declaration at generate time" {
     $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Generate'
-    $s -match '(?i)what a ticket is'
+    if (-not ($s -match '(?i)what a ticket is')) { throw 'configure/SKILL.md does not match: (?i)what a ticket is' }
+    $true
   }
 
   Assert "/configure's audit re-checks the declaration against the version-control policy" {
     $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit'
-    $s -match '(?i)what a ticket is'
+    if (-not ($s -match '(?i)what a ticket is')) { throw 'configure/SKILL.md does not match: (?i)what a ticket is' }
+    $true
   }
 }
 
@@ -7361,25 +7465,29 @@ Describe-Ticket 'fieldwork/02' 'the map template stops contradicting the ticket 
 
   Assert "the prose counts three differences, and gives the title its rationale" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'Decision tickets'
-    ($s -match '(?i)three differences') -and
-    ($s -match '(?i)records? the answer')
+    if (-not ($s -match '(?i)three differences')) { throw ($mapsTemplate + ' does not match: (?i)three differences') }
+    if (-not ($s -match '(?i)records? the answer')) { throw ($mapsTemplate + ' does not match: (?i)records? the answer') }
+    $true
   }
 
   Assert "numbering defers to the tracker where the tracker assigns ids" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'Decision tickets'
-    ($s -match '(?i)tracker[^\r\n]{0,60}assigns') -and
-    ($s -match '(?i)only (number|id)')
+    if (-not ($s -match '(?i)tracker[^\r\n]{0,60}assigns')) { throw ($mapsTemplate + ' does not match: (?i)tracker[^\r\n]{0,60}assigns') }
+    if (-not ($s -match '(?i)only (number|id)')) { throw ($mapsTemplate + ' does not match: (?i)only (number|id)') }
+    $true
   }
 
   Assert "a decision edge is answer-gating, never a stacking instruction" {
     $s = Get-SkillFile $mapsTemplate
-    ($s -match $rulePattern['the answer-gating edge rule']) -and
-    ($s -match '(?i)never a stacking')
+    if (-not ($s -match $rulePattern['the answer-gating edge rule'])) { throw ($mapsTemplate + ' does not match: $rulePattern[''the answer-gating edge rule'']') }
+    if (-not ($s -match '(?i)never a stacking')) { throw ($mapsTemplate + ' does not match: (?i)never a stacking') }
+    $true
   }
 
   Assert "the design document's fate after the map exists is stated" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'The map file'
-    $s -match '(?i)supersede'
+    if (-not ($s -match '(?i)supersede')) { throw ($mapsTemplate + ' does not match: (?i)supersede') }
+    $true
   }
 
   # ADR 0036: the lifecycle rides native issue state — a decision resolved by
@@ -7401,25 +7509,29 @@ Describe-Ticket 'fieldwork/03' 'the build lifecycle has a GitHub form' {
   # clause below is conjoined, so deleting any one of them goes red.
   Assert "open and resolved ride the issue's native state" {
     $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
-    ($s -match '(?i)`open`[^\r\n]{0,40}open issue') -and
-    ($s -match '(?i)closed as completed')
+    if (-not ($s -match '(?i)`open`[^\r\n]{0,40}open issue')) { throw ($ticketsTemplate + ' does not match: (?i)`open`[^\r\n]{0,40}open issue') }
+    if (-not ($s -match '(?i)closed as completed')) { throw ($ticketsTemplate + ' does not match: (?i)closed as completed') }
+    $true
   }
 
   Assert "blocked stays open, its reason in the body beside the edges" {
     $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
-    ($s -match '(?i)`blocked`[^\r\n]{0,40}stays open') -and
-    ($s -match '## Blocked')
+    if (-not ($s -match '(?i)`blocked`[^\r\n]{0,40}stays open')) { throw ($ticketsTemplate + ' does not match: (?i)`blocked`[^\r\n]{0,40}stays open') }
+    if (-not ($s -match '## Blocked')) { throw ($ticketsTemplate + ' does not match: ## Blocked') }
+    $true
   }
 
   Assert "obsolete closes as not planned, and the reason comment is mandatory" {
     $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
-    ($s -match $rulePattern['the obsolete-closure form']) -and
-    ($s -match '(?i)not[ -]planned[^\r\n]{0,120}mandatory')
+    if (-not ($s -match $rulePattern['the obsolete-closure form'])) { throw ($ticketsTemplate + ' does not match: $rulePattern[''the obsolete-closure form'']') }
+    if (-not ($s -match '(?i)not[ -]planned[^\r\n]{0,120}mandatory')) { throw ($ticketsTemplate + ' does not match: (?i)not[ -]planned[^\r\n]{0,120}mandatory') }
+    $true
   }
 
   Assert "the GitHub form needs no label the repository does not already have" {
     $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Format'
-    $s -match '(?i)zero (new )?labels'
+    if (-not ($s -match '(?i)zero (new )?labels')) { throw ($ticketsTemplate + ' does not match: (?i)zero (new )?labels') }
+    $true
   }
 
   # The claim this ticket removes. Matched by subject — states represented as
@@ -7434,9 +7546,10 @@ Describe-Ticket 'fieldwork/03' 'the build lifecycle has a GitHub form' {
 
   Assert "the forge reference has the close-as-not-planned invocation, reason flag included" {
     $s = Get-SkillFile $forge
-    ($s -match 'gh issue close') -and
-    ($s -match '--reason "not planned"') -and
-    ($s -match '--comment')
+    if (-not ($s -match 'gh issue close')) { throw ($forge + ' does not match: gh issue close') }
+    if (-not ($s -match '--reason "not planned"')) { throw ($forge + ' does not match: --reason "not planned"') }
+    if (-not ($s -match '--comment')) { throw ($forge + ' does not match: --comment') }
+    $true
   }
 }
 
@@ -7448,8 +7561,9 @@ Describe-Ticket 'fieldwork/04' 'the forge reference covers pinning and sub-issue
 
   Assert "pinning and unpinning are documented invocations" {
     $s = Get-SkillFile $forge
-    ($s -match 'gh issue pin') -and
-    ($s -match 'gh issue unpin')
+    if (-not ($s -match 'gh issue pin')) { throw ($forge + ' does not match: gh issue pin') }
+    if (-not ($s -match 'gh issue unpin')) { throw ($forge + ' does not match: gh issue unpin') }
+    $true
   }
 
   # GitHub's docs cap pinned issues at three, and neither they nor the help
@@ -7457,15 +7571,17 @@ Describe-Ticket 'fieldwork/04' 'the forge reference covers pinning and sub-issue
   # reference.
   Assert "the at-cap behaviour is marked untested, not guessed" {
     $s = Get-Section (Get-SkillFile $forge) 'Pin'
-    ($s -match '(?i)cap') -and
-    ($s -match '(?i)untested')
+    if (-not ($s -match '(?i)cap')) { throw ($forge + ' does not match: (?i)cap') }
+    if (-not ($s -match '(?i)untested')) { throw ($forge + ' does not match: (?i)untested') }
+    $true
   }
 
   # `sub_issue\b` cannot match the plural, so this only passes on the
   # singular removal path the API actually has.
   Assert "sub-issue removal is an invocable entry on the singular path" {
     $s = Get-SkillFile $forge
-    $s -match '(?i)--method DELETE[^\r\n]*/sub_issue\b'
+    if (-not ($s -match '(?i)--method DELETE[^\r\n]*/sub_issue\b')) { throw ($forge + ' does not match: (?i)--method DELETE[^\r\n]*/sub_issue\b') }
+    $true
   }
 
   # `-cmatch`: the whole point is the case of the flag, which `-match` erases.
@@ -7473,8 +7589,11 @@ Describe-Ticket 'fieldwork/04' 'the forge reference covers pinning and sub-issue
   # section, the attach call's own `-F` would satisfy it.
   Assert "the removal entry types its id as an integer, with the trap named" {
     $s = Get-Section (Get-SkillFile $forge) 'sub-issues'
-    ($s -cmatch '(?s)--method DELETE[^\r\n]*sub_issue\b.{0,40}-F sub_issue_id=') -and
-    ($s -match '(?i)integer')
+    if (-not ($s -cmatch '(?s)--method DELETE[^\r\n]*sub_issue\b.{0,40}-F sub_issue_id=')) {
+      throw 'the sub-issues section does not bind an uppercase -F sub_issue_id= to the DELETE invocation'
+    }
+    if (-not ($s -match '(?i)integer')) { throw 'the sub-issues section does not name the integer-typing trap' }
+    $true
   }
 
   # The field run recorded the typing trap as shared with the attach call —
@@ -7496,14 +7615,16 @@ Describe-Ticket 'fieldwork/05' 'the git reference names where the Marker is read
   # wrong recall produced a confident false verification report.
   Assert "the Marker check opens with the read — the path, and the field that yields the commit" {
     $s = Get-Section (Get-SkillFile $gitRef) 'Check the Marker'
-    ($s -match [regex]::Escape('.claude/position/marker.json')) -and
-    ($s -match '"commit"')
+    if (-not ($s -match [regex]::Escape('.claude/position/marker.json'))) { throw ($gitRef + ' does not match: [regex]::Escape(''.claude/position/marker.json'')') }
+    if (-not ($s -match '"commit"')) { throw ($gitRef + ' does not match: "commit"') }
+    $true
   }
 
   Assert "a missing marker file is an answer — unverified — never a path to re-guess" {
     $s = Get-Section (Get-SkillFile $gitRef) 'Check the Marker'
-    ($s -match '(?i)missing') -and
-    ($s -match '(?i)unverified')
+    if (-not ($s -match '(?i)missing')) { throw ($gitRef + ' does not match: (?i)missing') }
+    if (-not ($s -match '(?i)unverified')) { throw ($gitRef + ' does not match: (?i)unverified') }
+    $true
   }
 
   # The single home is the invocation home. The migration table is the one
@@ -7522,11 +7643,13 @@ Describe-Ticket 'fieldwork/05' 'the git reference names where the Marker is read
   # The writer still has to find the path — by pointer, from its own section.
   Assert "/commit's Marker section reaches the path through the git reference" {
     $s = Get-Section (Get-SkillFile 'commit/SKILL.md') 'Advance the Marker'
-    $s -match 'git\.md'
+    if (-not ($s -match 'git\.md')) { throw 'commit/SKILL.md does not match: git\.md' }
+    $true
   }
 
   Assert "/handoff reaches the path through the git reference" {
-    (Get-SkillFile 'handoff/SKILL.md') -match 'tools/git\.md'
+    if (-not ((Get-SkillFile 'handoff/SKILL.md') -match 'tools/git\.md')) { throw 'handoff/SKILL.md does not match: tools/git\.md' }
+    $true
   }
 }
 
@@ -7539,50 +7662,56 @@ Describe-Ticket 'fieldwork/06' 'a build ticket may declare a design increment' {
 
   Assert "the ticket format declares increments: step, question, and type, at design time only" {
     $s = Get-Section (Get-SkillFile $ticketsTemplate) 'Declared increments'
-    ($s -match '(?i)<step>') -and
-    ($s -match '(?i)question') -and
-    ($s -match '(?i)type') -and
-    ($s -match $rulePattern['the increment-declaration timing rule'])
+    if (-not ($s -match '(?i)<step>')) { throw ($ticketsTemplate + ' does not match: (?i)<step>') }
+    if (-not ($s -match '(?i)question')) { throw ($ticketsTemplate + ' does not match: (?i)question') }
+    if (-not ($s -match '(?i)type')) { throw ($ticketsTemplate + ' does not match: (?i)type') }
+    if (-not ($s -match $rulePattern['the increment-declaration timing rule'])) { throw ($ticketsTemplate + ' does not match: $rulePattern[''the increment-declaration timing rule'']') }
+    $true
   }
 
   # The gate conjunct is anchored to the smell sentence itself — 'tier' alone
   # travels with pre-existing §5 text and would survive the clause's deletion.
   Assert "the design stage writes them, and the scope assessment gates the declaration" {
     $s = Get-Section (Get-SkillFile 'design/SKILL.md') 'Plan'
-    ($s -match '(?i)declared increments?') -and
-    ($s -match '(?i)answerable up front')
+    if (-not ($s -match '(?i)declared increments?')) { throw 'design/SKILL.md does not match: (?i)declared increments?' }
+    if (-not ($s -match '(?i)answerable up front')) { throw 'design/SKILL.md does not match: (?i)answerable up front' }
+    $true
   }
 
   # ADR 0037: AFK resolves inline in the same commit; HITL stops at a point
   # the human could schedule, and that stop is not `blocked`.
   Assert "/implement resolves AFK inline and stops at HITL holding the claim, apart from blocked" {
     $s = Get-Section (Get-SkillFile 'implement/SKILL.md') 'Build'
-    ($s -match '(?i)inline') -and
-    ($s -match '(?i)same commit') -and
-    ($s -match $rulePattern['the increment hold rule']) -and
-    ($s -match '(?i)not `?blocked`?')
+    if (-not ($s -match '(?i)inline')) { throw 'implement/SKILL.md does not match: (?i)inline' }
+    if (-not ($s -match '(?i)same commit')) { throw 'implement/SKILL.md does not match: (?i)same commit' }
+    if (-not ($s -match $rulePattern['the increment hold rule'])) { throw 'implement/SKILL.md does not match: $rulePattern[''the increment hold rule'']' }
+    if (-not ($s -match '(?i)not `?blocked`?')) { throw 'implement/SKILL.md does not match: (?i)not `?blocked`?' }
+    $true
   }
 
   # The load-bearing half, shipped in the same edit as the mechanism —
   # without it, declared increments are a scope-creep vector.
   Assert "the guardrail: never invented, and an undeclared decision still blocks" {
     $s = Get-Section (Get-SkillFile 'implement/SKILL.md') 'Build'
-    ($s -match $rulePattern['the increment never-invented guardrail']) -and
-    ($s -match '(?i)undeclared[^\r\n]{0,120}`?blocked`?')
+    if (-not ($s -match $rulePattern['the increment never-invented guardrail'])) { throw 'implement/SKILL.md does not match: $rulePattern[''the increment never-invented guardrail'']' }
+    if (-not ($s -match '(?i)undeclared[^\r\n]{0,120}`?blocked`?')) { throw 'implement/SKILL.md does not match: (?i)undeclared[^\r\n]{0,120}`?blocked`?' }
+    $true
   }
 
   Assert "the map exits on settled-or-declared, naming the tickets that carry increments" {
     $s = Get-Section (Get-SkillFile $mapsTemplate) 'Leaving the map'
-    ($s -match $rulePattern['the map settled-or-declared exit']) -and
-    ($s -match '(?i)which tickets|names[^\r\n]{0,60}tickets')
+    if (-not ($s -match $rulePattern['the map settled-or-declared exit'])) { throw ($mapsTemplate + ' does not match: $rulePattern[''the map settled-or-declared exit'']') }
+    if (-not ($s -match '(?i)which tickets|names[^\r\n]{0,60}tickets')) { throw ($mapsTemplate + ' does not match: (?i)which tickets|names[^\r\n]{0,60}tickets') }
+    $true
   }
 
   # ADR 0029: conform or amend in the same change. The amendment shipped at
   # design capture; this asserts the built behaviour matches its words.
   Assert "the specification's workflow section carries the amendment this conforms to" {
     $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
-    ($spec -match '(?i)design increment') -and
-    ($spec -match 'NEVER invents an increment')
+    if (-not ($spec -match '(?i)design increment')) { throw 'specs.md does not match: (?i)design increment' }
+    if (-not ($spec -match 'NEVER invents an increment')) { throw 'specs.md does not match: NEVER invents an increment' }
+    $true
   }
 }
 
@@ -7594,21 +7723,24 @@ Describe-Ticket 'scaffolding/01' 'a shared tracker never carries protocol-only w
   $protocolOnly = Get-Section (Get-SkillFile $ticketsTemplate) 'A shared tracker never carries protocol-only work'
 
   Assert "the rule: a workflow-created ticket on a shared tracker states an outcome outside the protocol directory" {
-    ($protocolOnly -match $rulePattern['the protocol-only tracker rule']) -and
-    ($protocolOnly -match '(?i)shared tracker')
+    if (-not ($protocolOnly -match $rulePattern['the protocol-only tracker rule'])) { throw '$protocolOnly does not match: $rulePattern[''the protocol-only tracker rule'']' }
+    if (-not ($protocolOnly -match '(?i)shared tracker')) { throw '$protocolOnly does not match: (?i)shared tracker' }
+    $true
   }
 
   Assert "protocol-only work routes by its consumer: a map session, or a declared increment" {
-    ($protocolOnly -match '(?i)map session') -and
-    ($protocolOnly -match '(?i)declared increment')
+    if (-not ($protocolOnly -match '(?i)map session')) { throw '$protocolOnly does not match: (?i)map session' }
+    if (-not ($protocolOnly -match '(?i)declared increment')) { throw '$protocolOnly does not match: (?i)declared increment' }
+    $true
   }
 
   # Both bounds shipped in the same edit as the rule — without them it reads
   # as banning `docs:` work outright, or as binding what humans may file.
   Assert "both bounds: the diff never the commit type, and workflow-created on a shared tracker only" {
-    ($protocolOnly -match '(?i)diff, never the commit type') -and
-    ($protocolOnly -match '(?i)humans file what they like') -and
-    ($protocolOnly -match '(?i)local-markdown tracker[^\r\n]{0,60}nothing to bind')
+    if (-not ($protocolOnly -match '(?i)diff, never the commit type')) { throw '$protocolOnly does not match: (?i)diff, never the commit type' }
+    if (-not ($protocolOnly -match '(?i)humans file what they like')) { throw '$protocolOnly does not match: (?i)humans file what they like' }
+    if (-not ($protocolOnly -match '(?i)local-markdown tracker[^\r\n]{0,60}nothing to bind')) { throw '$protocolOnly does not match: (?i)local-markdown tracker[^\r\n]{0,60}nothing to bind' }
+    $true
   }
 }
 
@@ -7621,17 +7753,20 @@ Describe-Ticket 'scaffolding/02' 'the design PR is the only protocol-only landin
   $lands = Get-Section (Get-SkillFile $vcTemplate) 'How work lands'
 
   Assert "the exception: a design PR's entire diff sits under the protocol directory, one per design run" {
-    ($lands -match $rulePattern['the design-PR exception']) -and
-    ($lands -match '(?is)one\s+per\s+(design\s+)?run')
+    if (-not ($lands -match $rulePattern['the design-PR exception'])) { throw '$lands does not match: $rulePattern[''the design-PR exception'']' }
+    if (-not ($lands -match '(?is)one\s+per\s+(design\s+)?run')) { throw '$lands does not match: (?is)one\s+per\s+(design\s+)?run' }
+    $true
   }
 
   Assert "it is the only protocol-only pull request — everything else rides its consuming build PR" {
-    ($lands -match '(?i)the only one') -and
-    ($lands -match '(?i)rides the build pull request')
+    if (-not ($lands -match '(?i)the only one')) { throw '$lands does not match: (?i)the only one' }
+    if (-not ($lands -match '(?i)rides the build pull request')) { throw '$lands does not match: (?i)rides the build pull request' }
+    $true
   }
 
   Assert "the mechanical test is the diff, not a label or commit type" {
-    $lands -match '(?is)diff,\s+never\s+a\s+label\s+or\s+commit\s+type'
+    if (-not ($lands -match '(?is)diff,\s+never\s+a\s+label\s+or\s+commit\s+type')) { throw '$lands does not match: (?is)diff,\s+never\s+a\s+label\s+or\s+commit\s+type' }
+    $true
   }
 
   # The maps policy names the term and points at the exception's home — the
@@ -7639,8 +7774,9 @@ Describe-Ticket 'scaffolding/02' 'the design PR is the only protocol-only landin
   # path itself moved off the bare docs: commit.
   Assert "the branch-bound landing path names the per-session design PR" {
     $s = Get-SkillFile $mapsTemplate
-    ($s -match '(?i)land as that session.s design PR') -and
-    ($s -notmatch '(?i)lands as its own `?docs:`? commit')
+    if (-not ($s -match '(?i)land as that session.s design PR')) { throw ($mapsTemplate + ' does not match: (?i)land as that session.s design PR') }
+    if (-not ($s -notmatch '(?i)lands as its own `?docs:`? commit')) { throw ($mapsTemplate + ' still matches what it must not: (?i)lands as its own `?docs:`? commit') }
+    $true
   }
 }
 
@@ -7668,31 +7804,35 @@ Describe-Ticket 'scaffolding/03' 'a drift finding is evidence, indexed on the li
   # while the check-off timing survived.
   Assert "the index line: task-list form under Drift found, checked when the healing lands" {
     $c = Get-SkillFile $mapsTemplate
-    ($c -match '(?is)task.list\s+line') -and
-    ($c -match $rulePattern['the drift-finding index line']) -and
-    ($c -match '(?is)checked\s+off\s+when\s+the\s+healing\s+lands') -and
-    ($c -match '(?im)^\#\#\s+Drift\s+found')
+    if (-not ($c -match '(?is)task.list\s+line')) { throw ($mapsTemplate + ' does not match: (?is)task.list\s+line') }
+    if (-not ($c -match $rulePattern['the drift-finding index line'])) { throw ($mapsTemplate + ' does not match: $rulePattern[''the drift-finding index line'']') }
+    if (-not ($c -match '(?is)checked\s+off\s+when\s+the\s+healing\s+lands')) { throw ($mapsTemplate + ' does not match: (?is)checked\s+off\s+when\s+the\s+healing\s+lands') }
+    if (-not ($c -match '(?im)^\#\#\s+Drift\s+found')) { throw ($mapsTemplate + ' does not match: (?im)^\#\#\s+Drift\s+found') }
+    $true
   }
 
   Assert "on GitHub the line rides the body, never a comment" {
     $c = Get-SkillFile $mapsTemplate
-    ($c -match '(?is)body,?\s+never\s+a\s+comment') -and
-    ($c -match '(?is)paginated\s+fetch')
+    if (-not ($c -match '(?is)body,?\s+never\s+a\s+comment')) { throw ($mapsTemplate + ' does not match: (?is)body,?\s+never\s+a\s+comment') }
+    if (-not ($c -match '(?is)paginated\s+fetch')) { throw ($mapsTemplate + ' does not match: (?is)paginated\s+fetch') }
+    $true
   }
 
   Assert "the knowledge policy: a falsified Decision is never healed inline, and the finder is pointed at the form" {
     $c = Get-SkillFile $knowledgeTemplate
-    ($c -match $rulePattern['the decision-drift never-inline rule']) -and
-    ($c -match '(?is)drift\s+finding') -and
-    ($c -match 'evidence\.md')
+    if (-not ($c -match $rulePattern['the decision-drift never-inline rule'])) { throw ($knowledgeTemplate + ' does not match: $rulePattern[''the decision-drift never-inline rule'']') }
+    if (-not ($c -match '(?is)drift\s+finding')) { throw ($knowledgeTemplate + ' does not match: (?is)drift\s+finding') }
+    if (-not ($c -match 'evidence\.md')) { throw ($knowledgeTemplate + ' does not match: evidence\.md') }
+    $true
   }
 
   # Points, not restates: the knowledge template names the form's home and
   # carries none of the kind's contents.
   Assert "the knowledge template points rather than restates the kind" {
     $c = Get-SkillFile $knowledgeTemplate
-    ($c -notmatch $rulePattern['the drift-finding contents']) -and
-    ($c -notmatch '`\.claude/evidence/drift/`')
+    if (-not ($c -notmatch $rulePattern['the drift-finding contents'])) { throw ($knowledgeTemplate + ' still matches what it must not: $rulePattern[''the drift-finding contents'']') }
+    if (-not ($c -notmatch '`\.claude/evidence/drift/`')) { throw ($knowledgeTemplate + ' still matches what it must not: `\.claude/evidence/drift/`') }
+    $true
   }
 
   # ADR 0029: the layout row and the policy row land in the same change; the
@@ -7700,7 +7840,8 @@ Describe-Ticket 'scaffolding/03' 'a drift finding is evidence, indexed on the li
   # from now on.
   Assert "the specification's layout lists drift/ beside the other evidence kinds" {
     $spec = Get-Content (Join-Path $repo 'specs.md') -Raw
-    $spec -match '(?m)^.*out-of-scope/\s+drift/.*$'
+    if (-not ($spec -match '(?m)^.*out-of-scope/\s+drift/.*$')) { throw 'specs.md does not match: (?m)^.*out-of-scope/\s+drift/.*$' }
+    $true
   }
 }
 
@@ -7717,14 +7858,16 @@ Describe-Ticket 'scaffolding/04' 'design discovery surfaces drift, and the set r
   # was built to remove.
   Assert "discovery names the drift-finding read, scoped to what the request plans" {
     $s = Get-Section (Get-SkillFile $design) 'Discover'
-    ($s -match 'evidence/map\.md') -and
-    ($s -match '(?i)this request plans')
+    if (-not ($s -match 'evidence/map\.md')) { throw ($design + ' does not match: evidence/map\.md') }
+    if (-not ($s -match '(?i)this request plans')) { throw ($design + ' does not match: (?i)this request plans') }
+    $true
   }
 
   Assert "set-cutting: no protocol-only ticket, routed by the tickets policy" {
     $s = Get-Section (Get-SkillFile $design) 'Plan'
-    ($s -match '(?i)protocol-only') -and
-    ($s -match 'tickets\.md')
+    if (-not ($s -match '(?i)protocol-only')) { throw ($design + ' does not match: (?i)protocol-only') }
+    if (-not ($s -match 'tickets\.md')) { throw ($design + ' does not match: tickets\.md') }
+    $true
   }
 
   # This ticket places no rule — it wires pointers. The three rules it
@@ -7732,9 +7875,10 @@ Describe-Ticket 'scaffolding/04' 'design discovery surfaces drift, and the set r
   # this anchors the claim to the one file most likely to restate them.
   Assert "the stage points; the rules stay in the policies from 01 and 03" {
     $c = Get-SkillFile $design
-    ($c -notmatch $rulePattern['the protocol-only tracker rule']) -and
-    ($c -notmatch $rulePattern['the drift-finding contents']) -and
-    ($c -notmatch $rulePattern['the decision-drift never-inline rule'])
+    if (-not ($c -notmatch $rulePattern['the protocol-only tracker rule'])) { throw ($design + ' still matches what it must not: $rulePattern[''the protocol-only tracker rule'']') }
+    if (-not ($c -notmatch $rulePattern['the drift-finding contents'])) { throw ($design + ' still matches what it must not: $rulePattern[''the drift-finding contents'']') }
+    if (-not ($c -notmatch $rulePattern['the decision-drift never-inline rule'])) { throw ($design + ' still matches what it must not: $rulePattern[''the decision-drift never-inline rule'']') }
+    $true
   }
 }
 
@@ -7762,8 +7906,9 @@ Describe-Ticket 'scaffolding/05' 'adopt the changed templates here' {
 
   Assert "the installed tickets policy carries the protocol-only rule and its local-markdown bound" {
     $c = Get-Content (Join-Path $repo '.claude/policies/tickets.md') -Raw
-    ($c -match $rulePattern['the protocol-only tracker rule']) -and
-    ($c -match '(?is)local-markdown tracker[^\r\n]{0,60}nothing to bind')
+    if (-not ($c -match $rulePattern['the protocol-only tracker rule'])) { throw '.claude/policies/tickets.md does not match: $rulePattern[''the protocol-only tracker rule'']' }
+    if (-not ($c -match '(?is)local-markdown tracker[^\r\n]{0,60}nothing to bind')) { throw '.claude/policies/tickets.md does not match: (?is)local-markdown tracker[^\r\n]{0,60}nothing to bind' }
+    $true
   }
 
   # Derived, not copied — so this asserts the rule is present, never that the
@@ -7772,8 +7917,9 @@ Describe-Ticket 'scaffolding/05' 'adopt the changed templates here' {
   # ticket 02), and a third assertion would entrench what was merely accepted.
   Assert "the installed version-control policy carries the design-PR exception" {
     $c = Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw
-    ($c -match $rulePattern['the design-PR exception']) -and
-    ($c -match '(?is)every other protocol-only change rides')
+    if (-not ($c -match $rulePattern['the design-PR exception'])) { throw '.claude/policies/version-control.md does not match: $rulePattern[''the design-PR exception'']' }
+    if (-not ($c -match '(?is)every other protocol-only change rides')) { throw '.claude/policies/version-control.md does not match: (?is)every other protocol-only change rides' }
+    $true
   }
 }
 
@@ -13308,6 +13454,153 @@ Describe-Ticket 'citations/01' 'shipped text cites only what resolves where it i
     $t = Get-Content (Join-Path $repo '.claude/tickets/changelog/issues/01-dated-repairs-move-under-the-release-that-caused-them.md') -Raw
     if ($t -notmatch '(?i)recovered from') { throw 'the trail was dropped rather than moved' }
     if ($t -notmatch '1\.7\.0') { throw 'the trail is incomplete' }
+    $true
+  }
+}
+
+# --- ticket probe/01 — one bad file fails one section, not the run -----------
+
+# This section reads `scripts/verify.ps1` rather than `./skills`, which is the
+# third thing a section here can assert against and the rarest. It is deliberate:
+# the claim is about the runner's own structure, and no other tree can carry it.
+#
+# Both assertions parse the script rather than matching text in it. A regex would
+# find its own literal — the guard states the shape it requires, so the shape is
+# present in the file whether or not the runner has it, and the guard passes
+# forever. Parsing asks the question of one function instead of the file.
+Describe-Ticket 'probe/01' 'one bad file fails one section, not the run' {
+
+  # `Get-RepoText` is declared per section rather than beside the other helpers;
+  # two other sections do the same and this follows them rather than hoisting a
+  # third caller's worth of reach into the global scope.
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+
+  # Parsed once; both assertions below walk the same tree.
+  function Get-SectionRunner {
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+      (Join-Path $repo 'scripts/verify.ps1'), [ref]$null, [ref]$errors)
+    if ($errors) { throw "the script does not parse: $($errors[0].Message)" }
+    $fn = $ast.Find({
+      param($n)
+      $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+      $n.Name -eq 'Describe-Ticket'
+    }, $true)
+    if (-not $fn) { throw 'no Describe-Ticket function to check' }
+    $fn
+  }
+
+  Assert "the section runner catches what its body throws" {
+    $fn = Get-SectionRunner
+    $try = $fn.Find({
+      param($n) $n -is [System.Management.Automation.Language.TryStatementAst]
+    }, $true)
+    if (-not $try) {
+      throw 'Describe-Ticket invokes its body unguarded — one throw from a hoisted read ends the run'
+    }
+    # Catching and swallowing would be worse than not catching: the run would
+    # finish green having skipped a section. The handler has to record a failure.
+    $records = $try.CatchClauses | Where-Object {
+      $_.Body.Extent.Text -match '\$script:Failures'
+    }
+    if (-not $records) { throw 'the section runner catches but records nothing — a skipped section would pass' }
+    $true
+  }
+
+  Assert "an aborted section is distinguishable from one whose assertions failed" {
+    $fn = Get-SectionRunner
+    $try = $fn.Find({
+      param($n) $n -is [System.Management.Automation.Language.TryStatementAst]
+    }, $true)
+    if (-not $try) { throw 'nothing is caught, so nothing is reported' }
+    $handler = ($try.CatchClauses | ForEach-Object { $_.Body.Extent.Text }) -join "`n"
+    # The failure line has to say the section stopped early. Without that, an
+    # abort reads in the summary as one ordinary assertion failing, and the
+    # assertions it took down with it are invisible.
+    if ($handler -notmatch '(?i)abort') { throw 'the recorded failure does not say the section aborted' }
+    # The exception's own message is the only thing that says which file or
+    # heading was missing.
+    if ($handler -notmatch '\$_\.Exception\.Message') { throw 'the reason is dropped' }
+    $true
+  }
+
+  # Anchored to the two identifiers and the consequence, never to the wording
+  # around them. The first draft of this guard pinned the word "outside" and
+  # failed against a guide that said the same thing in different words — which
+  # is the defect this effort exists to remove, caught on its own first guard.
+  Assert "the tool guide says which throws are caught where" {
+    $doc = Get-RepoText '.claude/tools/verify.md'
+    # Both scopes named, or the guide describes one catcher and not a boundary.
+    foreach ($scope in @('Assert', 'Describe-Ticket')) {
+      if ($doc -notmatch [regex]::Escape($scope)) { throw "the guide does not name $scope as a scope that catches" }
+    }
+    if ($doc -notmatch '(?i)abort') { throw 'the guide does not describe a section aborting' }
+    # The cost is the whole point of documenting the boundary: a throw caught at
+    # section scope takes that section's other assertions with it. A guide that
+    # names the two scopes without saying that has described a distinction with
+    # no consequence attached.
+    if ($doc -notmatch '(?i)remaining assertions|assertions .{0,20}do not run|rest of (the |that )?section') {
+      throw 'the guide does not say a section-scoped catch costs the rest of the section'
+    }
+    $true
+  }
+}
+
+# --- ticket probe/02 — every failing assertion says what was wrong -----------
+
+# Reads `scripts/verify.ps1`, as probe/01 does and for the same reason: the claim
+# is about the assertions themselves, and they exist in no other tree.
+Describe-Ticket 'probe/02' 'every failing assertion says what was wrong' {
+
+  Assert "no assertion can fail without saying what was wrong" {
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+      (Join-Path $repo 'scripts/verify.ps1'), [ref]$null, [ref]$errors)
+    if ($errors) { throw "the script does not parse: $($errors[0].Message)" }
+
+    # The condition is `Assert`'s second positional argument. Taken from the
+    # parse rather than by matching text, so a condition spanning forty lines
+    # counts once and a `throw` in a neighbouring assertion cannot be credited
+    # to this one.
+    $silent = foreach ($call in $ast.FindAll({
+        param($n)
+        $n -is [System.Management.Automation.Language.CommandAst] -and
+        $n.GetCommandName() -eq 'Assert'
+      }, $true)) {
+      $condition = $call.CommandElements | Where-Object {
+        $_ -is [System.Management.Automation.Language.ScriptBlockExpressionAst]
+      } | Select-Object -First 1
+      if (-not $condition) { continue }
+
+      # Two shapes explain themselves, and only these two.
+      #
+      # A condition holding a `throw` says what was wrong on the path that
+      # throws. A condition whose value is the literal `$true` cannot return
+      # false at all, so its only failure is an exception — raised by a helper
+      # like `Get-Section`, which carries its own message. The `| Out-Null;
+      # $true` sections are that second shape and are sound; an earlier draft
+      # of this guard called them silent and would have "repaired" three
+      # assertions that already explained themselves perfectly.
+      #
+      # Everything else can hand `Assert` a bare $false, and a bare $false is a
+      # failure with the assertion's own name and nothing else.
+      if ($condition.FindAll({
+          param($n) $n -is [System.Management.Automation.Language.ThrowStatementAst] }, $true)) { continue }
+
+      $last = $condition.ScriptBlock.EndBlock.Statements[-1]
+      if ($last.Extent.Text.Trim() -eq '$true') { continue }
+
+      "line $($call.Extent.StartLineNumber): $($call.CommandElements[1].Extent.Text.Trim(""'""))"
+    }
+
+    if ($silent) {
+      throw "$(@($silent).Count) assertion(s) fail with no detail — the first is $(@($silent)[0])"
+    }
     $true
   }
 }
