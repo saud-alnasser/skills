@@ -50,9 +50,15 @@ This repository's own knowledge is not shipped and keeps its citations, and the 
 
 `verify.ps1` asserts this over the shipped surfaces.
 
-## Derived skills carry their attribution
+## Vendored files carry attribution; borrowed shapes do not
 
-Every skill derived from mattpocock/skills says so, in the skill. This is a licence obligation — see `LICENSE` and `NOTICE` — and it survives rewrites of the surrounding text.
+**The test is whether text was copied.** A file holding text vendored from mattpocock/skills says so, in the file, and that line survives rewrites of the surrounding prose. It is a licence obligation — the upstream licence is MIT, and its condition binds copies and substantial portions.
+
+**A structure borrowed from upstream is not a copy.** A two-axis review, a core loop, a branch discipline: copyright protects expression rather than shape, so a file that derived only a shape carries no obligation and states none. Attributing anyway is not free caution — it asserts a licence requirement that does not exist, which misstates the licence exactly as omitting a required one does.
+
+`NOTICE` reproduces the upstream terms in full and stays while any vendored text ships. It is the repository-level notice; the per-file lines are the file-level one, and only vendored files need them.
+
+`verify.ps1` pins the vendored set by name and fails in both directions — vendored text without attribution, and attribution on a file that vendored nothing.
 
 ## Short names are for the keyboard; descriptive names are for the model
 

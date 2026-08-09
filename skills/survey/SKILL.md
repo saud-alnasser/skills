@@ -60,7 +60,3 @@ Hand over what the survey learned and nothing more:
 - the Domain Contexts already loaded
 
 Then stop. **Do not grill here, do not write vocabulary, do not open an ADR.** Those are `/design`'s, and a survey that starts planning has quietly become a second planning surface with none of the gates.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

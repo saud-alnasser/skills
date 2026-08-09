@@ -63,7 +63,3 @@ The flow: decide it is out of scope → check for an existing file → append th
 ## Changing your mind
 
 Delete the file. Old issues are historical records and are not reopened; the new issue that prompted the reconsideration goes through normal triage.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

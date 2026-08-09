@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: superseded
 load-when: a shipped skill's derivation or attribution is in question
 sources: [skills/]
 supersedes: []
-superseded-by: []
+superseded-by: [0066]
 ---
 
 # Vendor mattpocock's skills rather than rewrite them

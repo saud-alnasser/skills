@@ -1932,12 +1932,6 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     $true
   }
 
-  # ADR 0001. Every skill derived from matt's says so.
-  Assert "attribution to mattpocock survives" {
-    $c = Get-SkillFile 'review/SKILL.md'
-    if (-not ($c -match '(?i)mattpocock/skills')) { throw 'review/SKILL.md does not match: (?i)mattpocock/skills' }
-    $true
-  }
 }
 
 # --- ticket tenure/06 — /commit, the transaction boundary ---------------------------
@@ -2548,13 +2542,6 @@ Describe-Ticket 'tenure/07' 'vendor /research and /prototype' {
     $true
   }
 
-  # ADR 0001, checked across every file both skills ship.
-  Assert "attribution to mattpocock survives in both skills" {
-    foreach ($f in @('research/SKILL.md', 'prototype/SKILL.md', 'prototype/LOGIC.md', 'prototype/UI.md')) {
-      if ((Get-SkillFile $f) -notmatch '(?i)mattpocock/skills') { throw "no attribution in $f" }
-    }
-    $true
-  }
 }
 
 # --- ticket tenure/09 — the gap-fillers, and the tracker's one home -----------------
@@ -2608,16 +2595,6 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
     $true
   }
 
-  Assert "every vendored gap-filler keeps its attribution" {
-    $missing = @()
-    foreach ($s in $onramps) {
-      foreach ($f in (Get-ChildItem (Join-Path $skills $s) -File -Filter *.md -ErrorAction SilentlyContinue)) {
-        if ((Get-SkillText $f) -notmatch '(?i)mattpocock/skills') { $missing += "$s/$($f.Name)" }
-      }
-    }
-    if ($missing) { throw ($missing -join ', ') }
-    $true
-  }
 
   # --- the tracker's one home ------------------------------------------------
 
@@ -8376,16 +8353,6 @@ Describe-Ticket 'orchestration/03' 'roles ship as named definitions' {
     $true
   }
 
-  # A licence obligation, and it follows the text rather than the artifact:
-  # three of these roles carry wording lifted from a derived skill, so the
-  # attribution has to travel with it. `portion-builder` is AEP's own.
-  Assert "a role carrying derived text carries its attribution" {
-    foreach ($role in 'spec-reviewer', 'standards-reviewer', 'researcher') {
-      $p = Join-Path $agents "$role.md"
-      if ((Get-Content $p -Raw) -notmatch 'mattpocock/skills') { throw "no attribution in $role.md" }
-    }
-    $true
-  }
 
   # The authoring standards are path-scoped, so a shipped surface they do not
   # name is one where they never load — the rules exist and simply do not fire.
@@ -13407,13 +13374,17 @@ Describe-Ticket 'citations/01' 'shipped text cites only what resolves where it i
     $true
   }
 
-  # The other half, and the one a blunt sweep would break: attribution is a
-  # licence obligation, not navigation, and it is the largest class of reference
-  # in the shipped tree. A rule that removed it would be a licence problem
-  # rather than a tidiness one.
-  Assert "every upstream attribution survives" {
-    $n = @(Get-SkillFiles | Where-Object { (Get-Content $_.FullName -Raw) -match 'mattpocock' }).Count
-    if ($n -lt 10) { throw "only $n shipped files still attribute upstream" }
+  # Attribution is the one class of reference this effort must not touch, and it
+  # is checked by `attribution/01` rather than here — that section pins the
+  # vendored set by name and fails in both directions, where a count could only
+  # ever fail in one. What belongs to *this* ticket is that its own sweep left
+  # attribution alone, which is what the assertion below tests.
+  Assert "the citation sweep did not reach attribution" {
+    foreach ($f in @('grilling/SKILL.md', 'tdd/SKILL.md')) {
+      if ((Get-SkillFile $f) -notmatch '(?i)vendored from \[mattpocock/skills\]') {
+        throw "the sweep removed vendored attribution from $f"
+      }
+    }
     $true
   }
 
@@ -13600,6 +13571,103 @@ Describe-Ticket 'probe/02' 'every failing assertion says what was wrong' {
 
     if ($silent) {
       throw "$(@($silent).Count) assertion(s) fail with no detail — the first is $(@($silent)[0])"
+    }
+    $true
+  }
+}
+
+# --- ticket attribution/01 — attribution follows the vendored set -------------
+
+# The vendored set, pinned by name. It decides whether a licence notice is
+# required on a file, which makes it a fact to check rather than a description to
+# trust — and pinning is the only form that can fail in both directions.
+#
+# Inferring it instead, from the word each file happens to use, would let a file
+# stop saying "vendored" and thereby exempt itself from needing to say anything.
+$vendored = @(
+  'codebase-design/SKILL.md'
+  'domain-modeling/SKILL.md'
+  'grilling/SKILL.md'
+  'review/SMELLS.md'
+  'tdd/SKILL.md'
+)
+
+# An attribution is a claim that THIS file's content came from upstream. A file
+# that merely names the upstream project is not attributing: `commit/SKILL.md`
+# says there is no equivalent there, and `configure/MIGRATION.md` names the
+# migration it performs. Matching on the project name alone would catch both and
+# force a licence notice onto files that borrowed nothing.
+$attribution = '(?i)(vendored|derived) from \[mattpocock/skills\]'
+
+Describe-Ticket 'attribution/01' 'attribution follows the vendored set' {
+
+  # Declared per section, as the other callers of each do.
+  function Get-RepoText {
+    param([string]$RelativePath)
+    $p = Join-Path $repo $RelativePath
+    if (-not (Test-Path $p)) { throw "$RelativePath is missing" }
+    Get-Content $p -Raw
+  }
+  $agents = Join-Path $repo 'agents'
+
+  Assert "NOTICE still reproduces the upstream licence in full" {
+    $n = Get-Content (Join-Path $repo 'NOTICE') -Raw
+    foreach ($required in @('MIT License', 'Copyright \(c\) 2026 Matt Pocock', 'without restriction', 'THE SOFTWARE IS PROVIDED "AS IS"')) {
+      if ($n -notmatch $required) { throw "NOTICE no longer carries: $required" }
+    }
+    $true
+  }
+
+  Assert "every vendored file attributes upstream" {
+    $missing = @($vendored | Where-Object { (Get-SkillFile $_) -notmatch $attribution })
+    if ($missing) { throw "vendored text with no attribution: $($missing -join ', ')" }
+    $true
+  }
+
+  # The other direction, and the one that stops the set regrowing. Nineteen files
+  # attributed upstream for a structure they borrowed rather than text they
+  # copied — a licence obligation asserted where none exists, which misstates the
+  # licence as surely as omitting a required one does.
+  Assert "no file outside the vendored set attributes upstream" {
+    $extra = @()
+    foreach ($f in Get-SkillFiles) {
+      $rel = $f.FullName.Substring($skills.Length).TrimStart('\', '/') -replace '\\', '/'
+      if ($rel -in $vendored) { continue }
+      if ((Get-SkillText $f) -match $attribution) { $extra += $rel }
+    }
+    foreach ($f in (Get-ChildItem $agents -File -Filter *.md -ErrorAction SilentlyContinue)) {
+      if ((Get-Content $f.FullName -Raw) -match $attribution) { $extra += "agents/$($f.Name)" }
+    }
+    if ($extra) { throw "attributes upstream without vendoring it: $($extra -join ', ')" }
+    $true
+  }
+
+  Assert "the rule states the vendored test, and states it once" {
+    $r = Get-RepoText '.claude/rules/skills.md'
+    if ($r -notmatch '(?i)vendored') { throw '.claude/rules/skills.md does not state the vendored test' }
+    if ($r -notmatch '(?i)structure|shape') { throw 'the rule does not say what borrowing a shape does not require' }
+    $ctx = Get-RepoText '.claude/contexts/repository.md'
+    if ($ctx -notmatch '(?i)vendored') { throw '.claude/contexts/repository.md does not state the vendored test' }
+    $true
+  }
+
+  # Scoped to the whole assertion, never to the line. The first draft matched
+  # line by line and passed while the count guard it was written to catch was
+  # still in the file — the counting and the word `mattpocock` sat on adjacent
+  # lines, so no single line held both. A guard that cannot see across its own
+  # subject is the failure this suite spent an effort removing.
+  Assert "no assertion gates attribution on a count of files" {
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+      (Join-Path $repo 'scripts/verify.ps1'), [ref]$null, [ref]$errors)
+    if ($errors) { throw "the script does not parse: $($errors[0].Message)" }
+    foreach ($call in $ast.FindAll({ param($n)
+        $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Assert' }, $true)) {
+      $t = $call.Extent.Text
+      if ($t -notmatch 'mattpocock') { continue }
+      if ($t -match '-(lt|le|gt|ge)\s+\d+') {
+        throw "attribution is gated on a count at line $($call.Extent.StartLineNumber): $($call.CommandElements[1].Extent.Text.Trim(""'""))"
+      }
     }
     $true
   }

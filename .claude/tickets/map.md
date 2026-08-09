@@ -3,6 +3,7 @@
 | Design | Status | Sources |
 | --- | --- | --- |
 | [aep](aep/spec.md) | implemented | `specs.md`, `.claude/tickets/streamline/spec.md`, `skills/`, `.claude/`, `scripts/verify.ps1` |
+| [attribution](attribution/spec.md) | accepted | `NOTICE`, `skills/`, `agents/`, `.claude/rules/skills.md`, `.claude/contexts/repository.md`, `scripts/verify.ps1`, `.claude/decisions/0066-attribution-rides-vendored-material-not-derived-structure.md` |
 | [axis](axis/spec.md) | implemented | `skills/help/SKILL.md`, `skills/triage/SKILL.md`, `skills/survey/SKILL.md`, `.claude/contexts/skill-authoring.md`, `.claude/rules/skills.md`, `.claude/protocol.md`, `scripts/verify.ps1`, `.claude/tickets/entry/spec.md` |
 | [changelog](changelog/spec.md) | implemented | `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `.claude/protocol.md`, `.claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md`, `scripts/verify.ps1` |
 | [citations](citations/spec.md) | implemented | `skills/`, `agents/`, `.claude/rules/skills.md`, `.claude/policies/decisions.md`, `scripts/verify.ps1` |

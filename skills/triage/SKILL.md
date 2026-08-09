@@ -125,7 +125,3 @@ Everything settled during grilling goes under *established*, or the work is lost
 ## Resuming
 
 Prior triage notes mean prior work. Read them, check what the reporter has answered since, and present the updated picture before continuing. Never re-ask a resolved question.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

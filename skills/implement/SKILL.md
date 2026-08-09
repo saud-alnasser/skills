@@ -342,7 +342,3 @@ An **AFK increment does not stop it** — it resolves inline and the run carries
 Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts under `.claude/contexts/`.
 
 `.claude/policies/knowledge.md` says which layers this stage may write, and `.claude/policies/context.md` what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
-
----
-
-Core loop derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

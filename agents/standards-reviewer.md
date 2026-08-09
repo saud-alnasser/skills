@@ -27,7 +27,3 @@ Two rules hold even where the repository documents neither, and this axis is whe
 - **A public interface is documented; private implementation is not.** Flag an undocumented contract callers depend on, and documentation of internals that now has to be kept true for no caller.
 
 Mark each finding a hard violation or a judgement call, and skip anything a linter or formatter already enforces.
-
----
-
-The two-axis structure this role serves is derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.
