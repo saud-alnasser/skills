@@ -24,7 +24,3 @@ Report three categories:
 Quote the spec line for every finding, and mark each a hard violation or a judgement call.
 
 **Never reconstruct the requirements from the diff you are reviewing.** A spec derived from the diff agrees with it by construction, which produces a rubber stamp that still reads like a review. Where you were given no spec, report that you were given none and find nothing.
-
----
-
-The two-axis structure this role serves is derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

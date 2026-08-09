@@ -68,7 +68,3 @@ resting on a secondary source.
 The file stays as the trail showing how a claim was earned. `/research` writes that trail and stops there.
 
 **Never write Context directly**, and never promote a finding yourself. Both rules, and what does happen to a durable finding, are in `.claude/policies/evidence.md`.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

@@ -106,7 +106,3 @@ There is **no reusable-harness exception.** That carve-out gets claimed for almo
 The write-up is **Evidence**: the trail showing how a claim was earned, recording what was verified and when. `.claude/policies/evidence.md` says why that is not a knowledge layer.
 
 **Never write Context directly**, and never promote a write-up yourself. Both rules, and what does happen to a durable result, are in `.claude/policies/evidence.md`.
-
----
-
-Branch structure and the throwaway discipline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

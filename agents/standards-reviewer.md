@@ -21,13 +21,9 @@ The repository's own written standards come first and override any general engin
 
 Architecture is part of this question rather than a third one, because boundaries and ownership are things this repository documents. So: are the ownership boundaries in `.claude/contexts/repository.md` still respected, was an abstraction introduced that the change did not require, and does the diff **contradict an accepted Decision** in `.claude/decisions/`? Say so explicitly, naming the Decision and the line. A contradiction noticed and passed over in silence is worse than one never seen — the record then shows it was reviewed and upheld.
 
-Two rules hold even where the repository documents neither (ADR 0007), and this axis is where a breach is caught:
+Two rules hold even where the repository documents neither, and this axis is where a breach is caught:
 
 - **Comments explain *why*, not *what*.** Flag a comment that would be unnecessary if the code named things honestly — the finding is the naming, not the comment.
 - **A public interface is documented; private implementation is not.** Flag an undocumented contract callers depend on, and documentation of internals that now has to be kept true for no caller.
 
 Mark each finding a hard violation or a judgement call, and skip anything a linter or formatter already enforces.
-
----
-
-The two-axis structure this role serves is derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

@@ -15,7 +15,7 @@ AEP ships as a plugin, so every command below is namespaced to it — `/aep:desi
 
 **Naming a command is not how work starts here.** Describe what you want and the entry rule in `CLAUDE.md` states which stage it enters, then enters it — a bug report reaches diagnosis, an unplanned change reaches `/design`, an issue from outside reaches `/triage`. The route is announced in one line before anything is touched, so a wrong guess costs you a correction rather than a wasted stage.
 
-**Two things stay typed, and it is the same reason twice: their subject is not the repository.** `/configure` acts on the workflow's own installation; `/handoff` acts on this conversation. Neither is implied by describing a problem, because the thing they operate on is not the thing you are describing. Everything else below is reachable by saying what you need — typing its name is a shortcut, never a requirement (ADR 0063).
+**Two things stay typed, and it is the same reason twice: their subject is not the repository.** `/configure` acts on the workflow's own installation; `/handoff` acts on this conversation. Neither is implied by describing a problem, because the thing they operate on is not the thing you are describing. Everything else below is reachable by saying what you need — typing its name is a shortcut, never a requirement.
 
 **First, once: `/configure`.** Nothing below works properly until it has run — it writes the tracker configuration, this repository's own tool commands, and the knowledge everything else reads. See **Knowledge** for what a later run does.
 

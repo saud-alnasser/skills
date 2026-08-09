@@ -22,7 +22,3 @@ A conflict is two intents that a text diff could not reconcile. Recovering both 
 4. **Run this repository's checks** — typecheck, tests, formatter, whatever it has. A merge that compiles is not a merge that works, and the tests are the only thing that distinguishes them.
 
 5. **Finish the operation.** Stage the resolved paths by name and continue; on a rebase, keep going until every commit has landed. The invocations are in `.claude/tools/git.md`.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

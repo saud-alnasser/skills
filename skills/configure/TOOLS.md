@@ -1,6 +1,6 @@
 # Deriving `.claude/tools/`
 
-One directory, one format, one place to look for how to type any command — the workflow's tools and this repository's, together and committed (ADR 0019).
+One directory, one format, one place to look for how to type any command — the workflow's tools and this repository's, together and committed.
 
 Committed is the point: the reference used to ship inside the plugin, so a teammate who cloned without AEP had none of it while still bound by the rule against guessing a CLI. Deriving into a file git tracks is what closes that.
 

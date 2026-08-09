@@ -35,7 +35,3 @@ Include a **suggested skills** section naming what the next agent should invoke,
 **Redact secrets** before writing — API keys, tokens, passwords, anything personally identifying. The file lands outside the repository, where none of the repository's own protections reach it.
 
 If arguments were passed, treat them as what the next session is for, and write to that.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

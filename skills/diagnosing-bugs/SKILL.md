@@ -120,7 +120,3 @@ Before declaring it done:
 - **The hypothesis that turned out to be right is in the commit message**, so the next person to debug this area learns something.
 
 **Then ask what would have prevented this bug.** If the answer is architectural — no good seam, tangled callers, hidden coupling — hand it to `survey` with the specifics, **after** the fix lands: you know more now than you did at the start.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

@@ -10,6 +10,18 @@ Everyday git — `add`, `commit`, `log`, `diff`, `checkout` — needs no entry h
 
 Every entry below is carried over intact, cross-references included — the Graphite note under **Never push** resolves to the derived [graphite.md](graphite.md), since this repository stacks.
 
+## Run the position report
+
+**The next three sections are one command**, and a stage that opens with verification runs that rather than making their reads by hand:
+
+```
+pwsh -NoProfile -File .claude/scripts/report-position.ps1
+```
+
+It checks the Marker, fingerprints the tree, takes both drift reads when an identity differs, prints the position half of the verification report, and writes the Receipt the commit stage refuses without.
+
+This entry is **this repository's own**, which is why it is a section rather than an edit to the ones below: the script is derived per repository from a behavioural specification, so its language and its path are facts about this clone and not about the workflow. The reads stay written out beneath because a reader without the script still needs them.
+
 ## Check the Marker
 
 The Marker is the commit Context was last verified against. `<marker>` below has exactly one source — the marker file, read fresh every time:
@@ -83,6 +95,14 @@ git diff --name-only <marker>..HEAD -- . ":(exclude).claude/"
 ```
 
 Two dots, not three. `<marker>..HEAD` is "what HEAD has that the Marker doesn't"; three dots would fold the Marker's own side back in.
+
+How far HEAD has moved, for the position report's own verdict line — the same range, counted rather than listed:
+
+```
+git rev-list --count <marker>..HEAD
+```
+
+`--count` is in `git rev-list -h`'s option list, and returns `0` for an empty range rather than printing nothing.
 
 Exclude the knowledge paths. A commit that only edited `.claude/contexts/` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
 

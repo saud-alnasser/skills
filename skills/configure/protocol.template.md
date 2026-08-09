@@ -1,5 +1,5 @@
 ---
-aep-version: 1.13.0
+aep-version: 1.14.0
 ---
 
 # Workflow protocol
@@ -80,9 +80,17 @@ See `.claude/tools/git.md` for the exact invocations and for how `--porcelain` o
 
 ## Reported, every time
 
-Every skill that relies on Context opens with a one-line verification report. **Including when there was nothing to verify.** "Marker matches on both facts — drift reads skipped" is a statement; silence is indistinguishable from the check never having run.
+Every skill that relies on Context opens with a verification report. **Including when there was nothing to verify** — silence is indistinguishable from the check never having run.
 
-That report is the only evidence the discipline ran. Verification is never best-effort; this is what makes a lapse visible rather than silent.
+**The report has two halves, and they are not the same kind of statement.**
+
+*Position* is computed — the Marker's two facts against the live two, and the drift lists when they differ. A script derived into `.claude/scripts/` produces it, and the stage **quotes that output rather than composing its own**: the invocations are recorded once in `.claude/tools/`, and reproducing them per stage gives one procedure as many homes as there are stages.
+
+*Judgement* is the stage's own — which Domain Contexts the request routes to, whether a Source Pointer still resolves, whether a Context statement is contradicted by source, and what was done about each. **No script can produce it**, and the stage prints it beneath.
+
+**The position half is attested; the judgement half is not.** The run that computes the position also writes a **Receipt** recording what was seen and which mode it was seen in, and `/commit` refuses a position no Receipt attests. Drawing the boundary is what makes any of this enforceable: the half that can be checked was previously not separated from the half that cannot, which is why the whole report read as something nobody could verify.
+
+**What that does not cover, stated rather than left to inference.** A Receipt proves the position was **computed**, never that the stage read it or acted on it. Verification at use is untouched and unenforced by this — a statement about to be relied on is still checked against the Codebase at the moment of reliance, whatever any Receipt says.
 
 **Where drift was read, the report says which happened to it** — healed, or discounted as outside what the work touches. That is not a second obligation: it is the same sentence the stage was already writing, and it is what makes the re-stamp above auditable rather than asserted. A report that says drift was read and stops has not earned the re-stamp, and the gap between the two reads as a stage that looked and moved on.
 
@@ -98,7 +106,7 @@ A pointer says *start investigating here* — never what exists there. When one 
 
 ## Modes
 
-A mode is the reasoning posture a stage runs under: what it optimises for, what it deliberately gives up, and what finished means while it holds. The definitions live in `.claude/modes/`, one file per posture and nowhere else, because several stages share one posture and a posture restated per stage drifts at one of them. A skill declares exactly one as `metadata.mode` in its frontmatter (ADR 0055), the table below names it per stage, and it holds for exactly as long as the stage runs — read the stage's mode file when the stage starts. Each states what it gives up, because a posture that gives up nothing is not one.
+A mode is the reasoning posture a stage runs under: what it optimises for, what it deliberately gives up, and what finished means while it holds. The definitions live in `.claude/modes/`, one file per posture and nowhere else, because several stages share one posture and a posture restated per stage drifts at one of them. A skill declares exactly one as `metadata.mode` in its frontmatter, the table below names it per stage, and it holds for exactly as long as the stage runs — read the stage's mode file when the stage starts. Each states what it gives up, because a posture that gives up nothing is not one.
 
 ## Which stage a request enters
 
@@ -114,7 +122,7 @@ A mode is the reasoning posture a stage runs under: what it optimises for, what 
 
 **Four of the five rows are read rather than judged.** The Claim is the branch, a ticket is a file or an issue, and an arrival from outside carries a reference — so the only judgement is the first row, telling a question from a change. That is what makes stating a route affordable on every turn, and it is why the table lives here rather than in the always-on tier: the tier carries the obligation, and this carries the lookup.
 
-**Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all (ADR 0061).
+**Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all.
 
 ## Which guides each stage reads
 

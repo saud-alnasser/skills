@@ -115,7 +115,3 @@ around line 150 has the issue.
 ```
 
 No category. No description of current versus desired behaviour. No acceptance criteria, so nothing says when it is done. No scope boundary. And two file paths with line numbers, which is the part that will be wrong first.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

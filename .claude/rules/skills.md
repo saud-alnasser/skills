@@ -38,9 +38,27 @@ Single-home is asserted, not trusted. When a rule is placed, add its guard to `$
 
 Two shapes it takes. A guard written from *your own* new wording matches only that wording, so an existing restatement elsewhere goes unseen — match the subject instead. And a guard covering two claims passes when either holds, so deleting one leaves it green — one assertion per site, anchored to that site.
 
-## Derived skills carry their attribution
+## Shipped text cites only what resolves where it is read
 
-Every skill derived from mattpocock/skills says so, in the skill. This is a licence obligation — see `LICENSE` and `NOTICE` — and it survives rewrites of the surrounding text.
+A file under `skills/` or `agents/` is read in whatever repository AEP is running in, and a template is written verbatim into one. So a reference in either may name only what exists there. `.claude/policies/tickets.md` resolves in every configured repository — that is what installing it is for. `ADR 0058` resolves in exactly one.
+
+**The test is followability, not usefulness.** An ADR number, `specs.md`, or one of its sections points at this repository's own records, and in somebody else's repository it is worse than a dead link: ADRs are numbered from `0001` on the same scheme, so a shipped `ADR 0058` is indistinguishable from theirs.
+
+Delete the citation. Where it was carrying a reason the surrounding prose does not state, **state the reason** — a citation doing real work leaves a hole when it goes, and the hole is invisible because the sentence still reads well.
+
+This repository's own knowledge is not shipped and keeps its citations, and the derived guides are written per repository from that repository's facts, so theirs are read where they resolve. Upstream attribution is exempt for the reason below: it is provenance the licence requires, not navigation.
+
+`verify.ps1` asserts this over the shipped surfaces.
+
+## Vendored files carry attribution; borrowed shapes do not
+
+**The test is whether text was copied.** A file holding text vendored from mattpocock/skills says so, in the file, and that line survives rewrites of the surrounding prose. It is a licence obligation — the upstream licence is MIT, and its condition binds copies and substantial portions.
+
+**A structure borrowed from upstream is not a copy.** A two-axis review, a core loop, a branch discipline: copyright protects expression rather than shape, so a file that derived only a shape carries no obligation and states none. Attributing anyway is not free caution — it asserts a licence requirement that does not exist, which misstates the licence exactly as omitting a required one does.
+
+`NOTICE` reproduces the upstream terms in full and stays while any vendored text ships. It is the repository-level notice; the per-file lines are the file-level one, and only vendored files need them.
+
+`verify.ps1` pins the vendored set by name and fails in both directions — vendored text without attribution, and attribution on a file that vendored nothing.
 
 ## Short names are for the keyboard; descriptive names are for the model
 

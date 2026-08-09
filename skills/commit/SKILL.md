@@ -15,23 +15,35 @@ Two callers, one implementation:
 - **`/implement`**, closing out a ticket it claimed, built, and had reviewed.
 - **A human typing it**, for work with no ticket — hand-written edits, or a change made outside this flow.
 
-`/commit` **confirms, it does not repeat.** Every check below is a question about state. It never runs the tests, never reviews, and never researches — those stages already ran, and re-running them here is the rediscovery ADR 0010 removed from sync.
+`/commit` **confirms, it does not repeat.** Every check below is a question about state. It never runs the tests, never reviews, and never researches — those stages already ran, and re-running them here is the rediscovery that dissolving the sync stage removed.
 
 ## 0 — Verification
 
 This reads Context to check it against the diff, so it opens with the verification report `.claude/protocol.md` requires:
 
 ```
-Verification
-  marker a3f91c2, tree clean — context trusted as-is
-  → contexts loaded: database
+Position
+  marker  a3f91c2  HEAD a3f91c2   commit match
+  tree    9f1d2af  live 9f1d2af   tree match
+  drift   reads skipped
+  mode    session 468b4f04
+
+  contexts loaded: database — trusted as-is
 ```
 
-Nothing to report is still reported. The rule and both drift reads are in `.claude/protocol.md`.
+Nothing to report is still reported. The rule, the split between the computed half and the judged one, and both drift reads are in `.claude/protocol.md`.
+
+**This run's Receipt is what step 1 then reads**, so the report is not a formality here — it is the input to the first question below.
 
 ## 1 — Confirm the stages ran
 
-Three questions. Each is about state, and none re-executes anything.
+Four questions. Each is about state, and none re-executes anything.
+
+- **Was the position attested?** Read the Receipt beside the Marker: it must name `HEAD` as it stands now — before this commit — and this run. There is nothing to recompute, and recomputing would defeat the check: the question is whether the position *was* derived, and a stage that derives it here answers about itself.
+
+  **No Receipt, or one naming a different position, means the report was never computed this run.** Say so, **name the script to run**, and stop. That refusal is recoverable by design, because its two causes are indistinguishable from outside — a stage that skipped verification and a human who deleted their Position directory leave the same absence, and only one is a defect. A refusal the caller cannot act on is the wall this stage's other refusals were written to avoid.
+
+  **A Receipt taken without a run identity attests less, and is accepted saying so.** It shows the position was computed at this commit and cannot show that *this* run computed it. Say which of the two you have; passing it as though it were the stronger one is the silent downgrade the mode field exists to prevent.
 
 - **Were the tests run, and did they pass?** A change with no test surface answers this honestly — an answer stated in one line, not a step skipped.
 - **Did `/review` run, and does every finding have an outcome?** Fixed, ticketed, or accepted-and-recorded. A finding still open is a blocker or a ticket, **never a silent pass**.
@@ -65,7 +77,7 @@ Do this **before staging**, not after committing — the spec is a tracked file,
 pwsh -NoProfile -File .claude/scripts/regenerate-indexes.ps1
 ```
 
-Every generated index is produced from the fields its directory declares, and this is where they are produced (ADR 0057). Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.
+Every generated index is produced from the fields its directory declares, and this is where they are produced. Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.
 
 Run it **before staging**, for the same reason the spec's status is set before staging — the indexes are tracked files, and regenerating after the commit leaves the tree dirty the moment it lands.
 
@@ -98,7 +110,7 @@ What belongs to `/commit` is only the consequence: an amend rewrites the commit,
 
 ## 7 — Advance the Marker
 
-Last, once the commit exists. **A commit cannot contain its own SHA** (ADR 0005) — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
+Last, once the commit exists. **A commit cannot contain its own SHA** — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
 
 Write **both facts** to the marker file — `.claude/tools/git.md` names its path, the read, and the invocation that builds the fingerprint, and it is the only file that does:
 

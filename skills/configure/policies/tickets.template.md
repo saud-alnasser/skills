@@ -42,7 +42,7 @@ implementation list — the ticket says what "done" looks like, and
 
 `blocked-by` is a list of bare ids, and `[]` is a positive statement that this ticket can start immediately rather than the absence of an answer. A `superseded` ticket also declares `superseded-by`, naming what replaced it. A **decision ticket** declares `type` — `grilling`, `prototype`, `research`, `task` — and no build ticket does.
 
-**These fields are the local-markdown form, and only that.** On GitHub the lifecycle rides the issue's native state — the mapping is under Lifecycle, below — and the edges live in the issue body, because the forge owns those facts natively; frontmatter there would be a second home for what the forge already knows, and would render as noise in its issue UI. The asymmetry is deliberate (ADR 0058). `.claude/policies/tracker.md` says which form applies, and `.claude/tools/github.md` has the invocations.
+**These fields are the local-markdown form, and only that.** On GitHub the lifecycle rides the issue's native state — the mapping is under Lifecycle, below — and the edges live in the issue body, because the forge owns those facts natively; frontmatter there would be a second home for what the forge already knows, and would render as noise in its issue UI. The asymmetry is deliberate. `.claude/policies/tracker.md` says which form applies, and `.claude/tools/github.md` has the invocations.
 
 ### Lifecycle
 
@@ -126,7 +126,7 @@ The role is a shipped agent definition, named rather than described. The files a
 
 A ticket with no `## Fan-out` section is a ticket built by one instance, unchanged in every respect.
 
-**A fan-out and an increment needing a human do not run together.** A child has no surface on which to ask one, so a `grilling` or `prototype` increment on a fanned-out ticket **resolves first, in the parent, before anything is dispatched** (ADR 0041). A declaration that would hand such an increment to a child is refused rather than reordered — the portion is wrong, not merely early. An AFK increment — `research` or `task` — needs nobody present and may sit inside a portion.
+**A fan-out and an increment needing a human do not run together.** A child has no surface on which to ask one, so a `grilling` or `prototype` increment on a fanned-out ticket **resolves first, in the parent, before anything is dispatched**. A declaration that would hand such an increment to a child is refused rather than reordered — the portion is wrong, not merely early. An AFK increment — `research` or `task` — needs nobody present and may sit inside a portion.
 
 ## Above Express — slicing
 

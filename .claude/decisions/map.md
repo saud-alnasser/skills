@@ -2,7 +2,7 @@
 
 | ADR | Load when | Status | Sources |
 | --- | --- | --- | --- |
-| [0001](0001-vendor-mattpocock-skills-rather-than-rewrite.md) | a shipped skill's derivation or attribution is in question | accepted | `skills/` |
+| [0001](0001-vendor-mattpocock-skills-rather-than-rewrite.md) | a shipped skill's derivation or attribution is in question | superseded | `skills/` |
 | [0002](0002-routing-table-not-tags-for-context-loading.md) | context loading is being changed, or frontmatter is proposed for routing | accepted | `.claude/contexts/` |
 | [0003](0003-knowledge-at-root-machinery-in-dot-claude.md) | the placement of knowledge at the repository root is argued from history | superseded | `.claude/` |
 | [0004](0004-drift-model.md) | drift is being detected, or its scope decided | accepted | `.claude/protocol.md` |
@@ -66,3 +66,6 @@
 | [0062](0062-continuation-is-bounded-by-the-plans-declared-increments.md) | a build run has to decide whether to take another ticket, or how far autonomous work may go before stopping | accepted | `skills/implement/SKILL.md`, `specs.md`, `.claude/policies/tickets.md` |
 | [0063](0063-two-on-ramps-cross-to-selection-and-the-exemption-is-one-test.md) | which invocation axis a skill sits on is in question, or a skill is proposed as exempt from selection | accepted | `skills/triage/SKILL.md`, `skills/survey/SKILL.md`, `.claude/protocol.md`, `.claude/tickets/entry/spec.md`, `scripts/verify.ps1` |
 | [0064](0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md) | something needs a fact only the running framework holds, or a new plugin component is proposed | accepted | `hooks/hooks.json`, `hooks/check-version.js`, `.claude/protocol.md`, `.claude/evidence/research/2026-08-09-reading-the-plugin-version-from-a-running-stage.md`, `.claude/decisions/0060-the-regenerator-is-derived-from-a-behavioural-specification.md` |
+| [0065](0065-the-audit-is-bounded-by-a-version-cursor.md) | a repair is being added to the configuration stage, or which repairs an audit should run is in question | accepted | `skills/configure/migration-changelog.md`, `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `.claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md` |
+| [0066](0066-attribution-rides-vendored-material-not-derived-structure.md) | attribution to the upstream project is being added, removed, or questioned | accepted | `NOTICE`, `skills/`, `agents/`, `.claude/rules/skills.md` |
+| [0067](0067-the-position-report-is-computed-and-attested-and-attestation-bounds-omission-only.md) | the verification report's enforcement is in question, or what a receipt attests is | accepted | `.claude/protocol.md`, `skills/configure/SCRIPTS.md`, `skills/commit/SKILL.md`, `.claude/scripts/` |
