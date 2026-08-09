@@ -23,4 +23,4 @@ A user instruction overrides everything here — say so when it does, and follow
 
 Ranks 2 and 5 split one directory by how a rule loads: no `paths:` is injected every turn, ranking with `CLAUDE.md`; path-scoped loads when a covered file is read and ranks below Decisions — a standard discovered in part of the tree rather than the whole. `.claude/rules/` holds standards discovered in **this repository**, path-scoped so the harness enforces the scope.
 
-For what is *built* here, `specs.md` is authoritative and `.claude/tickets/` records what was done, `aep/` live. Where it and an ADR disagree, the ADR wins and the specification is amended in the same change (ADR 0029).
+For what is *built* here, `specs.md` is authoritative and `.claude/tickets/` records what was done, `aep/` live. Where it and an ADR disagree, the ADR wins and the specification is amended in the same change.

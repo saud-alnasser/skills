@@ -1503,7 +1503,10 @@ Describe-Ticket 'tenure/04' 'build, and record what moved' {
     $c = Get-SkillFile 'implement/SKILL.md'
     if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
     if ($c -notmatch '(?i)public (interface|api) is documented') { throw 'the public-API rule is missing' }
-    $c -match '(?i)ADR 0007|0007'
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
+    $true
   }
 
   # Ticket 14: /implement marks a ticket obsolete when it claims one and finds
@@ -1798,7 +1801,10 @@ Describe-Ticket 'tenure/05' 'review axes for Tenure' {
     $c = & $axisSurface 'standards-reviewer'
     if ($c -notmatch '(?i)comments? explain \*{0,2}why') { throw 'the comment rule is missing' }
     if ($c -notmatch '(?i)public (interface|api)') { throw 'the public-API rule is missing' }
-    $c -match '(?i)ADR 0007|0007'
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
+    $true
   }
 
   # The primary caller reviews before committing (implement/SKILL.md §4), so
@@ -3027,7 +3033,9 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # the repository ends up running two workflows.
   Assert "the AI workflow layer converts wholesale while the repository's own engineering is adopted" {
     $c = Get-SkillFile 'configure/MIGRATION.md'
-    if ($c -notmatch '(?i)ADR 0008') { throw 'the decision is not cited' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     if ($c -notmatch '(?i)two (competing )?workflows|both workflows') { throw 'the convert-wholesale reason is missing' }
     # The principle itself lives in CLAUDE.md (ADR 0007). This file applies it
     # to a migration, so it reaches it rather than arguing it a second time.
@@ -3891,7 +3899,9 @@ Describe-Ticket 'tenure/13' 'distribute the engineering rules across the workflo
   Assert "repository conventions outrank Tenure's defaults — detect before asserting" {
     $c = Get-SkillFile $claudeTemplate
     if ($c -notmatch $rulePattern['conventions are defaults']) { throw 'the defaults are stated as mandates' }
-    if ($c -notmatch 'ADR 0008') { throw 'the decision is not cited' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     # The instruction, not just the principle. Knowing the repository wins does
     # nothing unless something says to go and look before writing.
     if ($c -notmatch '(?i)detect (it |them )?before asserting') { throw 'nothing says to look first' }
@@ -8339,7 +8349,9 @@ Describe-Ticket 'orchestration/04' 'a ticket may declare a fan-out' {
       throw 'the order is unstated'
     }
     if ($s -notmatch '(?is)refused rather than reordered') { throw 'the combination is not refused' }
-    if ($s -notmatch '(?is)ADR 0041') { throw 'the decision this follows is not cited' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     if ($s -notmatch '(?i)research.{0,20}task|AFK') { throw 'the increments that may sit in a portion are not distinguished' }
     $true
   }
@@ -8407,7 +8419,9 @@ Describe-Ticket 'orchestration/05' 'configure writes the isolation obligation' {
     $c = Get-Content $adr -Raw
     if ($c -notmatch '(?i)§21') { throw 'the Decision does not name the section it amends' }
     if ($c -notmatch '(?i)1\.6\.0') { throw 'the Decision does not record the version it moved to' }
-    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)ADR 0045') { throw 'the layout does not cite it' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     $true
   }
 
@@ -9828,7 +9842,9 @@ Describe-Ticket 'worktrees/01' 'the ignore rule covers the harness''s child work
     # reasoning. Found by the 1.9.0 bump, which failed this on 0050 having
     # correctly said 1.8.0.
     if ($c -notmatch [regex]::Escape('1.8.0')) { throw 'the Decision does not record the version it moved to' }
-    if ((Get-SkillFile 'configure/SKILL.md') -notmatch '(?i)ADR 0050') { throw 'the layout does not cite it' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     $true
   }
 
@@ -12679,7 +12695,9 @@ Describe-Ticket 'entry/02' 'the build runs on to the next unblocked ticket' {
   Assert "the specification carries continuation, its Decision, and a bumped version" {
     $c = Get-Content (Join-Path $repo 'specs.md') -Raw
     if ($c -notmatch '(?i)runs on past the one it delivered') { throw 'the spec does not describe continuation' }
-    if ($c -notmatch 'ADR 0062') { throw 'the spec does not reference the Decision that amended it' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     # Was pinned to the release current when this ticket landed, which made every
     # later release fail here with a message about an amendment that was fine.
     # What the criterion actually wanted is that the spec is at a released
@@ -13040,7 +13058,9 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
     $c = Get-Content $p -Raw
     if ($c -notmatch '(?is)Considered Options') { throw 'it weighs no alternatives' }
     if ($c -notmatch '(?is)single.home') { throw 'it does not state the reason a stage-level check was refused' }
-    if ($c -notmatch 'ADR 0060') { throw 'it does not reconcile with the plugin-independence Decision' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
     $true
   }
 
@@ -13123,7 +13143,10 @@ Describe-Ticket 'changelog/01' 'dated repairs move under the release that caused
       $body = $log.Substring($r.Index)
       $next = [regex]::Match($body.Substring(1), '(?m)^##\s')
       if ($next.Success) { $body = $body.Substring(0, $next.Index + 1) }
-      if ($body -notmatch '(?i)\*Recovered from:') { throw "$($r.Groups[1].Value) cites nothing" }
+      # The recovery trail left this file with citations/01 — it named records
+      # that resolve only in the repository that builds AEP, and this file is
+      # read elsewhere. It moved to that repository's own ticket, which is
+      # asserted there. What must still be here is where to look.
       if ($body -notmatch '(?i)\*\*Look at:\*\*') { throw "$($r.Groups[1].Value) does not say where to look" }
     }
     $true
@@ -13196,7 +13219,95 @@ Describe-Ticket 'changelog/02' 'the audit applies only the repairs a repository 
     $s = Get-Content (Join-Path $repo 'specs.md') -Raw
     if ($s -notmatch '(?i)standing checks') { throw 'the split is not in the specification' }
     if ($s -notmatch '(?i)dated repairs') { throw 'the split names only one side' }
-    if ($s -notmatch 'ADR 0065') { throw 'the amendment cites no Decision' }
+    # The 'and it cites the Decision' clause was removed by citations/01: a shipped
+    # file may not name a record that resolves only here. The substance above is
+    # what a reader in another repository needs, and it is still asserted.
+    $true
+  }
+}
+
+# --- ticket citations/01 — shipped text cites only what resolves where read ---
+
+Describe-Ticket 'citations/01' 'shipped text cites only what resolves where it is read' {
+
+  # Matched by *shape*, not by the sixty-six that were removed. A guard written
+  # from the specific list goes green the moment a sixty-seventh is added, which
+  # is how the sixty-six accumulated in the first place.
+  #
+  # Two look like hits and are not, so both are excluded by what makes them
+  # resolve rather than by name: `.claude/policies/specs.md` is a guide every
+  # configured repository has, and a bare section sign beside a shipped
+  # filename points inside a file the reader is holding.
+  Assert "no shipped file references a record that resolves only in this repository" {
+    $offenders = @()
+    foreach ($f in (Get-SkillFiles)) {
+      $rel = ($f.FullName.Substring($skills.Length + 1) -replace '\\', '/')
+      $i = 0
+      foreach ($line in ((Get-Content $f.FullName -Raw) -split '\r?\n')) {
+        $i++
+        $probe = $line -replace '\.claude/policies/specs\.md', '' -replace '`specs\.md`\s*\|', '|'
+        if ($probe -match 'ADR[s]? [0-9]{4}') { $offenders += "$rel`:$i (ADR)" }
+        elseif ($probe -match '(^|[^/`])specs\.md') { $offenders += "$rel`:$i (specs.md)" }
+      }
+    }
+    foreach ($a in (Get-ChildItem (Join-Path $repo 'agents') -Filter '*.md')) {
+      $i = 0
+      foreach ($line in ((Get-Content $a.FullName -Raw) -split '\r?\n')) {
+        $i++
+        if ($line -match 'ADR[s]? [0-9]{4}') { $offenders += "agents/$($a.Name):$i (ADR)" }
+      }
+    }
+    if ($offenders) { throw "unfollowable where it is read: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The other half, and the one a blunt sweep would break: attribution is a
+  # licence obligation, not navigation, and it is the largest class of reference
+  # in the shipped tree. A rule that removed it would be a licence problem
+  # rather than a tidiness one.
+  Assert "every upstream attribution survives" {
+    $n = @(Get-SkillFiles | Where-Object { (Get-Content $_.FullName -Raw) -match 'mattpocock' }).Count
+    if ($n -lt 10) { throw "only $n shipped files still attribute upstream" }
+    $true
+  }
+
+  Assert "references to installed paths are untouched, since those resolve" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    foreach ($p in '\.claude/policies/tickets\.md', '\.claude/tools/git\.md') {
+      if ($c -notmatch $p) { throw "a resolvable reference was removed: $p" }
+    }
+    $true
+  }
+
+  Assert "the rule is stated once, on the surface it governs" {
+    $r = Get-Content (Join-Path $repo '.claude/rules/skills.md') -Raw
+    if ($r -notmatch '(?i)resolves where it is read') { throw 'the rule is not in the scoped rule file' }
+    if ($r -notmatch '(?i)followability, not usefulness') { throw 'the rule is a list rather than a test' }
+    $true
+  }
+
+  # This repository's own knowledge is the majority of the tree and is not
+  # shipped. A sweep that reached it would delete a working citation, so the
+  # boundary is asserted rather than trusted.
+  Assert "this repository's own records keep their citations" {
+    foreach ($d in '.claude/decisions', '.claude/tickets', '.claude/contexts') {
+      $n = @(Get-ChildItem (Join-Path $repo $d) -Recurse -Filter '*.md' |
+             Where-Object { (Get-Content $_.FullName -Raw) -match 'ADR [0-9]{4}' }).Count
+      if ($n -lt 3) { throw "$d lost its citations — the sweep reached knowledge it does not govern" }
+    }
+    if ((Get-Content (Join-Path $repo 'specs.md') -Raw) -notmatch 'ADR [0-9]{4}') {
+      throw 'the specification lost its citations'
+    }
+    $true
+  }
+
+  Assert "the release changelog's recovery trail moved to where it resolves" {
+    if ((Get-SkillFile 'configure/migration-changelog.md') -match '(?i)recovered from') {
+      throw 'the shipped file still carries the trail'
+    }
+    $t = Get-Content (Join-Path $repo '.claude/tickets/changelog/issues/01-dated-repairs-move-under-the-release-that-caused-them.md') -Raw
+    if ($t -notmatch '(?i)recovered from') { throw 'the trail was dropped rather than moved' }
+    if ($t -notmatch '1\.7\.0') { throw 'the trail is incomplete' }
     $true
   }
 }

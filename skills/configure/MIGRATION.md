@@ -6,7 +6,7 @@ Everything below runs through `/configure`'s plan-and-confirm step. **Nothing is
 
 ## What converts, and what is adopted as found
 
-ADR 0008 draws the line, and `CLAUDE.md` carries the principle it rests on. In a migration: the repository's own engineering is **adopted as found**, and the AI workflow layer converts **wholesale** — that layer is what AEP replaces, and leaving it in place produces **two competing workflows**, each with its own idea of where knowledge lives.
+`CLAUDE.md` carries the principle this rests on, and the line it draws is this. In a migration: the repository's own engineering is **adopted as found**, and the AI workflow layer converts **wholesale** — that layer is what AEP replaces, and leaving it in place produces **two competing workflows**, each with its own idea of where knowledge lives.
 
 | Converts to AEP | Adopted as found |
 | --- | --- |
@@ -36,7 +36,7 @@ The case this will meet most often, since AEP is derived from those skills. Each
 
 ## The AEP layout migration
 
-AEP once grouped decisions, designs, research, and prototype write-ups under `.claude/docs/`. ADR 0018 dissolved that level, so a repository configured before it needs carrying across. This is the one migration whose source *is* AEP — every other row on this page converts somebody else's workflow.
+AEP once grouped decisions, designs, research, and prototype write-ups under `.claude/docs/`. That level was dissolved, so a repository configured before the change needs carrying across. This is the one migration whose source *is* AEP — every other row on this page converts somebody else's workflow.
 
 | From | To |
 | --- | --- |
@@ -46,7 +46,7 @@ AEP once grouped decisions, designs, research, and prototype write-ups under `.c
 | `.claude/docs/prototypes/*` | `.claude/evidence/prototypes/`, unchanged in content |
 | `.claude/docs/out-of-scope/*` | `.claude/evidence/out-of-scope/`, unchanged in content |
 | `.claude/docs/` itself | deleted, once empty |
-| `.claude/tickets/map.md` | `.claude/tickets/<effort>/map.md` — the effort it charts, read from its `# map: <effort name>` title (ADR 0059) |
+| `.claude/tickets/map.md` | `.claude/tickets/<effort>/map.md` — the effort it charts, read from its `# map: <effort name>` title |
 
 **A file moves; it is never rewritten.** Nothing here changes shape — the whole change is which directory the file sits in. Classification does not apply and neither does the compression test: this content was already admitted to AEP once.
 

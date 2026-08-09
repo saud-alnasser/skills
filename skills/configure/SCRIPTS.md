@@ -1,6 +1,6 @@
 # Deriving `.claude/scripts/`
 
-One script, written in the language this repository already uses, producing every generated index from the fields the indexed files declare (ADR 0060).
+One script, written in the language this repository already uses, producing every generated index from the fields the indexed files declare.
 
 **This page is the source of truth, not a copy of anyone's implementation.** A copy in every configured repository forks the moment the shipped one changes; a pointer into the plugin breaks the independence that keeps a repository useful to someone who never installed AEP. A description is neither — so what is specified here is **behaviour**, and the script that satisfies it belongs to the repository.
 
@@ -74,7 +74,7 @@ Four families, and the rule is *every index the workflow generates* — not this
 A field is read from frontmatter and nothing else. Two list shapes exist and they are not interchangeable:
 
 - **Inline** — `sources: [a, b]` — used by contexts, decisions, and evidence.
-- **Block** — the key alone on its line, then indented `- entry` lines — used by specs, because a single pointer can contain a comma (`specs.md §5, §8` is one entry) and inline form would split it silently.
+- **Block** — the key alone on its line, then indented `- entry` lines — used by specs, because a single pointer can contain a comma (`src/api/handlers.ts L40-L90` is one entry) and inline form would split it silently.
 
 **Refuse rather than read as empty.** Every one of these stops the regeneration and names the file:
 
@@ -101,7 +101,7 @@ Specs live either flat in the designs directory or one per effort beside the tic
 | index written to | `.claude/designs/map.md` | `.claude/tickets/map.md` |
 | a row's label / link | `<slug>` / `<slug>.md` | `<effort>` / `<effort>/spec.md` |
 
-Under the effort layout the index is **one level above** every spec rather than beside it, because it spans every effort while each spec belongs to one. ADR 0059 is where that placement is decided, and it decides the same thing for the per-effort fog map, which lives inside its effort's directory at `.claude/tickets/<effort>/map.md` and must not be indexed as a spec.
+Under the effort layout the index is **one level above** every spec rather than beside it, because it spans every effort while each spec belongs to one. The placement rule is where that is decided, and it decides the same thing for the per-effort fog map, which lives inside its effort's directory at `.claude/tickets/<effort>/map.md` and must not be indexed as a spec.
 
 **The two layouts are exclusive.** A tree holding both is refused rather than having one preferred, because preferring one drops every row of the other and reports it as a stale index.
 
@@ -173,6 +173,6 @@ Both files end with a single newline. **Report that this was run and that it mat
 
 ## How it stays right afterwards
 
-**By behaviour, never by text.** There is nothing to compare between this page and an implementation of it, so no entry-comparison check like the one `TOOLS.md` gets applies. The enforcement is ADR 0057's: the suite regenerates each index and compares it against what is committed, so a stale index, a hand-edited one, or a script that has drifted from this page all fail the build.
+**By behaviour, never by text.** There is nothing to compare between this page and an implementation of it, so no entry-comparison check like the one `TOOLS.md` gets applies. The enforcement is the regenerate-and-compare rule's: the suite regenerates each index and compares it against what is committed, so a stale index, a hand-edited one, or a script that has drifted from this page all fail the build.
 
 Which is also why **a generated index is never hand-edited**. The prohibition holds by being checked, not by being asked of whoever opens the file.

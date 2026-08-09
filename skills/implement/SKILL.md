@@ -167,7 +167,7 @@ Typecheck often, and run the single test file often. Run the **full suite once**
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
-Three rules about what gets written, applied even where the repository documents none of them (ADR 0007). `/review` checks them; this is where they are obeyed:
+Three rules about what gets written, applied even where the repository documents none of them. `/review` checks them; this is where they are obeyed:
 
 - **Prefer self-explanatory code.** Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
 - **Comments explain *why*, not *what*.** Constraints, tradeoffs, and reasoning are not recoverable from the code; a comment that restates the line below it goes stale on its own schedule.
@@ -204,7 +204,7 @@ A child based on anything but the claim is **not integrated**. The refusal **nam
 
 `.claude/policies/sub-agents.md` says what a child may do and what its two artifacts contain; the declaration says which roles run and what each owns. Neither is repeated below. What follows is only what this stage does with them.
 
-**Dispatch one child per declared role.** Each gets a brief built from the policy's template, composed now rather than carried on the ticket, because only now has anything read the code. Each runs in its own isolated worktree, so no child can reach another's files — and an isolated child's version-control commands fail if they reach the main checkout, so the boundary holds whether or not a brief mentioned it. Where that worktree is based is configuration rather than anything this stage states (ADR 0044), which is why the base is checked above rather than asserted here.
+**Dispatch one child per declared role.** Each gets a brief built from the policy's template, composed now rather than carried on the ticket, because only now has anything read the code. Each runs in its own isolated worktree, so no child can reach another's files — and an isolated child's version-control commands fail if they reach the main checkout, so the boundary holds whether or not a brief mentioned it. Where that worktree is based is configuration rather than anything this stage states, which is why the base is checked above rather than asserted here.
 
 **Say that the claim has widened, as the children are created.** How far it widens is the policy's; what belongs here is that nobody learns of it at the collision that would otherwise be the first sign.
 

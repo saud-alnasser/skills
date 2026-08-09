@@ -98,7 +98,7 @@ A pointer says *start investigating here* — never what exists there. When one 
 
 ## Modes
 
-A mode is the reasoning posture a stage runs under: what it optimises for, what it deliberately gives up, and what finished means while it holds. The definitions live in `.claude/modes/`, one file per posture and nowhere else, because several stages share one posture and a posture restated per stage drifts at one of them. A skill declares exactly one as `metadata.mode` in its frontmatter (ADR 0055), the table below names it per stage, and it holds for exactly as long as the stage runs — read the stage's mode file when the stage starts. Each states what it gives up, because a posture that gives up nothing is not one.
+A mode is the reasoning posture a stage runs under: what it optimises for, what it deliberately gives up, and what finished means while it holds. The definitions live in `.claude/modes/`, one file per posture and nowhere else, because several stages share one posture and a posture restated per stage drifts at one of them. A skill declares exactly one as `metadata.mode` in its frontmatter, the table below names it per stage, and it holds for exactly as long as the stage runs — read the stage's mode file when the stage starts. Each states what it gives up, because a posture that gives up nothing is not one.
 
 ## Which stage a request enters
 
@@ -114,7 +114,7 @@ A mode is the reasoning posture a stage runs under: what it optimises for, what 
 
 **Four of the five rows are read rather than judged.** The Claim is the branch, a ticket is a file or an issue, and an arrival from outside carries a reference — so the only judgement is the first row, telling a question from a change. That is what makes stating a route affordable on every turn, and it is why the table lives here rather than in the always-on tier: the tier carries the obligation, and this carries the lookup.
 
-**Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all (ADR 0061).
+**Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all.
 
 ## Which guides each stage reads
 

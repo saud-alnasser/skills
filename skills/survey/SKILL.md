@@ -9,7 +9,7 @@ metadata:
 
 Surface architectural friction and propose **deepening opportunities** — changes that turn shallow modules into deep ones. The aim is testability and navigability.
 
-This is a **survey**. It finds candidates and it stops; the chosen one goes to `/design`, which is where planning happens (ADR 0011). Running a grill here would rebuild the whole planning surface inside a survey command, and the second copy is the one that drifts.
+This is a **survey**. It finds candidates and it stops; the chosen one goes to `/design`, which is where planning happens. Running a grill here would rebuild the whole planning surface inside a survey command, and the second copy is the one that drifts.
 
 Built on a shared vocabulary:
 

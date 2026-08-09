@@ -48,7 +48,7 @@ The order is absolute: where they disagree, the Codebase is right — fix the do
 
 ## Requests that would change code
 
-A question gets an answer: load, answer, stop. A change to code, every turn, command or not: route, load, verify, then **state the classification** — what kind of change, how much process, and **which stage it enters** — one line, before touching anything, so the user can disagree. **Then enter that stage**, rather than answering with something for the user to run; the router's table says which (ADR 0061).
+A question gets an answer: load, answer, stop. A change to code, every turn, command or not: route, load, verify, then **state the classification** — what kind of change, how much process, and **which stage it enters** — one line, before touching anything, so the user can disagree. **Then enter that stage**, rather than answering with something for the user to run; the router's table says which.
 
 ## Writing knowledge
 
@@ -56,4 +56,4 @@ CI never modifies repository knowledge: `.claude/contexts/**` and `.claude/decis
 
 ## Conventions
 
-**The workflow's conventions are defaults for when the repository is silent** (ADR 0008): detect before asserting, and where the repository's own convention is genuinely worse, say so once, with reasoning, then follow it. Defaults: `.claude/policies/version-control.md`.
+**The workflow's conventions are defaults for when the repository is silent**: detect before asserting, and where the repository's own convention is genuinely worse, say so once, with reasoning, then follow it. Defaults: `.claude/policies/version-control.md`.

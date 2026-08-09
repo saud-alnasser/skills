@@ -15,7 +15,7 @@ Two callers, one implementation:
 - **`/implement`**, closing out a ticket it claimed, built, and had reviewed.
 - **A human typing it**, for work with no ticket — hand-written edits, or a change made outside this flow.
 
-`/commit` **confirms, it does not repeat.** Every check below is a question about state. It never runs the tests, never reviews, and never researches — those stages already ran, and re-running them here is the rediscovery ADR 0010 removed from sync.
+`/commit` **confirms, it does not repeat.** Every check below is a question about state. It never runs the tests, never reviews, and never researches — those stages already ran, and re-running them here is the rediscovery that dissolving the sync stage removed.
 
 ## 0 — Verification
 
@@ -65,7 +65,7 @@ Do this **before staging**, not after committing — the spec is a tracked file,
 pwsh -NoProfile -File .claude/scripts/regenerate-indexes.ps1
 ```
 
-Every generated index is produced from the fields its directory declares, and this is where they are produced (ADR 0057). Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.
+Every generated index is produced from the fields its directory declares, and this is where they are produced. Commit is the last point at which the tree is known complete: an index regenerated any earlier can be falsified by a later edit in the same change.
 
 Run it **before staging**, for the same reason the spec's status is set before staging — the indexes are tracked files, and regenerating after the commit leaves the tree dirty the moment it lands.
 
@@ -98,7 +98,7 @@ What belongs to `/commit` is only the consequence: an amend rewrites the commit,
 
 ## 7 — Advance the Marker
 
-Last, once the commit exists. **A commit cannot contain its own SHA** (ADR 0005) — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
+Last, once the commit exists. **A commit cannot contain its own SHA** — the whole reason the Marker is machine-local and written here rather than committed with the work it describes.
 
 Write **both facts** to the marker file — `.claude/tools/git.md` names its path, the read, and the invocation that builds the fingerprint, and it is the only file that does:
 

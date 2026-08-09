@@ -18,9 +18,11 @@ Every repair a repository needs because of **which release configured it**, grou
   directory rots because the directory moves underneath it, and a shipped
   release cannot change.
 
-  Every release below cites what its assignment was recovered from, because a
-  repair filed under a release *later* than the one that caused it never fires
-  again on the repositories that need it — and reports success while not firing.
+  A repair filed under a release *later* than the one that caused it never fires
+  again on the repositories that need it, and reports success while not firing.
+  The evidence behind each assignment is recorded where it resolves — in the
+  repository that builds AEP, on the effort that made the assignment — rather
+  than here, where a record number or a commit hash points at nothing.
 -->
 
 ## How the audit reads this
@@ -47,8 +49,6 @@ it declares no version
 
 No repair. This release moved the dated repairs into this file and taught the audit to read it; what changed is the plugin's own shape, and a repository gains it by updating the plugin.
 
-*Recovered from: this effort.*
-
 ## 1.13.0
 
 **Look at:** `.claude/protocol.md`'s frontmatter.
@@ -56,8 +56,6 @@ No repair. This release moved the dated repairs into this file and taught the au
 ### The protocol declares no release
 
 A protocol file with no `aep-version` field gains one, set to the release running the audit. The field is the only thing in that file an audit changes without the change being a repair. Left absent, the session hook cannot report anything and this cursor has nothing to read.
-
-*Recovered from: ADR 0064, which introduced the field and the hook that compares it.*
 
 ## 1.11.0
 
@@ -71,15 +69,13 @@ Nothing else reaches this. The generate step passes over every one of those file
 
 **The existing routing table is the conversion's input, not its casualty.** Its trigger sentences were written for exactly this purpose: carry each onto the file it describes as that file's `load-when`, and carry the Sources column onto the same file. Only where no such sentence exists anywhere — every Decision, since Decisions were never routed — is one being authored.
 
-**That authoring is judgement, and it is the one output nothing can check.** A load condition that describes what a file is *about* passes every assertion this shape adds and silently reintroduces what ADR 0002 rejected. So this repair goes through the plan **file by file, with the sentences visible**, never as a count — a human reading them is the only check there is.
+**That authoring is judgement, and it is the one output nothing can check.** A load condition that describes what a file is *about* passes every assertion this shape adds and silently reintroduces the failure a routing table exists to prevent. So this repair goes through the plan **file by file, with the sentences visible**, never as a count — a human reading them is the only check there is.
 
 Supersession is converted from wherever it is stated today and made symmetric at both ends. **Prose that discusses supersession without claiming it** — "supersedes one consequence of `0025`", "supersedes the layout stated in `0006`" — is **reported, never promoted**: reading it as a claim is a guess about what its author meant, and a partial supersession is not a supersession. Where a claim is partial, say so in the plan rather than rounding it.
 
 Filenames and numbers do not move. The numbering section of `.claude/policies/decisions.md` already governs that, and it governs this conversion exactly as it governs a move.
 
 Then generate both indexes from the fields. A repository already declaring fields is **current**: say so and change nothing.
-
-*Recovered from: the `declared-fields` effort and ADR 0055, planned at `60e5c8d` and first released in 1.11.0 at `df3fe87`.*
 
 ## 1.9.0
 
@@ -97,8 +93,6 @@ Three of AEP's later mechanics land in files a repository already has, so the ge
 
 **The shipped roles arrive with the plugin**, for the reason already recorded twice above: `agents/` belongs to the plugin rather than to the configured repository, so a role gaining a declared mode reaches a repository by updating the plugin and nothing here installs it.
 
-*Recovered from: the `mechanics` effort and ADR 0054, both added at `c688081`, released as 1.9.0.*
-
 ## 1.8.0
 
 **Look at:** `.claude/.gitignore`.
@@ -106,8 +100,6 @@ Three of AEP's later mechanics land in files a repository already has, so the ge
 ### An ignore file that predates the child-workspace rule
 
 An installed `.claude/.gitignore` covering `/position/` and `settings.local.json` but not `/worktrees/` was written before orchestration shipped, and the repository has been accumulating untracked child checkouts ever since. Recognition is by content, and the ignore file is **repaired rather than reported** — a repository configured once does not run the generate branch again on its own, so the audit is the only thing that reaches it.
-
-*Recovered from: the `worktrees` effort at `a24fffa`, "the ignore rule covers the harness's child workspaces", released as 1.8.0.*
 
 ## 1.7.0
 
@@ -129,8 +121,6 @@ A repository configured while orchestration had only one axis carries `.claude/p
 
 **The build stage is not part of it**, for the reason the shipped roles above are not. What a migration can reach is the contract the children read; the stage that dispatches them arrives with the plugin.
 
-*Recovered from: `7e7a461`, "the build stage dispatches sub-agents, on two axes", which added `.claude/policies/sub-agents.md`, both dispatched roles, and ADRs 0044–0046 in one release — 1.7.0. Both axes shipped together, so the one-axis shape exists only in repositories configured from a pre-release tree.*
-
 ## 1.2.0
 
 **Look at:** how `.claude/protocol.md` expands the acronym.
@@ -138,8 +128,6 @@ A repository configured while orchestration had only one axis carries `.claude/p
 ### Heal the framework's name
 
 A protocol file expanding AEP as the *AI* Engineering Protocol was installed before the rename to *Agentic*. The acronym never moved, so nothing is broken and nothing routes on the sentence — which is why only the audit reaches it. One sentence, not a migration.
-
-*Recovered from: `4227ce4`, "rename the framework as agentic engineering protocol", released as 1.2.0.*
 
 ## 1.0.0
 
@@ -159,4 +147,3 @@ Two older shapes exist, and recognition is by content in both. A repository conv
 
 The conversion brings either to the current layout: `.claude/modes/` is installed from the templates, one file per posture; any `### Mode:` sections found in the protocol file are removed in the same pass, because the directory is now their single home; and the routing table gains the mode column with the template's stage-to-mode assignments. Repository-specific rows — extra guides a row names, stages the repository added — are preserved, because they are the part the template cannot know. A file already on the current shape is current, and a re-run changes nothing.
 
-*Recovered from: `b2e66ac`, which both renamed the framework and added `.claude/modes/`, at manifest version 1.0.0. Both repairs are filed at the earliest release rather than split, because 1.0.0 spans the change and the earlier of two plausible releases is the safe direction: an over-eager repair is a no-op, a skipped one is not.*
