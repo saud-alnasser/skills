@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - scripts/verify.ps1
   - .claude/tools/verify.md
