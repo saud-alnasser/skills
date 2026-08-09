@@ -44,7 +44,18 @@ Stacking is implicit: the new branch sits on top of whatever is checked out. To 
 
 `--onto` is how a ticket is built on its blocker rather than on trunk. The branch name is still AEP's — `gt create <name>` takes it explicitly, so do not let `gt` generate one from the commit message.
 
-## Amend the current branch
+## Adopt a branch git created
+
+`gt create` branches *and* commits, so it cannot be used to claim a ticket — the Claim is the branch, and it is made before any work exists to commit. The claim is therefore `git switch -c` ([git.md](git.md)), which leaves a branch Graphite does not know about, and `gt modify` on one fails with `Cannot perform this operation on untracked branch`.
+
+```
+gt track <branch> -p <parent>     # adopt it; parent must already be tracked
+gt track <branch> -f              # ... or take the nearest tracked ancestor
+```
+
+Verified against `gt track --help` on gt 1.8.6. **`-p` is what makes this non-interactive**: without a parent, `gt track` prompts for one, and a prompt in a non-interactive session is a hang rather than an error. `-f` takes precedence over `-p` and is the escape when the intended parent is itself untracked.
+
+Track it **before the first `gt modify`**, not at claim time — a branch with no commit on it has nothing for Graphite to stack.
 
 ```
 gt modify -m "type(scope): summary"     # amend the branch's commit

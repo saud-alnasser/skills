@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.11.0
+**Version:** 1.12.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -94,6 +94,10 @@ Every engineering activity begins with the protocol, and nothing bypasses it, wi
 
 For each task the protocol determines: the activity, the objective, the mode, the workflow, the applicable policies, the required contexts, the relevant tool guides, and the completion requirements. The concrete routing lives in one committed file per repository — the protocol file — holding the stage→dependency table and the verification machinery (§19), reached by pointer so a turn that only answers a question never pays for it.
 
+**The entry stage is determined before anything is touched, stated, and then entered.** A request naming no command still has an activity, and the AI never answers one by telling the human which command to type. Which stage a request enters is mostly *read* rather than judged — whether a claim is held, whether a ticket exists, whether the work arrived from outside — and the judgement that remains is telling a question from a change. The route is stated in the classification line rather than gated on approval, because stating it is what makes a wrong route cost a correction instead of a stage.
+
+**The obligation lives in the boot tier and nowhere else** (§22); the table it routes from lives in the protocol file, with the rest of the routing. The failure being corrected is a stage *not being selected*, and anything that must itself be selected — a router skill above all — cannot correct it, which is what fixes the obligation to the tier that loads unconditionally. The table is not in that tier for the opposite reason: it is a lookup rather than a duty, it names commands, and nothing committed may assume those exist (§22). Consequently a stage the table can name MUST be reachable without being typed, and a stage whose invocation is itself the deliberate act is not a route destination (§11, ADR 0061).
+
 **The table is this repository's actual dependency set**, and that is what distinguishes it from the defaults each skill declares (§11). A skill ships in the framework and cannot know any repository's local guides; the table is written where the repository is, so where the two differ the **table governs**. It is derived by the configuration stage from the skill defaults plus whatever is local, and every stage has exactly one row. A guide a skill declares and its row omits is a defect unless the row records the omission — so dropping one stays possible and stops being silent.
 
 **The table cannot be dropped in favour of the skills' own declarations**, however redundant it looks from inside a session. In a configured repository the skills ship with the framework and are absent from the tree, so the protocol file is the only committed place that can answer what a stage reads — and nothing committed may assume the framework is installed (§22).
@@ -156,7 +160,11 @@ A workflow is procedural: what happens, when, and in what order. Workflows are d
 
 The spine's workflows, in landing order: **configure** (a repository joins the protocol), **design** (the whole planning surface: tickets, specs, decisions, discussions), **implement** (build one ticket end to end), **review** (two axes: does it implement what was asked, and does it follow this repository's standards), **commit** (turn finished work into a commit and advance the marker), with **research** and **prototype** available wherever evidence is missing.
 
-A design MAY declare, on a build ticket and at design time only, a **design increment**: a scoped decision that only partial code can answer, typed by whether it needs the human present. Implementation resolves a declared increment by invoking the design activity scoped to that increment alone — inline where no human is needed, stopping for the human where one is. Implementation NEVER invents an increment; a decision discovered undeclared blocks the ticket, exactly as before. (ADR 0037.) Additional workflows (release, incident, migration) MAY be added under the same contract: declare a mode, declare dependencies, produce artifacts.
+A design MAY declare, on a build ticket and at design time only, a **design increment**: a scoped decision that only partial code can answer, typed by whether it needs the human present. Implementation resolves a declared increment by invoking the design activity scoped to that increment alone — inline where no human is needed, stopping for the human where one is. Implementation NEVER invents an increment; a decision discovered undeclared blocks the ticket, exactly as before. (ADR 0037.)
+
+**An invocation that named no ticket runs on past the one it delivered**, to the next the declared edges leave unblocked, and stops where the plan already said a human is needed — a declared increment of a type requiring one, a ticket blocked, a decision discovered undeclared, a failure, or no unblocked work left. It invents no bound of its own: the stopping points were chosen at design time, on the tickets, by whoever approved them. An invocation that *named* a ticket delivers that one and ends, because taking another would be choosing work it was not given. Every ticket in a continued run is verified, built, reviewed, and closed out on its own terms; continuation governs what follows a delivery and nothing about how one is produced (ADR 0062).
+
+Additional workflows (release, incident, migration) MAY be added under the same contract: declare a mode, declare dependencies, produce artifacts.
 
 ## 11. Skills
 

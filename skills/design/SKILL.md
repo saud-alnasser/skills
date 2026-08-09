@@ -1,7 +1,6 @@
 ---
 name: design
-description: Turn a request into a workable plan — discover, state an understanding, grill, gather evidence, and leave a spec and tickets on disk. Use when starting any piece of work that isn't already planned.
-disable-model-invocation: true
+description: Turn a request into a workable plan — discover, state an understanding, grill, gather evidence, and leave a spec and tickets on disk. Use when a request would change code and no ticket covers it yet, however the request arrived. Not for a question about how something works, and not when a ticket already exists — that is /implement's.
 metadata:
   mode: design
   policies: [decisions, evidence, knowledge, maps, specs, tickets, tracker]

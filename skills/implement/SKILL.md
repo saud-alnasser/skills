@@ -63,9 +63,9 @@ frontier = tickets open, unblocked, unclaimed
 
 **Where the tickets are comes from `.claude/policies/tracker.md`** — the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and lifecycle; `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
 
-If the frontier is empty, say so rather than inventing work. If everything left is blocked, name what blocks it.
+If the frontier is empty, say so rather than inventing work — and where the invocation carried a *request* rather than a ticket, enter `/design` with it rather than stopping. Being told to go and type the planning command is the round trip the entry rule exists to remove. If everything left is blocked, name what blocks it.
 
-**The frontier is build tickets only.** On a shared tracker an issue triaged to `ready-for-agent` sits right beside a ticket `/design` cut, and it is not one: no outcome, no acceptance criteria, no edges. Say which is missing and route it to `/design`. **Do not fill the gaps in yourself** — inventing an outcome for someone else's issue is designing without the grill, on a surface a team reads.
+**The frontier is build tickets only.** On a shared tracker an issue triaged to `ready-for-agent` sits right beside a ticket `/design` cut, and it is not one: no outcome, no acceptance criteria, no edges. Say which is missing and **enter `/design`** — the route is stated and then taken, never handed back as a command for the user to type. **Do not fill the gaps in yourself** — inventing an outcome for someone else's issue is designing without the grill, on a surface a team reads.
 
 A ticket whose work turns out to be already done, or no longer needed, is marked `obsolete` with a one-line reason. Stop there — do not manufacture work to fill it.
 
@@ -75,7 +75,7 @@ Work with no ticket at all — hand-written edits, a change made outside this fl
 
 **Named a ticket, the stage builds that one**, and nothing below dispatches anything: one ticket, one claim, one commit, exactly as it has always run. **A named ticket is never joined by others.** The set exists for the invocation that named none, and a stage that answered a named ticket with several would be choosing work it was not given — which is the rule above, breached by the mode rather than by the pick.
 
-**Named nothing, the unit is a set.** The frontier regularly holds several tickets that gate none of each other, and taking them one invocation at a time makes each wait on the one before it for a reason neither ticket states. So the stage computes the **dispatched set** — the frontier tickets that no `Blocked by` edge orders against each other — and works all of it.
+**Named nothing, the unit is a set** — and the set outlives its first member: when one lands, the run continues to the next unblocked ticket, on the terms section 4 states. The frontier regularly holds several tickets that gate none of each other, and taking them one invocation at a time makes each wait on the one before it for a reason neither ticket states. So the stage computes the **dispatched set** — the frontier tickets that no `Blocked by` edge orders against each other — and works all of it.
 
 Computing a set is not choosing one. The edges were declared by `/design`, and reading a declaration is the opposite of writing one, which is why this does not except the rule above so much as leave it standing. That also fixes the bound: **the set is exactly what the edges permit — never widened, never reordered.** A ticket that looks independent, or that would obviously be fine alongside, is not a member unless the edges say so; no other property of a ticket is consulted, and nothing is added to the ticket format to record one.
 
@@ -314,6 +314,28 @@ Further changes are requested the same way they always were, in the same context
 That guard is what makes the rest safe: `/implement` **amends** rather than stacking `fix typo` commits, so **one ticket stays one commit** — and amending rewrites history, which is only safe while nothing has been pushed.
 
 Each amend produces a new SHA, so the Marker re-advances on **every amend** — through `/commit`, exactly as the first commit did.
+
+### Then take the next ticket
+
+**Where the invocation named a ticket, the run ends here.** That ticket was what was asked for, and taking another would be choosing work nobody gave — the same rule that keeps a named ticket from being joined by others, seen at the other end of the run.
+
+**Where it named none, the unit was a set, and a set is not finished because one member is.** Take the next open, unblocked, unclaimed ticket and build it exactly as this one was built. Approval is not renewed per ticket: being asked to type the same command five times for five tickets already approved is a checkpoint that decides nothing, and it is the friction the entry rule removes at the other end of the plan.
+
+Continuation **stops where the plan already said a human is needed**, and invents no bound of its own:
+
+```
+a declared increment of a HITL type   stop — name the ticket and the question
+a decision discovered undeclared      stop — that is `blocked`, as it always was
+the ticket is blocked                 stop — section 3 has the route
+the build or the suite fails          stop
+nothing unblocked remains             stop, and report what landed
+```
+
+An **AFK increment does not stop it** — it resolves inline and the run carries on, exactly as it does inside a single ticket. So the stopping points were chosen at design time, on the tickets, by the human who approved them; this stage reads them and never widens the reasons to keep going. **A plan that declared no increment runs to the end of its unblocked work** — that is the plan saying so, not this stage deciding it.
+
+**Each ticket is built on its own terms.** Verification, the claim, `tdd`, `/review` on both axes, and the close-out all run per ticket exactly as above. Continuation changes what happens *after* a ticket lands and nothing about how one is built — in particular **the verification report opens every ticket**, because a run that verified once and then built four tickets on that reading is the scan this workflow does not have.
+
+**Report the run, not the last ticket.** Which tickets landed, in order, and why the run stopped. A run that ends saying *resolved*, having landed four of six, is true about the fourth and false about the run.
 
 ## 5 — Record what moved
 

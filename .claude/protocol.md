@@ -90,6 +90,22 @@ A pointer says *start investigating here* — never what exists there. When one 
 
 A mode is the reasoning posture a stage runs under: what it optimises for, what it deliberately gives up, and what finished means while it holds. The definitions live in `.claude/modes/`, one file per posture and nowhere else, because several stages share one posture and a posture restated per stage drifts at one of them. A skill declares exactly one as `metadata.mode` in its frontmatter (ADR 0055), the table below names it per stage, and it holds for exactly as long as the stage runs — read the stage's mode file when the stage starts. Each states what it gives up, because a posture that gives up nothing is not one.
 
+## Which stage a request enters
+
+`CLAUDE.md` requires the entry stage to be stated and then entered. This is the table it states from — read top to bottom, first match wins:
+
+| The request | Enters |
+| --- | --- |
+| a question about how something works | nothing — answer it, and stop |
+| this tree already holds a Claim | `/implement`, resuming that ticket |
+| a ticket exists and is ready to build | `/implement` |
+| it arrived from outside — an issue, a pull request | `/triage` |
+| anything else that would change code | `/design` |
+
+**Four of the five rows are read rather than judged.** The Claim is the branch, a ticket is a file or an issue, and an arrival from outside carries a reference — so the only judgement is the first row, telling a question from a change. That is what makes stating a route affordable on every turn, and it is why the table lives here rather than in the always-on tier: the tier carries the obligation, and this carries the lookup.
+
+**Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all (ADR 0061).
+
 ## Which guides each stage reads
 
 Every stage also loads `.claude/contexts/repository.md` and routes from its table to the Domain Contexts the request touches. That is knowledge rather than a guide, and it is the same for all seven, so it is stated once here instead of once per row. The mode column names the posture the stage runs under, defined in `.claude/modes/`.

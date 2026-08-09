@@ -616,6 +616,12 @@ $rulePattern = [ordered]@{
   # the field name, since both files have a legitimate reason to name the field.
   'the load-condition rule'            = '(?i)never what it is about|never a description of what'
   'the worse-convention escape'        = '(?i)say so\s*\**\s*once, with reasoning'
+  # entry/01. The always-on tier owns the rule that a route is entered rather than
+  # named for the user to type (ADR 0061); every stage obeys it and none restates
+  # it. Anchored on the obligation — entering the stage — rather than on the
+  # destination list, since a stage naming its own destination is applying the
+  # rule and not a second home. `/implement` does exactly that two files away.
+  'the entry-route rule'               = '(?i)enters? that stage'
   # aep/11. The always-on tier owns the workaround-comment test; design's
   # root-cause section is about the *plan* and carries its own anchor.
   'the workaround-comment test'        = '(?i)workaround[^\r\n]{0,80}fix the code'
@@ -1103,6 +1109,12 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     'Claude never silently decides architecture' = '(?i)never silently decid'
     'the instruction precedence chain'           = '(?i)precedence'
     'the cold-request path states a classification' = '(?i)classification'
+    # entry/01. Presence in the *tier* is the whole point: a router that had to be
+    # selected could not fix a stage failing to be selected, so this rule is only
+    # correct where it loads without being chosen. Asserting it over the tier
+    # rather than over a filename keeps it true if the paragraph moves between
+    # unconditional files, exactly as the classification probe above does.
+    'the cold-request path enters the stage it names' = '(?i)enters? that stage'
   }
   foreach ($rule in $alwaysOn.Keys) {
     $pattern = $alwaysOn[$rule]
@@ -1122,8 +1134,28 @@ Describe-Ticket 'tenure/03' 'the whole planning surface' {
     Test-Path (Join-Path $skills 'design/SKILL.md')
   }
 
-  Assert "/design is user-invoked — planning starts because the user asked for it" {
-    Test-UserInvoked 'design/SKILL.md'
+  # entry/01 moved planning across the invocation axis (ADR 0061). The reason the
+  # old assertion carried — "planning starts because the user asked for it" — was
+  # the only record of that choice anywhere, which is how it read as an unexamined
+  # convention until this suite was searched; it lives in the ADR now. Asserted in
+  # the negative direction deliberately: a false pass here leaves planning
+  # unreachable, which is the exact defect the entry rule exists to remove.
+  Assert "/design is model-invoked — a described change reaches planning unasked" {
+    if (Test-UserInvoked 'design/SKILL.md') { throw 'still user-invoked' }
+    $true
+  }
+
+  # For a model-invoked skill the description is the entire basis of selection, so
+  # the guard against planning firing on a question lives in that string and
+  # nowhere else. Both directions are checked: what selects it, and what excludes
+  # it. Checking only the first would pass a description that grills every
+  # question asked of the repository.
+  Assert "/design's description states what selects it and what does not" {
+    $fm = Get-Frontmatter (Get-SkillFile 'design/SKILL.md')
+    if ($fm -notmatch '(?i)would change code') { throw 'does not name a change to code as the condition' }
+    if ($fm -notmatch '(?i)no ticket') { throw 'does not exclude work a ticket already covers' }
+    if ($fm -notmatch '(?i)not for a question') { throw 'does not exclude a question' }
+    $true
   }
 
   # `streamline/03` moved these out of the skill and into guides the configured
@@ -2431,8 +2463,9 @@ Describe-Ticket 'tenure/09' 'vendor the gap-fillers' {
   }
 
   # Alteration checklist item 3. Kept from matt's, because his axes already
-  # satisfy the rule: the two that must fire from a description of the problem
-  # are model-invoked, and the three a human types are not.
+  # satisfy the rule. The test that decides the axis is stated in
+  # `.claude/contexts/skill-authoring.md` and deliberately not restated here —
+  # it was recorded only in this comment until entry/01 gave it a home.
   $axis = @{
     'triage'                        = $true
     'handoff'                       = $true
@@ -6845,8 +6878,23 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   # reasoning about the root namespace was cut for deciding nothing the rule
   # above it had not already decided. It is a deliberate act with a diff, and the
   # cost buys a placement answer on the turn a file is created.
+  # 7,300 for entry/01's obligation: the classification line gains the entry
+  # stage, and the stage is then entered rather than named for the user to run
+  # (ADR 0061). Unconditional because the failure it corrects is a stage *not
+  # being selected* — anything reached by selection, a router skill above all,
+  # cannot fix that, so this is only correct in the tier that loads without being
+  # chosen. Measured 7,213.
+  #
+  # Paid down before the raise, and worth distinguishing from the relocation this
+  # ratchet exists to refuse: the first version carried the destination table in
+  # the tier too, at ~490 characters. The table moved to the protocol file, which
+  # cut the addition to ~170 — but it moved because the always-on tier may name no
+  # command (tenure/20, streamline/02), not to fit a budget. The router is where
+  # concrete routing already lives; the ceiling relief is a consequence of the
+  # correct placement rather than the reason for it. The tier keeps the
+  # obligation, which is the part that must fire on every turn.
   Assert "the always-on load is under the stated ceiling, measured rather than described" {
-    $ceiling = 7100
+    $ceiling = 7300
     $total = 0
     $unscoped = @('CLAUDE.md')
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
@@ -7158,9 +7206,9 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.11.0, not a draft" {
+  Assert "the specification is released at 1.12.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.11\.0\s*$') { throw 'the specification is not at a released 1.11.0' }
+    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.12\.0\s*$') { throw 'the specification is not at a released 1.12.0' }
     $true
   }
 
@@ -12426,6 +12474,178 @@ Describe-Ticket 'placement' 'everything AEP owns lives under .claude/, and only 
                'modes', 'tools', 'evidence', 'tickets', 'designs', 'position')
     $offenders = @($owned | Where-Object { Test-Path (Join-Path $repo $_) })
     if ($offenders) { throw "AEP-owned entries at the root: $($offenders -join ', ')" }
+    $true
+  }
+}
+
+# --- ticket entry/01 — a request states where it enters -----------------------
+
+Describe-Ticket 'entry/01' 'a request states where it enters, and planning is selectable' {
+
+  # ADR 0025: the template moves before the installed copy, and both in the same
+  # change. Compared on the rule rather than whole, unlike the placement rule
+  # above — that one is copied as-is, while this repository's CLAUDE.md carries
+  # sections the template never had, so a whole-file comparison would assert
+  # something that was never true and would have to be relaxed on first run.
+  Assert "the entry rule ships in the template and is installed here" {
+    $pair = [ordered]@{
+      'template'            = Get-SkillFile $claudeTemplate
+      'installed CLAUDE.md' = Get-Content (Join-Path $repo 'CLAUDE.md') -Raw
+    }
+    foreach ($where in $pair.Keys) {
+      if ($pair[$where] -notmatch '(?i)enters? that stage') { throw "the $where does not carry the entry rule" }
+      if ($pair[$where] -notmatch '(?i)which stage it enters') { throw "the $where does not add the entry to the classification line" }
+    }
+    $true
+  }
+
+  # A rule that says "enter the right stage" and names none is advice. The mapping
+  # is what makes it followable — and it belongs in the router rather than beside
+  # the obligation, because it names commands and nothing in the always-on tier
+  # may assume a command exists. That constraint is asserted by tenure/20 and
+  # streamline/02; this asserts the table landed somewhere it is allowed to be.
+  Assert "the router carries the table the entry rule states from" {
+    foreach ($c in (Get-SkillFile 'configure/protocol.template.md'),
+                   (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
+      foreach ($dest in '/implement', '/triage', '/design') {
+        if ($c -notmatch [regex]::Escape($dest)) { throw "the table names no destination $dest" }
+      }
+      if ($c -notmatch '(?i)first match wins') { throw 'the table does not say how it is read' }
+      if ($c -notmatch '(?i)read rather than judged') { throw 'the table does not say which rows are lookups' }
+    }
+    $true
+  }
+
+  # The always-on tier keeps the obligation and hands off the lookup. Asserted
+  # from the other side too: a tier that named a destination would pass every
+  # check above while breaking the no-command constraint, and the two failures
+  # would be reported far from this ticket.
+  Assert "the always-on tier states the obligation and names no destination" {
+    $c = Get-SkillFile $claudeTemplate
+    if ($c -notmatch '(?i)the router') { throw 'does not hand off to the router' }
+    foreach ($dest in '/implement', '/triage', '/design') {
+      if ($c -match [regex]::Escape($dest)) { throw "the always-on tier names $dest" }
+    }
+    $true
+  }
+
+  # A single-home guard is only worth having if it can fire. Asserted rather than
+  # confirmed by hand once, because the hand check is not repeated when the rule
+  # is later reworded: it must match the one home, and must *not* match the stage
+  # that legitimately applies the rule two files away — which is exactly the
+  # guard-that-cannot-discriminate shape `.claude/rules/skills.md` says to assume
+  # you have just written.
+  Assert "the entry-route guard tells its home from an application of it" {
+    $pattern = $rulePattern['the entry-route rule']
+    if ((Get-SkillFile $claudeTemplate) -notmatch $pattern) { throw 'does not match its own home' }
+    if ((Get-SkillFile 'implement/SKILL.md') -match $pattern) { throw '/implement matches it, but applies the rule rather than restating it' }
+    $true
+  }
+
+  # The round trip this ticket exists to remove: the build stage finds no ticket
+  # and answers with the name of a command. Both sites — the untriaged issue, and
+  # the invocation that carried a request rather than a ticket.
+  Assert "/implement enters planning rather than naming it" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)enter\s+`?/design`?') { throw 'never states that it enters /design' }
+    if ($c -match '(?i)route it to `/design`') { throw 'still hands the route back as an instruction to type' }
+    $true
+  }
+
+  # The specification is amended in the same change as the framework (ADR 0029).
+  Assert "the specification describes how the entry stage is determined" {
+    $c = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ($c -notmatch '(?i)entry stage is determined') { throw 'does not describe entry determination' }
+    if ($c -notmatch '(?i)boot tier and nowhere else') { throw 'does not place the rule in the boot tier' }
+    $true
+  }
+
+  # Until this ticket the axis test existed only as a comment beside the
+  # invocation assertions — a home no reader deciding how to author a skill would
+  # think to open. It has a real one now, and this checks the comment points
+  # rather than keeping the second copy that made it drift-prone.
+  Assert "the invocation-axis test is stated in context, not beside the assertions" {
+    $ctx = Get-Content (Join-Path $repo '.claude/contexts/skill-authoring.md') -Raw
+    if ($ctx -notmatch '(?i)fire from a description of the problem') { throw 'the context does not state the axis test' }
+    $self = Get-Content (Join-Path $repo 'scripts/verify.ps1') -Raw
+    if ($self -match '(?im)^\s*#.{0,90}the two that must fire from a description') {
+      throw 'this suite still restates the axis test in a comment'
+    }
+    $true
+  }
+}
+
+# --- ticket entry/02 — the build runs on to the next unblocked ticket ---------
+
+Describe-Ticket 'entry/02' 'the build runs on to the next unblocked ticket' {
+
+  # Continuation belongs to the set, not to a named ticket. Both directions are
+  # asserted: a stage that continued after being handed one ticket would be
+  # choosing work it was not given, which is the rule step 1 already carries.
+  Assert "continuation belongs to the invocation that named nothing" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)next open, unblocked, unclaimed ticket') { throw 'never states that it takes the next ticket' }
+    if ($c -notmatch '(?i)named a ticket, the run ends here') { throw 'does not end the run after a ticket it was handed' }
+    $true
+  }
+
+  # The bound is ADR 0062's: the plan's own declared increments, and nothing this
+  # stage invented. Each stop is asserted by name, because a list that lost one
+  # would still read as a list — and the one most likely to go is the undeclared
+  # decision, which is the oldest of them and the least specific to this ticket.
+  Assert "continuation stops where the plan says a human is needed" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    foreach ($stop in 'HITL type', 'discovered undeclared', 'is blocked', 'fails', 'nothing unblocked remains') {
+      if ($c -notmatch [regex]::Escape($stop)) { throw "the stop conditions omit: $stop" }
+    }
+    if ($c -notmatch '(?i)AFK increment does not stop it') { throw 'does not say an AFK increment carries on' }
+    if ($c -notmatch '(?i)invents no bound of its own') { throw 'does not refuse a bound of its own' }
+    $true
+  }
+
+  # The failure a continued run makes newly possible: verifying once and building
+  # four tickets on that reading, which is the startup scan this workflow does not
+  # have. Nothing else in the skill would catch it, because each ticket's own
+  # section reads correctly in isolation.
+  Assert "every ticket in a continued run opens with its own verification" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)verification report opens every ticket') { throw 'does not require a report per ticket' }
+    $true
+  }
+
+  # A run that lands four of six and reports the fourth is true about the ticket
+  # and false about the run. Nothing else in this workflow ends partially, so a
+  # reader has no habit to fall back on.
+  Assert "a continued run reports the run rather than its last ticket" {
+    $c = Get-SkillFile 'implement/SKILL.md'
+    if ($c -notmatch '(?i)report the run, not the last ticket') { throw 'does not require a run-level report' }
+    if ($c -notmatch '(?i)why the run stopped') { throw 'does not require the stopping reason' }
+    $true
+  }
+
+  # specs.md is normative and is amended in the same change (ADR 0029), and its
+  # own evolution rule requires the amendment to be a Decision with a version bump.
+  Assert "the specification carries continuation, its Decision, and a bumped version" {
+    $c = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ($c -notmatch '(?i)runs on past the one it delivered') { throw 'the spec does not describe continuation' }
+    if ($c -notmatch 'ADR 0062') { throw 'the spec does not reference the Decision that amended it' }
+    if ($c -notmatch '(?im)^\*\*Version:\*\*\s*1\.12\.0\s*$') { throw 'the version was not bumped for the amendment' }
+    $true
+  }
+
+  # Supersession is written at both ends or not at all (ADR-format rule). Neither
+  # of this effort's ADRs supersedes anything, so what is checked is that they
+  # declare the pair rather than omitting the fields.
+  Assert "this effort's Decisions declare the routing and supersession fields" {
+    foreach ($n in '0061-unplanned-work-enters-the-spine-from-the-boot-tier',
+                   '0062-continuation-is-bounded-by-the-plans-declared-increments') {
+      $p = Join-Path $repo ".claude/decisions/$n.md"
+      if (-not (Test-Path $p)) { throw "missing: $n" }
+      $fm = Get-Content $p -Raw
+      foreach ($field in 'status', 'load-when', 'sources', 'supersedes', 'superseded-by') {
+        if ($fm -notmatch "(?m)^$field\s*:") { throw "$n declares no $field" }
+      }
+    }
     $true
   }
 }
