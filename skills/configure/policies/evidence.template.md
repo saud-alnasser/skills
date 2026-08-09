@@ -42,7 +42,7 @@ falsifies: [.claude/policies/tracker.md]
 | `kind` | which of the five this is | the index |
 | `falsifies` | what the finding contradicts — `[]` where it contradicts nothing | the index, and whoever heals it |
 
-**One index at `.claude/evidence/map.md`, spanning all five kinds** — not one beneath each (ADR 0056). The governing obligation is *read the directory before producing more*, and that obligation is cross-kind: a question already answered by research is not answered again by reading only `research/`. That width is also what makes `kind` a real column rather than a restatement of the path the file sits in.
+**One index at `.claude/evidence/map.md`, spanning all five kinds** — not one beneath each. The governing obligation is *read the directory before producing more*, and that obligation is cross-kind: a question already answered by research is not answered again by reading only `research/`. That width is also what makes `kind` a real column rather than a restatement of the path the file sits in.
 
 Rows are in filename order, which is date order, with `kind` breaking a tie. Chronology is what a reader of accumulated evidence wants first, and grouping by kind would make the column decorative.
 

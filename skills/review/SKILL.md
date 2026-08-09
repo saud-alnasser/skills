@@ -108,7 +108,3 @@ Record an acceptance as an **ADR** when it clears the 3-of-3 test in `.claude/po
 There is no `.claude/reviews/`. A review is about a diff, and once that diff is merged its subject no longer exists — a stored review is a document describing a state of the repository that has not been true since the day it was written.
 
 Everything durable graduates out instead: a fix is in the code, a boundary rule is in Context, an accepted trade-off is an ADR, an unfixed problem is a ticket. What is left after those four is genuinely disposable.
-
----
-
-Two-axis structure and the smell baseline derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

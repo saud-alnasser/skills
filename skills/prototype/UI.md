@@ -88,7 +88,3 @@ Folding the winner into the real page is a **fresh implementation effort**, not 
 - **Sharing too much between variants.** A shared header is fine; a shared layout defeats the point. Each variant must be free to throw the layout out.
 - **Wiring variants to real mutations.** Read-only is fine — the question is what this should look like, not whether the backend works. Point a variant that must mutate at a stub.
 - **Leaving the switcher behind.** Variant components and a switcher left in the codebase rot fast and confuse the next reader.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

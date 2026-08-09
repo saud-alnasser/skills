@@ -75,6 +75,14 @@ _Avoid_: drift report, drift issue
 The identity of a working tree's contents, recorded beside the Marker's commit. Its match licenses skipping the drift reads — never that any statement is correct — which is what makes a stage other than commit safe to write it (ADR 0052).
 _Avoid_: tree hash, working-tree state, dirty flag
 
+**Position**:
+State describing where *this clone* stands rather than what the repository knows — the Marker, the prototype code on disk, the Receipt. Per-clone and never committed, defined by `.claude/.gitignore` as a category rather than a list of exceptions, and bound by one invariant: nothing shared may depend on it (ADR 0012). **That ignore is load-bearing, not bookkeeping** — the Tree Fingerprint counts what the ignore rules leave, so a Position file inside it would be counted, and writing a Receipt would change the very fingerprint just reported.
+_Avoid_: local state, session state, scratch
+
+**Receipt**:
+The Position record of a verification run — what the script saw, and which mode it ran in. `/commit` refuses a position no Receipt attests. **The position is attested; the healing is not** — it claims the marker and tree comparisons were computed, never that the stage acted on them, and that boundary is the decision rather than an omission from it (ADR 0067).
+_Avoid_: attestation, proof, audit log, verification record
+
 **Generated Index**:
 A routing table produced from fields the routed files declare, rather than written. Cannot disagree with its directory, which is why the audit obligation a hand-written one carries does not apply to it (ADR 0053).
 _Avoid_: manifest, generated map, derived table
@@ -92,6 +100,6 @@ _Avoid_: metadata, header, tag, attribute
 
 ## Constraints
 
-- **Every skill derived from mattpocock/skills carries its attribution.** Licence-derived, not stylistic — see `LICENSE` and `NOTICE`.
+- **Attribution follows vendored text, not borrowed shape.** A file holding text copied from mattpocock/skills attributes it; a file that derived only a structure does not, because copyright protects expression rather than shape and the upstream licence binds copies and substantial portions. `NOTICE` stays while any vendored text ships. Licence-derived in both directions — attributing where nothing was copied asserts an obligation that does not exist.
 - **The root `CLAUDE.md` stays under 200 lines.** It is always-on, so every turn pays for it whether or not a skill runs.
 - **Nothing committed may assume AEP is installed.** A teammate who clones this repository without the plugin must be able to follow every rule in `CLAUDE.md` and `.claude/rules/` on their own — the harness loads both without it.

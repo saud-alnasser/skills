@@ -5,7 +5,7 @@
 - **The plugin** holds what AEP *ships* — its skills, its dispatched roles, and the templates they install.
 - **`.claude/`** holds what a repository *runs on* — the protocol file, policies, modes, rules, contexts, decisions, evidence, tickets, tool guides, every generated file, and any script serving AEP's own process, which goes in `.claude/scripts/`.
 
-**`CLAUDE.md` at the repository root is the only entry AEP adds outside those two**, because the harness loads it by name and it cannot move (ADR 0006).
+**`CLAUDE.md` at the repository root is the only entry AEP adds outside those two**, because the harness loads it by name and it cannot move.
 
 Which of the two a file belongs to is decided by whether it **ships or is installed**: a template is the plugin's, and the file that template writes is `.claude/`'s.
 

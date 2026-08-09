@@ -29,7 +29,7 @@ Every session orients to it before choosing a ticket.
 
 The map lives **inside the effort it charts**, wherever `.claude/policies/tracker.md` says efforts are: `.claude/tickets/<effort>/map.md` on a local-markdown tracker, beside that effort's own spec and issues; a pinned issue on GitHub. An **index**, not a store: a decision lives in exactly one place — its ticket — and the map only gists it and links.
 
-It goes inside the effort rather than at the root of the tickets directory because there is **one map per effort** — the title below names one — and a shared path is one file for an artefact that comes one per effort, so two efforts mapped at once would contend for it. The root of the tickets directory carries what spans every effort instead (ADR 0059).
+It goes inside the effort rather than at the root of the tickets directory because there is **one map per effort** — the title below names one — and a shared path is one file for an artefact that comes one per effort, so two efforts mapped at once would contend for it. The root of the tickets directory carries what spans every effort instead.
 
 Until the map exists in that form, the design document holds the proposal and *is* the map; once created, the created map supersedes it. The proposal is not mirrored onto the map afterwards — that would be the second copy the rule below exists to prevent.
 

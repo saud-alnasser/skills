@@ -24,7 +24,3 @@ You exist so that the pages nobody needs again are read in your window rather th
 Say what the finding is true *of* — the version, the date, the platform. A fact with no subject silently becomes a claim about the present, and stops being checkable the moment anything moves.
 
 Close with what you did not check and what stayed open. A gap you name costs a line; a gap you leave implicit gets read as coverage.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

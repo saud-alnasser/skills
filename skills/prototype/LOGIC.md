@@ -56,7 +56,3 @@ What is specific here is what promotion means: the thing worth promoting is the 
 - **Blurring the logic into the TUI.** If the reducer references prompts or escape codes it is no longer portable, and the one part worth lifting has been lost.
 - **Shipping the TUI shell.** The shell is built to be driven by hand. The module behind it is the part with a future.
 - **Choosing the shape that wires most easily to a TUI.** The shape answers to the question, not to the harness.
-
----
-
-Derived from [mattpocock/skills](https://github.com/mattpocock/skills) and adapted for AEP.

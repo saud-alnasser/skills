@@ -80,7 +80,7 @@ The shape being generated, so the tree reads as its own map — every category i
 ```
 .claude/
 ├── protocol.md          the router — the only loose file this workflow owns
-├── settings.json        the harness's, merged not replaced (ADR 0045)
+├── settings.json        the harness's, merged not replaced
 ├── rules/               always-on and path-scoped standards
 ├── modes/               one reasoning posture per file
 ├── policies/            one guide per workflow concern
@@ -92,19 +92,21 @@ The shape being generated, so the tree reads as its own map — every category i
 ├── tools/               one file per tool this repository uses
 ├── scripts/             scripts serving this workflow's own process
 ├── position/            per-clone state — never committed
-├── worktrees/           the harness's isolated child checkouts (ADR 0050)
+├── worktrees/           the harness's isolated child checkouts
 └── .gitignore           what per-clone means, and the test for it
 ```
 
 **A second loose file is a category nobody named.** When something does not fit a directory above, that is the finding — say so rather than dropping it at the root.
 
-The two `settings` files are the harness's, not this workflow's: it reads them from those exact paths and would not find them anywhere else. They are still not one case. `settings.local.json` is per-clone, which is the exemption `.claude/.gitignore` states and the reason it cannot move under `position/`, and it appears in neither the tree above nor the canonical layout. `settings.json` is committed, so it is in both (ADR 0045).
+The two `settings` files are the harness's, not this workflow's: it reads them from those exact paths and would not find them anywhere else. They are still not one case. `settings.local.json` is per-clone, which is the exemption `.claude/.gitignore` states and the reason it cannot move under `position/`, and it appears in neither the tree above nor the canonical layout. `settings.json` is committed, so it is in both.
 
-`worktrees/` is the harness's too, and it is a third case rather than a repeat of either — which is why being per-clone is not on its own what keeps something out of the layout. It is per-clone like `settings.local.json`, and named in both the tree and the canonical layout like `settings.json`. What separates it is that it is a **directory**: the layout names every category, and a category nothing names is one the ignore file is free to forget (ADR 0050).
+`worktrees/` is the harness's too, and it is a third case rather than a repeat of either — which is why being per-clone is not on its own what keeps something out of the layout. It is per-clone like `settings.local.json`, and named in both the tree and the canonical layout like `settings.json`. What separates it is that it is a **directory**: the layout names every category, and a category nothing names is one the ignore file is free to forget.
 
-**`.claude/scripts/regenerate-indexes.<ext>`**, in the language this repository already uses — the one script that produces every generated index. [SCRIPTS.md](SCRIPTS.md) is the behavioural specification it is derived from, and it carries a fixture with exact expected output: run the derived script against that fixture and report the result **before** running it against the repository, because a freshly configured repository has no committed index for a first regeneration to be compared against.
+**`.claude/scripts/`, one script per section of [SCRIPTS.md](SCRIPTS.md)**, each in the language this repository already uses — the index regenerator and the position report today, and whatever that page specifies tomorrow. Derive from the page rather than from a list here: a list is what goes stale when the page grows a section, and the failure it produces is a stage whose input nothing writes.
 
-Nothing ships a copy of AEP's own script, and nothing points into the plugin for one (ADR 0060). `MIGRATION.md` carries no row for it: no earlier version of this workflow installed one, so there is nothing anywhere to convert.
+Each section carries a fixture with exact expected output. **Run every derived script against its own fixture and report the result before running it against the repository**, because a freshly configured repository has nothing for a first run to be compared against — a mis-derived script produces a wrong-but-self-consistent answer that every later check agrees with. **A mismatch stops this stage**; it is not reported and passed. A script that fails its own fixture is a wrong derivation, and installing one puts a confident wrong answer exactly where a stage quotes it as authority.
+
+Nothing ships a copy of AEP's own scripts, and nothing points into the plugin for one. `MIGRATION.md` carries no row for them: no earlier version of this workflow installed one, so there is nothing anywhere to convert.
 
 The rest of the tree — `.claude/decisions/`, `.claude/designs/`, `.claude/evidence/{research,prototypes,out-of-scope,discussions}/`, `.claude/tickets/`, `.claude/scripts/`, and `.claude/position/` — is **created lazily**, by whichever command first has something to put in it. `/configure` does not pre-create empty directories: an empty `evidence/research/` is a claim that research happened.
 
@@ -124,7 +126,7 @@ What is `/configure`'s is the *sourcing*: these are generated from the repositor
 
 **`.claude/modes/`**, from [modes/](modes/), copied as-is — one file per reasoning posture, seven in all. A stage reads exactly the one its `metadata.mode` field declares, which is why they are files rather than sections of the router.
 
-**`.claude/policies/`**, one guide per workflow concern or repository aspect. Eight describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are (ADR 0019) — a copied guide would hand this repository somebody else's facts.
+**`.claude/policies/`**, one guide per workflow concern or repository aspect. Eight describe the workflow and are copied as-is from [policies/](policies/); two describe *this* repository and are derived, exactly as the tool references are — a copied guide would hand this repository somebody else's facts.
 
 | Guide | Source | Covers |
 | --- | --- | --- |
@@ -147,13 +149,13 @@ The guides are what the workflow's stages read instead of restating; `.claude/pr
 
 **`.claude/policies/tracker.md`**, from [policies/tracker.template.md](policies/tracker.template.md). Choose from the **remote**: GitHub when a remote points at GitHub, GitLab when one points at GitLab, local markdown otherwise — including when there is no remote, and when the remote is a host with no tracker AEP drives. **Ask when it is ambiguous** — several remotes, or a remote that does not match where work is actually tracked. The triage label vocabulary folds into the same file. So does **`What a ticket is`**: answer the detect test the template carries from `.claude/policies/version-control.md` — written after that file, for exactly this reason — and cite the line the answer came from. `.claude/policies/maps.md` places decision work by reading the declaration, so a missing one is not a blank to leave.
 
-**`.claude/policies/version-control.md`**, from [policies/version-control.template.md](policies/version-control.template.md). The tracker file's neighbour: that says where the tickets are, this says what happens to one once somebody builds it. **Which model applies is read off the repository, not asked about**, by the check the template itself carries — a stacking tool installed on the machine says nothing about this repository. The branch convention and commit discipline are *detected*, from the recent branches, `CONTRIBUTING.md`, and the log; asserting AEP's defaults over a repository that demonstrates its own is what ADR 0008 forbids.
+**`.claude/policies/version-control.md`**, from [policies/version-control.template.md](policies/version-control.template.md). The tracker file's neighbour: that says where the tickets are, this says what happens to one once somebody builds it. **Which model applies is read off the repository, not asked about**, by the check the template itself carries — a stacking tool installed on the machine says nothing about this repository. The branch convention and commit discipline are *detected*, from the recent branches, `CONTRIBUTING.md`, and the log; asserting AEP's defaults over a repository that demonstrates its own is what the detect-before-asserting rule forbids.
 
 **`.claude/tools/*.md`**, one file per tool this repository actually uses — the workflow's own (`git`, `gh`, `glab`, `gt`) *and* this repository's (package manager, test runner, typechecker, linter, formatter, build, deploy), in one directory with one format. [TOOLS.md](TOOLS.md) has the derivation rules and the format; it is the step where information is most easily lost, so read it before writing a tool file.
 
 Take every repository-specific command from the manifest, scripts, or CI configuration, never from what the ecosystem usually does. The **single-file test command** is the one entry that must not be missing — the most-run command in the framework and the least guessable, and `tdd` says what happens without it.
 
-**`.claude/.gitignore`**, written exactly as below. It is Position's definition (ADR 0012), so it states the category and the test rather than listing entries — a per-clone file added later is covered by the rule instead of needing a new exception argued for:
+**`.claude/.gitignore`**, written exactly as below. It is Position's definition, so it states the category and the test rather than listing entries — a per-clone file added later is covered by the rule instead of needing a new exception argued for:
 
 ```gitignore
 # Position. Put a file under `position/` when it would be wrong in another clone
@@ -184,9 +186,9 @@ Take every repository-specific command from the manifest, scripts, or CI configu
 settings.local.json
 ```
 
-It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** (ADR 0006) — that is what lets AEP be added or removed as one directory instead of leaking entries into a file the repository owns.
+It goes inside `.claude/`, and **the repository's own root `.gitignore` is left alone** — that is what lets AEP be added or removed as one directory instead of leaking entries into a file the repository owns.
 
-`worktrees/` is named in §21's layout as the harness's rather than this workflow's (ADR 0050), which is what puts it inside the entry-for-entry comparison of this tree against the specification. `/configure` never creates it: the harness does, the first time a stage dispatches an isolated child.
+`worktrees/` is named in §21's layout as the harness's rather than this workflow's, which is what puts it inside the entry-for-entry comparison of this tree against the specification. `/configure` never creates it: the harness does, the first time a stage dispatches an isolated child.
 
 **`.claude/settings.json`**, carrying the worktree base ref. A sub-agent given worktree isolation branches from the repository's **default branch, not the parent session's `HEAD`**. So a child working a portion of a claimed ticket builds against a tree that does not contain the work it is extending — and nothing reports it: the child succeeds, the integration reads as routine, and the result is wrong in a way no test on the child's side can reach. A sentence telling a caller to set this is not enough, because the caller who forgets produces no error.
 
@@ -219,10 +221,8 @@ So this pass reaches what the routing table does not:
 - **Re-check `.claude/tools/`.** A repository's tooling changes, and a stale command is worse than no command: no command asks, a wrong one runs.
 - **Re-check `What a ticket is`** in the tracker policy against the version-control policy — the declaration drifts when the branching model moves, and a tracker file written before the declaration existed gets it backfilled here, which is the repair `.claude/policies/maps.md` sends a stale repository back for.
 - **Mark specs reality already satisfies.** `/commit` marks a spec `implemented` when it lands the last criterion; a spec finished outside that path stays `accepted` forever. This pass catches those.
-- **Repair an ignore file that predates the child-workspace rule.** An installed `.claude/.gitignore` covering `/position/` and `settings.local.json` but not `/worktrees/` was written before orchestration shipped, and the repository has been accumulating untracked child checkouts ever since. Recognition is by content, and the ignore file is **repaired rather than reported** — a repository configured once does not run the generate branch again on its own, so this pass is the only thing that reaches it.
-- **Heal the framework's name.** A protocol file expanding AEP as the *AI* Engineering Protocol was installed before the rename to *Agentic*. The acronym never moved, so nothing is broken and nothing routes on the sentence — which is why only this pass reaches it. One sentence, not a migration.
-- **Repair a stage table that predates the precedence rule.** The table is *derived* — from the defaults each skill declares, plus whatever guides are local to this repository — and a table written before that was stated may be missing guides its own skills name. Re-derive it, and **preserve the repository-specific rows**: extra guides a row names, stages the repository added. Those are the part the template cannot know, and the same reason the mode-column row preserves them. A guide a skill declares and its row omits is **surfaced in the plan, never added silently** — the omission may have been deliberate, and the new rule wants it recorded as such rather than undone.
-- **Re-stamp the release the protocol was written by.** `aep-version` is the one field in that file an audit changes without the change being a repair, and it is set to the release running this audit. Left stale, the session hook keeps reporting a repository this very run brought current — which trains the user to ignore it, and the warning is worth nothing the moment it is routinely ignored.
+- **Apply the repairs this repository has not had.** [migration-changelog.md](migration-changelog.md) holds every repair that fires because of *which release* configured a repository, grouped by the release that caused it. Read `aep-version` from `.claude/protocol.md` and consider only entries newer than it; a repository declaring no version predates the field and gets all of them. Each entry still recognises its shape by content before acting, so one considered against a repository that never had that shape is a no-op rather than a mistake. **Say which releases were skipped** — an audit that considered three of ten reads exactly like one that found nothing. Then set the field to the release running this audit, so the next run's cursor is right and the session hook stops reporting a repository this run brought current.
+- **Re-check `.claude/scripts/` against [SCRIPTS.md](SCRIPTS.md)**, in both directions: every script the page specifies exists, and nothing sits there that it does not specify. A repository configured by an earlier release has only the scripts that release named, so a missing one is a stage whose input nothing produces — and it fails at the moment that stage runs, not here, unless this pass looks. Run each against its fixture, exactly as a first configuration does; a derivation that has drifted from the page passes every other check in this list.
 - **Regenerate the routing tables.** Both are generated from declared fields, so a hand edit and a file added without fields both show up as an index that no longer matches its directory. Compare against a regeneration rather than reading the table for plausibility.
 
 Pruning deletes, so it goes through step 2's plan like everything else.
@@ -248,6 +248,6 @@ Recognition is by content, not by presence. A file that exists but describes a s
 
 ## What stays with the caller
 
-`/configure` **does not plan work and does not write code.** It finds a repository that needs designing and hands back; `/design` is the entry point for that, and taking it here would skip the grill (ADR 0011).
+`/configure` **does not plan work and does not write code.** It finds a repository that needs designing and hands back; `/design` is the entry point for that, and taking it here would skip the grill.
 
 It never commits. What it wrote is left in the working tree for the user to read, and `/commit` handles it from there.

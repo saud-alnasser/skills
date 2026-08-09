@@ -7,7 +7,7 @@
   The contract between a stage that dispatches and the children it dispatches.
   A policy rather than a second router: a child inherits the entrypoint
   hierarchy the parent loaded, so it reaches this file through the same pointer
-  chain a session uses and there is nothing to bootstrap (ADR 0040).
+  chain a session uses and there is nothing to bootstrap.
 
   Reached by pointer from `.claude/protocol.md`'s routing table, by every stage
   that dispatches. Those stages point at this file and restate no part of it —
