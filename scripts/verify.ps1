@@ -85,7 +85,7 @@ function Get-SkillFiles {
 # to one home by `streamline/08` — it was declared inside the first sweep that
 # needed it, so a later sweep silently exempted nothing and reported the two
 # files it was supposed to spare.
-$legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md')
+$legacyExempt = @('configure/SKILL.md', 'configure/MIGRATION.md', 'configure/migration-changelog.md')
 
 # The sweeps iterate `Get-SkillFiles` and read each one. `-Raw` yields $null for
 # an empty file, and the regex call that follows then throws a null-reference —
@@ -207,6 +207,32 @@ function Get-MetadataBlock {
 # wildcard `*` is /configure's, which reads the whole directory; a caller that
 # cares about the difference tests for it rather than being handed a list that
 # quietly means "all of them".
+# The configuration stage's migration content spans two shipped files since
+# `changelog/01`: `MIGRATION.md` converts a *shape* and fires on detection,
+# `migration-changelog.md` catches a repository up on a *release* and fires on a
+# version. Earlier tickets asserted their repair was "in MIGRATION.md" because
+# that was the only place it could be, and what those criteria wanted was that
+# the repair is described — never which file describes it. These span both, so a
+# relocation does not falsify a criterion it did not change. Each repair kept its
+# original heading for the same reason.
+function Get-MigrationText {
+  # `Get-Section` matches `##` and not `###`. Each repair sits one level under its
+  # release heading in the changelog, so the depth is normalised here rather than
+  # by flattening the file — the nesting is what groups repairs by release, and
+  # it is the grouping the cursor reads.
+  $log = (Get-SkillFile 'configure/migration-changelog.md') -replace '(?m)^###\s', '## '
+  (Get-SkillFile 'configure/MIGRATION.md') + "`n`n" + $log
+}
+
+# What the audit can reach, which is its own section plus the file it delegates
+# the dated repairs to. An assertion that a repair is reachable from the audit is
+# still answered here; one that it is *written in the audit list* is not, and that
+# is the distinction `changelog/01` drew.
+function Get-AuditReach {
+  $log = (Get-SkillFile 'configure/migration-changelog.md') -replace '(?m)^###\s', '## '
+  (Get-Section (Get-SkillFile 'configure/SKILL.md') '5 — Audit') + "`n`n" + $log
+}
+
 function Get-DeclaredPolicies {
   param([string]$Content)
   $block = Get-MetadataBlock $Content
@@ -3019,7 +3045,7 @@ Describe-Ticket 'tenure/08' 'initialize or migrate a repository onto Tenure' {
   # The instruction, not the heading that introduces it, and the alternative it
   # replaces — a broken link is the failure, so the rule has to name it.
   Assert "a converted file still referenced elsewhere leaves a pointer at the old path" {
-    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'pointer'
+    $s = Get-Section (Get-MigrationText) 'pointer'
     $s -match '(?is)leave[^.]{0,60}pointer[^.]{0,60}old path[^.]{0,60}broken link'
   }
 
@@ -6516,7 +6542,7 @@ Describe-Ticket 'streamline/07' 'commit follows review without asking' {
 Describe-Ticket 'streamline/08' 'the migration converts the superseded layout' {
 
   $mig = { Get-SkillFile 'configure/MIGRATION.md' }
-  $section = { Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'The guides-and-position migration' }
+  $section = { Get-Section (Get-MigrationText) 'The guides-and-position migration' }
 
   # --- criterion 1: every superseded path has a destination -----------------
 
@@ -6657,7 +6683,9 @@ Describe-Ticket 'aep/02' 'rename the framework from Tenure to AEP' {
   }
 
   Assert "the migration carries the rename, and splits live files from frozen records" {
-    $c = Get-SkillFile 'configure/MIGRATION.md'
+    # Anchored on `^## `, and the section now sits one level deeper under its
+    # release. The helper normalises the depth; the criterion is unchanged.
+    $c = Get-MigrationText
     $section = [regex]::Match($c, '(?ms)^## The Tenure[^\r\n]*AEP rename\s*(.+?)(?=^## |\z)')
     if (-not $section.Success) { throw 'the rename section is missing' }
     $s = $section.Groups[1].Value
@@ -6858,7 +6886,9 @@ Describe-Ticket 'aep/06' 'the templates generate the AEP shape, and the migratio
   }
 
   Assert "the migration recognises the pre-modes protocol file by content, converts, and re-runs clean" {
-    $c = Get-SkillFile 'configure/MIGRATION.md'
+    # Anchored on `^## `, and the section now sits one level deeper under its
+    # release. The helper normalises the depth; the criterion is unchanged.
+    $c = Get-MigrationText
     $s = [regex]::Match($c, '(?ms)^## The pre-modes protocol file\s*(.+?)(?=^## |\z)')
     if (-not $s.Success) { throw 'the pre-modes section is missing' }
     if ($s.Groups[1].Value -notmatch '### Mode:') { throw 'detection is not anchored to content' }
@@ -7227,9 +7257,18 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   # Pinned to the literal deliberately: specs.md makes every version bump a
   # deliberate amendment recorded as a Decision, so a guard that has to be
   # edited alongside one is doing its job rather than getting in the way.
-  Assert "the specification is released at 1.13.0, not a draft" {
+  Assert "the specification is released at 1.14.0, not a draft" {
     $c = Get-RepoText 'specs.md'
-    if ($c -notmatch '(?m)^\*\*Version:\*\*\s*1\.13\.0\s*$') { throw 'the specification is not at a released 1.13.0' }
+    # Read from the manifest rather than pinned. A literal here had to be
+    # hand-edited on every release, and twice in one session it was edited in one
+    # of its two homes and not the other — so the guard that exists to catch a
+    # forgotten bump was itself the thing forgotten. axis/04 asserts the manifest,
+    # the specification and the template agree; this asserts the pair is released.
+    $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+    if ($running -notmatch '^\d+\.\d+\.\d+$') { throw "the manifest carries no release version: $running" }
+    if ($c -notmatch ('(?m)^\*\*Version:\*\*\s*' + [regex]::Escape($running) + '\s*$')) {
+      throw "the specification is not at the released $running"
+    }
     $true
   }
 
@@ -7247,7 +7286,7 @@ Describe-Ticket 'agentic/01' 'the expansion is Agentic, and the rename stops at 
   }
 
   Assert "the audit branch heals an installed protocol file that predates the rename" {
-    (Get-SkillFile 'configure/SKILL.md') -match "(?s)## 5 — Audit.*Heal the framework's name"
+    (Get-AuditReach) -match "(?s)(?i)framework's name"
   }
 }
 
@@ -7463,7 +7502,7 @@ Describe-Ticket 'fieldwork/05' 'the git reference names where the Marker is read
     $homes = Get-SkillFiles |
       Where-Object { (Get-Content $_.FullName -Raw) -match 'position/marker' } |
       ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' }
-    $allowed = @('configure/tools/git.md', 'configure/MIGRATION.md')
+    $allowed = @('configure/tools/git.md', 'configure/MIGRATION.md', 'configure/migration-changelog.md')
     $stray = @($homes | Where-Object { $allowed -notcontains $_ })
     if ($stray) { throw "the marker path is restated in: $($stray -join ', ')" }
     if ($homes -notcontains 'configure/tools/git.md') { throw 'named nowhere live' }
@@ -8375,7 +8414,7 @@ Describe-Ticket 'orchestration/05' 'configure writes the isolation obligation' {
   # Repairs rather than reports — the acceptance criterion, and the half a
   # migration row loses first, since reporting is always the cheaper write.
   Assert "the migration recognises the gap by content and repairs it" {
-    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'Orchestration without its isolation setting'
+    $s = Get-Section (Get-MigrationText) 'Orchestration without its isolation setting'
     if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
     if ($s -notmatch '(?is)sub-agents\.md.{0,200}(absent|missing|fresh)') { throw 'the two halves of the test are not both stated' }
     if ($s -notmatch '(?is)repairs rather than reports') { throw 'the row reports instead of repairing' }
@@ -8785,7 +8824,7 @@ Describe-Ticket 'orchestration/08' 'adopt orchestration here' {
   }
 
   Assert "the migration names the repository that predates orchestration" {
-    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'A repository configured before orchestration existed'
+    $s = Get-Section (Get-MigrationText) 'A repository configured before orchestration existed'
     if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
     if ($s -notmatch '(?is)sub-agents\.md.{0,80}absent') { throw 'the second half of the test is unstated' }
     if ($s -notmatch '(?is)belongs to the plugin') { throw 'the row does not say the roles are not installed' }
@@ -9612,7 +9651,7 @@ Describe-Ticket 'parallel-tickets/07' 'adopt the second axis here' {
   # Same shape as orchestration/05's migration guard: by content, both halves,
   # and repairing rather than reporting — the half a migration row loses first.
   Assert "the migration recognises a first-axis repository by content, and repairs it" {
-    $s = Get-Section (Get-SkillFile 'configure/MIGRATION.md') 'first axis without the second'
+    $s = Get-Section (Get-MigrationText) 'first axis without the second'
     if ($s -notmatch '(?is)recognition is by content') { throw 'the row keys on presence rather than content' }
     if ($s -notmatch '(?is)the policy is present')     { throw 'the first half of the test is unstated' }
     if ($s -notmatch '(?is)no whole-ticket child|admits no whole-ticket child') { throw 'the second half of the test is unstated' }
@@ -9822,7 +9861,7 @@ Describe-Ticket 'worktrees/01' 'the ignore rule covers the harness''s child work
   # than the file — the generate step names the path too, and a file-wide match
   # would pass on that with the audit row absent.
   Assert "the audit repairs an ignore file that predates the rule, rather than reporting it" {
-    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') '5 — Audit'
+    $s = Get-AuditReach
     if ($s -notmatch '(?i)worktrees') { throw 'the audit never reaches an ignore file written before the rule' }
     if ($s -notmatch '(?is)worktrees[^\r\n]{0,200}(repair|heal|add)') { throw 'the audit reports it instead of repairing it' }
     $true
@@ -11063,7 +11102,9 @@ Describe-Ticket 'mechanics/13' 'the changed templates are adopted here' {
 
 Describe-Ticket 'mechanics/14' 'the migration converts a repository''s knowledge to declared fields' {
 
-  $m = Get-SkillFile 'configure/MIGRATION.md'
+  # Spans both surfaces since changelog/01 moved the dated half out. The criterion
+  # is that the conversion is described, which it still is — under its own heading.
+  $m = Get-MigrationText
 
   Assert "the row exists, and recognition names both halves" {
     if ($m -notmatch '(?im)^##\s+Knowledge that predates declared fields') { throw 'no row for the old shape' }
@@ -11117,8 +11158,10 @@ Describe-Ticket 'mechanics/14' 'the migration converts a repository''s knowledge
 
 Describe-Ticket 'mechanics/15' 'configure carries the remaining mechanics, and names what needs nothing' {
 
-  $m = Get-SkillFile 'configure/MIGRATION.md'
-  $s = Get-SkillFile 'configure/SKILL.md'
+  # Both moved: the three mechanics to the changelog under their own heading, and
+  # the stage-table repair out of the audit list into the same place.
+  $m = Get-MigrationText
+  $s = Get-AuditReach
 
   # The whole point of this ticket: three cases that look alike and are not.
   # A page that described them in one register would invite a run to repair the
@@ -12637,7 +12680,14 @@ Describe-Ticket 'entry/02' 'the build runs on to the next unblocked ticket' {
     $c = Get-Content (Join-Path $repo 'specs.md') -Raw
     if ($c -notmatch '(?i)runs on past the one it delivered') { throw 'the spec does not describe continuation' }
     if ($c -notmatch 'ADR 0062') { throw 'the spec does not reference the Decision that amended it' }
-    if ($c -notmatch '(?im)^\*\*Version:\*\*\s*1\.13\.0\s*$') { throw 'the version was not bumped for the amendment' }
+    # Was pinned to the release current when this ticket landed, which made every
+    # later release fail here with a message about an amendment that was fine.
+    # What the criterion actually wanted is that the spec is at a released
+    # version, which is the manifest's — not a particular number.
+    $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+    if ($c -notmatch ('(?im)^\*\*Version:\*\*\s*' + [regex]::Escape($running) + '\s*$')) {
+      throw "the version was not bumped for the amendment: spec disagrees with the manifest's $running"
+    }
     $true
   }
 
@@ -12879,16 +12929,21 @@ Describe-Ticket 'axis/03' 'the taxonomy names its third category, and a spent gu
     $true
   }
 
-  Assert "no ticket is left open and unblocked outside the live effort" {
+  # Named `axis` as the live effort when it was the live effort, which made the
+  # next effort's first open ticket a failure. Liveness is a property of the
+  # effort's spec, not a name — an open ticket under a spec that is not yet
+  # `implemented` is work in progress; one under an implemented spec is the
+  # stranded frontier entry this ticket existed to clear.
+  Assert "no open ticket is stranded under an implemented spec" {
     $stale = @()
     foreach ($f in Get-ChildItem (Join-Path $repo '.claude/tickets') -Recurse -Filter '*.md') {
       if ($f.FullName -notmatch 'issues') { continue }
-      $c = Get-Content $f.FullName -Raw
-      if ($c -notmatch '(?m)^status:\s*open\s*$') { continue }
-      if ($c -match '(?m)^part-of:\s*axis\s*$') { continue }
-      $stale += $f.Name
+      if ((Get-Content $f.FullName -Raw) -notmatch '(?m)^status:\s*open\s*$') { continue }
+      $spec = Join-Path $f.Directory.Parent.FullName 'spec.md'
+      if (-not (Test-Path $spec)) { $stale += $f.Name; continue }
+      if ((Get-Content $spec -Raw) -match '(?m)^status:\s*implemented\s*$') { $stale += $f.Name }
     }
-    if ($stale) { throw "open outside the live effort: $($stale -join ', ')" }
+    if ($stale) { throw "open under a finished effort: $($stale -join ', ')" }
     $true
   }
 }
@@ -12989,10 +13044,159 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
     $true
   }
 
-  Assert "the audit re-stamps the field, so a repaired repository stops warning" {
+  # `changelog/02` folded the standalone re-stamp bullet into the cursor step,
+  # which reads the field, applies what is newer, and then advances it. Same
+  # obligation, one bullet instead of two — so this asserts the obligation rather
+  # than the word the bullet used to open with.
+  Assert "the audit leaves the field at the release that ran it" {
     $c = Get-SkillFile 'configure/SKILL.md'
-    if ($c -notmatch '(?i)re-stamp') { throw 'the audit has no row for the field' }
     if ($c -notmatch '(?is)aep-version') { throw 'the audit does not name the field' }
+    if ($c -notmatch '(?i)set the field to the release running this audit') {
+      throw 'the audit never advances the field'
+    }
+    $true
+  }
+}
+
+# --- ticket changelog/01 — dated repairs move under the release that caused them --
+
+# The shape of a dated repair, wherever it is written: prose that recognises a
+# repository by what an *older release* left behind. Anchored on that phrasing
+# rather than on the ten being moved, because a guard written from the ten goes
+# green the moment an eleventh is added to the old place — which is exactly how
+# the ten accumulated.
+$datedRepair = '(?i)(predates?|installed before|configured before|configured while|converted before)'
+
+Describe-Ticket 'changelog/01' 'dated repairs move under the release that caused them' {
+
+  $log = Get-SkillFile 'configure/migration-changelog.md'
+
+  Assert "the changelog ships beside the migration page" {
+    if (-not (Test-Path (Join-Path $skills 'configure/migration-changelog.md'))) { throw 'it is missing' }
+    $true
+  }
+
+  # Every repair that moved, found by a phrase from its own body rather than by
+  # its old heading — a heading can be reworded in the move and the repair still
+  # be there, and it is the repair that had to survive.
+  $moved = @{
+    'the ignore file'          = 'accumulating untracked child checkouts'
+    'the framework name'       = '(?i)\*AI\* Engineering Protocol'
+    'the stage table'          = 'surfaced in the plan, never added silently'
+    'the Tenure rename'        = '(?i)`/tenure:` becomes `/aep:`'
+    'the pre-modes protocol'   = '(?i)### Mode:'
+    'orchestration absent'     = '(?i)sub-agents\.md` is absent'
+    'the isolation setting'    = 'worktree\.baseRef'
+    'the second axis'          = 'admits no whole-ticket child'
+    'declared fields'          = 'hand-written routing table'
+    'drift findings'           = 'Leave every unmarked'
+  }
+  foreach ($name in $moved.Keys) {
+    Assert "the changelog carries the repair for $name" {
+      if ($log -notmatch $moved[$name]) { throw 'the repair did not survive the move' }
+      $true
+    }
+  }
+
+  Assert "no dated repair is left in the audit list or the migration page" {
+    $offenders = @()
+    foreach ($f in 'configure/SKILL.md', 'configure/MIGRATION.md') {
+      foreach ($line in ((Get-SkillFile $f) -split '\r?\n')) {
+        # A line that *routes* to the changelog names the dated case in order to
+        # delegate it, which is the opposite of holding it. Excluded by the
+        # reference rather than by its wording, so rephrasing the bullet cannot
+        # quietly re-exempt it.
+        if ($line -match 'migration-changelog') { continue }
+        if ($line -match '^\s*[-*#]' -and $line -match $datedRepair) {
+          $offenders += "$f : $($line.Trim().Substring(0, [Math]::Min(64, $line.Trim().Length)))"
+        }
+      }
+    }
+    if ($offenders) { throw "dated repair outside the changelog — $($offenders -join ' | ')" }
+    $true
+  }
+
+  Assert "every release in the changelog cites what its assignment was recovered from" {
+    $releases = [regex]::Matches($log, '(?m)^##\s+(\d+\.\d+\.\d+)\s*$')
+    if ($releases.Count -lt 6) { throw "only $($releases.Count) releases are recorded" }
+    foreach ($r in $releases) {
+      $body = $log.Substring($r.Index)
+      $next = [regex]::Match($body.Substring(1), '(?m)^##\s')
+      if ($next.Success) { $body = $body.Substring(0, $next.Index + 1) }
+      if ($body -notmatch '(?i)\*Recovered from:') { throw "$($r.Groups[1].Value) cites nothing" }
+      if ($body -notmatch '(?i)\*\*Look at:\*\*') { throw "$($r.Groups[1].Value) does not say where to look" }
+    }
+    $true
+  }
+
+  Assert "the migration page states that catch-up moved, rather than losing it silently" {
+    $m = Get-SkillFile 'configure/MIGRATION.md'
+    if ($m -notmatch 'migration-changelog') { throw 'it does not point at where the repairs went' }
+    if ($m -notmatch '(?i)does not catch a repository up on releases') { throw 'it does not state its own scope' }
+    $true
+  }
+}
+
+# --- ticket changelog/02 — the audit applies only what the repository lacks ---
+
+Describe-Ticket 'changelog/02' 'the audit applies only the repairs a repository has not had' {
+
+  $c = Get-SkillFile 'configure/SKILL.md'
+
+  Assert "the audit reads the changelog from the release the repository declares" {
+    if ($c -notmatch 'migration-changelog') { throw 'the audit never opens it' }
+    if ($c -notmatch '(?i)aep-version') { throw 'the audit does not read the cursor' }
+    if ($c -notmatch '(?i)newer than') { throw 'the audit does not bound what it considers' }
+    $true
+  }
+
+  Assert "a repository declaring no release has every repair considered" {
+    if ($c -notmatch '(?i)no version[^.]{0,90}all of them') { throw 'the absent-field case is not stated' }
+    $true
+  }
+
+  # The cursor selects what is *considered*; content still selects what is *done*.
+  # Without this the cursor reads as permission to act on a release number alone,
+  # which would repair repositories that never had the shape.
+  Assert "the cursor narrows what is considered, never what is verified" {
+    if ($c -notmatch '(?i)recognises its shape by content') { throw 'the cursor is not bounded to selection' }
+    $true
+  }
+
+  Assert "the audit says which releases it skipped" {
+    if ($c -notmatch '(?i)which releases were skipped') { throw 'a partial audit is indistinguishable from a clean one' }
+    $true
+  }
+
+  Assert "the audit leaves the cursor pointing at the release that ran it" {
+    if ($c -notmatch '(?i)set the field to the release running this audit') { throw 'the cursor is never advanced' }
+    $true
+  }
+
+  Assert "the running release has a changelog entry" {
+    $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+    $log = Get-SkillFile 'configure/migration-changelog.md'
+    if ($log -notmatch ('(?m)^##\s+' + [regex]::Escape($running) + '\s*$')) {
+      throw "no entry for $running — a release with no repair still says so"
+    }
+    $true
+  }
+
+  Assert "a Decision records the cursor and the two readings of an absent field" {
+    $p = Join-Path $repo '.claude/decisions/0065-the-audit-is-bounded-by-a-version-cursor.md'
+    if (-not (Test-Path $p)) { throw 'the Decision is missing' }
+    $d = Get-Content $p -Raw
+    if ($d -notmatch '(?is)Considered Options') { throw 'it weighs no alternatives' }
+    if ($d -notmatch '(?is)opposite things to the two readers') { throw 'the asymmetry is not recorded' }
+    if ($d -notmatch '(?is)cannot rot|frozen') { throw 'it does not say why a hand-written file is safe here' }
+    $true
+  }
+
+  Assert "the specification carries the cursor and the standing-versus-dated split" {
+    $s = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ($s -notmatch '(?i)standing checks') { throw 'the split is not in the specification' }
+    if ($s -notmatch '(?i)dated repairs') { throw 'the split names only one side' }
+    if ($s -notmatch 'ADR 0065') { throw 'the amendment cites no Decision' }
     $true
   }
 }

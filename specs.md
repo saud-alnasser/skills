@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.13.0
+**Version:** 1.14.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -360,6 +360,8 @@ Claude Code auto-loads exactly two things: `CLAUDE.md` and `.claude/rules/**`. E
 **A sub-agent inherits the boot tier and none of the conversation.** A dispatched child receives the entrypoint hierarchy the parent loaded — including the unconditional rules — alongside its own system prompt and the brief. It does not receive the parent's conversation, tool results, or system prompt. So the three tiers above describe a child as well as a session, and a child arrives already bound by the boot tier: the sub-agent contract (§20) narrows what it may do rather than bootstrapping what it knows (ADR 0040). Two consequences the tiers alone do not give. Anything a child needs from the *conversation* is written into the brief, because the brief is the only parent-to-child channel. And pointer-tier material is reached by the child rather than quoted into the brief, because a child can read — quoting it spends the parent's window to buy nothing.
 
 Placement is by loading mechanism, never by topic — a mechanism is observable, a discipline is not. The framework ships as a plugin (`aep`); slash commands are the skills; nothing *committed* requires the plugin — a reader without it follows the same pointers and reads the same files. Only invoking the stages needs it.
+
+**The release a repository declares is also a cursor.** The configuration stage's audit performs two kinds of work that read alike and are not alike: **standing checks**, true of every conforming repository on every run, and **dated repairs**, true only of repositories left in one historical shape. Dated repairs are grouped by the release that produced the shape each repairs, and an audit considers only those newer than the release the repository declares — every one still recognising its shape by content before acting, so the cursor narrows what is *considered* and never what is *verified*. A repository declaring no release has all of them considered, which is the opposite of what the same absence means to the hook below, and deliberately: absence proves the repository predates the field, silence costs a notification, and a skipped repair costs the repository (ADR 0065).
 
 **One behaviour binds to a harness event rather than to a file.** The protocol file declares the release that wrote it, and a `SessionStart` hook the plugin ships compares that against the running release, saying one line when they differ and nothing when they match. It is a hook because the running release is reachable only from shipped content — the harness exports the plugin's own root to a hook process and to skill content, never to a stage's shell — and because the alternative states the same sentence in every stage that should warn. The property above survives it: a repository without the plugin loses a notification, not a rule, and a protocol file declaring no release is unknown rather than stale.
 
