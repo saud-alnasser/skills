@@ -43,6 +43,22 @@ it declares no version
 
 ---
 
+## 1.15.0
+
+**Look at:** the tracker policy, `.claude/policies/evidence.md`, and `.claude/policies/specs.md`.
+
+### A tracker policy that predates the spec-layout declaration
+
+The regenerator was already told that a repository's tracker policy declares which of the two spec layouts applies, and until this release nothing wrote that section — no template gave the tracker policy one and no step derived one, so the instruction pointed at a declaration nothing produced. A repository configured before this release has a tracker policy with no such section.
+
+**Repaired, not reported**, and the repair already has a home: the audit's own `Where a spec lives` check detects the layout from the tree and writes the section. This entry exists so a repository that skips straight past that bullet still reaches it from the cursor — and so a reader can tell that a missing section is *absent* rather than *declaring the other layout*, which is a finding rather than a backfill.
+
+### Policy files that gained content this release
+
+The evidence and specification policies gained text a repository configured earlier does not have: what a consumed finding records, and where a spec's status may move. Both are **additive** — nothing that was installed became wrong — so they are reported rather than rewritten.
+
+**Do not re-derive an installed policy to pick them up.** A whole-file replacement reverts every repository-specific derivation in the same stroke, and those derivations are the point of the directory. Report the difference, name the file, and let a human decide.
+
 ## 1.14.0
 
 **Look at:** nothing in a configured repository.
