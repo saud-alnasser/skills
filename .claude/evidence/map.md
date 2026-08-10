@@ -11,3 +11,4 @@
 | [2026-08-09-one-perturbation-cannot-test-three-assertion-polarities](prototypes/2026-08-09-one-perturbation-cannot-test-three-assertion-polarities.md) | prototypes | — |
 | [2026-08-09-perturbing-the-tree-to-find-assertions-that-check-nothing](prototypes/2026-08-09-perturbing-the-tree-to-find-assertions-that-check-nothing.md) | prototypes | — |
 | [2026-08-09-reading-the-plugin-version-from-a-running-stage](research/2026-08-09-reading-the-plugin-version-from-a-running-stage.md) | research | `.claude/tickets/axis/issues/04-the-protocol-records-its-version.md` |
+| [2026-08-10-the-compliant-path-costs-more-than-the-workaround](discussions/2026-08-10-the-compliant-path-costs-more-than-the-workaround.md) | discussions | — |
