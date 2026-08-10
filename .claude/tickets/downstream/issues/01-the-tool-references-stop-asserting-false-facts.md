@@ -17,10 +17,20 @@ by hand, through an API, what one flag does — and does it believing the framew
 checked.
 
 The stacking reference records the pull request body as *not documented*, so
-nothing may depend on it. It is observable: on `gt 1.8.6` the title comes from
-the commit subject, the body is the repository's pull request template left
-unfilled, and the commit body reaches neither. The reference also omits that a
-non-interactive submit opens new pull requests as drafts.
+nothing may depend on it. **That wording is correct and stays** — it was going to
+be replaced here with a stronger claim, and the stronger claim is false. A
+configured repository observed `gt 1.8.6` leaving the body as an unfilled
+template with the commit body reaching neither; submitting from this repository
+on the same version prefilled the body from the commit in full. Two observations
+of one version disagree, and the shipped wording is the only statement consistent
+with both. `.claude/evidence/drift/2026-08-10-gt-submit-does-prefill-the-pull-request-body.md`
+records the check.
+
+What the stacking reference genuinely lacks is smaller: it does not say that
+submit behaviour is configurable through `gt config`'s submit settings, which is
+the likeliest reason two runs of one version disagreed, and it omits that a
+non-interactive submit opens new pull requests as drafts unless `--publish` is
+passed.
 
 Behind both: refreshing a derived reference is defined as one-directional. The
 audit re-checks an installed file against the repository it describes, and that is
@@ -35,10 +45,11 @@ Every entry that moved states what the named version actually does, and names
 that version, so a later reader can tell a fact that has gone stale from one that
 was wrong when written.
 
-The stacking entry separates what was observed from what was verified. Confirming
-submit behaviour means publishing, which is the human's call, so the entry records
-the observation with its version and its observer rather than promoting it to a
-checked fact.
+The stacking entry keeps its refusal to claim what the body will hold, and gains
+the reason that refusal is right: the behaviour is configurable, so a fact
+checked on one machine is not a fact about the version. Where an entry does
+record an observation, it names the version and says it was observed rather than
+verified.
 
 A repository that verifies a correction has a specified way to return it, and the
 refresh section describes both directions rather than one. The return is a
@@ -51,10 +62,13 @@ repository, so the two interlock rather than competing.
 - No shipped tool reference asserts that a capability is absent when the named
   version has it.
 - Every entry corrected here names the tool version it was checked against.
-- The stacking entry marks the submit-body behaviour as observed rather than
-  verified, and names the version it was observed on.
+- The stacking entry still refuses to state what a submit puts in the body, and
+  says why — the behaviour is configurable, so one machine's answer is not the
+  version's.
 - The stacking entry states that a non-interactive submit creates drafts, and
   what opts out.
+- No entry promotes a single observation to a verified fact; one that records an
+  observation names its version and says which it is.
 - The refresh section names both directions, and the upstream direction produces a
   record rather than an edit made in the other repository.
 - The suite fails when a shipped reference denies a capability its own named
