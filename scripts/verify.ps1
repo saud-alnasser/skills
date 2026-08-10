@@ -15307,6 +15307,20 @@ Describe-Ticket 'downstream/02' 'the audit says how an installed file is compare
     $true
   }
 
+  # The reopen: the method was delivered as trailing prose while no bullet made
+  # the comparison it describes — the bullets compared tools against the
+  # repository and scripts against their page, so the method attached to
+  # nothing and a run had to invent the check it was being told how to make.
+  # The guard matches the subject — a bullet whose instruction is
+  # installed-against-template — not this author's wording of one.
+  Assert "an audit bullet performs the installed-against-template comparison the method attaches to" {
+    $s = (& $audit) -replace "`r", ''
+    $bullets = @([regex]::Matches($s, '(?m)^- \*\*[^\n]*$') | ForEach-Object { $_.Value })
+    $hit = @($bullets | Where-Object { $_ -match '(?i)installed' -and $_ -match '(?i)templat' })
+    if (-not $hit) { throw 'no audit bullet compares an installed file against its template - the method attaches to nothing' }
+    $true
+  }
+
   # Re-derivation is the destructive branch, and the audit is the only pass that
   # reaches these files at all. A repository's corrected tool reference can be
   # ahead of the plugin's — TOOLS.md's upward path exists for exactly that — so

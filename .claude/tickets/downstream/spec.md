@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - skills/configure/tools/github.md
   - skills/configure/tools/graphite.md

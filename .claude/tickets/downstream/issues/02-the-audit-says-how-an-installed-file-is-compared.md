@@ -1,6 +1,6 @@
 ---
 title: 'fix(configure): the audit says how an installed file is compared against its template'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---
@@ -64,3 +64,18 @@ repository, scripts against `SCRIPTS.md`, and the tracker policy against the
 version-control policy. The comparison method still attaches to nothing, which is the
 gap this ticket was cut to close. The Outcome also asked for a bullet; it was delivered
 as trailing prose.
+
+## Comments
+
+The reopen is closed by giving §5 the bullet: **Re-check the installed copies against
+the templates that wrote them** — the rules, the modes, the copied policies, and the
+protocol file, the set no other bullet's comparison can see. The trailing prose now
+opens by binding its method to that bullet rather than to "several checks above". The
+suite gained the guard the reopen implied: an assertion that some audit bullet performs
+the installed-against-template comparison, matched on the subject rather than this
+wording, and confirmed red against the pre-fix text before the bullet was written.
+
+Review noted, without raising it as a violation: the guard matches word co-occurrence
+on a bullet line rather than parsing that the bullet's instruction is a comparison, so
+an unrelated future bullet containing both words would satisfy it. Left as-is — the
+tightening is available if a false pass ever materialises.

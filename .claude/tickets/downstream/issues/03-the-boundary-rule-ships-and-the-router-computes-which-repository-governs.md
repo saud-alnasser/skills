@@ -1,6 +1,6 @@
 ---
 title: 'feat(rules): work for another repository leaves as a report, and the router computes which one governs'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---
@@ -81,3 +81,15 @@ already-configured repository, which is the case that produced this effort, neve
 receives the boundary rule, the two new `engineering.md` clauses, or the protocol
 changes. Precedent puts migration rows at release rather than at build, so this may be
 convention; reopened so the release cannot miss it.
+
+## Comments
+
+The release did not miss it: `chore(dist): release 1.16.0` (#28) cites this reopen and
+ships the changelog entry — the boundary rule installed as an absent always-on rule, the
+engineering clauses and router changes reported as additive, each reaching an
+already-configured repository through §5's version-cursor bullet. The reopen's own
+hedge held: migration rows land at release, so no standing §5 bullet was added, and the
+delivery is the changelog entry rather than a build change. Every acceptance criterion
+re-checked against the tree at 1.16.0. The release closed the migration half and said
+so in its own message; the audit half it left open — a §5 bullet comparing an installed
+file against its template — lands in the same commit as this resolution, via ticket 02.

@@ -43,6 +43,12 @@ it declares no version
 
 ---
 
+## 1.17.0
+
+**Look at:** nothing in a configured repository.
+
+No repair. This release gave the audit a bullet that compares an installed copy against the template that wrote it, and bound the existing comparison method to that bullet. Both are the configuration stage's own text, so a repository gains them by updating the plugin — there is nothing in one to catch up.
+
 ## 1.16.0
 
 **Look at:** `.claude/rules/`, `CLAUDE.md`, `.claude/protocol.md`, `.claude/scripts/`, and the derived tool references.
