@@ -1183,8 +1183,11 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     # the router's opening paragraph and nowhere else under skills/; the
     # configure audit refers to "the points the file names" without repeating
     # them. Single-line, because the enumeration is one sentence wherever it
-    # would be restated.
-    'the router extension-point set'  = '(?i)aep-version[^\r\n]{0,160}Deviations|Deviations[^\r\n]{0,160}aep-version'
+    # would be restated. Repointed by retire/02: aep-version retired, so the
+    # enumeration is the Deviations section alone. Anchored on the subject in
+    # both shapes a restatement takes — the vary sentence, and any claim of a
+    # single or only extension point — not on one file's phrasing.
+    'the router extension-point set'  = '(?i)may vary is the entries of a[^\r\n]{0,60}Deviations[^\r\n]{0,60}nothing else|(only|sole|single) extension point'
   }
   foreach ($rule in $rulePattern.Keys) { $singleHome[$rule] = $rulePattern[$rule] }
   foreach ($rule in $singleHome.Keys) {
@@ -13203,11 +13206,13 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
   $hookDir = Join-Path $repo 'hooks'
   $script  = Join-Path $hookDir 'check-version.js'
 
+  # Repointed by retire/02: aep-version retired into the per-file `version`,
+  # whose entry-file reading carries what this ticket introduced.
   Assert "both protocol copies declare the release as a field" {
     foreach ($p in @((Join-Path $repo '.claude/protocol.md'), (Join-Path $skills 'configure/protocol.template.md'))) {
       $fm = Get-Frontmatter (Get-Content $p -Raw)
       if (-not $fm) { throw "$(Split-Path -Leaf $p) has no frontmatter" }
-      if ($fm -notmatch '(?m)^aep-version:[ \t]*(\S+)[ \t]*$') { throw "$(Split-Path -Leaf $p) declares no aep-version" }
+      if ($fm -notmatch '(?m)^version:[ \t]*(\S+)[ \t]*$') { throw "$(Split-Path -Leaf $p) declares no version" }
     }
     $true
   }
@@ -13219,7 +13224,7 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
   Assert "the manifest, the specification and the template agree on the release" {
     $manifest = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
     $spec = [regex]::Match((Get-Content (Join-Path $repo 'specs.md') -Raw), '(?m)^\*\*Version:\*\*\s*(\S+)\s*$').Groups[1].Value
-    $tpl = [regex]::Match((Get-Frontmatter (Get-SkillFile 'configure/protocol.template.md')), '(?m)^aep-version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+    $tpl = [regex]::Match((Get-Frontmatter (Get-SkillFile 'configure/protocol.template.md')), '(?m)^version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
     $seen = @($manifest, $spec, $tpl) | Sort-Object -Unique
     if ($seen.Count -ne 1) { throw "manifest $manifest, spec $spec, template $tpl" }
     $true
@@ -13252,6 +13257,8 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
   # Behaviour, run rather than read. Each branch is a real invocation against a
   # temporary tree, because the whole value of this hook is that it stays quiet —
   # and a check that only reads the source cannot tell silence from absence.
+  # Since retire/01 these fixtures declare only the legacy field, so they are
+  # also the fallback path's standing regression test.
   Assert "the hook is silent when the releases match, and speaks when they differ" {
     if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'node is not on PATH; the exec-form hook cannot run' }
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
@@ -13296,11 +13303,13 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
   # `changelog/02` folded the standalone re-stamp bullet into the cursor step,
   # which reads the field, applies what is newer, and then advances it. Same
   # obligation, one bullet instead of two — so this asserts the obligation rather
-  # than the word the bullet used to open with.
+  # than the word the bullet used to open with. Repointed by retire/02: the
+  # advance became structural — verbatim replacement of the entry moves the
+  # field — so the obligation asserted is that the audit says so.
   Assert "the audit leaves the field at the release that ran it" {
     $c = Get-SkillFile 'configure/SKILL.md'
-    if ($c -notmatch '(?is)aep-version') { throw 'the audit does not name the field' }
-    if ($c -notmatch '(?i)set the field to the release running this audit') {
+    if ($c -notmatch 'Read `version` from') { throw 'the audit does not name the field' }
+    if ($c -notmatch '(?i)leaves the field at the release running this audit') {
       throw 'the audit never advances the field'
     }
     $true
@@ -13395,9 +13404,10 @@ Describe-Ticket 'changelog/02' 'the audit applies only the repairs a repository 
 
   $c = Get-SkillFile 'configure/SKILL.md'
 
+  # Repointed by retire/02: the cursor field is the entry's `version` now.
   Assert "the audit reads the changelog from the release the repository declares" {
     if ($c -notmatch 'migration-changelog') { throw 'the audit never opens it' }
-    if ($c -notmatch '(?i)aep-version') { throw 'the audit does not read the cursor' }
+    if ($c -notmatch 'Read `version` from') { throw 'the audit does not read the cursor' }
     if ($c -notmatch '(?i)newer than') { throw 'the audit does not bound what it considers' }
     $true
   }
@@ -13420,8 +13430,10 @@ Describe-Ticket 'changelog/02' 'the audit applies only the repairs a repository 
     $true
   }
 
+  # Repointed by retire/02, with the advance now structural — the verbatim
+  # replacement of the entry is what moves the field.
   Assert "the audit leaves the cursor pointing at the release that ran it" {
-    if ($c -notmatch '(?i)set the field to the release running this audit') { throw 'the cursor is never advanced' }
+    if ($c -notmatch '(?i)leaves the field at the release running this audit') { throw 'the cursor is never advanced' }
     $true
   }
 
@@ -16904,14 +16916,15 @@ Describe-Ticket 'crystallize/05' 'the router compresses to norm form and stage l
 
   # Flipped repository -> framework at the user's direction during adoption:
   # the census observed zero differing lines between template and installed
-  # copy, so the router is law with two named points — the `aep-version` value
-  # and the `## Deviations` entries.
+  # copy, so the router became law with its named extension points — two then;
+  # the `## Deviations` entries alone since retire/02 retired `aep-version`.
   Assert "the router declares framework ownership and the release that wrote it" {
     foreach ($c in (Get-SkillFile 'configure/protocol.template.md'),
                    (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
       $fm = Get-Frontmatter $c
       if ($fm -notmatch '(?m)^owner:\s*framework\s*$') { throw 'no framework owner declaration' }
-      if ($fm -notmatch '(?m)^aep-version:') { throw 'no release field' }
+      # Repointed by retire/02: the release field is the per-file stamp now.
+      if ($fm -notmatch '(?m)^version:') { throw 'no release field' }
     }
     $true
   }
@@ -17040,15 +17053,18 @@ Describe-Ticket 'crystallize/06' 'the stages speak norm form and read their exac
   # aging as computed steps whose output the stage quotes — determinism norms
   # the review demanded, paid for and recorded. Raised to 153,200 by
   # crystallize/09's run, where the router's flip to framework law added its
-  # install statement and the audit's set-aside of the two extension points to
-  # /configure — the exemption the delta review demanded so deviations survive
-  # the byte comparison. New law each time, never re-inflated essays. Raised to
+  # install statement and the audit's set-aside of the extension points (two
+  # then; one since retire/02) to /configure — the exemption the delta review
+  # demanded so deviations survive the byte comparison. New law each time, never re-inflated essays. Raised to
   # 153,400 by provenance/01, which added the stamp constraint to the audit —
   # the stamp routes attention and the comparison runs regardless — one bullet
   # of new law binding the check the stamp could otherwise tempt into skipping.
+  # Raised to 153,430 by retire/02 — measured, not rounded: the cursor read
+  # gained its legacy fallback and the advance became the verbatim replacement,
+  # reworded law rather than essays, and review priced the exact bytes.
   Assert "the skill bodies stay under their measured post-conversion ceiling" {
     $total = (Get-ChildItem $skills -Recurse -Filter 'SKILL.md' | Measure-Object -Property Length -Sum).Sum
-    if ($total -gt 153400) { throw "skill bodies total $total against a 153,400 ceiling" }
+    if ($total -gt 153430) { throw "skill bodies total $total against a 153,430 ceiling" }
     $true
   }
 
@@ -17090,8 +17106,9 @@ Describe-Ticket 'crystallize/07' 'the fixed core installs verbatim, ownership is
     'the outside-write rule is a bound, not a count' = '(?i)a bound, not a count'
     # The delta review's blocker: a byte-exact audit would report a
     # repository's deviations as a defect and reinstall over the channel that
-    # records them — the comparison sets the router's two points aside first.
-    'the audit sets the router extension points aside before comparing' = '(?i)setting aside the two extension points'
+    # records them — the comparison sets the router's extension point aside
+    # first. Repointed by retire/02: the set shrank to the Deviations entries.
+    'the audit sets the router extension points aside before comparing' = '(?i)setting aside the extension point[^\r\n]{0,80}Deviations'
   }
   foreach ($norm in $configureNorms.Keys) {
     $pattern = $configureNorms[$norm]
@@ -17371,11 +17388,10 @@ Describe-Ticket 'provenance/01' 'framework files declare the release that last c
     $true
   }
 
-  # The router is the one file where the two version facts sit side by side —
-  # `aep-version` is the configured-at release, re-stamped by audits; `version`
-  # is the file's own — so it is the one place the difference must be stated,
-  # and it must be stated on both sides of the byte-lock.
-  Assert "the router distinguishes the file's own stamp from the configured-at release" {
+  # The router owns the field's meaning — provenance everywhere, and since
+  # retire/02 the entry exception beside it — and must state it on both sides
+  # of the byte-lock.
+  Assert "the router states what its own stamp means, on both copies" {
     foreach ($side in @((Get-SkillFile 'configure/protocol.template.md'), (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw))) {
       if ($side -notmatch '(?i)`version`[^\r\n]{0,240}last changed') { throw 'a router copy does not state what its own stamp means' }
     }
@@ -17489,6 +17505,133 @@ Describe-Ticket 'provenance/02' 'a changed template that kept its stamp fails th
       $verdict = Get-StampVerdict $old (Get-SkillText $t) $stamp $released $current
       if ($verdict) { throw "$path — $verdict" }
     }
+    $true
+  }
+}
+
+# --- ticket retire/01 — the hook reads the entry version, with a legacy fallback
+
+Describe-Ticket 'retire/01' 'the hook reads the entry version, with a legacy fallback' {
+
+  $script = Join-Path $repo 'hooks/check-version.js'
+
+  Assert "the hook reads the surviving field and keeps the legacy fallback" {
+    $c = Get-Content $script -Raw
+    if ($c -notmatch "'version'") { throw 'the hook never reads the surviving field' }
+    if ($c -notmatch "'aep-version'") { throw 'the legacy fallback is gone — pre-stamp repositories go silent' }
+    $true
+  }
+
+  # Behaviour, run rather than read, exactly as the hook's first version was
+  # proven. The fixture writes whole frontmatter blocks because the branch
+  # under test is which field answers, not which value — and the axis/04 block
+  # keeps the legacy-only fixtures, which now exercise the fallback path.
+  Assert "each field answers on its own, the entry field wins, and neither is silence" {
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'node is not on PATH; the exec-form hook cannot run' }
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+    New-Item -ItemType Directory -Path (Join-Path $tmp '.claude') -Force | Out-Null
+    try {
+      $run = {
+        param($frontmatter)
+        "$frontmatter# body" | Set-Content (Join-Path $tmp '.claude/protocol.md')
+        $env:CLAUDE_PLUGIN_ROOT = $repo
+        $env:CLAUDE_PROJECT_DIR = $tmp
+        $out = & node $script 2>&1 | Out-String
+        $env:CLAUDE_PLUGIN_ROOT = $null
+        $env:CLAUDE_PROJECT_DIR = $null
+        $out.Trim()
+      }
+      $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+      if ((& $run "---`nversion: $running`n---`n") -ne '') { throw 'it spoke on a matching entry field' }
+      $stale = & $run "---`nversion: 0.0.1`n---`n"
+      if ($stale -eq '') { throw 'it stayed silent on a stale entry field' }
+      if ($stale -notmatch 'configure') { throw 'it does not name the command that repairs it' }
+      if ((& $run "---`naep-version: 0.0.1`n---`n") -eq '') { throw 'the fallback stayed silent on a stale legacy field' }
+      if ((& $run "---`nversion: $running`naep-version: 0.0.1`n---`n") -ne '') { throw 'a legacy value outranked the entry field' }
+      if ((& $run "---`nowner: framework`n---`n") -ne '') { throw 'a repository declaring neither field was treated as stale rather than unknown' }
+      Remove-Item (Join-Path $tmp '.claude/protocol.md') -Force
+      $env:CLAUDE_PLUGIN_ROOT = $repo
+      $env:CLAUDE_PROJECT_DIR = $tmp
+      $absent = (& node $script 2>&1 | Out-String).Trim()
+      $env:CLAUDE_PLUGIN_ROOT = $null
+      $env:CLAUDE_PROJECT_DIR = $null
+      if ($absent -ne '') { throw 'a repository with no router at all was treated as stale rather than absent' }
+    } finally {
+      Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $true
+  }
+}
+
+# --- ticket retire/02 — aep-version retires, and the entry stamp is the release
+
+Describe-Ticket 'retire/02' 'aep-version retires, and the entry stamp is the release' {
+
+  $copies = @(
+    (Get-SkillFile 'configure/protocol.template.md'),
+    (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)
+  )
+
+  Assert "neither router copy declares the retired field, and both keep the survivor" {
+    foreach ($c in $copies) {
+      $fm = Get-Frontmatter $c
+      if ($fm -match '(?m)^aep-version:') { throw 'a router copy still declares aep-version' }
+      if ($fm -notmatch '(?m)^version:[ \t]*\d+\.\d+\.\d+[ \t]*$') { throw 'a router copy lost its version stamp' }
+    }
+    $true
+  }
+
+  Assert "both router copies name the Deviations section as the only extension point" {
+    foreach ($c in $copies) {
+      if ($c -notmatch '(?i)may vary is the entries of a[^\r\n]{0,60}Deviations[^\r\n]{0,60}nothing else') { throw 'the enumeration is not the single point' }
+      if ($c -match 'aep-version') { throw 'a router copy still names the retired field' }
+    }
+    $true
+  }
+
+  # The one defined exception to last-changed semantics, stated where the field
+  # lives: the entry is stamped by every release, so its stamp is the release.
+  Assert "both router copies state the entry exception" {
+    foreach ($c in $copies) {
+      if ($c -notmatch '(?is)every release stamps') { throw 'a router copy does not state why the entry speaks for the installation' }
+    }
+    $true
+  }
+
+  Assert "the audit reads the surviving field and never names the retired one" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -match '(?i)aep-version') { throw 'the audit still names the retired field' }
+    if ($c -notmatch 'Read `version` from') { throw 'the audit does not read the cursor from the surviving field' }
+    $true
+  }
+
+  Assert "the changelog cursor reads the surviving field, with the legacy fallback" {
+    $log = Get-SkillFile 'configure/migration-changelog.md'
+    if ($log -notmatch '(?i)declares version:') { throw 'the cursor does not read the surviving field' }
+    if ($log -notmatch '(?i)fall(s|ing)? back[^\r\n]{0,80}aep-version') { throw 'a legacy repository loses its cursor narrowing' }
+    $true
+  }
+
+  Assert "a dated repair drops the orphaned field rather than preserving it" {
+    $log = Get-SkillFile 'configure/migration-changelog.md'
+    if ($log -notmatch '(?is)aep-version[^.]{0,200}(dropped|never preserved)') { throw 'nothing retires the field from configured repositories' }
+    $true
+  }
+
+  # Standards review: the 1.13.0 entry instructed the audit to *write* the
+  # field into a protocol declaring none — a pre-1.13.0 repository considers
+  # every entry, so without the marker one audit would plant the retired field
+  # and then drop it, editing a byte-locked file twice for nothing.
+  Assert "no live entry still instructs writing the retired field" {
+    $log = Get-SkillFile 'configure/migration-changelog.md'
+    if ($log -notmatch '(?i)never gains the field') { throw 'the field-gaining repair carries no retirement marker' }
+    $true
+  }
+
+  Assert "the specification names one extension point" {
+    $s = Get-Content (Join-Path $repo 'specs.md') -Raw
+    if ($s -match '(?i)two named extension points') { throw 'the specification still names two' }
+    if ($s -notmatch '(?i)one named extension point') { throw 'the specification does not name the surviving point' }
     $true
   }
 }

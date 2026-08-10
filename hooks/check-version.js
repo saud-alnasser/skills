@@ -60,10 +60,16 @@ function main() {
   const running = manifest && typeof manifest.version === 'string' ? manifest.version : null;
   if (!running) return;
 
-  const configured = frontmatterField(
-    path.join(projectDir, '.claude', 'protocol.md'),
-    'aep-version'
-  );
+  // The entry's `version` is the release that stamped it, and every release
+  // stamps the entry — which is what lets one field speak for the whole
+  // installation. `aep-version` is the field's retired predecessor: a
+  // repository configured before the stamps existed declares only it, and
+  // reading it keeps that repository's warning alive until its first audit
+  // replaces the file. A file declaring neither field is unknown, never stale.
+  const protocol = path.join(projectDir, '.claude', 'protocol.md');
+  const configured =
+    frontmatterField(protocol, 'version') ??
+    frontmatterField(protocol, 'aep-version');
   if (!configured || configured === running) return;
 
   process.stdout.write(

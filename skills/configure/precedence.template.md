@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.18.0
+version: 1.19.0
 ---
 
 <!-- Unconditional: no `paths:` frontmatter, deliberately — precedence must hold on every turn, and adding to this tier is a permanent always-on cost. -->
