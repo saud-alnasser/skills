@@ -1,6 +1,7 @@
 ---
 aep-version: 1.18.0
 owner: framework
+version: 1.18.0
 ---
 
 # Workflow protocol
@@ -67,7 +68,7 @@ Every skill that relies on Context opens with a verification report — **includ
 
 ## The release this protocol was written by
 
-The `aep-version` field above declares which release of the workflow wrote this file; `/configure` sets it and nothing else changes it. **Nothing here compares it** — the comparison needs the *running* release, reachable only from what the framework ships, so a `SessionStart` hook the plugin carries makes it once per session, saying one line on a mismatch and nothing on a match. A file declaring no version is **unknown rather than stale**, and a reader without the plugin loses a notification rather than a rule.
+The `aep-version` field above declares which release of the workflow wrote this file; `/configure` sets it and nothing else changes it. **Nothing here compares it** — the comparison needs the *running* release, reachable only from what the framework ships, so a `SessionStart` hook the plugin carries makes it once per session, saying one line on a mismatch and nothing on a match. A file declaring no version is **unknown rather than stale**, and a reader without the plugin loses a notification rather than a rule. The `version` field every framework-owned file declares — this one included — is a different fact: the release that last changed that file's content, written where the file is authored and varied by nobody. `/configure` re-stamps `aep-version` and never touches `version`.
 
 ## Recovering a broken Source Pointer
 
