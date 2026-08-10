@@ -1,4 +1,5 @@
 ---
+owner: repository
 paths:
   - "skills/**"
   - "agents/**"

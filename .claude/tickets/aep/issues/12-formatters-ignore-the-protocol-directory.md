@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): whatever formats a repository is made to skip `.claude/`
 status: resolved
 blocked-by: []

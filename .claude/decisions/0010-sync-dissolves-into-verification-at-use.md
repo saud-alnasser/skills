@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a synchronisation or reconciliation pass is proposed
 sources: [.claude/protocol.md]

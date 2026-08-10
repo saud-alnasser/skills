@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the tracker's declaration of what a ticket is has to be read or changed
 sources: [.claude/policies/tracker.md]

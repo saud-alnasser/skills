@@ -1147,6 +1147,13 @@ Describe-Ticket 'tenure/02' 'verification at use, healing where the break is fou
     # wants — a partial restatement elsewhere is still a second home.
     'root-cause over workaround'      = '(?i)removal condition'
     'directories over verbose filenames' = '(?i)verbose filename'
+    # crystallize/09's run. The router names its own extension points — ADR
+    # 0073 puts the naming in the owning file — so the enumeration lives in
+    # the router's opening paragraph and nowhere else under skills/; the
+    # configure audit refers to "the points the file names" without repeating
+    # them. Single-line, because the enumeration is one sentence wherever it
+    # would be restated.
+    'the router extension-point set'  = '(?i)aep-version[^\r\n]{0,160}Deviations|Deviations[^\r\n]{0,160}aep-version'
   }
   foreach ($rule in $rulePattern.Keys) { $singleHome[$rule] = $rulePattern[$rule] }
   foreach ($rule in $singleHome.Keys) {
@@ -7011,9 +7018,12 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
 
   # The boot tier is measured as loaded: block-level HTML comments are stripped
   # by the harness before injection, so they cost nothing and are excluded.
+  # Rule frontmatter is stripped too — observed directly: `.claude/rules/skills.md`
+  # carries a `paths:` block on disk, and its injected copy begins at the title.
   function Get-LoadedLength {
     param([string]$RelativePath)
     $c = Get-Content (Join-Path $repo $RelativePath) -Raw
+    $c = [regex]::Replace($c, '(?ms)\A---\r?\n.*?\r?\n---\r?\n', '')
     ([regex]::Replace($c, '(?ms)^<!--.*?-->\r?\n?', '')).Length
   }
 
@@ -7069,8 +7079,13 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   # asked for anything, and the pre-existing text was deliberately left alone:
   # rewriting standards the ticket did not name would be a change nobody reviewed.
   # The order stays compress-first, raise-second, and the ratchet still bites next.
+  # LOWERED 9483 -> 9450 by crystallize/02: the tier gained the entry table, the
+  # no-ask rule, and the fixed-owner rule, and still shrank — the essays were
+  # compressed out under the norm-form conversion, so the additions were paid
+  # for twice over. Measured 9441. Frontmatter joined the strip because the
+  # harness discards it before injection (see Get-LoadedLength).
   Assert "the always-on load is under the stated ceiling, measured rather than described" {
-    $ceiling = 9483
+    $ceiling = 9450
     $total = 0
     $unscoped = @('CLAUDE.md')
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
@@ -7281,12 +7296,13 @@ Describe-Ticket 'aep/12' 'whatever formats a repository is made to skip .claude/
 
   # The reasoning is recorded here and the bound travels in the shipped prose,
   # deliberately not as a citation: a skill installed elsewhere would be
-  # pointing at a decision record that repository does not have. So the two
-  # halves are asserted at their own homes rather than through a cross-reference.
+  # pointing at a decision record that repository does not have. ADR 0076
+  # superseded 0033's count with a bound (crystallize/07), and this guard
+  # followed the rule it stands for: the outside-write rule is now the bound.
   Assert "the decision is recorded here, and the shipped instruction carries its own bound" {
-    $adr = Join-Path $repo '.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md'
-    if (-not (Test-Path $adr)) { throw 'the decision behind the exception is unrecorded' }
-    (& $formatterSection) -match '(?i)only thing `?/configure`? writes outside'
+    $adr = Join-Path $repo '.claude/decisions/0076-what-configure-writes-outside-the-protocol-directory-is-a-bound-not-a-count.md'
+    if (-not (Test-Path $adr)) { throw 'the decision behind the bound is unrecorded' }
+    (& $formatterSection) -match '(?i)a bound, not a count'
   }
 
   # ADR 0006 is bounded, not overturned. Asserted here as well as at its own
@@ -10325,8 +10341,11 @@ Describe-Ticket 'mechanics/09' 'the stage-dependency set has two homes, and the 
     $true
   }
 
-  Assert "each home is named for what it alone can know" {
-    if ($s5 -notmatch '(?is)cannot know[^.]{0,80}local') { throw 'section 5 does not say what a skill cannot know' }
+  # Reshaped by crystallize/09's run: ADR 0079 superseded 0054's derivation,
+  # so the two homes are now the plugin's defaults and the release's table —
+  # the precedence survives, the derivation does not.
+  Assert "each home is named for what it alone can be" {
+    if ($s5 -notmatch "(?is)plugin's defaults|defaults each skill declares") { throw 'section 5 does not name the skill lines as the plugin defaults' }
     if ($s11 -notmatch '(?is)(default)[^.]{0,60}(instance|protocol table)') {
       throw 'section 11 does not name the pair as a default and an instance'
     }
@@ -10334,16 +10353,16 @@ Describe-Ticket 'mechanics/09' 'the stage-dependency set has two homes, and the 
   }
 
   Assert "the precedence is stated, and carries its reason rather than only its verdict" {
-    if ($s5 -notmatch '(?is)table (governs|wins)') { throw 'no precedence is stated' }
-    if ($s5 -notmatch '(?is)written where the repository is|table is written where') {
+    if ($s5 -notmatch '(?is)table[^.]{0,80}(governs|wins)') { throw 'no precedence is stated' }
+    if ($s5 -notmatch '(?is)committed statement[^.]{0,80}without the plugin|without the plugin can follow') {
       throw 'the precedence is asserted without the reason it runs that way'
     }
     $true
   }
 
-  Assert "the table is derived by the configuration stage, not authored" {
-    if ($s5 -notmatch '(?is)derived by the configuration stage') { throw 'nothing says the table is derived' }
-    if ($s5 -notmatch '(?is)plus whatever is local') { throw 'the local half of the derivation is unstated' }
+  Assert "the table is the release's, and a differing repository records a deviation" {
+    if ($s5 -notmatch '(?is)move only with the release') { throw 'nothing says the rows are the release''s' }
+    if ($s5 -notmatch '(?is)deviation') { throw 'the differing-repository disposition is unstated' }
     $true
   }
 
@@ -11150,7 +11169,7 @@ Describe-Ticket 'mechanics/12' 'this repository''s decisions and contexts declar
       $d = $adrs[$f.Name.Substring(0, 4)]
       "| [$($f.Name.Substring(0,4))]($($f.Name)) | $($d.LoadWhen) | $($d.Status) | $(& $fmtSrc $d.Sources) |"
     }
-    $want = ((@('# Decision map', '', '| ADR | Load when | Status | Sources |', '| --- | --- | --- | --- |') + $rows) -join "`n") + "`n"
+    $want = ((@('---', 'owner: repository', '---', '', '# Decision map', '', '| ADR | Load when | Status | Sources |', '| --- | --- | --- | --- |') + $rows) -join "`n") + "`n"
     $have = (Get-Content (Join-Path $dDir 'map.md') -Raw) -replace "`r`n", "`n"
     if ($want -ne $have) { throw 'the decision index differs from a regeneration' }
 
@@ -11160,7 +11179,7 @@ Describe-Ticket 'mechanics/12' 'this repository''s decisions and contexts declar
       $d = & $readFields (Get-Content $f.FullName -Raw)
       "| [$([System.IO.Path]::GetFileNameWithoutExtension($f.Name))]($($f.Name)) | $($d.LoadWhen) | $(& $fmtSrc $d.Sources) |"
     }
-    $cwant = ((@('# Context map', '', '| Context | Load when | Sources |', '| --- | --- | --- |') + $crows) -join "`n") + "`n"
+    $cwant = ((@('---', 'owner: repository', '---', '', '# Context map', '', '| Context | Load when | Sources |', '| --- | --- | --- |') + $crows) -join "`n") + "`n"
     $chave = (Get-Content (Join-Path $cDir 'map.md') -Raw) -replace "`r`n", "`n"
     if ($cwant -ne $chave) { throw 'the context index differs from a regeneration' }
     $true
@@ -12020,7 +12039,11 @@ Describe-Ticket 'declared-fields/10' 'a per-effort map moves into its effort dir
   Assert "no fog map sits at the vacated path — only the index it was vacated for" {
     $at = Join-Path $repo '.claude/tickets/map.md'
     if (-not (Test-Path $at)) { throw 'nothing is at the path — the design index that vacating it was for is missing' }
-    $title = ((Get-Content $at -TotalCount 1) -replace "`r", '').Trim()
+    # The generated index opens with its ownership frontmatter; the title this
+    # guard reads is the first line of the body.
+    $raw = (Get-Content $at -Raw) -replace "`r", ''
+    $body = [regex]::Replace($raw, "(?ms)\A---\n.*?\n---\n\n?", '')
+    $title = ($body -split "`n")[0].Trim()
     if ($title -match '(?i)^#\s+map:') { throw "a fog map still sits at the vacated path: $title" }
     if ($title -ne '# Design map') { throw "an unexpected file sits at the vacated path: $title" }
     $true
@@ -12734,19 +12757,24 @@ Describe-Ticket 'entry/01' 'a request states where it enters, and planning is se
     $true
   }
 
-  # A rule that says "enter the right stage" and names none is advice. The mapping
-  # is what makes it followable — and it belongs in the router rather than beside
-  # the obligation, because it names commands and nothing in the always-on tier
-  # may assume a command exists. That constraint is asserted by tenure/20 and
-  # streamline/02; this asserts the table landed somewhere it is allowed to be.
-  Assert "the router carries the table the entry rule states from" {
+  # A rule that says "enter the right stage" and names none is advice. The
+  # mapping is what makes it followable. crystallize/05 moved the entry table
+  # wholly into the always-on tier — its one home, the specification's choice —
+  # stated over activities so the no-command constraint (tenure/20,
+  # streamline/02) holds there; the router keeps the activity→command mapping,
+  # the half that may name commands. The tier's table and its reading rules are
+  # asserted with the tier (crystallize/02); this asserts the mapping resolves.
+  Assert "the router maps each entry activity to its command, and restates no entry row" {
     foreach ($c in (Get-SkillFile 'configure/protocol.template.md'),
                    (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
       foreach ($dest in '/implement', '/triage', '/design') {
-        if ($c -notmatch [regex]::Escape($dest)) { throw "the table names no destination $dest" }
+        if ($c -notmatch [regex]::Escape($dest)) { throw "the mapping names no destination $dest" }
       }
-      if ($c -notmatch '(?i)first match wins') { throw 'the table does not say how it is read' }
-      if ($c -notmatch '(?i)read rather than judged') { throw 'the table does not say which rows are lookups' }
+      # Matched on the rows' subject, not the tier's header — a re-headed or
+      # prose restatement of the routing must fail here too.
+      foreach ($row in '(?i)anything else that would change code', '(?i)a question about how something works') {
+        if ($c -match $row) { throw 'the router restates an entry row the tier owns' }
+      }
     }
     $true
   }
@@ -12911,8 +12939,11 @@ Describe-Ticket 'axis/01' 'work arriving from outside reaches its stage unasked'
   # — which is exactly what shipped. Read from the template, because that is the
   # copy every configured repository receives.
   Assert "every destination the entry table names is one the model may select" {
-    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Which stage a request enters'
-    if (-not $section) { throw 'the entry table is gone' }
+    # crystallize/05: the entry table moved to the always-on tier and names
+    # activities; the router's 'Entering a stage' mapping is where destinations
+    # are commands, so the axis check reads that section now.
+    $section = Get-Section (Get-SkillFile $protocolTemplate) 'Entering a stage'
+    if (-not $section) { throw 'the entry mapping is gone' }
     $withheld = @()
     foreach ($line in [regex]::Matches($section, '(?m)^\|[^|\r\n]*\|([^|\r\n]*)\|\s*$')) {
       foreach ($d in [regex]::Matches($line.Groups[1].Value, '`/([a-z-]+)`')) {
@@ -12928,9 +12959,9 @@ Describe-Ticket 'axis/01' 'work arriving from outside reaches its stage unasked'
   }
 
   Assert "the installed entry table names the same destinations as the shipped one" {
-    $a = Get-Section (Get-SkillFile $protocolTemplate) 'Which stage a request enters'
-    $b = Get-Section (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw) 'Which stage a request enters'
-    if (-not $b) { throw 'the installed copy has no entry table' }
+    $a = Get-Section (Get-SkillFile $protocolTemplate) 'Entering a stage'
+    $b = Get-Section (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw) 'Entering a stage'
+    if (-not $b) { throw 'the installed copy has no entry mapping' }
     $names = { param($t) ,@([regex]::Matches($t, '`/([a-z-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) }
     if (((& $names $a) -join ',') -ne ((& $names $b) -join ',')) { throw 'the two tables route differently' }
     $true
@@ -14946,6 +14977,14 @@ Describe-Ticket 'records/02' 'consumption is recorded by any finding that declar
     # the healing and the finding are one change, so there was never a moment
     # where it was waiting.
     'drift/2026-08-10-gt-submit-does-prefill-the-pull-request-body.md'
+    # Consumption established by crystallize/04: ADR 0077 narrowed the
+    # prohibition to landing, and the version-control policy was rewritten to
+    # the narrowed norm in the same change that wrote this mark.
+    'drift/2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports.md'
+    # Consumption established by crystallize/07: ADR 0076 superseded 0033's
+    # count with a bound, and the configure skill's outside-write sentence was
+    # rewritten to the bound in the same change that wrote this mark.
+    'drift/2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory.md'
     $consumedFinding
   )
 
@@ -15475,22 +15514,28 @@ Describe-Ticket 'downstream/03' 'work for another repository leaves as a report'
     $true
   }
 
-  Assert "the stage table refuses a request for another repository, naming both" {
-    foreach ($pair in @(@('the template', (Get-SkillFile 'configure/protocol.template.md')),
-                        @('this repository', (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)))) {
+  # crystallize/05 moved the entry table into the always-on tier, so the row
+  # this asserts moved with it; the refusal's naming obligation stayed with the
+  # report, in the router.
+  Assert "the entry table refuses a request for another repository, naming both" {
+    foreach ($pair in @(@('the template', (Get-SkillFile 'configure/CLAUDE.template.md')),
+                        @('this repository', (Get-Content (Join-Path $repo 'CLAUDE.md') -Raw)))) {
       $c = $pair[1] -replace "`r", ''
-      $table = [regex]::Match($c, '(?s)\| The request \| Enters \|.*?(?=\n\*\*)')
-      if (-not $table.Success) { throw "$($pair[0]) has no stage table" }
-      if ($table.Value -notmatch '(?i)repository other than this one') {
-        throw "$($pair[0])'s stage table has no row for a request about another repository"
+      $table = [regex]::Match($c, '(?s)\| The request \| Enters \|.*?(?=\n\n)')
+      if (-not $table.Success) { throw "$($pair[0]) has no entry table" }
+      if ($table.Value -notmatch '(?i)another repository') {
+        throw "$($pair[0])'s entry table has no row for a request about another repository"
       }
-      # First match wins in that table, so a row below /design would never be
-      # reached — every row beneath it matches such a request perfectly.
+      # First match wins in that table, so a boundary row below design would
+      # never be reached — every row beneath it matches such a request.
       $rows = @($table.Value -split "`n" | Where-Object { $_ -match '^\| ' })
-      if ($rows[2] -notmatch '(?i)repository other than this one') {
+      if ($rows[2] -notmatch '(?i)another repository') {
         throw "$($pair[0]) placed the boundary row below a row that would match first"
       }
-      if ($c -notmatch '(?i)refusal names both repositories') {
+    }
+    foreach ($pair in @(@('the router template', (Get-SkillFile 'configure/protocol.template.md')),
+                        @('the installed router', (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)))) {
+      if ($pair[1] -notmatch '(?i)names both repositories') {
         throw "$($pair[0]) does not require the refusal to name both repositories"
       }
     }
@@ -15827,22 +15872,18 @@ Describe-Ticket 'downstream/04' 'the generated-index prohibition gains the mecha
     $true
   }
 
-  # Installing the check makes `/configure` write a second file outside
-  # `.claude/`, so the formatter sentence had to move. The guard that bounded it
-  # (ADR 0033's, at "the decision is recorded here") pins only the phrase "only
-  # thing /configure writes outside" — which the reworded sentence still matches
-  # while asserting something weaker than it did. Satisfying that guard's letter
-  # is not keeping it, so the count it was standing for is asserted here instead.
-  Assert "the formatter exception names the second write and closes the set at two" {
+  # ADR 0076 (crystallize/07) superseded the count this once asserted: the
+  # outside-write rule is a bound — the specified set for the release, each
+  # write planned, the audit asserting equality — because a count is
+  # re-falsified by every legitimate addition while the bound still catches
+  # the unplanned write.
+  Assert "the formatter exception states the outside-write bound, not a count" {
     $c = (Get-SkillFile 'configure/SKILL.md') -replace "`r", ''
     $m = [regex]::Match($c, '(?ms)^\*\*Whatever formats this repository.*?(?=^#{2}\s)')
     if (-not $m.Success) { throw 'the formatter instruction is gone from step 4' }
-    if ($m.Value -notmatch '(?is)regenerate-and-compare[^.]{0,120}only thing') {
-      throw 'the formatter exception does not name the regenerate-and-compare check as the other write outside .claude/'
-    }
-    if ($m.Value -notmatch '(?is)\bno third\b') {
-      throw 'the formatter exception bounds nothing — it names two writes and does not close the set'
-    }
+    if ($m.Value -notmatch '(?is)a bound, not a count') { throw 'the bound is unstated' }
+    if ($m.Value -notmatch '(?is)specification names for the running release') { throw 'the bound does not name its source' }
+    if ($m.Value -notmatch '(?is)written set equals the specified set') { throw 'nothing asserts the audit checks the set' }
     $true
   }
 }
@@ -16180,6 +16221,10 @@ Describe-Ticket 'downstream/08' 'a waiting drift finding is surfaced by the inde
       $r = & $runRegenerator $root
       if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
       $expected = (@(
+        '---'
+        'owner: repository'
+        '---'
+        ''
         '# Evidence map'
         ''
         '| Finding | Kind | Falsifies |'
@@ -16303,6 +16348,956 @@ Describe-Ticket 'downstream/08' 'a waiting drift finding is surfaced by the inde
       throw 'the reason inferring consumption is refused is gone from the audit'
     }
     $true
+  }
+}
+
+# --- ticket crystallize/01 — the specification declares ownership and exact loading
+
+Describe-Ticket 'crystallize/01' 'the specification declares ownership, extension points, and exact loading' {
+
+  $spec = { Get-Content (Join-Path $repo 'specs.md') -Raw }
+
+  # The reader test the ticket states: owner, binding, variation, deviation —
+  # each answerable from the specification alone. One assertion per answer, so
+  # a deleted answer is named rather than folded into a neighbour's pass.
+  Assert "the specification declares the owner field and what framework ownership binds" {
+    $c = & $spec
+    if ($c -notmatch '(?i)declares its owner') { throw 'no owner declaration' }
+    if ($c -notmatch '(?i)installed verbatim') { throw 'verbatim install is unstated' }
+    if ($c -notmatch '(?i)byte-for-byte') { throw 'the hash audit is unstated' }
+    if ($c -notmatch '(?i)defect to reinstall, never drift to heal') { throw 'the defect-not-drift rule is unstated' }
+    $true
+  }
+
+  Assert "variation enters through declared points, and a point traces to the census" {
+    $c = & $spec
+    if ($c -notmatch '(?i)extension points the owning file names') { throw 'the entry points are unstated' }
+    if ($c -notmatch '(?i)variation census') { throw 'the census is unnamed' }
+    if ($c -notmatch '(?i)never invented') { throw 'nothing forbids inventing a point' }
+    $true
+  }
+
+  Assert "a deviation is defined, loud, and carries its declaring release" {
+    $c = & $spec
+    if ($c -notmatch '(?i)declared deviation') { throw 'the deviation is undefined' }
+    if ($c -notmatch '(?i)release it was declared under') { throw 'the declaring release is unstated' }
+    if ($c -notmatch '(?is)surfaced by every audit') { throw 'the deviation is not loud' }
+    $true
+  }
+
+  Assert "the norm form is stated with its clarity floor, and the essays stay home" {
+    $c = & $spec
+    if ($c -notmatch '(?i)checkable imperative or table carrying a one-line why') { throw 'the norm form is unstated' }
+    if ($c -notmatch '(?is)Decisions and is not installed') { throw 'nothing keeps the essays home' }
+    if ($c -notmatch '(?i)never traded for compression') { throw 'the clarity floor is gone' }
+    $true
+  }
+
+  # Both directions: the exact semantics are present, and the permissive
+  # sentence they replace is genuinely gone rather than joined.
+  Assert "stage rows are mandatory and exact, and judged selection is removed" {
+    $c = & $spec
+    if ($c -notmatch '(?i)mandatory and exact') { throw 'row semantics are not exact' }
+    if ($c -notmatch '(?i)never restoring selection') { throw 'the fix for an unaffordable row is unstated' }
+    if ($c -match '(?i)selected by the stage being run') { throw 'the permissive selection sentence survives' }
+    if ($c -notmatch "(?i)loads its row's policies whole") { throw 'the policy section still reads as judged selection' }
+    $true
+  }
+
+  Assert "the always-on core names its four members and the test that selects them" {
+    $c = & $spec
+    if ($c -notmatch '(?i)absence on a turn cause behavioral drift') { throw 'the drift test is unstated' }
+    foreach ($member in 'entry table', 'no-ask rule', 'fixed-owner rule', 'verification core') {
+      if ($c -notmatch "(?i)\*\*$member\*\*") { throw "the tier does not name the $member" }
+    }
+    $true
+  }
+
+  # The home ticket 05 left to the specification to choose. Chosen: the tier,
+  # wholly — stated over activities so the no-command constraint holds.
+  Assert "the entry table's home is the tier, stated over activities" {
+    $c = & $spec
+    if ($c -notmatch '(?i)activities, never commands') { throw 'the table is not bounded to activities' }
+    if ($c -notmatch '(?i)entry table has one home') { throw 'the single home is unstated' }
+    $true
+  }
+
+  Assert "the quality gates carry the determinism conformance" {
+    $c = & $spec
+    if ($c -notmatch '(?i)computed, or it names its judgement') { throw 'the computed-or-judged gate is gone' }
+    if ($c -notmatch '(?i)seeded deletion') { throw 'the pilot proof is unstated' }
+    if ($c -notmatch '(?i)census-derived') { throw 'the census gate is gone' }
+    if ($c -notmatch '(?i)without a disposition fails the audit') { throw 'deviation aging is unenforced' }
+    $true
+  }
+
+  # The precedence rule's other half: the ADRs sat at proposed until the
+  # specification stopped disagreeing with them, which is this ticket. Each is
+  # accepted now, and cited from the specification it amends.
+  Assert "the four crystallize decisions are accepted and cited from the specification" {
+    $c = & $spec
+    foreach ($n in '0073', '0074', '0075', '0078') {
+      $f = Get-ChildItem (Join-Path $repo '.claude/decisions') -Filter "$n-*.md"
+      if (-not $f) { throw "no decision $n" }
+      $fm = Get-Frontmatter (Get-Content $f.FullName -Raw)
+      if ($fm -notmatch '(?m)^status:\s*accepted\s*$') { throw "decision $n is not accepted" }
+      if ($c -notmatch "\b$n\b") { throw "the specification does not cite $n" }
+    }
+    $true
+  }
+}
+
+# --- ticket crystallize/03 — the knowledge policies convert to owned norm form -
+
+Describe-Ticket 'crystallize/03' 'the knowledge policies convert to framework-owned norm form' {
+
+  # Each manifest below is the numbered norm inventory taken from its file
+  # BEFORE conversion — the mechanism the determinism gate requires. A manifest
+  # row IS its guard, so the inventory and the guards cannot drift apart, and
+  # every row was fire-checked by deleting its anchor from the converted file
+  # and watching this suite fail with the row's name.
+  #
+  # Pilot proof (2026-08-10, the effort's first conversion): the norm
+  # "a falsified Decision is never healed inline" was seeded out of the
+  # converted knowledge template; the run failed naming exactly that row; the
+  # norm was restored. No other file converted until this proof existed.
+
+  $family = [ordered]@{
+    'knowledge' = @{ template = 'configure/policies/knowledge.template.md'; installed = '.claude/policies/knowledge.md' }
+    'context'   = @{ template = 'configure/policies/context.template.md';   installed = '.claude/policies/context.md' }
+    'decisions' = @{ template = 'configure/policies/decisions.template.md'; installed = '.claude/policies/decisions.md' }
+    'evidence'  = @{ template = 'configure/policies/evidence.template.md';  installed = '.claude/policies/evidence.md' }
+    'maps'      = @{ template = 'configure/policies/maps.template.md';      installed = '.claude/policies/maps.md' }
+  }
+
+  # Verbatim install is the model: the template is what ships, the installed
+  # copy is what this repository runs on, and a byte of difference is a defect.
+  foreach ($name in $family.Keys) {
+    $f = $family[$name]
+    Assert "$name — the template and the installed copy are byte-identical" {
+      if ((Get-SkillFile $f.template) -ne (Get-Content (Join-Path $repo $f.installed) -Raw)) {
+        throw "$($f.installed) differs from its template"
+      }
+      $true
+    }
+    Assert "$name — the policy declares framework ownership in frontmatter" {
+      $fm = Get-Frontmatter (Get-Content (Join-Path $repo $f.installed) -Raw)
+      if ($fm -notmatch '(?m)^owner:\s*framework\s*$') { throw 'no owner: framework declaration' }
+      $true
+    }
+  }
+
+  $manifests = [ordered]@{
+    'knowledge' = [ordered]@{
+      'the pen table names all six writer rows' = '(?s)`/configure`.*`/design`.*`/implement`.*`/commit`.*`/review`.*`/research`, `/prototype`'
+      'design writes vocabulary and Decisions as they resolve, never batched' = '(?i)as they resolve, never batched'
+      'a Decision is offered only past the decisions-policy bar' = '(?i)clears the bar in `\.claude/policies/decisions\.md`'
+      'implement writes only what its change moved' = '(?i)only the concepts, boundaries, and Source Pointers its change moved'
+      'commit heals what the diff falsified and authors nothing new' = '(?i)heals what its diff falsified and authors nothing new'
+      'a falsified Decision is never healed inline' = '(?i)falsified Decision is never healed inline'
+      'a change that moves no concept updates no knowledge' = '(?i)moves no concept updates no knowledge'
+      'implementation detail never lands in Context' = '(?i)implementation detail never lands in Context'
+    }
+    'context' = [ordered]@{
+      'the three kinds of file, each with what it holds and when it is read' = '(?s)contexts/map\.md.*contexts/repository\.md.*contexts/<domain>\.md'
+      'map.md holds the routing table alone' = '(?i)nothing else goes in this file'
+      'the table is generated from the declared fields' = '(?i)generated from the fields each context declares'
+      'a generated table cannot disagree with its directory' = '(?i)cannot disagree with its directory'
+      'hand-editing is prohibited and the prohibition enforced' = '(?i)enforced by regenerating and comparing'
+      'every context file has exactly one row, repository.md included' = '(?i)exactly one row, including'
+      'a group label row carries the directory name and nothing else' = '(?i)label row carries the directory name'
+      'the term-placement table decides by where a term is used' = '(?i)only while one workflow stage runs'
+      'a stage-owned term is defined in its guide and nowhere else' = "(?i)defined in that stage's guide and nowhere else"
+      'a term fitting two rows is two senses to split' = '(?i)being used in two senses'
+      'context is orientation, never documentation' = '(?i)orientation, never documentation'
+      'no code, API shapes, inventories, or walkthroughs' = '(?i)code, API shapes, function names'
+      'a Source Pointer is a coordinate, never a claim' = '(?i)navigation coordinate, never a claim'
+      'load-when states when to load, never a topic' = '(?i)states when to load the file, never what it is about'
+      'a domain earns a file only by its own vocabulary, principles, or ownership' = '(?i)own vocabulary, principles, or ownership'
+    }
+    'decisions' = [ordered]@{
+      'ADRs are sequentially numbered, the directory created lazily' = '(?i)Create the directory lazily'
+      'the template block carries the five declared fields' = '(?s)```md.*status:.*load-when:.*sources:.*supersedes:.*superseded-by:.*```'
+      'a single paragraph is enough' = '(?i)single paragraph is enough'
+      'optional sections must earn their place' = '(?i)mandatory sections produce filler'
+      'a field nothing acts on is deleted' = '(?i)a field nothing acts on is deleted'
+      'routing is adopted by pointer and the supersession pair is its own' = '(?i)supersession pair below'
+      'the status column answers is-this-live without opening anything' = '(?i)is this live'
+      'a stage routes through the index and opens only what it names' = '(?i)opens only the ADRs it names'
+      'a moved ADR keeps its number and slug' = "(?i)preserve each ADR's existing number"
+      'committed reasoning is frozen; only status and superseded-by move' = '(?is)reasoning is \*\*frozen\*\*'
+      'supersession is written at both ends in the same change' = '(?i)written at both ends'
+      'writing only the new end is named as the tempting half' = '(?i)tempting half'
+      'the three-of-three bar gates offering an ADR' = '(?s)Hard to reverse.*Surprising without context.*real trade-off'
+      'a convention is not a decision' = '(?i)convention is not a decision'
+    }
+    'evidence' = [ordered]@{
+      'evidence records what was verified and when; nothing revalidates it' = '(?i)nothing revalidates it afterwards'
+      'the five kinds each name their directory and producer' = '(?s)research/.*prototypes/.*out-of-scope/.*discussions/.*drift/'
+      'a kind earns its directory when it has a file' = '(?i)earns its directory when it has a file'
+      'the directory is read before producing more' = '(?i)read the directory before producing more'
+      'every file declares kind and falsifies' = '(?s)\| `kind` \|.*\| `falsifies` \|'
+      'one index spans all five kinds' = '(?i)spanning all five kinds'
+      'rows sit in filename order' = '(?i)filename order'
+      'the index is generated, never hand-edited' = '(?i)generated, never hand-edited'
+      'the account is frozen, the line beside it' = '(?i)beside it rather than inside it'
+      'a healed finding carries a Consumed line' = 'Consumed:'
+      'whoever heals writes the line in the same change' = '(?i)same change as the healing'
+      'unestablished consumption stays unmarked and reads as waiting' = '(?i)stays unmarked and reads as waiting'
+      'the index reports the line and decides nothing' = '(?i)reports the line and decides nothing'
+      'a discussion requires its open half' = '(?i)required, not optional'
+      'a discussion is never maintained' = '(?i)fourth knowledge layer'
+      'a drift finding records what, against which commit, and what it falsifies' = '(?i)against which commit'
+      'prototype code is not evidence' = '(?i)prototype code is not evidence'
+      'gated evidence stops the design; ungated runs in the background' = '(?i)gated evidence block stops the design'
+      'design owns graduation' = '(?i)owns graduation'
+      'research and prototype never write Context directly' = '(?i)never write Context directly'
+      'graduation is a copy, never a move' = '(?i)never a move'
+    }
+    'maps' = [ordered]@{
+      'a map is reached only when the fog gate fired' = '(?i)fog gate fired'
+      'the tracker declaration is read before anything is created' = '(?i)What a ticket is'
+      'branch-bound keeps decision work off the tracker' = '(?i)Branch-bound'
+      'tracked intent applies the file as written' = '(?i)Tracked intent'
+      'a missing declaration is a configuration gap to backfill' = '(?i)configuration gap'
+      'every map ticket resolves a decision, never a build slice' = '(?i)never a slice of a build'
+      'the destination is named first' = '(?i)Name the destination first'
+      'the map lives inside the effort it charts' = 'tickets/<effort>/map\.md'
+      'the map is an index, not a store' = '(?i)An index, not a store'
+      'open tickets are not listed on the map' = '(?i)Open tickets are not listed'
+      'a decision ticket answers on resolution, never in the body' = '(?i)written on resolution, never in the body'
+      'an agent answering its own grilling has skipped the ticket' = '(?i)it has skipped it'
+      'the four decision types are enumerated' = '(?s)`grilling`.*`research`.*`prototype`.*`task`'
+      'a decision edge is answer-gating, never stacking' = '(?i)answer-gating, never a stacking instruction'
+      'fog is charted only where visible' = "(?i)don't chart what you cannot see yet"
+      'fog or ticket is decided by whether the question is sharp now' = '(?i)stated precisely now'
+      'out-of-scope work never graduates' = '(?i)never graduates'
+      'drift in the area gets a task-list line on the map' = '(?i)Drift found'
+      'one ticket per session, research in parallel' = '(?i)One ticket per session'
+      'the map ends settled or with declared increments' = '(?i)scoped increment on the build ticket'
+    }
+  }
+
+  foreach ($name in $manifests.Keys) {
+    $file = $family[$name]
+    foreach ($norm in $manifests[$name].Keys) {
+      $pattern = $manifests[$name][$norm]
+      Assert "$name norm — $norm" {
+        if ((Get-SkillFile $file.template) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+        $true
+      }
+    }
+  }
+}
+
+# --- ticket crystallize/02 — the always-on core ships in norm form ------------
+
+Describe-Ticket 'crystallize/02' 'the always-on core ships in norm form and gains its three members' {
+
+  # The same manifest mechanism crystallize/03 piloted: each row below is one
+  # norm from the pre-conversion inventory of the always-on surfaces, plus the
+  # three members the effort adds. Every row was fire-checked by deleting its
+  # anchor and watching this suite fail with the row's name.
+
+  $pairs = [ordered]@{
+    'precedence'  = @{ template = 'configure/precedence.template.md';  installed = '.claude/rules/precedence.md' }
+    'engineering' = @{ template = 'configure/engineering.template.md'; installed = '.claude/rules/engineering.md' }
+    'placement'   = @{ template = 'configure/placement.template.md';   installed = '.claude/rules/placement.md' }
+    'boundary'    = @{ template = 'configure/boundary.template.md';    installed = '.claude/rules/boundary.md' }
+  }
+  foreach ($name in $pairs.Keys) {
+    $f = $pairs[$name]
+    Assert "$name — the template and the installed rule are byte-identical" {
+      if ((Get-SkillFile $f.template) -ne (Get-Content (Join-Path $repo $f.installed) -Raw)) {
+        throw "$($f.installed) differs from its template"
+      }
+      $true
+    }
+    Assert "$name — the rule declares framework ownership in frontmatter" {
+      $fm = Get-Frontmatter (Get-Content (Join-Path $repo $f.installed) -Raw)
+      if ($fm -notmatch '(?m)^owner:\s*framework\s*$') { throw 'no owner: framework declaration' }
+      $true
+    }
+  }
+
+  # Both entrypoints: the template that ships, and this repository's own.
+  $entrypoints = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/CLAUDE.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo 'CLAUDE.md') -Raw }
+  }
+  $tierNorms = [ordered]@{
+    'the entry table routes the six request shapes' = '(?s)\| The request \| Enters \|.*another repository.*holds a claim.*triage.*design'
+    'the entry table is read first-match, mostly without judgement' = '(?i)first match wins[^.]{0,80}read rather than judged'
+    'the no-ask rule: a settled question is acted on, citing the line' = '(?i)settles a question is acted on, citing the line'
+    'the fixed-owner rule: framework law is followed as written' = '(?i)followed as written'
+    'a variation with no point is a loud declared deviation' = '(?i)declared deviation, loud in every audit'
+    'the knowledge order is absolute and the Codebase wins' = '(?i)the Codebase is right'
+    'verification is at use, never a scan or a phase' = '(?i)Never a scan\. Never a phase\.'
+    'the compression test gates every knowledge write' = '(?i)improve a future engineering decision'
+    'conventions are defaults for a silent repository' = '(?i)defaults for when the repository is silent'
+    'the router is reached by pointer' = '(?i)question turn never pays for it'
+  }
+  foreach ($where in $entrypoints.Keys) {
+    foreach ($norm in $tierNorms.Keys) {
+      $pattern = $tierNorms[$norm]
+      $reader = $entrypoints[$where]
+      Assert "always-on norm ($where) — $norm" {
+        if ((& $reader) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+        $true
+      }
+    }
+  }
+
+  # The tier may name activities and never commands — the constraint that
+  # made the table's move into the tier possible at all. Checked on both
+  # copies; entry/01 checks only the template.
+  Assert "the entry table names activities, never commands" {
+    foreach ($where in $entrypoints.Keys) {
+      foreach ($dest in '/implement', '/triage', '/design', '/aep:') {
+        if ((& $entrypoints[$where]) -match [regex]::Escape($dest)) { throw "$where names $dest" }
+      }
+    }
+    $true
+  }
+
+  $ruleNorms = [ordered]@{
+    'precedence — the ladder opens with the user' = @('precedence', '(?im)^1\.\s+What the user said')
+    'precedence — a user instruction overrides and is named doing it' = @('precedence', '(?i)overrides everything here')
+    'precedence — repository authority facts declare in CLAUDE.md, not here' = @('precedence', '(?i)declare in its `CLAUDE\.md`, never in this file')
+    'engineering — source is inspected before any repository-specific claim' = @('engineering', '(?i)before any repository-specific claim')
+    'engineering — a CLI is an API and flags are never guessed' = @('engineering', '(?i)never try a flag and see')
+    'engineering — the check-fire standard survives' = @('engineering', '(?i)letting its check fire')
+    'engineering — the user-invoked-skill standard survives' = @('engineering', '(?i)invoked by the user')
+    'placement — two places, and the root carries only CLAUDE.md' = @('placement', '(?i)only entry AEP adds outside those two')
+    'placement — whose process it serves decides' = @('placement', '(?i)whose process a file serves')
+    'boundary — work for another repository leaves as a report' = @('boundary', '(?i)work for any other leaves as a report')
+    'boundary — the crossing is said when reached' = @('boundary', '(?i)say it when it is reached')
+  }
+  foreach ($norm in $ruleNorms.Keys) {
+    $file = $pairs[$ruleNorms[$norm][0]]
+    $pattern = $ruleNorms[$norm][1]
+    Assert "rule norm — $norm" {
+      if ((Get-SkillFile $file.template) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+      $true
+    }
+  }
+
+  # The acceptance the ratchet cannot state: smaller than the tier measured
+  # before this ticket (9454), despite the three additions. The ceiling assert
+  # in aep/08 owns the live measurement; this pins the comparison.
+  Assert "the tier shrank below its pre-conversion measurement despite the additions" {
+    $m = [regex]::Match((Get-Content (Join-Path $repo 'scripts/verify.ps1') -Raw), '(?m)^\s*\$ceiling = (\d+)')
+    if (-not $m.Success) { throw 'no ceiling to read' }
+    if ([int]$m.Groups[1].Value -ge 9454) { throw "the ceiling did not move below the pre-conversion tier: $($m.Groups[1].Value)" }
+    $true
+  }
+}
+
+# --- ticket crystallize/04 — the delivery policies convert, dispatch narrows --
+
+Describe-Ticket 'crystallize/04' 'the delivery policies convert and the set-dispatch prohibition narrows to landing' {
+
+  # The manifest mechanism crystallize/03 piloted, applied to the delivery
+  # family. The verbatim trio (specs, tickets, sub-agents) is framework law,
+  # byte-locked pair by pair; the derived pair (tracker, version-control) is
+  # repository-owned, its facts entering as declared frontmatter fields — the
+  # extension points this family's census produced. Every row fire-checked.
+
+  $family = [ordered]@{
+    'specs'      = @{ template = 'configure/policies/specs.template.md';      installed = '.claude/policies/specs.md' }
+    'tickets'    = @{ template = 'configure/policies/tickets.template.md';    installed = '.claude/policies/tickets.md' }
+    'sub-agents' = @{ template = 'configure/policies/sub-agents.template.md'; installed = '.claude/policies/sub-agents.md' }
+  }
+  foreach ($name in $family.Keys) {
+    $f = $family[$name]
+    Assert "$name — the template and the installed copy are byte-identical" {
+      if ((Get-SkillFile $f.template) -ne (Get-Content (Join-Path $repo $f.installed) -Raw)) {
+        throw "$($f.installed) differs from its template"
+      }
+      $true
+    }
+    Assert "$name — the policy declares framework ownership in frontmatter" {
+      $fm = Get-Frontmatter (Get-Content (Join-Path $repo $f.installed) -Raw)
+      if ($fm -notmatch '(?m)^owner:\s*framework\s*$') { throw 'no owner: framework declaration' }
+      $true
+    }
+  }
+
+  # The derived pair: repository-owned, with the repository's facts as fields
+  # something can act on rather than prose something has to parse.
+  $derivedFields = [ordered]@{
+    '.claude/policies/version-control.md' = @('owner:\s*repository', 'model:\s*stacked-changes', 'unit:\s*effort')
+    '.claude/policies/tracker.md'         = @('owner:\s*repository', 'tracker:\s*local-markdown', 'spec-home:\s*per-effort', 'ticket-model:\s*tracked-intent')
+  }
+  foreach ($file in $derivedFields.Keys) {
+    $fields = $derivedFields[$file]
+    Assert "$file declares its repository facts as frontmatter fields" {
+      $fm = Get-Frontmatter (Get-Content (Join-Path $repo $file) -Raw)
+      foreach ($p in $fields) {
+        if ($fm -notmatch "(?m)^$p\s*$") { throw "missing declared field: $p" }
+      }
+      $true
+    }
+  }
+
+  Assert "the templates name the declared fields as the extension points" {
+    foreach ($t in 'configure/policies/version-control.template.md', 'configure/policies/tracker.template.md') {
+      $c = Get-SkillFile $t
+      if ($c -notmatch '(?i)owner: repository') { throw "$t shows no declared-fields block" }
+      if ($c -notmatch '(?i)extension points') { throw "$t does not name the fields as extension points" }
+    }
+    $true
+  }
+
+  # The healing ADR 0077 licensed, in the installed policy that carried the
+  # falsified norm.
+  Assert "the dispatch norm narrows to landing and states the judgement cost" {
+    $c = Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw
+    if ($c -notmatch '(?i)dispatch is independent of landing \(ADR 0077\)') { throw 'the narrowed norm is not stated' }
+    if ($c -notmatch '(?i)judgement over what each workspace reported') { throw 'the retained cost is unstated' }
+    if ($c -match '(?i)a set is not dispatched') { throw 'the falsified prohibition survives' }
+    $true
+  }
+
+  Assert "a never-commit worktree has a sanctioned exit that keeps the check alive" {
+    $c = Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw
+    if ($c -notmatch '(?i)forced removal is the sanctioned exit') { throw 'no sanctioned exit' }
+    if ($c -notmatch '(?i)verified integrated against its change record') { throw 'the exit is not gated on verification' }
+    if ($c -notmatch '(?i)letter while killing its check|letter-versus-check') { throw 'the cleaning dodge is not refused' }
+    $true
+  }
+
+  Assert "the set-dispatch drift finding is marked consumed, naming this healing" {
+    $c = Get-Content (Join-Path $repo '.claude/evidence/drift/2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports.md') -Raw
+    if ($c -notmatch '(?im)^Consumed:.*crystallize/04') { throw 'the finding does not name this healing' }
+    $true
+  }
+
+  $manifests = [ordered]@{
+    'specs' = [ordered]@{
+      'the spec home is read from the tracker policy' = '(?i)declares which'
+      'a problem is not a solution wearing its clothes' = '(?i)solution wearing a problem'
+      'sources is a list, one entry per line' = '(?i)one entry per line'
+      'nothing to point at declares an empty list' = 'sources: \[\]'
+      'no file paths outside sources, and no code' = '(?i)No file paths outside the `sources` field'
+      'a spec uses the repository vocabulary' = "(?i)repository's vocabulary|Use the repository.s vocabulary"
+      'an empty section is deleted, not padded' = '(?i)deleted, not padded'
+      'the spec is not the decision record' = '(?i)not the decision record'
+      'only the status field ever moves' = '(?i)Only the status field ever moves'
+      'implemented is written by the commit stage' = '(?i)`/commit` writes it'
+      'a post-hoc spec is reconstruction and says so' = '(?i)reconstruction, not record'
+      'the design index is generated, never hand-edited' = '(?i)generated, never hand-edited'
+    }
+    'tickets' = [ordered]@{
+      'one ticket per file — a combined file cannot be claimed' = '(?i)cannot be claimed'
+      'no implementation diary' = '(?i)no implementation diary'
+      'the lifecycle vocabulary is closed' = '(?s)open\s+created by /design.*superseded'
+      'there is no claimed state' = '(?i)no `claimed` state'
+      'on a shared tracker the merge resolves' = '(?i)merge resolves the ticket'
+      'a ticket has an observable outcome' = '(?i)observe when it closes'
+      'deepen, do not widen' = "(?i)Deepen, don't widen"
+      'one design run, one root' = '(?i)One design run, one root'
+      'the protocol-only test is the diff' = '(?i)test is the diff'
+      'acceptance is checkable by a non-author' = '(?i)someone who did not write the code'
+      'increments are declared at design time only' = '(?i)written at design time only'
+      'a fan-out names roles and ownership, and stops' = '(?i)names roles and ownership, and stops'
+      'slices are vertical, not horizontal' = '(?i)Vertical slices, not horizontal'
+      'every later ticket declares an edge' = '(?i)declares at least one'
+      'wide refactors run expand-contract' = '(?i)expand.contract'
+      'an obsolete ticket is never deleted' = '(?i)Never delete it'
+    }
+    'sub-agents' = [ordered]@{
+      'a child inherits the entrypoint hierarchy' = '(?i)inherits the entrypoint hierarchy'
+      'the unit is a portion or a whole ticket' = '(?i)portion of one ticket or a whole ticket'
+      'a ticket child declines a declared fan-out' = '(?i)declines it and records the decline'
+      'a child writes no knowledge layer' = '(?i)writes no knowledge layer'
+      'a child claims, commits, pushes, integrates nothing' = '(?i)claims nothing, commits nothing'
+      'no agent message is another agent consent' = "(?i)another agent's consent"
+      'a child dispatches nobody' = '(?i)dispatches nobody'
+      'a decision is recorded and stopped on' = '(?i)recorded and stopped on'
+      'exactly two requests exist' = '(?i)Exactly two things may be requested'
+      'the menu is closed' = '(?i)menu is closed'
+      'a request spends the cap' = "(?i)spends the brief's cap"
+      'a question travels attributed, an answer verbatim' = '(?i)travels attributed'
+      'a brief missing a part is incomplete' = '(?i)missing any one of them is incomplete'
+      'the record reconciles against the actual diff' = "(?i)reconciled against the child's actual diff"
+      'the change record is Position' = '(?i)change record is Position'
+    }
+    'version-control-template' = [ordered]@{
+      'the model read wins over the stated model' = '(?i)the read is right'
+      'a stacking-tool probe can make its own answer true' = '(?i)make its own answer true'
+      'the unit field is the extension point' = 'unit: ticket \| effort'
+      'effort-unit dispatch is independent of landing' = '(?i)dispatch is independent of landing'
+      'the never-commit worktree exit ships in the template' = '(?i)forced removal is the sanctioned exit'
+      'the branch encodes the ticket id' = '(?i)encode the ticket id'
+      'the design PR is the one protocol-only pull request' = '(?i)design PR'
+      'scripts diffs are code, not scaffolding' = '(?i)code, not scaffolding'
+    }
+    'tracker-template' = [ordered]@{
+      'both trackers are first-class' = '(?i)neither is a fallback'
+      'the CLI is never guessed' = '(?i)docs fetch, not an assumption'
+      'the spec home is a declared field' = 'spec-home'
+      'the ticket model is a declared field' = 'ticket-model'
+      'roles are triage vocabulary, never the build lifecycle' = '(?i)never the build lifecycle'
+      'assignment is read, never written unasked' = '(?i)never writes it unasked'
+    }
+  }
+  $manifestFiles = @{
+    'specs'                    = 'configure/policies/specs.template.md'
+    'tickets'                  = 'configure/policies/tickets.template.md'
+    'sub-agents'               = 'configure/policies/sub-agents.template.md'
+    'version-control-template' = 'configure/policies/version-control.template.md'
+    'tracker-template'         = 'configure/policies/tracker.template.md'
+  }
+  foreach ($name in $manifests.Keys) {
+    $path = $manifestFiles[$name]
+    foreach ($norm in $manifests[$name].Keys) {
+      $pattern = $manifests[$name][$norm]
+      Assert "$name norm — $norm" {
+        if ((Get-SkillFile $path) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+        $true
+      }
+    }
+  }
+}
+
+# --- ticket crystallize/05 — the router compresses and load lists become exact -
+
+Describe-Ticket 'crystallize/05' 'the router compresses to norm form and stage load lists become exact' {
+
+  # The manifest mechanism crystallize/03 piloted, applied to the router. The
+  # inventory below was taken from the pre-conversion template; every row was
+  # fire-checked by deleting its anchor and watching this suite fail with the
+  # row's name. The Marker and Receipt semantics survive unchanged in meaning —
+  # their rows are the proof.
+
+  # Flipped repository -> framework at the user's direction during adoption:
+  # the census observed zero differing lines between template and installed
+  # copy, so the router is law with two named points — the `aep-version` value
+  # and the `## Deviations` entries.
+  Assert "the router declares framework ownership and the release that wrote it" {
+    foreach ($c in (Get-SkillFile 'configure/protocol.template.md'),
+                   (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
+      $fm = Get-Frontmatter $c
+      if ($fm -notmatch '(?m)^owner:\s*framework\s*$') { throw 'no framework owner declaration' }
+      if ($fm -notmatch '(?m)^aep-version:') { throw 'no release field' }
+    }
+    $true
+  }
+
+  Assert "the installed router matches the template in this repository" {
+    if ((Get-SkillFile 'configure/protocol.template.md') -ne (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
+      throw 'the installed router drifted from the template'
+    }
+    $true
+  }
+
+  $routerNorms = [ordered]@{
+    'position is per-clone state, never repository knowledge' = '(?i)never what the repository knows'
+    'nothing shared may depend on Position' = '(?i)Nothing shared may depend on it'
+    'the marker holds two facts' = '(?i)holds \*\*two facts\*\*'
+    'both comparisons are identity tests with no third condition' = '(?i)no third condition'
+    'a match licenses exactly the skip, no more' = '(?i)exactly that, and no more'
+    'the marker is a cache-validity check, not a task' = '(?i)cache-validity check, not a task'
+    'an absent tree fact reads the tree live' = '(?i)no tree fact means the tree is unknown'
+    'the second writer re-stamps the tree fact alone' = '(?i)leaving the commit fact untouched'
+    'the re-stamp is conditional on the dealing' = '(?i)conditional on the dealing and never on the reading'
+    'both drift sources are read' = 'git diff --name-only'
+    'a non-ancestor marker is not a base to diff from' = '(?i)not an ancestor of'
+    'the report opens every stage, even with nothing to verify' = '(?i)including when there was nothing to verify'
+    'the computed half is quoted, never composed' = '(?i)quotes that output rather than composing its own'
+    'the judgement half is beyond any script' = '(?i)No script can produce it'
+    'the governing repository leads the judgement half' = '(?i)governing repository leads'
+    'the refusal names both repositories' = '(?i)names both repositories'
+    'a receipt attests computation and nothing more' = '(?i)never that the stage read it'
+    'the report says which disposition the drift got' = '(?i)healed, or discounted'
+    'a missing release field is unknown, never stale' = '(?i)unknown rather than stale'
+    'a broken pointer is searched for, never invented' = '(?i)never invent a replacement path'
+    'a mode is defined once, in the modes directory' = '(?i)one file per posture and nowhere else'
+    'the entry table has one home, the always-on tier' = '(?i)lives in the always-on tier, its one home'
+    'a stage is stated, then taken' = '(?i)Stated, then taken'
+    'a row is mandatory and exact' = '(?i)A row is mandatory and exact'
+    'a tool guide outside a row is reached at the operation' = '(?i)reached when an operation needs it'
+    'a missing forge reference is a configuration gap' = '(?i)configuration gap'
+    'the sub-agent contract rides only dispatching rows' = '(?i)every row whose stage dispatches'
+    'a stage reads its row and stops' = '(?i)reads its row and stops'
+  }
+  foreach ($norm in $routerNorms.Keys) {
+    $pattern = $routerNorms[$norm]
+    Assert "router norm — $norm" {
+      if ((Get-SkillFile 'configure/protocol.template.md') -notmatch $pattern) { throw 'the conversion dropped this norm' }
+      $true
+    }
+  }
+
+  # Both directions on the semantics change: the exact rule is present (a row
+  # above) and the permissive sentence it replaced is gone.
+  Assert "the permissive may-read sentence is gone from the corpus" {
+    foreach ($c in (Get-SkillFile 'configure/protocol.template.md'),
+                   (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)) {
+      if ($c -match '(?i)what a stage \*may\* read') { throw 'the permissive sentence survives' }
+    }
+    $true
+  }
+
+  # The acceptance's measurement: every stage row's total load, summed over the
+  # guides its row names, is measured and bounded per stage, so a regression
+  # that quietly re-inflates any row fails here rather than reading as noise.
+  # The design row is the acceptance's own comparison: 73,825 characters before
+  # the effort (measured at f73a5a2), 49,532 after crystallize/09.
+  Assert "every stage row's total load is measured and bounded" {
+    $section = Get-Section (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw) 'Which guides each stage reads'
+    $measured = 0
+    # Ratcheted per stage by crystallize/09 from the flat design-60k /
+    # others-90k pair, each bound set just above the measured load at that
+    # ticket (triage 4,948; design 49,532; implement 59,672; review 61,940;
+    # research 16,180; prototype 7,911; commit 35,550).
+    $bounds = @{ triage = 8000; design = 52000; implement = 63000; review = 65000;
+                 research = 18000; prototype = 9000; commit = 38000 }
+    foreach ($stage in 'triage', 'design', 'implement', 'review', 'research', 'prototype', 'commit') {
+      $row = [regex]::Match($section, "(?m)^\|\s*``/$stage``\s*\|[^|]*\|([^\r\n]*)\|\s*$")
+      if (-not $row.Success) { throw "no $stage row" }
+      $total = 0
+      foreach ($g in [regex]::Matches($row.Groups[1].Value, '`(\.claude/[^`]+)`')) {
+        $p = Join-Path $repo $g.Groups[1].Value
+        if (Test-Path $p -PathType Leaf) { $total += (Get-Content $p -Raw).Length }
+        elseif (Test-Path $p -PathType Container) {
+          $total += (Get-ChildItem $p -Filter '*.md' -File | ForEach-Object { (Get-Content $_.FullName -Raw).Length } | Measure-Object -Sum).Sum
+        }
+      }
+      $bound = $bounds[$stage]
+      if ($total -gt $bound) { throw "the $stage row loads $total chars against a $bound bound" }
+      $measured++
+    }
+    if ($measured -ne 7) { throw 'a spine row went unmeasured' }
+    $true
+  }
+}
+
+# --- ticket crystallize/06 — the skills speak norm form and read exact lists --
+
+Describe-Ticket 'crystallize/06' 'the stages speak norm form and read their exact load lists' {
+
+  # The conversion's finding, recorded on the ticket as a departure from its assumption: the
+  # shipped skills were already largely norm-form, so the deep rewrites landed
+  # where essays actually lived (design, commit, implement's prose passages)
+  # and the pin-dense orchestration core was left at its existing density —
+  # the clarity-over-compression constraint deciding against forcing it.
+  # What is guarded here: the converted norms, the corpus-wide absence of
+  # judged guide selection, and the measured ceiling on the skill bodies.
+
+  Assert "no skill instructs judged guide selection" {
+    $offenders = @()
+    foreach ($f in (Get-ChildItem (Join-Path $skills '.') -Recurse -Filter 'SKILL.md')) {
+      $c = Get-Content $f.FullName -Raw
+      if ($c -match '(?i)what a stage \*may\* read|cho(o|c)se (among|which) (guides|policies)|select which guides') {
+        $offenders += $f.FullName.Substring($skills.Length + 1)
+      }
+    }
+    if ($offenders) { throw "judged selection instructed in: $($offenders -join ', ')" }
+    $true
+  }
+
+  # The skill-body total, measured and bounded. 154,403 before the effort;
+  # the bound holds the gain and fails a regression that re-inflates the
+  # corpus. Deep compression of the orchestration core was deliberately not
+  # taken — the departure is recorded on the ticket.
+  # Raised 152,000 -> 152,600 by crystallize/07, which added the ownership,
+  # deviation, and upgrade norms to /configure — new law, not re-inflated
+  # essays; the ratchet records the reason as ever. Raised again to 152,800 by
+  # the whole-effort review, whose fixes classified the audit's comparison and
+  # aging as computed steps whose output the stage quotes — determinism norms
+  # the review demanded, paid for and recorded. Raised to 153,200 by
+  # crystallize/09's run, where the router's flip to framework law added its
+  # install statement and the audit's set-aside of the two extension points to
+  # /configure — the exemption the delta review demanded so deviations survive
+  # the byte comparison. New law each time, never re-inflated essays.
+  Assert "the skill bodies stay under their measured post-conversion ceiling" {
+    $total = (Get-ChildItem $skills -Recurse -Filter 'SKILL.md' | Measure-Object -Property Length -Sum).Sum
+    if ($total -gt 153200) { throw "skill bodies total $total against a 153,200 ceiling" }
+    $true
+  }
+
+  $skillNorms = [ordered]@{
+    'design — the deliverable is a file, never only conversation' = @('design/SKILL.md', '(?i)Nothing lives only in the conversation')
+    'design — a format is applied when the tier selects it' = @('design/SKILL.md', '(?i)applied when the tier selects it')
+    'design — waiting drift is raised, never settled' = @('design/SKILL.md', '(?i)never deciding that it was consumed')
+    'commit — confirms, does not repeat' = @('commit/SKILL.md', '(?i)confirms, it does not repeat')
+    'commit — a refusal names the incomplete stage' = @('commit/SKILL.md', '(?i)names the incomplete stage')
+    'commit — the marker pair is written together' = @('commit/SKILL.md', '(?i)written \*\*together\*\*')
+    'implement — one ticket per invocation where one was named' = @('implement/SKILL.md', '(?i)One ticket per invocation')
+    'implement — the report opens every ticket of a run' = @('implement/SKILL.md', '(?i)verification report opens every ticket')
+    'implement — the run is reported, not the last ticket' = @('implement/SKILL.md', '(?i)Report the run, not the last ticket')
+  }
+  foreach ($norm in $skillNorms.Keys) {
+    $file = $skillNorms[$norm][0]
+    $pattern = $skillNorms[$norm][1]
+    Assert "skill norm — $norm" {
+      if ((Get-SkillFile $file) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+      $true
+    }
+  }
+}
+
+# --- ticket crystallize/07 — configure installs verbatim, stamps, audits ------
+
+Describe-Ticket 'crystallize/07' 'the fixed core installs verbatim, ownership is stamped, and the audit compares exactly' {
+
+  $configureNorms = [ordered]@{
+    'every installed instruction file declares its owner' = '(?i)declares its owner in frontmatter'
+    'a framework-owned guide installs verbatim' = '(?i)installed \*\*verbatim\*\*'
+    'repository facts enter through declared fields' = '(?i)facts go into the \*\*declared fields\*\*'
+    'an unprovided variation is a recorded deviation' = '(?i)recorded as a deviation'
+    'a deviation carries file, reason, and declaring release' = '(?i)release it was declared under'
+    'the audit surfaces every deviation on every run' = '(?i)Surface every deviation, on every run'
+    'deviation age is computed and one release unanswered fails' = '(?i)no disposition fails the audit'
+    'a framework-owned mismatch is a defect to reinstall' = '(?i)defect to reinstall, never drift to heal'
+    'the upgrade replaces law verbatim and spares extensions' = '(?i)replaces framework-owned files verbatim and leaves extensions untouched'
+    'the outside-write rule is a bound, not a count' = '(?i)a bound, not a count'
+    # The delta review's blocker: a byte-exact audit would report a
+    # repository's deviations as a defect and reinstall over the channel that
+    # records them — the comparison sets the router's two points aside first.
+    'the audit sets the router extension points aside before comparing' = '(?i)setting aside the two extension points'
+  }
+  foreach ($norm in $configureNorms.Keys) {
+    $pattern = $configureNorms[$norm]
+    Assert "configure norm — $norm" {
+      if ((Get-SkillFile 'configure/SKILL.md') -notmatch $pattern) { throw 'the norm is missing from the skill' }
+      $true
+    }
+  }
+
+  Assert "every installed mode declares framework ownership and matches its template" {
+    foreach ($t in (Get-ChildItem (Join-Path $skills 'configure/modes') -Filter '*.template.md')) {
+      $installed = Join-Path $repo (".claude/modes/" + ($t.Name -replace '\.template\.md$', '.md'))
+      if (-not (Test-Path $installed)) { throw "no installed copy for $($t.Name)" }
+      $i = Get-Content $installed -Raw
+      if ((Get-Frontmatter $i) -notmatch '(?m)^owner:\s*framework\s*$') { throw "$($t.Name): no owner stamp" }
+      if ((Get-Content $t.FullName -Raw) -ne $i) { throw "$($t.Name): installed copy differs from template" }
+    }
+    $true
+  }
+
+  # Every extension point the effort shipped traces to a row in the committed
+  # census — the acceptance the determinism gate states: no row, no point.
+  Assert "the variation census is committed, and every shipped extension point traces to it" {
+    $p = Join-Path $repo '.claude/evidence/research/2026-08-10-the-variation-census-for-extension-points.md'
+    if (-not (Test-Path $p)) { throw 'no committed census' }
+    $c = Get-Content $p -Raw
+    foreach ($point in '`tracker`', '`spec-home`', '`ticket-model`', '`model`', '`unit`', 'authority facts declare in') {
+      if ($c -notmatch [regex]::Escape($point)) { throw "extension point $point has no census row" }
+    }
+    if ((Get-Frontmatter $c) -notmatch '(?m)^kind:\s*research\s*$') { throw 'the census is not filed as evidence' }
+    $true
+  }
+
+  Assert "the configure-writes drift finding is marked consumed, naming ADR 0076" {
+    $c = Get-Content (Join-Path $repo '.claude/evidence/drift/2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory.md') -Raw
+    if ($c -notmatch '(?im)^Consumed:.*ADR 0076') { throw 'the finding does not name the superseding decision' }
+    $true
+  }
+}
+
+# --- ticket crystallize/08 — this repository adopts and declares its extensions
+
+Describe-Ticket 'crystallize/08' 'this repository adopts the crystallized layout and declares its extensions' {
+
+  # The spec's acceptance measurement, taken at adoption (2026-08-10) and
+  # recorded where the acceptance is checked:
+  #   always-on tier   9,454 chars before -> 9,450 after, despite gaining the
+  #                    entry table, the no-ask rule, and the fixed-owner rule
+  #   /design turn     ~109,800 chars before (tier + router + skill + row with
+  #                    tool guides) -> 81,265 after, a 26% drop with no norm
+  #                    lost — the manifests across 02-07 are the no-norm-lost
+  #                    proof, each row fire-checked.
+  # The live halves are asserted: the tier by aep/08's ceiling, the design row
+  # by crystallize/05's bound, and the turn total below.
+
+  Assert "a design turn's loaded total stays materially below the pre-effort load" {
+    function Get-Stripped([string]$p) {
+      $c = Get-Content (Join-Path $repo $p) -Raw
+      $c = [regex]::Replace($c, '(?ms)\A---\r?\n.*?\r?\n---\r?\n', '')
+      ([regex]::Replace($c, '(?ms)^<!--.*?-->\r?\n?', '')).Length
+    }
+    $total = 0
+    foreach ($f in 'CLAUDE.md', '.claude/rules/precedence.md', '.claude/rules/engineering.md',
+                   '.claude/rules/placement.md', '.claude/rules/boundary.md', '.claude/protocol.md') {
+      $total += Get-Stripped $f
+    }
+    $total += (Get-Content (Join-Path $skills 'design/SKILL.md') -Raw).Length
+    foreach ($f in '.claude/policies/tickets.md', '.claude/policies/specs.md', '.claude/policies/maps.md',
+                   '.claude/policies/decisions.md', '.claude/policies/evidence.md',
+                   '.claude/policies/knowledge.md', '.claude/policies/tracker.md') {
+      $total += (Get-Content (Join-Path $repo $f) -Raw).Length
+    }
+    # Ratcheted 90,000 -> 82,000 by crystallize/09: the trio's conversion took
+    # the measured turn from 81,265 to ~79,600.
+    if ($total -gt 82000) { throw "a design turn loads $total chars against an 82,000 bound (pre-effort: ~109,800)" }
+    $true
+  }
+
+  # The audit's mechanical core passes here: every framework-owned pair is
+  # byte-locked by the family guards, and the deviation list is empty — this
+  # repository conforms, so a Deviations section would be a claim of variation
+  # nobody made.
+  Assert "the adopted router carries no deviation, deliberately" {
+    if ((Get-Content (Join-Path $repo '.claude/protocol.md') -Raw) -match '(?m)^## Deviations') {
+      throw 'a Deviations section exists — each entry must be deliberate, with a reason'
+    }
+    $true
+  }
+
+  Assert "this repository's facts are readable from its extensions alone" {
+    $vc = Get-Frontmatter (Get-Content (Join-Path $repo '.claude/policies/version-control.md') -Raw)
+    $tr = Get-Frontmatter (Get-Content (Join-Path $repo '.claude/policies/tracker.md') -Raw)
+    foreach ($want in @(@($vc, 'model:\s*stacked-changes'), @($vc, 'unit:\s*effort'),
+                        @($tr, 'tracker:\s*local-markdown'), @($tr, 'spec-home:\s*per-effort'),
+                        @($tr, 'ticket-model:\s*tracked-intent'))) {
+      if ($want[0] -notmatch "(?m)^$($want[1])\s*$") { throw "extension field missing: $($want[1])" }
+    }
+    $c = Get-Content (Join-Path $repo 'CLAUDE.md') -Raw
+    if ($c -notmatch '(?i)`specs\.md` is the canonical, authoritative specification') {
+      throw 'the authority declaration left CLAUDE.md'
+    }
+    $true
+  }
+
+  # The corpus-wide half of adoption: every markdown file under `.claude/` and
+  # every installable configure surface declares its owner, generated indexes
+  # included (the regenerator emits the field). Two stated exclusions:
+  # `.claude/position/` is machine-local and gitignored, and
+  # `CLAUDE.template.md` carries the harness-behaviour exception recorded on
+  # ticket crystallize/08.
+  Assert "every file under .claude and configure's installed surfaces declares its owner" {
+    $files = @(Get-ChildItem (Join-Path $repo '.claude') -Recurse -Filter *.md -File |
+               Where-Object { $_.FullName -notmatch '[\\/](position|worktrees)[\\/]' }) +
+             @(Get-ChildItem (Join-Path $skills 'configure/modes'), (Join-Path $skills 'configure/policies'),
+                             (Join-Path $skills 'configure/tools') -Filter *.md -File) +
+             @(Get-ChildItem (Join-Path $skills 'configure') -Filter '*.template.md' -File |
+               Where-Object { $_.Name -ne 'CLAUDE.template.md' })
+    $bad = @()
+    foreach ($f in $files) {
+      $fm = Get-Frontmatter (Get-Content $f.FullName -Raw)
+      if ($fm -notmatch '(?m)^owner:\s*(repository|framework)\s*$') { $bad += $f.Name }
+    }
+    if ($bad) { throw "no owner declared: $($bad -join ', ')" }
+    $true
+  }
+
+  $vocab = [ordered]@{
+    'Owner' = '(?m)^\*\*Owner\*\*:'
+    'Extension Point' = '(?m)^\*\*Extension Point\*\*:'
+    'Deviation' = '(?m)^\*\*Deviation\*\*:'
+    'Norm' = '(?m)^\*\*Norm\*\*:'
+  }
+  foreach ($term in $vocab.Keys) {
+    $pattern = $vocab[$term]
+    Assert "the repository context defines: $term" {
+      if ((Get-Content (Join-Path $repo '.claude/contexts/repository.md') -Raw) -notmatch $pattern) {
+        throw 'the term is undefined'
+      }
+      $true
+    }
+  }
+}
+
+# --- ticket crystallize/09 — the remaining delivery policies convert to norm form
+
+Describe-Ticket 'crystallize/09' 'the tickets, specs, and sub-agents policies convert to norm form' {
+
+  # The whole-effort review found crystallize/04 partially delivered: the trio
+  # was stamped and byte-locked but kept its essay shape. This is the
+  # conversion, under the manifest mechanism crystallize/03 piloted. The rows
+  # crystallize/04 already inventoried are not repeated — its table still runs
+  # against the converted text — so this table holds only the norms that
+  # inventory left out, completing the manifest. Byte-locked pairs and
+  # ownership stay crystallize/04's guards. Every row here fire-checked.
+
+  $manifests = [ordered]@{
+    'tickets' = [ordered]@{
+      'the fields are the local-markdown form only'       = '(?i)local-markdown form, and only that'
+      'GitHub states ride the native state, zero labels'  = '(?i)zero new labels'
+      'blocked stays open, its reason in the body'        = '(?i)`blocked` stays open'
+      'triage vocabulary never marks a build ticket'      = '(?i)not the triage vocabulary'
+      'assignment is a tracker fact, and it is theirs'    = '(?i)tracker fact, and it is theirs'
+      'protocol-only work rides its consumer'             = '(?i)rides its consumer'
+      'an outside path means the work is not protocol-only' = '(?i)the diff decides'
+      'the rule reads the diff, never the commit type'    = '(?i)diff, never the commit type'
+      'a human increment resolves in the parent first'    = '(?i)resolves first, in the parent'
+      'no fan-out section means one instance'             = '(?i)built by one instance'
+      'prefactoring goes first'                           = '(?i)Prefactoring goes first'
+      'only real gates serialize'                         = '(?i)Only real gates'
+      'gh has no blocking subcommand'                     = '(?i)no blocking subcommand'
+      'related carries no ordering'                       = '(?i)carries no ordering and blocks nothing'
+      'a stray is neither root nor carries an edge'       = '(?i)neither the root nor carries an edge'
+      'a ticket names no file paths and holds no code'    = '(?i)names no file paths and holds no code'
+    }
+    'specs' = [ordered]@{
+      'a spec is the reasoning behind the tickets'        = '(?i)reasoning behind the tickets'
+      'the status column answers which is live'           = '(?i)which of these is live'
+      'index enforcement is regenerate-and-compare'       = '(?i)regenerating and comparing'
+      'the scripts directory takes nothing else'          = '(?i)takes nothing else'
+      'the derived-scripts constraint is deliberate'      = '(?i)not an oversight to route around'
+      'the two layouts are exclusive'                     = '(?i)two layouts are exclusive'
+      'a reconstruction declares the field and the prose' = 'reconstructed: true'
+      'unrecoverable sections are kept and marked'        = '(?i)kept and marked'
+      # Anchored to the reconstruction norm's own subject: the spec-status rule
+      # two sections up ends "superseding it, never by rewriting it", so a
+      # pattern on that tail matched a different norm and could not fail —
+      # caught by the delta review's own mutation test.
+      'a reconstruction is corrected by superseding'      = '(?i)reconstruction is corrected by superseding'
+    }
+    'sub-agents' = [ordered]@{
+      'a child never speaks to the human'                 = '(?i)never speaks to the human'
+      'pointer material is named, never quoted'           = '(?i)named in the brief, never quoted'
+      'the policy narrows, never bootstraps'              = '(?i)narrows what a child may do'
+      'a child verifies at use exactly as a session does' = '(?i)does not soften it'
+      'a found falsehood becomes a drift finding'         = '(?i)a finder like any other'
+      'a denial is not routed around'                     = '(?i)denial is not routed around'
+      'no child can send anything to anyone'              = '(?i)No child can send anything'
+      'an answer travels verbatim'                        = '(?i)answer travels verbatim'
+      'an unrelayable answer stops the child'             = '(?i)stops the child'
+      'the brief is the only unasked channel'             = '(?i)only channel from parent to child'
+      'waiting is not an ending'                          = '(?i)not an ending'
+      'the record returns a path and a summary'           = '(?i)path and a compressed summary'
+      'the record is a manifest, not a report'            = '(?i)manifest, not a report'
+    }
+  }
+  $manifestFiles = @{
+    'tickets'    = 'configure/policies/tickets.template.md'
+    'specs'      = 'configure/policies/specs.template.md'
+    'sub-agents' = 'configure/policies/sub-agents.template.md'
+  }
+  foreach ($name in $manifests.Keys) {
+    $path = $manifestFiles[$name]
+    foreach ($norm in $manifests[$name].Keys) {
+      $pattern = $manifests[$name][$norm]
+      Assert "$name norm — $norm" {
+        if ((Get-SkillFile $path) -notmatch $pattern) { throw 'the conversion dropped this norm' }
+        $true
+      }
+    }
+  }
+
+  # The conversion's size gain, held per file so re-inflation fails loudly.
+  # Measured as .Length characters, matching the assertion: tickets 16,491 ->
+  # ~15,500, specs 7,796 -> ~7,500, sub-agents 10,017 -> ~9,700 pre- to
+  # post-conversion. The drop is single-digit because the trio was already
+  # pin-dense — earlier efforts normalized much of it — and clarity is never
+  # traded for compression; the departure from the knowledge family's
+  # -20..-43% is recorded on the ticket.
+  $ceilings = @{
+    'configure/policies/tickets.template.md'    = 15900
+    'configure/policies/specs.template.md'      = 7700
+    'configure/policies/sub-agents.template.md' = 9900
+  }
+  foreach ($file in $ceilings.Keys) {
+    $cap = $ceilings[$file]
+    Assert "$file stays under its post-conversion ceiling ($cap)" {
+      $len = (Get-SkillFile $file).Length
+      if ($len -gt $cap) { throw "$file is $len chars against a $cap ceiling" }
+      $true
+    }
   }
 }
 

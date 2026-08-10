@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): adopt the changed templates here
 status: resolved
 blocked-by: [01, 02, 03, 04]

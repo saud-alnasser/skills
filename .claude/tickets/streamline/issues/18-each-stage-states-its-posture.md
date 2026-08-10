@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): each stage states the tradeoffs it accepts
 status: superseded
 blocked-by: [06]

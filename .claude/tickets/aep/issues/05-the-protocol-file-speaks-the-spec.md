@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(configure): align the protocol file and the entrypoint with the specification
 status: resolved
 blocked-by: [03, 04]

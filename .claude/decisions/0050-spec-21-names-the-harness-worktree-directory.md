@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the ignore file or the layout omits a directory something writes
 sources: [.claude/.gitignore]

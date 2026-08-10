@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): vendor the gap-fillers
 status: resolved
 blocked-by: []

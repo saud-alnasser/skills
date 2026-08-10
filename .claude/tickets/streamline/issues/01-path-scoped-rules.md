@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(rules): split the rules directory and make a scoped rule actually scoped
 status: resolved
 blocked-by: []

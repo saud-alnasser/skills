@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(specs): the stage-dependency set has two homes, and the table wins
 status: resolved
 blocked-by: []

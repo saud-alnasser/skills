@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(skills): compress everything shipped to the specification's density
 status: resolved
 blocked-by: [08]

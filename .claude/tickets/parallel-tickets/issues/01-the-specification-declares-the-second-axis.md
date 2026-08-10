@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(specs): the specification declares the second axis
 status: resolved
 blocked-by: []

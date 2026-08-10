@@ -43,6 +43,18 @@ it declares no version
 
 ---
 
+## 1.18.0
+
+**Look at:** every installed instruction file, `.claude/protocol.md`, `CLAUDE.md`, and the two derived policies.
+
+### The crystallized layout — owners, declared fields, and the entry table's move
+
+This release split installed instruction files by owner. A repository configured earlier shows the pre-crystallize shape: no `owner` frontmatter anywhere, its repository facts written as prose inside `tracker.md` and `version-control.md` rather than declared as fields, the entry table in `.claude/protocol.md` rather than in `CLAUDE.md`, and every framework-owned copy differing wholesale from the release's norm-form templates.
+
+**Recognise it by content before repairing**: wholesale difference across every framework-owned file *plus* a missing `owner` field is this migration, not the all-files-at-once comparison fault the audit otherwise suspects — the absent frontmatter is what tells the two apart.
+
+**Repaired**, in four moves, none losing a repository fact. Framework-owned files (the copied policies, the four unconditional rules, the modes) are replaced verbatim from the release, gaining their stamps. The two derived policies keep their repository's facts: read the tracker choice, spec home, ticket model, model, and unit out of the existing prose and write them as the declared fields the templates name, then reshape the surviving prose onto the new template — the facts move, nothing is invented. `CLAUDE.md` gains the entry table, the no-ask rule, and the fixed-owner rule from the template, merged around the repository's own sections as ever; the router is replaced verbatim — framework law now, so a stage-table row an earlier repair preserved as repository-specific is not carried over either, re-entering through the deviation channel below — and its entry table not carried over, since the tier now owns it. Anything in an old file that fits no declared field and no template section is recorded as a deviation in the router's `## Deviations` section rather than dropped — the loud channel exists for exactly this remainder.
+
 ## 1.17.0
 
 **Look at:** nothing in a configured repository.

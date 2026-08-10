@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: work whose whole effect sits under .claude/ is about to be ticketed
 sources: [.claude/policies/tickets.md]

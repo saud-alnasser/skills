@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): a ticket may declare a fan-out
 status: resolved
 blocked-by: [02]

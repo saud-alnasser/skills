@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a routing table or a declared field is being changed
 sources: [.claude/policies/context.md]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a generated index or a fog map needs a path, or `.claude/tickets/map.md` is in question
 sources: [.claude/policies/maps.md, specs.md, .claude/tickets/]

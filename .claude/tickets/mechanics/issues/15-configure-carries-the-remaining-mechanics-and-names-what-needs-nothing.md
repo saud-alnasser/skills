@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): configure carries the remaining mechanics, and names what needs nothing
 status: resolved
 blocked-by: [03, 09, 11]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: planning work is proposed outside /design
 sources: [skills/design/]

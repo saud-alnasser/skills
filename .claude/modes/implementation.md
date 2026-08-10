@@ -1,3 +1,7 @@
+---
+owner: framework
+---
+
 # Mode: implementation
 
 <!-- Installed by /configure at `.claude/modes/implementation.md`, copied as-is. -->

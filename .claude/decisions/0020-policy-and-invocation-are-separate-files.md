@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a policy and the invocations that serve it are being put in one file
 sources: [.claude/policies/, .claude/tools/]

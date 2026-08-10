@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a ticket's state has to be expressed on GitHub
 sources: [.claude/tools/github.md]

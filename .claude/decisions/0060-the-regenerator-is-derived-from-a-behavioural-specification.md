@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: something AEP ships needs to exist as code in a configured repository, or the regenerator's source of truth is in question
 sources: [skills/configure/, .claude/decisions/0057-one-regenerator-enforced-by-comparison.md]

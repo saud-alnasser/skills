@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(configure): the shipped git reference describes both facts the marker holds'
 status: resolved
 blocked-by: []

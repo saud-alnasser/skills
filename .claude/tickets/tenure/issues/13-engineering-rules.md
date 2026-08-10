@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(rules): distribute the engineering rules across the workflow
 status: resolved
 blocked-by: []

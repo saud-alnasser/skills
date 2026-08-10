@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: drift is being detected, or its scope decided
 sources: [.claude/protocol.md]

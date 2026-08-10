@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(verify): the checkout pins its line ending, and the regenerator emits it'
 status: resolved
 blocked-by: [01]

@@ -1,6 +1,8 @@
 # AEP
 
-This repository builds the **Agentic Engineering Protocol (AEP)** — a Claude Code skill framework where understanding of a repository compounds over time. `skills/` and `agents/` are what ships, `.claude/` is what this repository runs on, and `specs.md` is the canonical specification.
+This repository builds the **Agentic Engineering Protocol (AEP)** — a Claude Code skill framework where understanding compounds over time. `skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.
+
+For what is *built* here, `specs.md` is the canonical, authoritative specification and `.claude/tickets/` records what was done. Where it and an ADR disagree, the ADR wins and the specification is amended in the same change.
 
 ## Rules that always apply
 
@@ -14,21 +16,36 @@ This repository builds the **Agentic Engineering Protocol (AEP)** — a Claude C
 | Context | how this repository thinks | `.claude/contexts/**` |
 | Decisions | why this approach was selected | `.claude/decisions/` |
 
-The order is absolute: where they disagree, the Codebase is right — fix the documentation, never the reverse. Load `.claude/contexts/map.md` at session start — routing only; Domain Contexts load on demand, and loading them all defeats the point.
+The order is absolute: where they disagree, the Codebase is right — fix the documentation, never the reverse. Load `.claude/contexts/map.md` at session start — routing only; Domain Contexts load on demand.
 
-## Where the machinery lives
+## Machinery
 
-- `.claude/protocol.md` — the router: the verification machinery and the stage table. Committed, and reached by pointer — a question turn never pays for it.
-- `.claude/modes/` — one reasoning posture per file.
-- `.claude/policies/tracker.md` — where the tickets live; `.claude/policies/version-control.md` — how work lands. `.claude/tools/` — how to *type* it.
+`.claude/protocol.md` is the router — the verification machinery and the stage table — reached by pointer, so a question turn never pays for it. `.claude/policies/tracker.md` says where tickets live; `.claude/policies/version-control.md` how work lands; `.claude/tools/` how to *type* it.
 
 ## Verification at use
 
-**Never a scan. Never a phase.** Check a Context statement against the Codebase at the moment it is about to be relied on; scope is what the work touches. **Source Pointers are verified before use, always** — a broken one is searched for, never invented; the router has the machinery. Fix drift where you find it, in the same breath; nothing else catches a lapse.
+**Never a scan. Never a phase.** A Context statement is checked against the Codebase at the point of use; scope is what the work touches. **Source Pointers are verified before use, always** — a broken one is searched for, never invented; the router has the machinery. Fix drift where you find it, in the same breath — nothing else catches a lapse.
 
-## Requests that would change code
+## Which stage a request enters
 
-A question gets an answer: load, answer, stop. A change to code, every turn, command or not: route, load, verify, then **state the classification** — what kind of change, how much process, and **which stage it enters** — one line, before touching anything, so the user can disagree. **Then enter that stage**, rather than answering with something for the user to run; the router's table says which.
+A question gets an answer: load, answer, stop. A change, every turn, command or not: **state the classification** — what kind of change, how much process, and **which stage it enters** — one line, before touching anything, so the user can disagree — **then enter that stage**; how each is reached is the router's.
+
+Top to bottom, first match wins — the four lower rows are read rather than judged:
+
+| The request | Enters |
+| --- | --- |
+| it would change another repository | nothing — report, hand back |
+| a question about how something works | nothing — answer, stop |
+| this tree already holds a claim | the build, resuming it |
+| a ticket is ready to build | the build |
+| it arrived from outside — an issue, a pull request | triage |
+| anything else that would change code | design |
+
+**A loaded norm that settles a question is acted on, citing the line — never re-asked.** Asking is for genuine forks only.
+
+## Framework law
+
+**A file declaring `owner: framework` is followed as written — never edited, healed, or debated.** Variation enters only through the extension points it names; anything else is a declared deviation, loud in every audit. Unstamped files are the repository's, healed as ever.
 
 ## Writing knowledge
 
@@ -36,4 +53,4 @@ CI never modifies repository knowledge: `.claude/contexts/**` and `.claude/decis
 
 ## Conventions
 
-**The workflow's conventions are defaults for when the repository is silent**: detect before asserting; where the repository's own is genuinely worse, say so once, with reasoning, then follow it. Defaults: `.claude/policies/version-control.md`.
+**The workflow's conventions are defaults for when the repository is silent**: detect before asserting; where the repository's own is genuinely worse, say so once, then follow it. Defaults: `.claude/policies/version-control.md`.

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(skills): compress the primitives and the on-ramps
 status: superseded
 blocked-by: [09]

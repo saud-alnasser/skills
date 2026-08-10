@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a blocked ticket is being scheduled on a stacking repository
 sources: [.claude/policies/version-control.md]

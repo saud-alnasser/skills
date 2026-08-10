@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'refactor(skills): shipped bodies stop citing what resolves only here'
 status: resolved
 blocked-by: []

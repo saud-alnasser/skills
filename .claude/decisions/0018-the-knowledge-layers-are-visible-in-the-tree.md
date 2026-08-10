@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the directory layout under .claude/ is being changed
 sources: [.claude/]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the migration's own test strategy is in question
 sources: [skills/configure/MIGRATION.md]

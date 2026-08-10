@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 1.17.0
+**Version:** 1.18.0
 **Status:** Normative. This document is the canonical specification of the framework this repository builds.
 **Supersedes:** the Tenure framing, and the streamline effort's spec as the description of the target architecture.
 
@@ -77,12 +77,18 @@ AEP separates engineering into twelve systems. Each answers exactly one question
 | --- | --- | --- |
 | Protocol | how does engineering happen here? | stable |
 | Rules | how should an engineer think? | nearly frozen |
-| Policies | how is engineering performed in this repository? | evolves with process |
+| Policies | how is engineering performed in this repository? | framework law, two derived; varies at declared points |
 | Contexts | what is true, and where is it found? | evolves with code |
 | Modes | how should I think during this work? | stable |
 | Workflows | what happens, in what order? | stable |
 | Skills | what capability is being exercised? | stable |
 | Tool guides | how does this repository use its tools? | evolves with tooling |
+
+**Every instruction file AEP installs declares its owner** in frontmatter, and the owner is read off that field, never inferred from a directory. `framework`-owned files are law: installed verbatim from the release, release-stamped, compared byte-for-byte by the configuration stage's audit — a mismatch there is a defect to reinstall, never drift to heal — and never edited, healed, or argued with in a session. Repository-owned files — contexts, decisions, evidence, every derived file (the two repository-describing policies, the tool guides, the entrypoint), and standards the repository discovered in its own tree — stay the repository's to heal exactly as §19 describes. The protocol file is `framework`-owned law installed verbatim, with two named extension points — the `aep-version` value and the entries of a `## Deviations` section — the whole of what may differ from the release's template. (ADR 0073.)
+
+**Repository variation enters framework law only through the extension points the owning file names**: a structured declaration for facts, a Decision (§16) for variation that needs reasoning. Extension points are census-derived, never invented: a point ships only where a committed **variation census** — the observed differences between templates and installed copies, plus the per-repository facts this specification names — shows the variation is real. A variation with no point to enter through is a **declared deviation**: allowed, recorded with its reason and the release it was declared under, and surfaced by every audit run until the framework grows the point or the repository conforms. The deviation channel is load-bearing — without a loud escape hatch, fixed law pressures repositories to fork silently, which is worse than the disease. (ADRs 0073, 0078.)
+
+**A framework-owned normative file states each norm as a checkable imperative or table carrying a one-line why.** The full rationale — history, what a rule does not mean, the failure stories — lives in the framework repository's specification and Decisions and is not installed. Mechanism stays beside the norm when short and in a tool guide when long. Clarity is never traded for compression: the audience is the model alone, so human-comfortable prose may go, but a norm stays unambiguous and complete at any density — and a norm whose why cannot be stated in one line is not understood well enough to ship. (ADR 0074.)
 
 ## 5. The Protocol
 
@@ -96,9 +102,11 @@ For each task the protocol determines: the activity, the objective, the mode, th
 
 **The entry stage is determined before anything is touched, stated, and then entered.** A request naming no command still has an activity, and the AI never answers one by telling the human which command to type. Which stage a request enters is mostly *read* rather than judged — whether a claim is held, whether a ticket exists, whether the work arrived from outside — and the judgement that remains is telling a question from a change. The route is stated in the classification line rather than gated on approval, because stating it is what makes a wrong route cost a correction instead of a stage.
 
-**The obligation lives in the boot tier and nowhere else** (§22); the table it routes from lives in the protocol file, with the rest of the routing. The failure being corrected is a stage *not being selected*, and anything that must itself be selected — a router skill above all — cannot correct it, which is what fixes the obligation to the tier that loads unconditionally. The table is not in that tier for the opposite reason: it is a lookup rather than a duty, it names commands, and nothing committed may assume those exist (§22). Consequently a stage the table can name MUST be reachable without being typed, and a stage whose invocation is itself the deliberate act is not a route destination (§11, ADR 0061).
+**The obligation lives in the boot tier and nowhere else** (§22), and the entry table it routes from lives beside it in that tier, in norm form (ADR 0075). The failure being corrected is a stage *not being selected*, and anything that must itself be selected — a router skill above all — cannot correct it; a table behind a pointer is consulted only by the turn that already routed, which is the same failure one layer down. The table names **activities, never commands** — nothing committed may assume a command exists (§22), and an activity needs no plugin to be named: the classification line states the stage, and the protocol file states how each stage is reached. The entry table has one home, the tier; the protocol file carries the stage→dependency table and does not restate the entry rows. A stage the table can name MUST be reachable without being typed, and a stage whose invocation is itself the deliberate act is not a route destination (§11, ADR 0061).
 
-**The table is this repository's actual dependency set**, and that is what distinguishes it from the defaults each skill declares (§11). A skill ships in the framework and cannot know any repository's local guides; the table is written where the repository is, so where the two differ the **table governs**. It is derived by the configuration stage from the skill defaults plus whatever is local, and every stage has exactly one row. A guide a skill declares and its row omits is a defect unless the row records the omission — so dropping one stays possible and stops being silent.
+**The table is the framework's, and it still governs where a skill's own dependency line differs** (§11) — the skill lines are the plugin's defaults, and the table is the one committed statement a reader without the plugin can follow. Every stage has exactly one row, the rows move only with the release, and a repository whose needs differ from a row records a deviation rather than editing one; a guide a skill declares and its row omits is a defect in the release, not a local repair. (ADR 0079, superseding the per-repository derivation ADR 0054 described.)
+
+**A row is mandatory and exact.** A stage loads its whole row — cut small enough to always be loaded whole — and nothing in the corpus instructs a stage to choose among its guides: judged selection is the mis-load being removed. A row that cannot be afforded whole is a row that is too big, and the fix is cutting the row, never restoring selection. (ADR 0075.)
 
 **The table cannot be dropped in favour of the skills' own declarations**, however redundant it looks from inside a session. In a configured repository the skills ship with the framework and are absent from the tree, so the protocol file is the only committed place that can answer what a stage reads — and nothing committed may assume the framework is installed (§22).
 
@@ -108,19 +116,19 @@ Rules are universal engineering principles. They are intentionally difficult to 
 
 Rules include, at minimum: never assume facts; verify before implementation; read before modification; preserve architectural consistency; keep changes minimal; prefer understanding over guessing; separate facts from assumptions; communicate uncertainty; maintain traceability.
 
-Rules NEVER describe project workflows or repository conventions — that is what policies are for. A rule is stated as a directive, not as an argument: one clause of rationale survives only where the rule would read as arbitrary without it, because a defended rule invites re-evaluation instead of application.
+Rules NEVER describe project workflows or repository conventions — that is what policies are for. A rule is stated as a norm (Part II): a checkable directive carrying its one-line why. The why is a floor, not an opening argument — a defended rule invites re-evaluation instead of application, and an unreasoned one is misapplied at exactly the edges the reason would have caught.
 
-Rules split by **when they fire** (§22): unconditional rules load every turn and are kept few; scoped rules load only when a file they govern is touched.
+Rules split by **when they fire** (§22): unconditional rules load every turn and are kept few; scoped rules load only when a file they govern is touched. Rules the framework installs declare `framework` ownership; a standard the repository discovered in its own tree is repository-owned and stays so.
 
 ## 7. Policies
 
-Policies are the repository's operational agreements: how engineering work is performed *here*. Unlike rules they evolve with the project.
+Policies are the framework's operational law, installed per repository: how engineering work is performed under the protocol. A policy that describes the workflow is `framework`-owned (Part II), evolves in the framework, and arrives by upgrade, verbatim — its prose never varies per repository. Two canonical policies describe the *repository* instead — the tracker and version control — and are derived: `repository`-owned, their machine-read facts declared as frontmatter fields (the extension points), their prose elaborating those fields in the repository's own terms. Reasoned departures enter through Decisions, and anything else is a declared deviation. A policy the repository adds beyond the canonical set is repository-owned.
 
 Each policy owns exactly one concern. The canonical set — extensible per repository — covers: version control, the tracker, tickets, specs, decisions, evidence, discussions, knowledge writing, context format, code review, and the sub-agent contract (§20). A testing policy says when tests are required; it does not explain the test framework (that is a tool guide's job). A policy defines expectations, never knowledge.
 
 The sub-agent contract is a policy rather than a second protocol file, because a dispatched child inherits the boot tier and therefore reaches it through the same pointer chain a session uses (§22). A second router would be a second place to look before knowing which one to read (ADR 0040).
 
-Policies are reached by pointer, selected by the stage being run — a stage reads its declared policies and stops. Reading another stage's policies is the cost the routing table exists to remove.
+Policies are reached by pointer. A stage loads its row's policies whole (§5) and stops — reading another stage's policies is the cost the routing table exists to remove.
 
 ## 8. Contexts
 
@@ -265,7 +273,7 @@ No single document contains the methodology; it emerges from composition. A skil
 
 **Reported, every time.** Every stage that relies on context opens with a one-line verification report — including when there was nothing to verify. Silence is indistinguishable from the check never having run.
 
-**Healing in place.** Fix what you find where you find it: a stale pointer is repaired in the same breath as discovering it; a moved boundary is corrected then and there. No queue, no deferred pass. This is not best-effort — nothing else catches a lapse. A pointer that cannot be recovered by searching for where the concept moved is reported broken, never guessed at.
+**Healing in place.** Fix what you find where you find it: a stale pointer is repaired in the same breath as discovering it; a moved boundary is corrected then and there. No queue, no deferred pass. This is not best-effort — nothing else catches a lapse. A pointer that cannot be recovered by searching for where the concept moved is reported broken, never guessed at. Healing reaches only what the repository owns: a framework-owned file that differs from its release is a defect to reinstall, never drift to heal (Part II).
 
 ## 20. Multi-agent engineering
 
@@ -353,7 +361,7 @@ This section binds AEP's concepts to the harness that runs it. Portability to ot
 
 Claude Code auto-loads exactly two things: `CLAUDE.md` and `.claude/rules/**`. Everything else loads by pointer. Therefore:
 
-- **Boot tier** = `CLAUDE.md` + rules without `paths:` frontmatter. Loaded every turn; kept under a measured, asserted budget. Adding to it is a permanent per-turn tax.
+- **Boot tier** = `CLAUDE.md` + rules without `paths:` frontmatter. Loaded every turn; kept under a measured, asserted budget — adding to it is a permanent per-turn tax. Membership is selected by one test: **would this norm's absence on a turn cause behavioral drift.** By it the tier carries, in norm form: the **entry table** (§5); the **no-ask rule** — a loaded norm that settles a question is acted on, citing the line; asking is for genuine forks; the **fixed-owner rule** — a framework-owned file is followed as written, never healed or debated, variation entering only through declared points and anything else a loud declared deviation; and the **verification core** (§19). (ADR 0075.)
 - **Scoped tier** = rules with `paths:` frontmatter, loaded when a covered file is read. A scope announced in prose but not in frontmatter is paid for on every turn and enforced on none — the defect class this binding exists to prevent.
 - **Pointer tier** = everything else: the protocol file, policies, contexts, modes, workflows, tool guides, artifacts. The protocol governs this tier; the routing tables are its instrument.
 
@@ -375,6 +383,10 @@ The protocol's conventions are defaults for when the repository is silent, never
 - **Single home**, mechanically guarded: when a rule is placed, a duplication guard is added, and the guard is confirmed to fail against a deliberate reintroduction before it is trusted.
 - **The verification suite is the fidelity floor**: every mechanically checkable acceptance criterion has an assertion; a change that adds a checkable claim without an assertion is untested by construction.
 - **The boot budget is asserted**, not estimated — exceeding it fails the build.
+- **A fixed-core procedure is computed, or it names its judgement**: whatever a script can compute ships as a derived script step whose output the stage quotes, and an irreducible judgement states its inputs and its one question — no procedure instructs unstructured judgement. (ADR 0078.)
+- **Conversion is manifest-driven**: a normative file is rewritten only against a numbered inventory of its norms, every row gains a fire-checked suite guard, and the mechanism is proven by a seeded deletion — the guard watched failing with that norm's name — before any further conversion relies on it.
+- **Extension points are census-derived**: a point ships only tracing to a row in the committed variation census (Part II); a point with no row does not ship.
+- **Deviation age is computed**, from the release the deviation declares (Part II) — one release without a disposition fails the audit.
 
 ---
 

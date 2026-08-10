@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(rules): the always-on standards cover what gets written, and close-out invokes the commit skill
 status: resolved
 blocked-by: [09]

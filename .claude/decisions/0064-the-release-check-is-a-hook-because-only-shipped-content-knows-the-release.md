@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: something needs a fact only the running framework holds, or a new plugin component is proposed
 sources: [hooks/hooks.json, hooks/check-version.js, .claude/protocol.md, .claude/evidence/research/2026-08-09-reading-the-plugin-version-from-a-running-stage.md, .claude/decisions/0060-the-regenerator-is-derived-from-a-behavioural-specification.md]

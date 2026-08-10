@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): a ticket-builder role ships
 status: resolved
 blocked-by: [02]

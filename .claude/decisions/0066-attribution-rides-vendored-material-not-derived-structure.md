@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: attribution to the upstream project is being added, removed, or questioned
 sources: [NOTICE, skills/, agents/, .claude/rules/skills.md]

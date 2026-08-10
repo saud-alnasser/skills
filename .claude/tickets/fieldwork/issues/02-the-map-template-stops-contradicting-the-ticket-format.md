@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: fix(configure): the map template stops contradicting the ticket format
 status: resolved
 blocked-by: [01]

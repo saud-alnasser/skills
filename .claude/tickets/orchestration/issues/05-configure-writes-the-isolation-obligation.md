@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): configure writes the isolation obligation
 status: resolved
 blocked-by: [02]

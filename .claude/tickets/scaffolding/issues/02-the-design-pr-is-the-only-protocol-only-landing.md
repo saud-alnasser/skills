@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): the design PR is the only protocol-only landing
 status: resolved
 blocked-by: []

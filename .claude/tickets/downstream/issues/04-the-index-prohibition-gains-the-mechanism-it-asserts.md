@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(configure): the generated-index prohibition gains the mechanism it asserts'
 status: resolved
 blocked-by: []

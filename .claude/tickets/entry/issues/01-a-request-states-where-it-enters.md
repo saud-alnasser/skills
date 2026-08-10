@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(rules): a request states where it enters, and planning is selectable'
 status: resolved
 blocked-by: []

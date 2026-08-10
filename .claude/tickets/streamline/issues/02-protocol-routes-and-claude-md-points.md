@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(configure): the protocol becomes the router, and the entrypoint becomes a pointer
 status: resolved
 blocked-by: []

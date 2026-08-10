@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): roles ship as named definitions
 status: resolved
 blocked-by: [02]

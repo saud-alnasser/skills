@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: whether a stage should prompt before committing is in question
 sources: [skills/implement/]

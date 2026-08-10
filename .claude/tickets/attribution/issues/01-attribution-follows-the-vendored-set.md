@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'refactor(skills): attribution follows the vendored set, not every resemblance'
 status: resolved
 blocked-by: []

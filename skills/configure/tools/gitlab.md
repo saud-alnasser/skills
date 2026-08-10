@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # glab — GitLab CLI
 
 Docs: https://gitlab.com/gitlab-org/cli/-/tree/main/docs/source

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(skills): configure derives every specified script, not only the regenerator'
 status: resolved
 blocked-by: [01]

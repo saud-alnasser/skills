@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: which invocation axis a skill sits on is in question, or a skill is proposed as exempt from selection
 sources: [skills/triage/SKILL.md, skills/survey/SKILL.md, .claude/protocol.md, .claude/tickets/entry/spec.md, scripts/verify.ps1]

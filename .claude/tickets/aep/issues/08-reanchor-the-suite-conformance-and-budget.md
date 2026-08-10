@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: test(verify): re-anchor the suite to the AEP shape, close coverage, and assert the budget
 status: resolved
 blocked-by: [07]

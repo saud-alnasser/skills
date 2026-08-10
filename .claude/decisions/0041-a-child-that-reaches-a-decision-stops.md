@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a dispatched child meets a decision it cannot make
 sources: [.claude/policies/sub-agents.md]

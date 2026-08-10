@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(design): protocol-only work is refused where it is created, and the test reads the diff'
 status: resolved
 blocked-by: []

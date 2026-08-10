@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(implement): on a stack, blocked means stacked
 status: resolved
 blocked-by: [18]

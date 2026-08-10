@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: what passes between an orchestrator and a child is being changed
 sources: [.claude/policies/sub-agents.md]

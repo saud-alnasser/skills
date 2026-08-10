@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a shipped template and its installed copy are both about to change
 sources: [skills/configure/]

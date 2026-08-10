@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a reasoning posture is proposed as derived per repository
 sources: [.claude/modes/]

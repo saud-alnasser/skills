@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(scripts): one regenerator produces every index, and the suite compares
 status: resolved
 blocked-by: []

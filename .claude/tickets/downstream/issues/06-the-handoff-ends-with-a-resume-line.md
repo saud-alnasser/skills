@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(skills): the handoff ends with a copy-paste resume line and names where it lives'
 status: resolved
 blocked-by: []

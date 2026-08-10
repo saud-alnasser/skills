@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a rule is being placed
 sources: [.claude/rules/]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(configure): every shipped surface reads the spec-layout declaration instead of asserting a path'
 status: resolved
 blocked-by: [01]

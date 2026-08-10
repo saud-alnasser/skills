@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: superseded
 load-when: which stage may write which knowledge layer is being changed
 sources: [.claude/policies/knowledge.md]

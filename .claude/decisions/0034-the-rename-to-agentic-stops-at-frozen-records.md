@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a rename would touch a Decision or a resolved ticket
 sources: [.claude/decisions/]

@@ -1,8 +1,17 @@
+---
+owner: repository
+tracker: local-markdown
+spec-home: per-effort
+ticket-model: tracked-intent
+---
+
 # Tracker
+
+The one home for which tracker this repository uses and how it is driven. The three frontmatter fields above are the declared repository facts; the prose elaborates them.
 
 ## Which tracker
 
-**Local markdown.** Tickets live as files under `.claude/tickets/<effort>/`.
+**Local markdown** (`tracker` above). Tickets live as files under `.claude/tickets/<effort>/`.
 
 | Tracker | Tickets live in | Driven by |
 | --- | --- | --- |
@@ -10,36 +19,32 @@
 
 The GitHub remote (`saud-alnasser/skills`) is a code remote only. Issues are enabled there and empty, and that is deliberate: this repository's ticket history *is* the build record of the framework, and it is read far more often than it is filed against.
 
-**Never guess the CLI.** A tracker operation with no entry in `tools/` is a docs fetch, not an assumption.
+- **Never guess the CLI** — a tracker operation with no entry in `tools/` is a docs fetch, not an assumption.
 
 ## Where a spec lives
 
-**One per effort.** Each spec sits beside the tickets it governs: `.claude/tickets/<effort>/spec.md`.
+**One per effort** (`spec-home` above). Each spec sits beside the tickets it governs: `.claude/tickets/<effort>/spec.md`.
 
-Read off the tree rather than chosen: every effort directory here holds its spec beside its `issues/`, and there is no `.claude/designs/` directory at all. The flat shape — one spec per file in the designs directory — is what a repository that has written no spec yet starts in, and it is not this one.
-
-This is the **one home** for the answer. Anything that needs to know where a spec is written reads it here rather than assuming a path — the format guide, the stages that open a spec, and the script that regenerates the index over them, which writes that index to `.claude/tickets/map.md` because under this layout it spans every effort while each spec belongs to one.
+Read off the tree rather than chosen: every effort directory here holds its spec beside its `issues/`, and there is no `.claude/designs/` directory at all. This is the **one home** for the answer — anything needing to know where a spec is written reads it here, including the script that regenerates the index over them, which writes to `.claude/tickets/map.md` because under this layout the index spans every effort while each spec belongs to one.
 
 ## What a ticket is
 
-**Tracked intent.** A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The detect test asks whether the version-control policy ties one ticket to one branch, one commit, and one pull request. It ties none of the three: the unit is the **effort**, and a ticket is one of several amending its single commit (`.claude/policies/version-control.md`, "The unit is the effort, not the ticket"). So a ticket exists and resolves as a file, the Claim is the effort's branch rather than the ticket's, and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.
+**Tracked intent** (`ticket-model` above). A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The detect test asks whether the version-control policy ties one ticket to one branch, one commit, and one pull request; it ties none of the three — the unit is the **effort** (`.claude/policies/version-control.md`, "The unit is the effort, not the ticket") — so a ticket exists and resolves as a file, the Claim is the effort's branch rather than the ticket's, and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.
 
-The reasoning here was previously the *absence* of pull requests, which `.claude/evidence/drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md` recorded as false — work does land by pull request. That finding is the dated record of the check and stays as it is; what it falsified is repaired above. The declaration did not flip, and the finding was careful to say it might not: the conclusion was unsupported rather than refuted, and it now rests on the unit instead of on the landing mechanism.
+The reasoning here previously rested on the *absence* of pull requests, which `.claude/evidence/drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md` recorded as false — work does land by pull request. The finding stays as the dated record; the conclusion did not flip: it was unsupported rather than refuted, and now rests on the unit instead of the landing mechanism.
 
-- One effort per directory: `.claude/tickets/<effort>/`
-- The spec is `.claude/tickets/<effort>/spec.md`
+- One effort per directory: `.claude/tickets/<effort>/`; the spec is `<effort>/spec.md`
 - Tickets are one file each at `<effort>/issues/NN-<slug>.md`, numbered from `01` — never a combined file
-- Every lifecycle fact is a **declared field**. `title`, `status` and `blocked-by` are on every ticket; `part-of` and `superseded-by` are on the tickets they apply to. The format is `.claude/policies/tickets.md`'s
-- The title is the `title` field, in Conventional Commits form: `chore(skills): vendor the primitives and rewrite their paths`. There is no `# ` heading — the id is the filename, so a ticket opens at its first section (ADR 0058)
+- Every lifecycle fact is a **declared field**: `title`, `status`, `blocked-by` on every ticket; `part-of` and `superseded-by` where they apply. The format is `.claude/policies/tickets.md`'s
+- The title is the `title` field, Conventional Commits form; there is no `# ` heading — the id is the filename, so a ticket opens at its first section (ADR 0058)
 - Conversation appends at the bottom under `## Comments`, and is where a deviation from the ticket is recorded
-
-`blocked-by: []` means nothing blocks it. Blockers are bare two-digit ids within the same effort.
+- `blocked-by: []` means nothing blocks it; blockers are bare two-digit ids within the same effort
 
 ## Assignment
 
-Not recorded. Single maintainer, no assignee field, no board. Where a ticket needs a human rather than an agent it says so in `status`, which is about the *work*, not about who owns it.
+Not recorded — single maintainer, no assignee field, no board. Where a ticket needs a human rather than an agent it says so in `status`, which is about the *work*, not who owns it.
 
-AEP reads Assignment and never writes it unasked.
+- **AEP reads Assignment and never writes it unasked.**
 
 ## Roles
 
@@ -55,9 +60,7 @@ The canonical roles and the strings this repository actually uses:
 
 Category roles are not recorded separately — the Conventional Commits type in the ticket title carries it: `fix(...)` is a bug, `feat(...)` is an enhancement.
 
-**One deviation from the standard shape, recorded rather than tidied away.** The tracker template holds that triage roles and the build lifecycle are separate vocabularies and that nothing carries both. Here, one `status` field carries both: `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from `blocked-by` rather than written.
-
-Treat the union above as the vocabulary and the split as a known wrinkle in this repository — not as licence to introduce a second field. Which of those strings are in the tree at any moment is a census rather than a convention: read it off the tickets, and do not record it here, where it is wrong again the next time one closes.
+- **One deviation from the standard shape, recorded rather than tidied away**: the tracker template holds that triage roles and the build lifecycle are separate vocabularies, and here one `status` field carries both — `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from `blocked-by` rather than written. Treat the union above as the vocabulary and the split as a known wrinkle, never as licence for a second field. Which strings are in the tree at any moment is a census read off the tickets, not recorded here.
 
 ## External pull requests
 

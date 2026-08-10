@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: test(verify): re-anchor the suite to the new layout and close its coverage gaps
 status: superseded
 blocked-by: [16]

@@ -1,30 +1,33 @@
+---
+owner: framework
+---
+
 # Context Format
 
-<!--
-  Installed by /configure at `.claude/policies/context.md`. Copied as-is — it
-  describes the workflow, not this repository.
+<!-- Installed by /configure at `.claude/policies/context.md`. -->
 
-  Routing and vocabulary were one file until this format split them. The reason
-  is cost: routing is what every session needs first and it is small, while the
-  vocabulary is large and mostly irrelevant to any one request. One file meant
-  the cheap half could not be read without the expensive half.
--->
-
-Context is how this repository thinks. It lives in `.claude/contexts/` as three kinds of file, and the split exists so the part every session needs is not carried by the part most sessions do not.
+Context is how a repository thinks, held at `.claude/contexts/` in three kinds of file — the split keeps the part every session needs out of the part most sessions never touch.
 
 | File | Holds | Read |
 | --- | --- | --- |
-| `contexts/map.md` | the routing table, and nothing else | first, every session |
+| `contexts/map.md` | the Routing Table, and nothing else | first, every session |
 | `contexts/repository.md` | vocabulary, boundaries, and constraints that cross domains | when a term or boundary is in question |
 | `contexts/<domain>.md` | one domain's own vocabulary and boundaries | when the routing table says the request touches it |
 
 ## `contexts/map.md`
 
-The routing table alone. It is the mechanism that makes context loading demand-driven — without it every session pays for every domain.
-
-**It is generated from the fields each context declares, never written by hand.** The two columns beyond the link are the two fields — `load-when` and `sources` — rolled up from the files they describe. A generated table cannot disagree with its directory, because it is not a second statement of the directory's contents: a context added without fields cannot appear in a regeneration, and a row pointing at nothing cannot be produced. That is the property, and it replaces the audit that a hand-written table needed rather than adding to it. **A generated file is never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it.
+- **The routing table alone — nothing else goes in this file** — a sentence of orientation there is a sentence every session pays for.
+- **The table is generated from the fields each context declares, never written by hand** — the columns beyond the link are `load-when` and `sources`, rolled up from the files they describe. A generated table cannot disagree with its directory, because it is not a second statement of the directory's contents — that property replaces the audit a hand-written table needed rather than adding to it.
+- **A generated file is never hand-edited** — enforced by regenerating and comparing, never requested of whoever opens it.
+- **Every file under `contexts/` has exactly one row, including `repository.md` itself** — a file with no row is unreachable, and a row with no file points at nothing.
+- **Rows group as: `repository.md` first, flat domains in filename order, then each Project Context as a labelled group** — filename order is the only ordering a directory supplies.
+- **A group's label row carries the directory name and nothing else, its cells blank** — a directory has no frontmatter, so a value there is a claim its directory never made. A file's empty `sources` renders `—`: the dash says the file declared nothing, where a blank says nobody was asked.
 
 ```md
+---
+owner: repository
+---
+
 # Context map
 
 | Context | Load when | Sources |
@@ -37,15 +40,9 @@ The routing table alone. It is the mechanism that makes context loading demand-d
 | [web/forms](web/forms.md) | the request touches form state or validation | `apps/web/src/forms/` |
 ```
 
-**Every file under `contexts/` has exactly one row, including `repository.md` itself.** A file with no row is unreachable; a row with no file is a pointer at nothing. Group the rows: repository-wide domains first and flat, then each Project Context as a labelled group of its own.
-
-The order within the flat group is `repository.md` first — it is the cross-cutting vocabulary rather than a domain — then filename order, which is the only ordering a directory supplies. **A Project Context's label row carries the directory name and nothing else**: no member file states a fact about its group and a directory has no frontmatter, so there is nothing to roll up. A value there would be the one thing a generated table may not contain, a claim its directory never made. That is also why the group row's cells are blank where a file's empty `sources` renders as `—`: the dash says the file declared nothing to point at, and a blank says nobody was asked.
-
-Nothing else goes in this file. A sentence of orientation here is a sentence every session pays for, which is the cost the split was made to remove.
-
 ## `contexts/repository.md`
 
-What a repository-wide term means, who owns what, and which constraints outlive the current implementation.
+Repository-wide terms, ownership, and the constraints that outlive the implementation:
 
 ```md
 # {Repo or system name}
@@ -71,7 +68,7 @@ _Avoid_: purchase, transaction
 
 ## `contexts/<domain>.md`
 
-The same shape, minus anything repository-wide, and with its **declared fields** at the top.
+The same shape minus anything repository-wide, with its declared fields at the top:
 
 ```md
 ---
@@ -92,40 +89,29 @@ _Avoid_: view, cache, denorm
 
 ## Where a term belongs
 
-Name every place the term is used, then read off the answer:
-
 | Used | Belongs in |
 | --- | --- |
 | only while one workflow stage runs | that stage's guide in `.claude/policies/` |
 | only by work in one domain | that domain's Context |
 | across stages, or across domains | `contexts/repository.md` |
 
-**A term owned by a stage is defined in that stage's guide and nowhere else.** What a ticket's states mean belongs with the ticket format; what a branch asserts belongs with the version-control policy. Defining it in the vocabulary as well is a second home, and the copy that is not edited is the one that goes stale.
+- **A term owned by a stage is defined in that stage's guide and nowhere else** — the copy that is not edited is the one that goes stale.
+- **A term that fits two rows is being used in two senses: split it and name each** — that is a finding about the repository, not a filing problem.
 
-A term that seems to fit two rows is being used in two senses. Split it, and name each sense — that is a finding about the repository, not a filing problem.
+## What gets written
 
-## What belongs, and what never does
-
-Context is **orientation, not documentation**: concepts, vocabulary, boundaries, stable constraints, Source Pointers.
-
-Apply the **compression test** in `CLAUDE.md` before writing anything into any of the three. Context is not a spec, a scratch pad, or a home for implementation decisions. The split changes where a line goes; it does not admit a line that failed the test before.
-
-**Never write in**: code, API shapes, function names, file inventories, or an implementation walkthrough. Those rot the moment the Codebase moves, and the Codebase already answers them.
-
-## Rules
-
-- **Be opinionated.** When multiple words exist for the same concept, pick the best one and list the others under `_Avoid_`.
-- **Keep definitions tight.** One or two sentences max. Define what it IS, not what it does.
-- **Only include terms specific to this repository.** General programming concepts — timeouts, error types, utility patterns — do not belong even where the repository uses them heavily. Before adding a term, ask whether it is unique to this repository or general; only the former belongs.
-- **Boundaries state ownership and the rules that cross it** — who may write what, what may only be referenced by id. Not a module list.
-- **Constraints are the ones that outlive the current implementation** — regulatory limits, contractual latency, platform bans. A constraint a refactor could remove is not stable; leave it out.
-- **A Source Pointer is a navigation coordinate, never a claim.** A declared `sources: [src/auth/]` means "start investigating here" — it says nothing about what is there. Declaring it as a field moved where the pointer is written and nothing about what it means: `CLAUDE.md` has the verify-before-use rule, and `.claude/protocol.md` how to recover a broken one.
-- **`load-when` states when to load the file, never what it is about.** *"the request touches sessions, tokens, or permissions"* routes; *"authentication and session handling"* is a topic, and a topic answers a question nobody asked. It is the one field a generated table cannot check, so it is read back rather than counted. This rule governs **every** declared load condition, Decisions included — `.claude/policies/decisions.md` adopts the mechanism and points here rather than restating it.
+- **Context is orientation, never documentation** — concepts, vocabulary, boundaries, stable constraints, Source Pointers; the compression test in `CLAUDE.md` gates every line of all three kinds. The split changes where a line goes; it does not admit a line that failed the test before.
+- **Never write in code, API shapes, function names, file inventories, or implementation walkthroughs** — they rot the moment the Codebase moves, and the Codebase already answers them.
+- **Be opinionated: one term per concept, the rest under `_Avoid_`** — two live words for one concept is drift with a head start.
+- **A definition is one or two sentences saying what the term IS** — what it does is the Codebase's to show.
+- **Only terms specific to this repository** — a general programming concept costs a row and buys nothing, however heavily it is used.
+- **Boundaries state ownership and the rules that cross it** — who may write what, what is referenced by id only; a module list orients nobody.
+- **Constraints are the ones that outlive the current implementation** — regulatory limits, contractual latency, platform bans; one a refactor could remove is not stable.
+- **A Source Pointer is a navigation coordinate, never a claim** — `sources: [src/auth/]` means start investigating here and says nothing about what is there. Declaring it as a field moved where the pointer is written and nothing about what it means: `CLAUDE.md` has the verify-before-use rule, and `.claude/protocol.md` how to recover a broken one.
+- **`load-when` states when to load the file, never what it is about** — a topic answers a question nobody asked, and it is the one field a generated table cannot check. Governs every declared load condition, Decisions included; `.claude/policies/decisions.md` points here rather than restating it.
 
 ## When a domain earns a file
 
-A Domain Context exists when a domain has **its own vocabulary, principles, or ownership** — never merely because a folder exists. A file per source directory is sediment; it costs a routing-table row and buys nothing.
-
-A Project Context — a directory under `contexts/` — earns its directory on the same test. Domains that span the repository stay flat.
-
-Structure is carried by the filesystem; the routing table carries reachability. Those are two jobs, and the table is not a second copy of the directory layout — it is the load conditions, which the filesystem cannot express.
+- **A Domain Context exists only where a domain has its own vocabulary, principles, or ownership** — a file per source directory is sediment: a routing-table row that buys nothing.
+- **A Project Context — a directory under `contexts/` — earns its directory on the same test** — domains that span the repository stay flat.
+- **Structure is carried by the filesystem; the routing table carries the load conditions** — two jobs, and the table is not a second copy of the directory layout.

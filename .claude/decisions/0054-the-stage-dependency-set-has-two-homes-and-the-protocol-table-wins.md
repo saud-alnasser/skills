@@ -1,9 +1,10 @@
 ---
-status: accepted
+owner: repository
+status: superseded
 load-when: a stage's dependencies are stated in more than one place
 sources: [.claude/protocol.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0079]
 ---
 
 # The stage-dependency set has two homes, and the protocol table wins

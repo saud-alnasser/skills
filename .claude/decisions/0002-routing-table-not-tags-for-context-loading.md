@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: context loading is being changed, or frontmatter is proposed for routing
 sources: [.claude/contexts/]

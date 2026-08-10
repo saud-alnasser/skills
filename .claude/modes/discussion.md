@@ -1,3 +1,7 @@
+---
+owner: framework
+---
+
 # Mode: discussion
 
 <!-- Installed by /configure at `.claude/modes/discussion.md`, copied as-is. -->

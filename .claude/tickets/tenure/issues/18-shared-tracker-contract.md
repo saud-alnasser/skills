@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(tracker): what tenure may write to a tracker other people read
 status: resolved
 blocked-by: [17]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: superseded
 load-when: the placement of knowledge at the repository root is argued from history
 sources: [.claude/]

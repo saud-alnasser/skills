@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a derived reference is found wrong in a configured repository, or the refresh path between plugin and repository is in question
 sources: [skills/configure/TOOLS.md, skills/configure/tools/, .claude/decisions/0070-work-for-another-repository-leaves-as-a-report.md, .claude/tickets/downstream/spec.md]

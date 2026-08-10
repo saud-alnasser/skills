@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(knowledge): designs gain a generated index where the directory is flat
 status: resolved
 blocked-by: [04, 05, 10]

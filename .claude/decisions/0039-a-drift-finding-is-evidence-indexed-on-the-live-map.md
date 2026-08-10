@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: drift is found that cannot be healed on the spot
 sources: [.claude/evidence/drift/]

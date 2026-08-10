@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(verify): assertions stop depending on the checkout''s line endings'
 status: resolved
 blocked-by: []

@@ -1,9 +1,10 @@
 ---
-status: accepted
+owner: repository
+status: superseded
 load-when: a formatter's reach includes .claude/
 sources: [skills/configure/SKILL.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0076]
 ---
 
 # /configure writes the formatter exclusion outside `.claude/`

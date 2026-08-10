@@ -1,8 +1,12 @@
+---
+owner: framework
+---
+
 # ADR Format
 
-Decisions are preserved as ADRs in `.claude/decisions/`, sequentially numbered: `0001-slug.md`, `0002-slug.md`, and so on.
+<!-- Installed by /configure at `.claude/policies/decisions.md`. -->
 
-Create the directory lazily — only when the first ADR is needed.
+Decisions are ADRs in `.claude/decisions/`, sequentially numbered `0001-slug.md` onward. Create the directory lazily, with the first ADR.
 
 ## Template
 
@@ -20,11 +24,12 @@ superseded-by: []
 {1-3 sentences: what's the context, what did we decide, and why.}
 ```
 
-The prose can still be a single paragraph. The value is in recording *that* a decision was made and *why* — not in filling out sections.
+- **A single paragraph is enough** — the value is recording *that* a decision was made and *why*, never filling out sections.
+- **Optional sections only where they earn it** — `## Considered Options` when the rejected alternatives are worth remembering, `## Consequences` when downstream effects are non-obvious; mandatory sections produce filler, and filler trains the reader to skim.
 
 ## Declared fields
 
-Every ADR declares these, and they are the only frontmatter it carries. Each exists because something reads it; a field nothing acts on is deleted rather than maintained.
+Every ADR declares these five, and no others — a field nothing acts on is deleted rather than maintained.
 
 | Field | Holds | Read by |
 | --- | --- | --- |
@@ -34,13 +39,17 @@ Every ADR declares these, and they are the only frontmatter it carries. Each exi
 | `supersedes` | the ADRs this one replaces | the supersession graph |
 | `superseded-by` | the ADRs that replace this one | the supersession graph |
 
-**The routing mechanism is `.claude/policies/context.md`'s, and Decisions use it unchanged.** What a `load-when` has to be, why a topic fails there, and why a generated index is never hand-edited are stated in that file and deliberately not repeated here — the rule is the same rule, and a second copy is the one that goes stale. What belongs to *this* format is the supersession pair below, which routing has no equivalent of.
+- **The routing mechanism is `.claude/policies/context.md`'s, used unchanged and deliberately not repeated here** — what a `load-when` must be, why a topic fails there, and why a generated index is never hand-edited live in that file; a second copy is the one that goes stale. What belongs to *this* format is the supersession pair below, which routing has no equivalent of.
 
 ## The index
 
-`.claude/decisions/map.md`, generated from the fields above, one row per ADR in numeric order:
+`.claude/decisions/map.md`, generated from the fields, one row per ADR in numeric order:
 
 ```md
+---
+owner: repository
+---
+
 # Decision map
 
 | ADR | Load when | Status | Sources |
@@ -49,53 +58,28 @@ Every ADR declares these, and they are the only frontmatter it carries. Each exi
 | [0018](0018-read-models-are-projected.md) | a query reaches for the write model | superseded | `src/db/` |
 ```
 
-The status column is what makes the index answer *is this live* without opening anything, which is the question a reader of a fifty-file directory asks first.
-
-**A stage routes through this file and opens only the ADRs it names.** Reading the directory whole is the cost the index exists to remove, and a stage that does it anyway has not been slowed down — it has stopped using the mechanism.
-
-## Optional sections
-
-Only include these when they add genuine value. Most ADRs won't need them.
-
-- **`## Considered Options`** — only when the rejected alternatives are worth remembering
-- **`## Consequences`** — only when non-obvious downstream effects need to be called out
-
-Mandatory sections produce filler, and filler trains the reader to skim.
+- **The status column answers *is this live* without opening anything** — the first question a reader of a fifty-file directory asks.
+- **A stage routes through the index and opens only the ADRs it names** — reading the directory whole is the cost the index exists to remove, and doing it anyway is not being slowed down but abandoning the mechanism.
 
 ## Numbering
 
-Scan `.claude/decisions/` for the highest existing number and increment by one.
-
-Whenever decisions move — in from another layout, or across a change to AEP's own — **preserve each ADR's existing number and slug** rather than renumbering. Inbound references to `0007` must keep resolving, and they resolve by number, so renumbering to close a gap breaks every one of them at once.
+- **Highest existing number plus one.**
+- **Whenever decisions move — in from another layout, or across a change to AEP's own — preserve each ADR's existing number and slug** — inbound references to `0007` must keep resolving, and they resolve by number, so renumbering to close a gap breaks every one at once.
 
 ## Supersession
 
-An ADR is a **draft until committed** and may be edited freely while the grill refines it.
-
-Once committed its reasoning is **frozen**. Of the declared fields only `status` and `superseded-by` move after that, and never the prose — an ADR records what was decided and why *at the time*, so rewriting it destroys the only record of the reasoning that was actually applied. `load-when` and `sources` describe the file rather than the decision, and are corrected like any other pointer when what they name moves.
-
-A changed mind is a new file. **Supersession is written at both ends, in the same change**: the new ADR lists the old under `supersedes`, the old lists the new under `superseded-by`, and its `status` becomes `superseded`. A claim made at one end and absent at the other is a **defect**, not a stylistic preference — it is what makes the relationship readable from either side, and what lets the graph be checked at all rather than trusted.
-
-Writing only the new end is the tempting half, because that is the file being edited. It leaves a reader who opens the old ADR with no way to learn it is dead, which is the exact reader this rule exists for.
+- An ADR is a draft until committed. Once committed its reasoning is **frozen**: of the declared fields only `status` and `superseded-by` move, and never the prose — an ADR records what was decided and why *at the time*, and rewriting it destroys the only record of the reasoning actually applied. `load-when` and `sources` describe the file rather than the decision, and are corrected like any other pointer.
+- **A changed mind is a new file, and supersession is written at both ends, in the same change** — the new ADR lists the old under `supersedes`; the old lists the new under `superseded-by` and its `status` becomes `superseded`. A claim made at one end and absent at the other is a **defect**, not a stylistic preference — it is what lets the graph be checked rather than trusted.
+- **Writing only the new end is the tempting half, because that is the file being edited** — it leaves a reader who opens the old ADR with no way to learn it is dead, and that reader is the exact one this rule exists for.
 
 ## When to offer an ADR
 
-All three of these must be true:
+All three must hold, or it is not a Decision:
 
-1. **Hard to reverse** — the cost of changing your mind later is meaningful
-2. **Surprising without context** — a future reader will look at the code and wonder "why on earth did they do it this way?"
-3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
+1. **Hard to reverse** — the cost of changing your mind later is meaningful.
+2. **Surprising without context** — a future reader will wonder why on earth it was done this way.
+3. **The result of a real trade-off** — genuine alternatives existed and one was picked for specific reasons.
 
-If a decision is easy to reverse, skip it — you'll just reverse it. If it's not surprising, nobody will wonder why. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+- **A convention is not a decision** — it belongs in the skill or rule that enforces it, never here.
 
-A convention is not a decision. It belongs in the skill or rule that enforces it, not here.
-
-### What qualifies
-
-- **Architectural shape.** "We're using a monorepo." "The write model is event-sourced, the read model is projected into Postgres."
-- **Integration patterns between contexts.** "Ordering and Billing communicate via domain events, not synchronous HTTP."
-- **Technology choices that carry lock-in.** Database, message bus, auth provider, deployment target. Not every library — just the ones that would take a quarter to swap out.
-- **Boundary and scope decisions.** "Customer data is owned by the Customer context; other contexts reference it by ID only." The explicit no-s are as valuable as the yes-s.
-- **Deliberate deviations from the obvious path.** "We're using manual SQL instead of an ORM because X." Anything where a reasonable reader would assume the opposite. These stop the next engineer from "fixing" something that was deliberate.
-- **Constraints not visible in the code.** "We can't use AWS because of compliance requirements." "Response times must be under 200ms because of the partner API contract."
-- **Rejected alternatives when the rejection is non-obvious.** If you considered GraphQL and picked REST for subtle reasons, record it — otherwise someone will suggest GraphQL again in six months.
+What qualifies: architectural shape; integration patterns between contexts; technology choices that carry lock-in; boundary and scope decisions — the explicit no-s as much as the yes-s; deliberate deviations from the obvious path, which stop the next engineer from "fixing" something deliberate; constraints not visible in the code; rejected alternatives whose rejection is non-obvious, which otherwise get re-proposed in six months.

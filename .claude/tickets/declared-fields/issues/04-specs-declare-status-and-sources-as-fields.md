@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): a spec declares its status and sources as fields
 status: resolved
 blocked-by: []

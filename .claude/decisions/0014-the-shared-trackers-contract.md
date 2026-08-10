@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: something is about to be written to a tracker other people read
 sources: [.claude/policies/tracker.md]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): derive this repository's own tool references
 status: resolved
 blocked-by: [03]

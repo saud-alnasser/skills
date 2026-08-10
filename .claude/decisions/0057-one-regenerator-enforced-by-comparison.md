@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a generated index needs to be produced, or something proposes to maintain one
 sources: [.claude/scripts/, .claude/policies/context.md]

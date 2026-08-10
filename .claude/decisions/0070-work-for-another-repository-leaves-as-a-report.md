@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: work would touch a repository other than the one the session is for, or a finding is about another repository
 sources: [.claude/rules/, .claude/protocol.md, skills/configure/protocol.template.md, .claude/tickets/downstream/spec.md]

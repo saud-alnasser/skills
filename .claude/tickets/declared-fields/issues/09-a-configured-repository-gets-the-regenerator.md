@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): a configured repository gets the regenerator, not a promise
 status: resolved
 blocked-by: []

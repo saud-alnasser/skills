@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(configure): close the graphite configuration gap
 status: resolved
 blocked-by: []

@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # gh — GitHub CLI
 
 Derived from: aep/github.md

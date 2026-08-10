@@ -54,9 +54,13 @@ Entries newly written for this repository are ordinary sections with no counterp
 
 ## The format
 
-Every file: what it is for, the docs URL, **and the condition for fetching it** — a URL with no trigger is decoration.
+Every file: `owner: repository` frontmatter — a derived reference is the repository's to heal, and the field is what the audit reads — then what it is for, the docs URL, **and the condition for fetching it** — a URL with no trigger is decoration.
 
 ```markdown
+---
+owner: repository
+---
+
 # <tool> — <what it is for here>
 
 Docs: https://...

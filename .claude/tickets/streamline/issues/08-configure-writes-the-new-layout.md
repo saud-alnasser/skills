@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): the migration converts the superseded layout
 status: superseded
 blocked-by: [05, 06, 07]

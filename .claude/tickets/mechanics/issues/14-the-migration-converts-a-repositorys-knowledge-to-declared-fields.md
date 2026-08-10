@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the migration converts a repository's knowledge to declared fields
 status: resolved
 blocked-by: [08]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 load-when: a term, boundary, or constraint is in question
 sources: []
 ---
@@ -91,12 +92,28 @@ _Avoid_: manifest, generated map, derived table
 A fact stated in frontmatter because something acts on it — a generated index, the configuration stage's derivation, or an assertion. A fact only a human reads stays prose. On what AEP ships the fields ride the harness's own `metadata` map rather than bare keys (ADR 0055), and whether a field restates its own path depends on how wide the index over it is (ADR 0056).
 _Avoid_: metadata, header, tag, attribute
 
+**Owner**:
+The frontmatter field deciding who may change an installed instruction file: `framework` is law — installed verbatim, byte-locked to its template, never healed or debated; `repository` is this repository's to heal (ADR 0073).
+_Avoid_: maintainer, author
+
+**Extension Point**:
+The declared form through which a repository varies framework law — a frontmatter field for a fact, an ADR for a departure needing reasoning. Census-derived, never invented (ADRs 0073, 0078).
+_Avoid_: override, customization, hook
+
+**Deviation**:
+A repository variation with no Extension Point to enter through — declared in the router's Deviations section with its reason and declaring release, surfaced by every audit, its age computed and forced to a disposition after one release (ADR 0073).
+_Avoid_: exception, fork, workaround
+
+**Norm**:
+A checkable imperative or table carrying its one-line why — the form every framework-owned normative file states its rules in; the essays stay in this repository's specification and Decisions, un-installed (ADR 0074).
+_Avoid_: guideline, directive
+
 ## Boundaries
 
 - **`skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in the shipped surfaces. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.
 - **A rule has exactly one home**, and the home is determined by when the rule must fire, not by what it is about. Restating a rule where it reads well is the failure this framework exists to prevent.
 - **The Spine owns stages; Primitives own none.** A Primitive that acquires a stage has become a Spine command and needs a Decision saying so. Both terms are `contexts/skill-authoring.md`'s.
-- **AEP's templates are not this repository's configuration.** `skills/configure/*.template.md` describes what gets installed elsewhere; the installed copies here are ordinary files that this repository owns and may heal.
+- **AEP's templates are not this repository's configuration.** `skills/configure/*.template.md` describes what gets installed elsewhere. An installed copy here declaring `owner: framework` is byte-locked to its template — the suite compares the pair, so a fix lands in the template and is copied over, never written into the copy alone. Installed files without the stamp remain ordinary files this repository owns and may heal.
 
 ## Constraints
 

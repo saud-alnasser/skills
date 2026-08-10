@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): adopt the second axis here
 status: resolved
 blocked-by: [06]

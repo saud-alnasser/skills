@@ -59,7 +59,13 @@ Four families, and the rule is *every index the workflow generates* — not this
 
 ### The output, exactly
 
+**Every index opens with `owner: repository` frontmatter** — the generated files sit in a corpus where every instruction and knowledge file declares its owner, and the generator is the only writer here, so the declaration is emitted rather than asked of anyone:
+
 ```md
+---
+owner: repository
+---
+
 # Context map
 
 | Context | Load when | Sources |
@@ -71,6 +77,10 @@ Four families, and the rule is *every index the workflow generates* — not this
 ```
 
 ```md
+---
+owner: repository
+---
+
 # Decision map
 
 | ADR | Load when | Status | Sources |
@@ -79,6 +89,10 @@ Four families, and the rule is *every index the workflow generates* — not this
 ```
 
 ```md
+---
+owner: repository
+---
+
 # Evidence map
 
 | Finding | Kind | Falsifies |
@@ -89,6 +103,10 @@ Four families, and the rule is *every index the workflow generates* — not this
 ```
 
 ```md
+---
+owner: repository
+---
+
 # Design map
 
 | Design | Status | Sources |
@@ -205,6 +223,10 @@ The two findings differ in one thing only: the second carries a consumption mark
 Run the derived script against it. `.claude/contexts/map.md` must be exactly:
 
 ```md
+---
+owner: repository
+---
+
 # Context map
 
 | Context | Load when | Sources |
@@ -216,6 +238,10 @@ Run the derived script against it. `.claude/contexts/map.md` must be exactly:
 and `.claude/decisions/map.md` exactly:
 
 ```md
+---
+owner: repository
+---
+
 # Decision map
 
 | ADR | Load when | Status | Sources |
@@ -226,6 +252,10 @@ and `.claude/decisions/map.md` exactly:
 and `.claude/evidence/map.md` exactly:
 
 ```md
+---
+owner: repository
+---
+
 # Evidence map
 
 | Finding | Kind | Falsifies |

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the enforcement of a generated index is in question, or what `.claude/scripts/` may hold
 sources: [skills/configure/SCRIPTS.md, skills/configure/SKILL.md, specs.md, .claude/tickets/downstream/spec.md]

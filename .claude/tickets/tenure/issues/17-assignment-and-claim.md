@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(coordination): assignment, claim, and the branch as the lock
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: an effort's open obligations have to move to another effort
 sources: [.claude/tickets/]

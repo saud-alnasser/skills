@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(protocol): the protocol records the version it was configured at'
 status: resolved
 blocked-by: []

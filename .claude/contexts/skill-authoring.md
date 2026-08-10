@@ -1,4 +1,5 @@
 ---
+owner: repository
 load-when: the request adds, renames, splits, or restructures a skill
 sources: [skills/, .claude/decisions/]
 ---

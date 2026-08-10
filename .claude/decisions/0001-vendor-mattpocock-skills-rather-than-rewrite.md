@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: superseded
 load-when: a shipped skill's derivation or attribution is in question
 sources: [skills/]

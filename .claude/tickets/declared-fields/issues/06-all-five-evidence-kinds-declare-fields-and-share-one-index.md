@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(knowledge): the five evidence kinds declare fields and share one index
 status: resolved
 blocked-by: [05]

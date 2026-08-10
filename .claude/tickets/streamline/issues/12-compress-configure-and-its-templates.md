@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(configure): compress onboarding, its templates, and the tool references
 status: superseded
 blocked-by: [09]

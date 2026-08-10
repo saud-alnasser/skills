@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a child needs something it is not permitted to do itself
 sources: [.claude/policies/sub-agents.md]

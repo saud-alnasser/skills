@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'test(verify): the sweep records what each assertion survives'
 status: resolved
 blocked-by: [01]

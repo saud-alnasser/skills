@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): adopt orchestration here
 status: resolved
 blocked-by: [06, 07]

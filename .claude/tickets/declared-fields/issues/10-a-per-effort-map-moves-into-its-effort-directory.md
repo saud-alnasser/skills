@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): a per-effort map moves into its effort's directory
 status: resolved
 blocked-by: []

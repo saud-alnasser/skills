@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(specs): a routing table is generated from declared fields
 status: resolved
 blocked-by: []

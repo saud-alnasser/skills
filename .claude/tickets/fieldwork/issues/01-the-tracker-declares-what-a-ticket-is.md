@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): the tracker declares what a ticket is, and the map reads it
 status: resolved
 blocked-by: []

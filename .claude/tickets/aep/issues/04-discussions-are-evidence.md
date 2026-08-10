@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): record the discussion that produced no decision
 status: resolved
 blocked-by: [02]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'refactor(configure): templates and their installed copies stop citing this repository'
 status: resolved
 blocked-by: [01]
