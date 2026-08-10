@@ -37,12 +37,14 @@ Two commands, and the first alone does nothing visible:
 
 ```
 claude plugin marketplace update aep-marketplace
-claude plugin update aep@aep-marketplace --scope local
+claude plugin update aep@aep-marketplace --scope <scope>
 ```
 
 The marketplace update refreshes the **catalog**; the installed plugin stays pinned to its old commit until the second command runs. `claude plugin list` reports the pin, so it is how you tell the two apart. A restart applies the change.
 
-**The second command needs both the qualified id and the scope, and lies when it does not get them.** `claude plugin update aep` fails with `Plugin "aep" not found` — not because it is missing, but because the bare name misses and `--scope` defaults to `user` while AEP is installed at `local`. Adding only the scope fails identically. Read that error as *wrong id or wrong scope*, never as *not installed*; check `claude plugin list` before believing it.
+**The scope is read from `claude plugin list`, never written here.** Which scope a clone's AEP is installed at is Position — per-machine, exactly as the pin above is — and this file stated one machine's answer as the command to type. It was wrong on the machine that wrote it by the time anyone read it back: AEP was installed at `user` there, and the guide said `local`.
+
+**The command needs both the qualified id and the scope, and lies when it does not get them.** `claude plugin update aep` fails with `Plugin "aep" not found` — not because it is missing, but because the bare name misses and `--scope` defaults to `user`, which is right on some machines and wrong on others. Read that error as *wrong id or wrong scope*, never as *not installed*; check `claude plugin list` before believing it.
 
 The marketplace name is optional — omitting it updates every configured marketplace.
 

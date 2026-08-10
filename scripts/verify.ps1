@@ -14906,6 +14906,13 @@ Describe-Ticket 'records/02' 'consumption is recorded by any finding that declar
   # heals it, which is the point at which its consumption becomes establishable.
   $marked = @(
     'drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md'
+    # Consumption established in the same commit that filed it: the finding
+    # falsified a ticket's account of what `gt submit` does to a pull request
+    # body, and the ticket was rewritten from the observation before anything
+    # was built from it. That is the case the format calls consumed-on-arrival —
+    # the healing and the finding are one change, so there was never a moment
+    # where it was waiting.
+    'drift/2026-08-10-gt-submit-does-prefill-the-pull-request-body.md'
     $consumedFinding
   )
 
