@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(release): install Tenure and remove the mattpocock skills
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: an index is being added for a directory, or a declared field looks like it restates a path
 sources: [.claude/evidence/, .claude/policies/evidence.md]

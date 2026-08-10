@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(knowledge): a healed drift finding is surfaced routinely rather than only by an audit'
 status: resolved
 blocked-by: []

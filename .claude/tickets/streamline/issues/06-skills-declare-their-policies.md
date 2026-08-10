@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): each skill declares the guides it reads
 status: resolved
 blocked-by: [03]

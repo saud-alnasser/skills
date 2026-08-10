@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: where a mode's text lives is in question
 sources: [.claude/modes/]

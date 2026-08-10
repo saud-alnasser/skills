@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a repair is being added to the configuration stage, or which repairs an audit should run is in question
 sources: [skills/configure/migration-changelog.md, skills/configure/SKILL.md, skills/configure/MIGRATION.md, .claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md]

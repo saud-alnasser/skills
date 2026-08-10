@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: test(verify): derive the suite's general assertions from specs.md
 status: resolved
 blocked-by: [09]

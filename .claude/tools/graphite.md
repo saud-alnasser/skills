@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # gt — Graphite (stacked changes)
 
 Derived from: aep/graphite.md

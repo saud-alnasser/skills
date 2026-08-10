@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a branch or a commit is about to be created for a ticket
 sources: [.claude/policies/version-control.md]

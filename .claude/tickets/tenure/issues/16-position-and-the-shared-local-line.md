@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(knowledge): position, and the line between shared and local
 status: resolved
 blocked-by: []

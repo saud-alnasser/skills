@@ -1,3 +1,7 @@
+---
+owner: framework
+---
+
 # Mode: maintenance
 
 <!-- Installed by /configure at `.claude/modes/maintenance.md`, copied as-is. -->

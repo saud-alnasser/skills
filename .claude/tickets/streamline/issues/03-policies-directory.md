@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): one guide per workflow concern, reached by pointer
 status: resolved
 blocked-by: [02]

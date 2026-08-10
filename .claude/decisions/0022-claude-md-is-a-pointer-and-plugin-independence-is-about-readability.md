@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the entrypoint is being added to, or plugin independence is in question
 sources: [CLAUDE.md]

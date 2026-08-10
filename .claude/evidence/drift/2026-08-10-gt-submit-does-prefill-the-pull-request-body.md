@@ -1,4 +1,5 @@
 ---
+owner: repository
 kind: drift
 falsifies: [.claude/tickets/downstream/issues/01-the-tool-references-stop-asserting-false-facts.md]
 ---

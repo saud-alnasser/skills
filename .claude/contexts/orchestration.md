@@ -1,4 +1,5 @@
 ---
+owner: repository
 load-when: the work dispatches sub-agents, or reads what one returned
 sources: [agents/, .claude/policies/sub-agents.md, skills/implement/SKILL.md]
 ---

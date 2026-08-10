@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a ticket's lifecycle facts are being read or written, or the two tracker forms look inconsistent
 sources: [.claude/policies/tickets.md, .claude/tickets/]

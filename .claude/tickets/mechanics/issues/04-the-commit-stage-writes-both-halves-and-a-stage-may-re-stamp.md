@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the commit stage writes both halves, and a stage may re-stamp the tree
 status: resolved
 blocked-by: [03]

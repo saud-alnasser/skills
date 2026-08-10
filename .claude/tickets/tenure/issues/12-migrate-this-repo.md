@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: test(configure): migrate this repository onto Tenure
 status: resolved
 blocked-by: [11]

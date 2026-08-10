@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: prototype code is about to be kept
 sources: [skills/prototype/]

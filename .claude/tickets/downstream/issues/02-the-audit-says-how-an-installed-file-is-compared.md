@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(configure): the audit says how an installed file is compared against its template'
 status: resolved
 blocked-by: []

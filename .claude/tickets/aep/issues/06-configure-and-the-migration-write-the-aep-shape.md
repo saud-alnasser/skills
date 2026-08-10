@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): the templates generate the AEP shape, and the migration converts onto it
 status: resolved
 blocked-by: [05]

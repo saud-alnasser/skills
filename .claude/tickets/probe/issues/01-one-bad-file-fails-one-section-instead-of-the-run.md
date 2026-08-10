@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(verify): one bad file fails one section instead of the whole run'
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(knowledge): state this repository's version-control policy
 status: resolved
 blocked-by: [04, 05]

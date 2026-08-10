@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(configure): adopt the covered ignore rule here
 status: resolved
 blocked-by: [01]

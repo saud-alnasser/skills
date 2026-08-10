@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: implemented
 sources:
   - .claude/evidence/research/2026-08-03-rentable-field-run.md

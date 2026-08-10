@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # Tenure — build status
 
 Where the build has got to. Moved here from the root `CLAUDE.md` during the migration in ticket 12: it is ticket state, so it belongs with the tickets rather than in the always-on file every turn pays for.

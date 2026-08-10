@@ -1,4 +1,5 @@
 ---
+owner: repository
 kind: research
 falsifies: [.claude/tickets/axis/issues/04-the-protocol-records-its-version.md]
 ---

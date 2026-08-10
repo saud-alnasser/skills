@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the specification's layout section is being amended
 sources: [specs.md]

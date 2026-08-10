@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(skills): every skill declares its guides as a field, not a body line
 status: resolved
 blocked-by: [01]

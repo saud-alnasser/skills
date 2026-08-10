@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): adopt the remaining changed templates here
 status: resolved
 blocked-by: [04, 09, 11]

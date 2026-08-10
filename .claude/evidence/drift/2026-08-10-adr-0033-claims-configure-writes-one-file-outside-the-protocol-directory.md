@@ -1,4 +1,5 @@
 ---
+owner: repository
 kind: drift
 falsifies: [.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md]
 ---
@@ -45,3 +46,5 @@ asserted directly, but only in the skill.
 A design run that decides whether 0033 is bounded — two writes, both named, set closed
 — or superseded by a decision stating the rule as a bound rather than a number. Either
 way the specification is amended in the same change, per `.claude/rules/precedence.md`.
+
+Consumed: `skills/configure/SKILL.md`, "a bound, not a count" — crystallize/07 (ADR 0076)

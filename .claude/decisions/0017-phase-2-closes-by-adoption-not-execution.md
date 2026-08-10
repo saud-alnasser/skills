@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: an effort is being closed while its obligations are unfinished
 sources: [.claude/tickets/]

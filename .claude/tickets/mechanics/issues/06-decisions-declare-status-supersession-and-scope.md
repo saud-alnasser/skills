@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): decisions declare status, supersession, and scope
 status: resolved
 blocked-by: [05]

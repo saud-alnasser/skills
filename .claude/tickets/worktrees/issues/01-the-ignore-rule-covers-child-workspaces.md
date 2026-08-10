@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: fix(skills): the ignore rule covers the harness's child workspaces
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a file under .claude/ is about to be committed or ignored
 sources: [.claude/.gitignore, .claude/position/]

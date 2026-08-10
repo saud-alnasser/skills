@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(agents): dispatched roles declare their mode under the same map
 status: resolved
 blocked-by: [01]

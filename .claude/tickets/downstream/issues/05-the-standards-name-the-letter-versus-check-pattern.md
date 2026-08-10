@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(rules): the standards name keeping a rule''s letter while removing its check'
 status: resolved
 blocked-by: [03]

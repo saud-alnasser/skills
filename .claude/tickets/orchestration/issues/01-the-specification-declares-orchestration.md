@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(specs): the specification declares orchestration
 status: resolved
 blocked-by: []

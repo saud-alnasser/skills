@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): contexts declare their sources and their load condition
 status: resolved
 blocked-by: [05]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): give version control its own policy file
 status: resolved
 blocked-by: [03]

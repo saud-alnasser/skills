@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(skills): this repository derives the position script from the specification'
 status: resolved
 blocked-by: [01]

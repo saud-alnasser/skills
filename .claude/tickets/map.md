@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # Design map
 
 | Design | Status | Sources |
@@ -8,6 +12,7 @@
 | [axis](axis/spec.md) | implemented | `skills/help/SKILL.md`, `skills/triage/SKILL.md`, `skills/survey/SKILL.md`, `.claude/contexts/skill-authoring.md`, `.claude/rules/skills.md`, `.claude/protocol.md`, `scripts/verify.ps1`, `.claude/tickets/entry/spec.md` |
 | [changelog](changelog/spec.md) | implemented | `skills/configure/SKILL.md`, `skills/configure/MIGRATION.md`, `.claude/protocol.md`, `.claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md`, `scripts/verify.ps1` |
 | [citations](citations/spec.md) | implemented | `skills/`, `agents/`, `.claude/rules/skills.md`, `.claude/policies/decisions.md`, `scripts/verify.ps1` |
+| [crystallize](crystallize/spec.md) | implemented | `specs.md, Parts II and IV`, `.claude/protocol.md`, `.claude/rules/`, `.claude/policies/`, `skills/configure/` |
 | [declared-fields](declared-fields/spec.md) | implemented | `skills/`, `agents/`, `scripts/verify.ps1`, `.claude/protocol.md`, `.claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md` |
 | [downstream](downstream/spec.md) | implemented | `skills/configure/tools/github.md`, `skills/configure/tools/graphite.md`, `skills/configure/TOOLS.md §Refreshing a derived file`, `skills/configure/SCRIPTS.md`, `skills/configure/SKILL.md §5 — Audit, where AEP is already here`, `skills/configure/protocol.template.md`, `skills/configure/engineering.template.md`, `skills/handoff/SKILL.md`, `specs.md §Generated indexes, §Layout`, `.claude/evidence/discussions/2026-08-10-the-compliant-path-costs-more-than-the-workaround.md`, `.claude/decisions/0070-work-for-another-repository-leaves-as-a-report.md`, `.claude/decisions/0071-the-index-prohibition-is-enforced-by-a-specified-ci-step.md`, `.claude/decisions/0072-a-verified-downstream-correction-returns-as-evidence.md` |
 | [entry](entry/spec.md) | implemented | `CLAUDE.md`, `skills/configure/CLAUDE.template.md`, `skills/design/SKILL.md`, `skills/implement/SKILL.md`, `specs.md §5, §10, §11`, `scripts/verify.ps1`, `.claude/decisions/0061-unplanned-work-enters-the-spine-from-the-boot-tier.md`, `.claude/contexts/skill-authoring.md` |

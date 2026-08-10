@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the decisions index is generated, and the review stage routes through it
 status: resolved
 blocked-by: [06, 07]

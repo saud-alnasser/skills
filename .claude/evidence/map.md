@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # Evidence map
 
 | Finding | Kind | Falsifies |
@@ -11,7 +15,8 @@
 | [2026-08-09-one-perturbation-cannot-test-three-assertion-polarities](prototypes/2026-08-09-one-perturbation-cannot-test-three-assertion-polarities.md) | prototypes | — |
 | [2026-08-09-perturbing-the-tree-to-find-assertions-that-check-nothing](prototypes/2026-08-09-perturbing-the-tree-to-find-assertions-that-check-nothing.md) | prototypes | — |
 | [2026-08-09-reading-the-plugin-version-from-a-running-stage](research/2026-08-09-reading-the-plugin-version-from-a-running-stage.md) | research | consumed — `.claude/tickets/axis/issues/04-the-protocol-records-its-version.md` |
-| [2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory](drift/2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory.md) | drift | waiting — `.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md` |
+| [2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory](drift/2026-08-10-adr-0033-claims-configure-writes-one-file-outside-the-protocol-directory.md) | drift | consumed — `.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md` |
 | [2026-08-10-gt-submit-does-prefill-the-pull-request-body](drift/2026-08-10-gt-submit-does-prefill-the-pull-request-body.md) | drift | consumed — `.claude/tickets/downstream/issues/01-the-tool-references-stop-asserting-false-facts.md` |
 | [2026-08-10-the-compliant-path-costs-more-than-the-workaround](discussions/2026-08-10-the-compliant-path-costs-more-than-the-workaround.md) | discussions | — |
-| [2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports](drift/2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports.md) | drift | waiting — `.claude/policies/version-control.md`, `.claude/decisions/0051-the-commit-unit-here-is-the-effort.md`, `skills/implement/SKILL.md` |
+| [2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports](drift/2026-08-10-the-set-dispatch-prohibition-forbids-more-than-its-reason-supports.md) | drift | consumed — `.claude/policies/version-control.md`, `.claude/decisions/0051-the-commit-unit-here-is-the-effort.md`, `skills/implement/SKILL.md` |
+| [2026-08-10-the-variation-census-for-extension-points](research/2026-08-10-the-variation-census-for-extension-points.md) | research | — |

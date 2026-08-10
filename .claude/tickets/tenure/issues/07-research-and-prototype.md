@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): vendor /research and /prototype
 status: resolved
 blocked-by: []

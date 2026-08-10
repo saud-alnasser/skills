@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): record the grill that produced no decision
 status: superseded
 blocked-by: [03]

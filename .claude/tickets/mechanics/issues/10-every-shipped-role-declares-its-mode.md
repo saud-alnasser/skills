@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(agents): every shipped role declares its mode
 status: resolved
 blocked-by: []

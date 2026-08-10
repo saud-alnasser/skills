@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the sub-agent policy ships
 status: resolved
 blocked-by: [01]

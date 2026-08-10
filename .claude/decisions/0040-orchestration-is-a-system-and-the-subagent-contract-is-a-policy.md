@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: where the sub-agent contract belongs is in question
 sources: [.claude/policies/sub-agents.md]

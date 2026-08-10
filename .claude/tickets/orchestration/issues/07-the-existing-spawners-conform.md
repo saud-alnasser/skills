@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the existing spawners conform to the policy
 status: resolved
 blocked-by: [02]

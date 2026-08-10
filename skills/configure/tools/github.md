@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # gh — GitHub CLI
 
 Docs: https://cli.github.com/manual/

@@ -1,3 +1,7 @@
+---
+owner: framework
+---
+
 # Mode: prototype
 
 <!-- Installed by /configure at `.claude/modes/prototype.md`, copied as-is. -->

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(configure): a configured repository declares which spec layout it uses'
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): a local ticket declares its lifecycle facts as fields
 status: resolved
 blocked-by: []

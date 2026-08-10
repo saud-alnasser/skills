@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(knowledge): any finding declaring what it falsifies records its consumption'
 status: resolved
 blocked-by: []

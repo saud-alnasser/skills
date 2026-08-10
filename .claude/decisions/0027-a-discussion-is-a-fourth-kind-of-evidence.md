@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a grill ends without reaching a decision
 sources: [.claude/evidence/]

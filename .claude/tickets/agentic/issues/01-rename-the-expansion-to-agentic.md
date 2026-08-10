@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: docs(skills): rename the expansion to the Agentic Engineering Protocol, and release the specification at 1.2.0
 status: resolved
 blocked-by: []

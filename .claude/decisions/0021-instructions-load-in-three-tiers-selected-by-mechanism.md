@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: an instruction is being placed, or its per-turn cost is in question
 sources: [.claude/rules/, .claude/policies/]

@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # claude plugin — AEP's own distribution
 
 This repository *is* the plugin: `.claude-plugin/plugin.json` sits at the root and `marketplace.json` publishes it with `"source": "./"`. So the tree you are editing and the AEP that is running are two different things, and the whole point of this file is the gap between them.

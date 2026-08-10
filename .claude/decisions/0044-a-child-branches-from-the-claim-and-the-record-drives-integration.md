@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a child's worktree base is in question
 sources: [.claude/settings.json]

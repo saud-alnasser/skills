@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: AEP needs a field of its own on something it ships, or a shipped fact is stated as a body line
 sources: [skills/, agents/, .claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md]

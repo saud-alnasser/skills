@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a plan meets a decision only partial code can answer
 sources: [.claude/policies/tickets.md]

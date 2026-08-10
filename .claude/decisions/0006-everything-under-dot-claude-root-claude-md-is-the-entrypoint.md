@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: something is proposed at the repository root rather than under .claude/
 sources: [CLAUDE.md, .claude/]

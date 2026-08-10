@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(skills): compress the build spine
 status: superseded
 blocked-by: [09]

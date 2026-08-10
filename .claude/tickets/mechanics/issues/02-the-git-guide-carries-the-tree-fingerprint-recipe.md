@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the git guide carries the tree-fingerprint recipe
 status: resolved
 blocked-by: [01]

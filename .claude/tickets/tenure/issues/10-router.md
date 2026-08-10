@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): router over the Tenure skill set
 status: resolved
 blocked-by: [03, 06, 08, 09]

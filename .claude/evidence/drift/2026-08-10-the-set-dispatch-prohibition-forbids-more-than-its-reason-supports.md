@@ -1,4 +1,5 @@
 ---
+owner: repository
 kind: drift
 falsifies: [.claude/policies/version-control.md, .claude/decisions/0051-the-commit-unit-here-is-the-effort.md, skills/implement/SKILL.md]
 ---
@@ -61,3 +62,5 @@ the command. Forced, deliberately, with the reasoning stated in the transcript.
 A design run that decides whether to narrow the prohibition to landing, states the
 retained cost, and reconciles ADRs 0046 and 0051 — and that gives the worktree rule a
 disposition for a repository whose children never commit.
+
+Consumed: `.claude/policies/version-control.md`, "The unit is the effort, not the ticket" — crystallize/04 (ADR 0077)

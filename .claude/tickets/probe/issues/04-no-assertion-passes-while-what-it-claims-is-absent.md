@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'refactor(verify): no assertion passes while what it claims is absent'
 status: obsolete
 blocked-by: [03]

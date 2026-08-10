@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # Decision map
 
 | ADR | Load when | Status | Sources |
@@ -34,7 +38,7 @@
 | [0030](0030-streamline-is-superseded-by-the-aep-effort.md) | an effort's open obligations have to move to another effort | accepted | `.claude/tickets/` |
 | [0031](0031-spec-21-gains-designs-and-the-ignore-file.md) | the specification's layout section is being amended | accepted | `specs.md` |
 | [0032](0032-modes-live-in-their-own-directory.md) | where a mode's text lives is in question | accepted | `.claude/modes/` |
-| [0033](0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md) | a formatter's reach includes .claude/ | accepted | `skills/configure/SKILL.md` |
+| [0033](0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md) | a formatter's reach includes .claude/ | superseded | `skills/configure/SKILL.md` |
 | [0034](0034-the-rename-to-agentic-stops-at-frozen-records.md) | a rename would touch a Decision or a resolved ticket | accepted | `.claude/decisions/` |
 | [0035](0035-what-a-ticket-is-is-a-declared-tracker-fact.md) | the tracker's declaration of what a ticket is has to be read or changed | accepted | `.claude/policies/tracker.md` |
 | [0036](0036-the-build-lifecycle-rides-native-issue-state-on-github.md) | a ticket's state has to be expressed on GitHub | accepted | `.claude/tools/github.md` |
@@ -55,7 +59,7 @@
 | [0051](0051-the-commit-unit-here-is-the-effort.md) | a branch or a commit is about to be created for a ticket | accepted | `.claude/policies/version-control.md` |
 | [0052](0052-the-marker-records-the-tree-and-claims-only-that-drift-was-read.md) | the Marker's contents, or what a match licenses, is in question | accepted | `.claude/protocol.md` |
 | [0053](0053-a-routing-table-is-generated-from-fields-the-routed-file-declares.md) | a routing table or a declared field is being changed | accepted | `.claude/policies/context.md` |
-| [0054](0054-the-stage-dependency-set-has-two-homes-and-the-protocol-table-wins.md) | a stage's dependencies are stated in more than one place | accepted | `.claude/protocol.md` |
+| [0054](0054-the-stage-dependency-set-has-two-homes-and-the-protocol-table-wins.md) | a stage's dependencies are stated in more than one place | superseded | `.claude/protocol.md` |
 | [0055](0055-aep-fields-ride-the-harness-metadata-map.md) | AEP needs a field of its own on something it ships, or a shipped fact is stated as a body line | accepted | `skills/`, `agents/`, `.claude/evidence/research/2026-08-05-frontmatter-extension-points-for-skills-and-agents.md` |
 | [0056](0056-one-generated-index-per-family-not-per-directory.md) | an index is being added for a directory, or a declared field looks like it restates a path | accepted | `.claude/evidence/`, `.claude/policies/evidence.md` |
 | [0057](0057-one-regenerator-enforced-by-comparison.md) | a generated index needs to be produced, or something proposes to maintain one | accepted | `.claude/scripts/`, `.claude/policies/context.md` |
@@ -74,3 +78,10 @@
 | [0070](0070-work-for-another-repository-leaves-as-a-report.md) | work would touch a repository other than the one the session is for, or a finding is about another repository | accepted | `.claude/rules/`, `.claude/protocol.md`, `skills/configure/protocol.template.md`, `.claude/tickets/downstream/spec.md` |
 | [0071](0071-the-index-prohibition-is-enforced-by-a-specified-ci-step.md) | the enforcement of a generated index is in question, or what `.claude/scripts/` may hold | accepted | `skills/configure/SCRIPTS.md`, `skills/configure/SKILL.md`, `specs.md`, `.claude/tickets/downstream/spec.md` |
 | [0072](0072-a-verified-downstream-correction-returns-as-evidence.md) | a derived reference is found wrong in a configured repository, or the refresh path between plugin and repository is in question | accepted | `skills/configure/TOOLS.md`, `skills/configure/tools/`, `.claude/decisions/0070-work-for-another-repository-leaves-as-a-report.md`, `.claude/tickets/downstream/spec.md` |
+| [0073](0073-instruction-files-declare-an-owner-and-framework-law-varies-only-at-declared-points.md) | an installed instruction file is about to be edited, healed, or varied per repository | accepted | `specs.md`, `.claude/policies/`, `skills/configure/` |
+| [0074](0074-installed-norms-carry-a-one-line-why-and-the-essays-stay-home.md) | a file AEP ships or installs is about to be written or converted | accepted | `specs.md`, `.claude/policies/`, `.claude/rules/`, `skills/` |
+| [0075](0075-stage-loads-are-exact-and-the-always-on-core-is-selected-by-the-drift-test.md) | a stage's load list, or the always-on tier's membership, is about to change | accepted | `.claude/protocol.md`, `skills/`, `.claude/rules/` |
+| [0076](0076-what-configure-writes-outside-the-protocol-directory-is-a-bound-not-a-count.md) | /configure would write, or an audit would check a write, outside the protocol directory | accepted | `skills/configure/`, `.claude/decisions/0033-configure-writes-the-formatter-exclusion-outside-dot-claude.md` |
+| [0077](0077-dispatch-is-independent-of-landing-and-a-never-commit-child-has-a-sanctioned-exit.md) | a ticket set is about to be dispatched, or a worktree whose child never commits is about to be removed | accepted | `.claude/policies/version-control.md`, `skills/implement/SKILL.md`, `.claude/decisions/0046-ticket-orchestration-is-a-second-axis-and-its-failure-rule-inverts.md`, `.claude/decisions/0051-the-commit-unit-here-is-the-effort.md` |
+| [0078](0078-a-fixed-core-procedure-is-computed-or-it-names-its-judgement.md) | a fixed-core procedure is about to be written, or a conversion, extension point, or deviation is about to be created | accepted | `specs.md`, `.claude/scripts/`, `.claude/tickets/crystallize/spec.md` |
+| [0079](0079-the-router-is-framework-law-installed-verbatim.md) | the protocol file's ownership, the stage table's origin, or a wish to vary a stage row is in question | accepted | `.claude/protocol.md`, `skills/configure/protocol.template.md`, `.claude/evidence/research/2026-08-10-the-variation-census-for-extension-points.md` |

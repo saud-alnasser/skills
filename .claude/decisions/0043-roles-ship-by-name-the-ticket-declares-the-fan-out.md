@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a fan-out is being declared on a ticket
 sources: [agents/]

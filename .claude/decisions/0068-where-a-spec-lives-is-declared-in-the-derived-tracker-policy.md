@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: where a spec is written is in question, or which policies may carry a repository-specific fact
 sources: [skills/configure/policies/tracker.template.md, skills/configure/policies/specs.template.md, skills/configure/SCRIPTS.md, skills/configure/SKILL.md]

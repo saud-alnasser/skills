@@ -1,101 +1,77 @@
+---
+owner: repository
+---
+
 # Version control
 
 <!--
-  Installed by /configure at `.claude/policies/version-control.md`. This is the **one
-  home** for how work moves from a ticket to a merged change in this
-  repository.
+  Installed by /configure at `.claude/policies/version-control.md`, derived per
+  repository: the **one home** for how work moves from a ticket to a merged
+  change here. The policy half of a pair — `.claude/policies/tracker.md` says
+  where the tickets are; this says what happens to one once somebody builds it.
+  How to type any of it is `.claude/tools/`.
 
-  It is the policy half of a pair. `.claude/policies/tracker.md` says where the tickets
-  are; this says what happens to a ticket once somebody starts building it.
-  Both are policy — what this repository *does*. How to type any of it is
-  `.claude/tools/`, which is invocation and a different question.
-
-  It is committed and carries no AEP machinery, so a teammate with no plugin
-  reads it and learns how this repository works. `CLAUDE.md` names it for
-  exactly that reason.
-
-  Keep it short. Four questions, and nothing else.
+  The installed copy declares `owner: repository` and the two facts below as
+  frontmatter fields — the extension points through which a repository varies
+  the framework's delivery defaults. A stage acts on the fields; the prose
+  elaborates them.
 -->
+
+{The installed copy's frontmatter — the declared repository facts, written by
+/configure from the tree and confirmed with the user:}
+
+```yaml
+---
+owner: repository
+model: plain | stacked-changes
+unit: ticket | effort
+---
+```
 
 ## Which model
 
-{**Plain git** or **stacked changes**. One of the two, stated plainly — this is
-the fact everything below depends on.}
+{**Plain git** or **stacked changes** — stated in the `model` field above and
+elaborated here. This is the fact everything below depends on.}
 
-On plain git, `blocked-by: [01]` in a ticket means *wait until 01 is resolved*.
-Where the repository uses stacked changes it means *stack on top of 01*, and
-waiting is the thing the tool exists to remove. Getting it wrong is expensive
-in both directions, which is why it is written down rather than rediscovered.
+- On plain git, `blocked-by: [01]` means *wait until 01 is resolved*; on stacked changes it means *stack on top of 01* — waiting is the thing the tool exists to remove, and getting the model wrong is expensive in both directions.
+- **Confirm the declaration before relying on it** — one read: `ls .git/.graphite_repo_config` (exists → stacked changes; absent → plain git). Where the read disagrees, **the read is right**: correct this file where you stand and carry on, or the next reader gets the same wrong fact.
+- **Confirm by reading the filesystem, never by asking the stacking tool** — several of their commands initialise the repository as a side effect, so a probe can make its own answer true.
 
-**Confirm this statement before relying on it**, the same way any other written
-claim is confirmed. It is one read:
+## The unit
 
-```
-ls .git/.graphite_repo_config     # exists → stacked changes. absent → plain git
-```
+{**Ticket** or **effort** — stated in the `unit` field above. On `ticket`, one
+ticket is one branch, one commit, one unit of review, and the dispatched-set
+axis lands one commit per ticket. On `effort`, an effort is one branch and one
+commit that every ticket amends — and the consequences below apply.}
 
-A repository can adopt a stacking tool, or abandon one, long after this file
-was written. Where the read disagrees with the statement above, **the read is
-right** — correct this file where you are standing, and carry on with the true
-answer. Deferring it means the next reader gets the same wrong fact.
+Under `unit: effort` only:
 
-**Confirm it by reading the filesystem, never by asking the stacking tool.**
-Several of their commands initialise the repository as a side effect, so a
-probe that shells out to one can make its own answer true.
+- **A set may still be dispatched — dispatch is independent of landing.** The work is built in isolated worktrees and reaches history only as the orchestrator folds each diff into the effort's one commit, under the contract `.claude/policies/sub-agents.md` states. What is lost relative to per-ticket landing, stated rather than discovered: **a failed sibling is excluded by the orchestrator's judgement over what each workspace reported, where per-ticket branches would have excluded it by topology.**
+- **A spent worktree here is dirty by construction** — its work landed through integration and the tree kept its uncommitted state — so the removal refusal fires on every one and carries no second opinion. Once the work is **verified integrated against its change record and the suite is green**, forced removal is the sanctioned exit — state the verification where the removal is done. Cleaning a tree until the refusal cannot fire keeps the rule's letter while killing its check; the force at least leaves its trace in the command.
 
 ## Branch naming
 
-{This repository's branch convention, if it has one — read it off the recent
-branches and off `CONTRIBUTING.md` rather than asserting one. Delete this
-section if there is none, and `/implement`'s default applies.}
+{This repository's branch convention, read off the recent branches and
+`CONTRIBUTING.md` rather than asserted. Delete this section if there is none,
+and the build stage's default applies.}
 
-Whatever goes here has to **encode the ticket id** and has to be reproducible
-from the ticket alone. The branch is how a ticket is claimed, so two tools that
-disagree about the name disagree about whether the ticket is taken.
+- **The name must encode the ticket id and be reproducible from the ticket alone** — the branch is how a ticket is claimed, so two tools that disagree about the name disagree about whether the ticket is taken. A repository whose unit is the effort encodes the effort instead, on the same reproducibility test.
 
 ## Commit discipline
 
-{What this repository's commits actually look like — subject form, scope
-vocabulary, whether bodies are expected, how a ticket is referenced. Read it
-off `CONTRIBUTING.md` and the recent `git log`, not off what is usual.
+{What this repository's commits look like — subject form, scope vocabulary,
+whether bodies are expected, how a ticket is referenced. Read off
+`CONTRIBUTING.md` and the recent `git log`; write the answer here so a later
+run does not detect it again.}
 
-This section is where the answer goes once the repository has been read, so a
-later run does not have to detect it again.}
-
-AEP's defaults, applying only where the repository is silent: **Conventional
-Commits — `type(scope): summary`** — for commits, PR titles, and issue titles.
-The scope names an engineering domain, and `misc`, `stuff`, and `update` are
-not domains.
+- AEP's defaults, where the repository is silent: **Conventional Commits — `type(scope): summary`** — for commits, PR titles, and issue titles; the scope names an engineering domain, and `misc`, `stuff`, and `update` are not domains.
 
 ## How work lands
 
 {How a finished branch reaches the default branch here — merged by a pull
-request, submitted as a stack, fast-forwarded by the maintainer — and who does
-it.}
+request, submitted as a stack, fast-forwarded — and who does it.}
 
-Where work lands by pull request, the default description covers **problem,
-solution, architectural impact, testing, related issues, breaking changes** —
-never a commit-by-commit account.
-
-One pull request kind is allowed to change nothing outside `.claude/`: the
-**design PR** — a single design run's deliverable, its entire diff under the
-protocol directory, one per run. Approving it is approving the plan before
-anyone builds, which is what makes it reviewable where other protocol-only
-pull requests are not. It is the only one: every other protocol-only
-change rides the build pull request that consumes it, and a multi-session
-design effort lands one small design PR per session rather than holding an
-effort-long branch. The test is the **diff, never a
-label or commit type** — nothing mechanical marks a design PR except what
-its diff touches.
-
-**A diff confined to `.claude/scripts/` is code, not scaffolding.** The
-workflow's own scripts live under the protocol directory, so they read as
-protocol-only by the test above and are not. Nothing about the test changes —
-such a diff fails it and rides its consumer, exactly as any other code change
-does — but the reason it fails is worth stating, because "protocol scaffolding
-is never its own unit of work" does not obviously reach executable content.
-
-Publishing is the human's call: `.claude/rules/engineering.md` carries that as
-a standing rule and this section does not repeat it. What belongs here is what
-actually happens in this repository once the work is ready, which is a fact
-about the repository rather than a rule about Claude.
+- Where work lands by pull request, the description covers **problem, solution, architectural impact, testing, related issues, breaking changes** — never a commit-by-commit account.
+- **One pull request kind may change nothing outside `.claude/`: the design PR** — a single design run's deliverable, its entire diff under the protocol directory, one per run; approving it is approving the plan before anyone builds, which is what makes it reviewable where other protocol-only pull requests are not. It is the only one: every other protocol-only change rides the build pull request that consumes it, and a multi-session design effort lands one small design PR per session. The test is the **diff, never a label or commit type**.
+- **A diff confined to `.claude/scripts/` is code, not scaffolding** — the workflow's own scripts sit under the protocol directory, so they read as protocol-only by the test above and are not: such a diff fails it and rides its consumer, exactly as any other code change does.
+- Publishing is the human's call — `.claude/rules/engineering.md` carries the standing rule; what belongs here is only what happens in this repository once the work is ready.

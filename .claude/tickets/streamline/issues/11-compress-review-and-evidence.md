@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(skills): compress the review and evidence stages
 status: superseded
 blocked-by: [09]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: docs(knowledge): supersede streamline, and record the adoption of the specification
 status: resolved
 blocked-by: []

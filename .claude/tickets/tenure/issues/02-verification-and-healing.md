@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(knowledge): verification at use, healing where the break is found
 status: resolved
 blocked-by: []

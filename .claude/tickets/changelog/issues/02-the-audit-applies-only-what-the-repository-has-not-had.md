@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(configure): the audit applies only the repairs a repository has not had'
 status: resolved
 blocked-by: [01]

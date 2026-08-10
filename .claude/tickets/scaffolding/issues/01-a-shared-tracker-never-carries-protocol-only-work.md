@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(configure): a shared tracker never carries protocol-only work
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): ship the modes, and have every skill declare exactly one
 status: resolved
 blocked-by: [02]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: revert(rules): return the entrypoint to its pre-effort state, and keep the scope fix
 status: obsolete
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(skills): commit refuses an unattested position, and the protocol stops overclaiming'
 status: resolved
 blocked-by: [01]

@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: the verification report's enforcement is in question, or what a receipt attests is
 sources: [.claude/protocol.md, skills/configure/SCRIPTS.md, skills/commit/SKILL.md, .claude/scripts/]

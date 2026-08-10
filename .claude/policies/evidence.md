@@ -1,20 +1,12 @@
+---
+owner: framework
+---
+
 # Evidence
 
-<!--
-  Installed by /configure at `.claude/policies/evidence.md`. Copied as-is — it
-  describes the workflow, not this repository.
+<!-- Installed by /configure at `.claude/policies/evidence.md`. -->
 
-  Consolidated from /design, /research, /prototype, and /triage, each of which
-  stated part of it. The gating rule and the graduation rule in particular were
-  /design's, reached by pointer from the two skills that produce evidence; they
-  live here now and every one of those four points at this file.
-
-  Reached by pointer from `.claude/protocol.md`'s routing table.
--->
-
-**Evidence is the trail showing how a claim was earned** — research findings, prototype write-ups, the record of a rejected request, the discussion that produced no decision, and the drift finding.
-
-It is not a knowledge layer, and the difference is the whole reason it has its own directory: **evidence records what was verified and when, and nothing revalidates it afterwards.** Context is maintained against the Codebase; a finding is true of the moment it was taken. That shared property is what earns the five kinds one grouping directory rather than five scattered ones.
+**Evidence is the trail showing how a claim was earned.** It is not a knowledge layer: evidence records what was verified and when, and nothing revalidates it afterwards — Context is maintained against the Codebase, a finding is true of the moment it was taken. That shared property is what earns the five kinds one grouping directory.
 
 ## The five kinds
 
@@ -26,9 +18,12 @@ It is not a knowledge layer, and the difference is the whole reason it has its o
 | discussions | `.claude/evidence/discussions/` | `/design` |
 | drift findings | `.claude/evidence/drift/` | whoever finds the drift |
 
+- **A kind earns its directory when it has a file** — an empty `prototypes/` is a claim that prototyping happened.
+- **Read the directory before producing more** — a finding whose question matches and whose assumptions hold is the answer: cite it and move on; rebuilding a recorded experiment is the waste these directories exist to prevent.
+
 ## Declared fields, and the one index
 
-Every evidence file declares these two fields:
+Every evidence file declares two fields:
 
 ```yaml
 ---
@@ -42,71 +37,44 @@ falsifies: [.claude/policies/tracker.md]
 | `kind` | which of the five this is | the index |
 | `falsifies` | what the finding contradicts — `[]` where it contradicts nothing | the index, and whoever heals it |
 
-**One index at `.claude/evidence/map.md`, spanning all five kinds** — not one beneath each. The governing obligation is *read the directory before producing more*, and that obligation is cross-kind: a question already answered by research is not answered again by reading only `research/`. That width is also what makes `kind` a real column rather than a restatement of the path the file sits in.
-
-Rows are in filename order, which is date order, with `kind` breaking a tie. Chronology is what a reader of accumulated evidence wants first, and grouping by kind would make the column decorative.
-
-**It is generated, never hand-edited**, and enforced by regenerating and comparing. A file declaring no fields cannot appear in a regeneration.
-
-**The account itself is frozen.** The fields sit beside it, never inside it: nothing about what was checked, when, or against which commit moves once a finding is written.
-
-**A kind earns its directory when it has a file.** An empty `prototypes/` is a claim that prototyping happened.
+- **One index at `.claude/evidence/map.md`, spanning all five kinds** — the obligation it serves, *read the directory before producing more*, is cross-kind; a question research answered is not answered again by reading only `research/`. That width is what makes `kind` a column rather than a restatement of the path.
+- **Rows sit in filename order — date order — with `kind` breaking ties** — chronology is what a reader of accumulated evidence wants first.
+- **The index is generated, never hand-edited** — enforced by regenerating and comparing; a file declaring no fields cannot appear in a regeneration.
+- **The account itself is frozen** — nothing about what was checked, when, or against which commit moves once a finding is written; the fields and the consumption line sit beside it rather than inside it, because editing the account destroys the only thing it was kept for.
 
 ## Consumption
 
-**A finding records its own consumption**, and the obligation is the `falsifies` field's rather than any one kind's. Every kind declares that field: a research finding that falsifies something and is then acted on owes the line exactly as a drift finding does, and a finding declaring `falsifies: []` owes nothing, having named nothing to heal. The directory the file sits in decides nothing.
-
-Once what the finding falsified has been healed, it carries a `Consumed:` line naming where the healing landed — the file, and the change that did it:
+- **A finding records its own consumption, and the obligation is the `falsifies` field's** — every kind owes it equally, and a finding declaring `falsifies: []` owes nothing, having named nothing to heal.
+- **Once the falsified knowledge is healed, the finding carries a `Consumed:` line naming where the healing landed** — without it a healed finding and a waiting one are the same file, re-derived on every later design run by the one stage obliged to read this directory:
 
 ```md
 Consumed: `.claude/policies/tracker.md`, "What a ticket is" — <effort>/NN
 ```
 
-Without it a healed finding and a waiting one are the same file in the same directory, so every later design run re-derives which is which by opening the knowledge each one falsified. That is not a hypothetical cost: it is paid on every run, by the one stage obliged to read this directory.
-
-**The index carries the answer, so a waiting finding is seen without opening one.** A finding that named something to heal reads as `waiting` on `.claude/evidence/map.md` until its `Consumed:` line lands, and as `consumed` afterwards; one declaring `falsifies: []` reads as neither, having named nothing. That is why the surfacing needs no sweep and no second mechanism: a stage already reads this index, and the state is a column on the read it was already doing.
-
-**The index reports the line and decides nothing.** It repeats what the finding says about itself and never works out from the healed knowledge whether somebody acted — an unmarked finding shows as waiting, which is the same safe direction the rule below sets, now visible to whoever is positioned to answer it rather than only to an audit months later.
-
-**The account itself is frozen, and the line sits beside it rather than inside it.** A finding is the dated record of a check; editing the account to say it was later fixed destroys the only thing it was kept for. Nothing about what was checked, when, or against which commit ever moves.
-
-**Whoever heals writes it, in the same change as the healing.** A finding healed in one change and marked in another has a window where it reads as waiting — the same reason a correction lands in the commit that falsified the statement rather than in a later one. A finding whose consumption cannot be established is left unmarked, which reads as waiting: that is the safe direction, and inferring the other one is the guess this format exists to prevent.
+- **Whoever heals writes the line, in the same change as the healing** — marked in a later change, there is a window where it reads as waiting.
+- **A finding whose consumption cannot be established stays unmarked and reads as waiting** — waiting is the safe direction, and inferring consumption from the healed knowledge is the guess this format exists to prevent.
+- **The index carries `waiting` or `consumed` per finding, so a waiting one is seen without opening anything** — no sweep and no second mechanism: a stage already reads this index, and the state is a column on that read.
+- **The index reports the line and decides nothing** — it repeats what the finding says about itself and never works out from the healed knowledge whether somebody acted; an unmarked finding shows as waiting.
 
 ## Discussions
 
-A discussion records the grill that ended without a decision: what was asked, what was assumed, what was weighed, and what stayed open. **The open half is required, not optional** — a discussion with nothing open is a decision that has not been written down yet, and says so instead of being filed here.
-
-It is a record, dated, never maintained. What was weighed on a Tuesday stays true of that Tuesday; a discussion kept current would be a fourth knowledge layer with no rank in the truth hierarchy, which is exactly what the property above exists to prevent. Alternatives that *did* produce a decision need no discussion — the Decision already carries its considered options.
+- **A discussion records the grill that ended without a decision: what was asked, what was assumed, what was weighed, and what stayed open** — and the open half is required, not optional: a discussion with nothing open is a decision that has not been written down yet, and is filed as one instead.
+- **A record, dated, never maintained** — kept current it would be a fourth knowledge layer with no rank in the truth hierarchy. Alternatives that produced a decision need no discussion; the Decision carries its considered options.
 
 ## Drift findings
 
-A drift finding records a knowledge statement checked in passing and found false: **what was checked, against which commit, and what it falsifies** — enough that a later reader can re-run the check without reconstructing it. It is written by whoever finds the drift, on whatever branch they stand on, and rides that branch; finding it does not interrupt the work that surfaced it.
-
-Where a live design effort owns the area, the finding is indexed on that effort's map — the form is `.claude/policies/maps.md`'s. With no live effort it waits here, and the next design run over the area reads it. Which drift becomes a finding at all, rather than being healed on the spot, is `.claude/policies/knowledge.md`'s to say.
-
-**Throwaway prototype code is not evidence.** The code goes to `.claude/position/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent — ignoring the record of what it proved is silent data loss, and the two sit under different parents so that no ignore pattern can reach one while aiming at the other.
-
-**Read the directory before producing more.** A finding whose question matches and whose assumptions still hold is the answer: cite it and move on. Rebuilding an experiment whose answer is already recorded is the waste these directories exist to prevent.
+- **A drift finding records what was checked, against which commit, and what it falsifies** — enough that a later reader can re-run the check without reconstructing it.
+- **Written by whoever finds the drift, on whatever branch they stand on, without interrupting the work that surfaced it.**
+- **Where a live design effort owns the area, the finding is indexed on that effort's map** (`.claude/policies/maps.md`); with no live effort it waits here for the next design run over the area. Which drift becomes a finding rather than being healed on the spot is `.claude/policies/knowledge.md`'s to say.
+- **Throwaway prototype code is not evidence** — code goes to `.claude/position/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent; ignoring the record of what it proved is silent data loss.
 
 ## Gating
 
-A **gated** evidence block stops the design. The gate fired because the answer is load-bearing, and planning past it means planning on a guess.
-
-**Ungated evidence runs in the background** and the design continues.
-
-That split is the whole cost model: gating everything makes the workflow serial for answers nobody was waiting on, and gating nothing means the plan is built before its load-bearing assumption is checked.
+- **A gated evidence block stops the design; ungated evidence runs in the background** — gating everything makes the workflow serial for answers nobody was waiting on, and gating nothing builds the plan on an unchecked load-bearing assumption.
 
 ## Graduation
 
-Durable findings **graduate** out of evidence and into knowledge — how the repository behaves becomes Context, why an approach was chosen becomes a Decision.
-
-**`/design` owns graduation**, because `/design` read the findings and nothing downstream will. A producing skill that promoted its own finding would be writing knowledge nobody grilled.
-
-A discussion graduates the same way: when its parked question later resolves, `/design` writes the Decision, and the discussion stays where it is as the record of what was weighed. Nothing else promotes one.
-
-So `/research` and `/prototype` **never write Context directly.** They fail that way for different reasons, and both are worth keeping:
-
-- A **research** finding is a versioned external fact. Copied into Context it lands in a layer that has no version and nothing to re-verify it against — and the finding's whole value was that it said what it was true *of*.
-- A **prototype** result is true of the thing that was built, under the constraints it was built with. Copied into Context it is restated as a claim about the repository, which is not what was demonstrated.
-
-Graduation is a **copy of what is durable, not a move.** The evidence stays where it is: it is the record of how the claim was earned, and deleting it leaves the Context statement with no provenance.
+- **Durable findings graduate out of evidence into knowledge, and `/design` owns graduation** — how the repository behaves becomes Context, why an approach was chosen becomes a Decision; `/design` read the findings and nothing downstream will.
+- **`/research` and `/prototype` never write Context directly** — a research finding is a versioned external fact: copied into Context it lands in a layer that has no version and nothing to re-verify it against. A prototype result is true of the thing that was built, under the constraints it was built with — restated in Context it becomes a claim about the repository, which is not what was demonstrated.
+- **A discussion graduates the same way: when its parked question later resolves, `/design` writes the Decision** — the discussion stays where it is as the record of what was weighed.
+- **Graduation is a copy of what is durable, never a move** — the evidence stays where it is; deleting it leaves the Context statement with no provenance.

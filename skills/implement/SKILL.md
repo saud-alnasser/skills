@@ -14,9 +14,7 @@ One ticket, built and closed out. `/design` always leaves at least one ticket on
 
 ## 0 — Verification. Every invocation. No exceptions.
 
-Open with the verification report. Not conditional on tier, size, or the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit.
-
-The rule and both drift reads live in `.claude/protocol.md`; `.claude/tools/git.md` has the invocations.
+Open with the verification report — not conditional on tier, size, or the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit. The rule and both drift reads live in `.claude/protocol.md`; `.claude/tools/git.md` has the invocations.
 
 ```
 Position
@@ -34,9 +32,7 @@ Position
       "migrations are transactional" — they are not. corrected.
 ```
 
-**Everything above the blank line is the script's output, quoted.** Everything below is this stage's, and no script can produce it — the split is `.claude/protocol.md`'s, and it is what makes the first half checkable at all.
-
-Nothing to verify still prints, and the judgement half still says what it found:
+**Everything above the blank line is the script's output, quoted.** Everything below is this stage's, and no script can produce it — the split is `.claude/protocol.md`'s. Nothing to verify still prints, and the judgement half still says what it found:
 
 ```
 Position
@@ -48,11 +44,9 @@ Position
   contexts touched by this ticket: database — trusted as-is
 ```
 
-**The position half is attested and the judgement half is not.** The same run writes the Receipt `/commit` refuses without, so a stage that never computed the position cannot reach a commit — and nothing here claims more than that: what was done with the report is still only visible in the report.
+**The position half is attested and the judgement half is not.** The same run writes the Receipt `/commit` refuses without, so a stage that never computed the position cannot reach a commit — and nothing here claims more: what was done with the report is only visible in the report.
 
-**Completion criterion:** no source is read through a Source Pointer that has not been verified this session, and no Context statement is acted on before it has been checked against source. A pointer that cannot be recovered by searching is reported — the recovery rule is in `.claude/protocol.md`.
-
-**Never infer an API from a filename**, and never trust what a pointer's path implies. `src/auth/` is where to start reading — not a claim that an auth module exists there, still less that it exposes the function you were about to call.
+**Completion criterion:** no source is read through a Source Pointer that has not been verified this session, and no Context statement is acted on before it has been checked against source. A pointer that cannot be recovered by searching is reported — the recovery rule is in `.claude/protocol.md`. **Never infer an API from a filename**, and never trust what a pointer's path implies: `src/auth/` is where to start reading, not a claim that an auth module exists there.
 
 ## 1 — Take one ticket
 
@@ -160,33 +154,25 @@ The closing keyword also moves, into the commit body, reversing the split that a
 
 ### Resuming after losing context
 
-An instance that has lost its context reads the branch it is standing on: the branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got.
-
-A detached HEAD names no branch and holds no Claim. Do not guess from the diff — claim a ticket properly or hand back.
+An instance that has lost its context reads the branch it is standing on: the branch names the ticket, the ticket says what "done" looks like, and the diff since the branch point says how far it got. A detached HEAD names no branch and holds no Claim — do not guess from the diff; claim a ticket properly or hand back.
 
 ### Assignment is not this
 
-**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `.claude/tools/github.md` has the invocation.
-
-Assignment already separates humans, so the Claim only arbitrates between one person's own instances — which is why a branch is enough.
+**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `.claude/tools/github.md` has the invocation. Assignment already separates humans, so the Claim only arbitrates between one person's own instances — which is why a branch is enough.
 
 ## 2 — Build
 
-Drive `tdd` at the seams agreed during design. The ticket states an observable outcome; the loop is what proves it. One vertical slice at a time.
-
-Typecheck often, and run the single test file often. Run the **full suite once**, at the end, before handing back. The command for each is in `.claude/tools/` — read it rather than guessing, for the reason `tdd` gives.
+Drive `tdd` at the seams agreed during design — the ticket states an observable outcome, and the loop is what proves it, one vertical slice at a time. Typecheck often, run the single test file often, and run the **full suite once**, at the end, before handing back; the command for each is in `.claude/tools/` — read it rather than guessing, for the reason `tdd` gives.
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
-Three rules about what gets written, applied even where the repository documents none of them. `/review` checks them; this is where they are obeyed:
+Three rules about what gets written, applied even where the repository documents none of them — `/review` checks them; this is where they are obeyed:
 
-- **Prefer self-explanatory code.** Where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
-- **Comments explain *why*, not *what*.** Constraints, tradeoffs, and reasoning are not recoverable from the code; a comment that restates the line below it goes stale on its own schedule.
-- **A public interface is documented; private implementation is not.** Anything callers depend on states its contract — what it does, what it requires, how it fails.
+- **Prefer self-explanatory code** — where a block needs extensive explanation to follow, the explanation is evidence about the block: improve the code instead of annotating it.
+- **Comments explain *why*, not *what*** — constraints, tradeoffs, and reasoning are not recoverable from the code; a comment restating the line below it goes stale on its own schedule.
+- **A public interface is documented; private implementation is not** — anything callers depend on states its contract: what it does, what it requires, how it fails.
 
-Where the new code lands and what it is called is `codebase-design`'s. Read its **Files and names** section and apply it here, while the file is being created — a layout decision is cheap now and a rename touching every caller later.
-
-The rule against guessing an API is in `.claude/rules/engineering.md`, and building is where it costs the most: confirm the **version, signature, and limits** of anything you call before calling it. Code compiles against what is installed, not against what you remember being true.
+Where the new code lands and what it is called is `codebase-design`'s — read its **Files and names** section and apply it while the file is being created: a layout decision is cheap now and a rename touching every caller later. The rule against guessing an API is in `.claude/rules/engineering.md`, and building is where it costs most: confirm the **version, signature, and limits** of anything you call before calling it — code compiles against what is installed, not what you remember.
 
 ### A declared increment is reached
 
@@ -282,9 +268,7 @@ A worktree is **spent when the work it held has landed** — integrated, committ
 
 ## 3 — When the plan turns out wrong
 
-A plan is wrong when the ticket cannot be built as written: the architecture it assumes is not there, an approach it depends on does not work, or the change crosses a boundary nobody costed.
-
-**Never redesign past it.** Improvising discards the grill, the options the user chose, and the tier that was assessed — and none of that loss is visible in the diff afterwards.
+A plan is wrong when the ticket cannot be built as written: the architecture it assumes is not there, an approach it depends on does not work, or the change crosses a boundary nobody costed. **Never redesign past it** — improvising discards the grill, the options the user chose, and the tier that was assessed, and none of that loss is visible in the diff afterwards.
 
 ```
 → stop. do not build past the discovery.
@@ -298,11 +282,7 @@ A plan is wrong when the ticket cannot be built as written: the architecture it 
 → hand back: this needs /design
 ```
 
-`blocked`, not `open` — an open ticket with no blocker is back on the frontier, and the next `/implement` walks into the same wall.
-
-Release the claim *and* set `blocked`: the status keeps the ticket off the frontier, and deleting the branch stops this clone reporting a Claim on work nobody is doing. Neither alone is enough. The branch goes only because there is nothing on it — where a partial commit exists, keep the branch and say so.
-
-Leave the tree untouched: the partial work is usually the sharper evidence of *why* the plan was wrong, and it is the user's to keep or discard.
+`blocked`, not `open` — an open ticket with no blocker is back on the frontier, and the next `/implement` walks into the same wall. Release the claim *and* set `blocked`: the status keeps the ticket off the frontier, and deleting the branch stops this clone reporting a Claim on work nobody is doing — neither alone is enough. The branch goes only because there is nothing on it; where a partial commit exists, keep the branch and say so. Leave the tree untouched — the partial work is usually the sharper evidence of *why* the plan was wrong, and it is the user's to keep or discard.
 
 A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
@@ -310,11 +290,7 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 `/review` runs **both axes**, and its fixes are applied, **before** anything is committed — reviewing afterwards would land work about to be reviewed rather than work that has been.
 
-Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read. `.claude/policies/tickets.md` has why; `.claude/policies/tracker.md` says which kind this repository has.
-
-There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree. What makes that safe is the push prohibition below — nothing is published, and every effect is locally reversible.
-
-Further changes are requested the same way they always were, in the same context and on the same ticket. They amend.
+Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read; `.claude/policies/tickets.md` has why, `.claude/policies/tracker.md` which kind this repository has. There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree — safe because of the push prohibition below, which keeps every effect locally reversible.
 
 `/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against. A `/commit` that refuses stops the close-out; it is not worked around, and the ticket stays open.
 
@@ -330,7 +306,7 @@ Each amend produces a new SHA, so the Marker re-advances on **every amend** — 
 
 **Where the invocation named a ticket, the run ends here.** That ticket was what was asked for, and taking another would be choosing work nobody gave — the same rule that keeps a named ticket from being joined by others, seen at the other end of the run.
 
-**Where it named none, the unit was a set, and a set is not finished because one member is.** Take the next open, unblocked, unclaimed ticket and build it exactly as this one was built. Approval is not renewed per ticket: being asked to type the same command five times for five tickets already approved is a checkpoint that decides nothing, and it is the friction the entry rule removes at the other end of the plan.
+**Where it named none, the unit was a set, and a set is not finished because one member is.** Take the next open, unblocked, unclaimed ticket and build it exactly as this one was built — approval is not renewed per ticket: five invocations for five tickets already approved is a checkpoint that decides nothing.
 
 Continuation **stops where the plan already said a human is needed**, and invents no bound of its own:
 
@@ -342,14 +318,12 @@ the build or the suite fails          stop
 nothing unblocked remains             stop, and report what landed
 ```
 
-An **AFK increment does not stop it** — it resolves inline and the run carries on, exactly as it does inside a single ticket. So the stopping points were chosen at design time, on the tickets, by the human who approved them; this stage reads them and never widens the reasons to keep going. **A plan that declared no increment runs to the end of its unblocked work** — that is the plan saying so, not this stage deciding it.
+An **AFK increment does not stop it** — it resolves inline and the run carries on, exactly as inside a single ticket. The stopping points were chosen at design time, by the human who approved them; this stage reads them and never widens the reasons to keep going. **A plan that declared no increment runs to the end of its unblocked work** — that is the plan saying so, not this stage deciding it.
 
-**Each ticket is built on its own terms.** Verification, the claim, `tdd`, `/review` on both axes, and the close-out all run per ticket exactly as above. Continuation changes what happens *after* a ticket lands and nothing about how one is built — in particular **the verification report opens every ticket**, because a run that verified once and then built four tickets on that reading is the scan this workflow does not have.
+**Each ticket is built on its own terms** — verification, the claim, `tdd`, `/review` on both axes, and the close-out all run per ticket exactly as above; in particular **the verification report opens every ticket**, because a run that verified once and built four tickets on that reading is the scan this workflow does not have.
 
-**Report the run, not the last ticket.** Which tickets landed, in order, and why the run stopped. A run that ends saying *resolved*, having landed four of six, is true about the fourth and false about the run.
+**Report the run, not the last ticket** — which tickets landed, in order, and why the run stopped. A run that ends saying *resolved*, having landed four of six, is true about the fourth and false about the run.
 
 ## 5 — Record what moved
 
-Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts under `.claude/contexts/`.
-
-`.claude/policies/knowledge.md` says which layers this stage may write, and `.claude/policies/context.md` what belongs in Context at all. Read them rather than deciding here — the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
+Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts. `.claude/policies/knowledge.md` says which layers this stage may write, and `.claude/policies/context.md` what belongs in Context at all — read them rather than deciding here: the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.

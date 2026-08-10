@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): vendor the primitives and rewrite their paths
 status: resolved
 blocked-by: []

@@ -1,104 +1,96 @@
+---
+owner: repository
+---
+
 # Tracker
 
 <!--
-  Installed by /configure at `.claude/policies/tracker.md`. This is the **one home** for
-  which tracker this repository uses and how it is driven.
+  Installed by /configure at `.claude/policies/tracker.md`, derived per
+  repository: the **one home** for which tracker this repository uses and how
+  it is driven. Every skill that touches the tracker reads this file — a second
+  copy of any of it is how two skills end up disagreeing about where the
+  tickets are. What happens to a ticket once somebody builds it is
+  `.claude/policies/version-control.md`'s.
 
-  Every skill that touches the tracker reads this file — /design when it cuts
-  tickets, /implement when it claims one, /triage when it works incoming
-  issues. A second copy of any of it is how two skills end up disagreeing
-  about where the tickets are.
-
-  Delete the rows that do not apply. Keep the file short: it answers "which
-  tracker, and how", and nothing else. What happens to a ticket once somebody
-  builds it — the model, the branch convention, how work lands — is
-  `.claude/policies/version-control.md`'s, and branch naming lived here only because
-  that file did not exist yet.
+  The installed copy declares `owner: repository` and the three facts below as
+  frontmatter fields — the extension points through which a repository varies
+  the framework's tracking defaults. A stage acts on the fields; the prose
+  elaborates them.
 -->
+
+{The installed copy's frontmatter — the declared repository facts, written by
+/configure from the tree and confirmed with the user:}
+
+```yaml
+---
+owner: repository
+tracker: github | local-markdown
+spec-home: flat | per-effort
+ticket-model: branch-bound | tracked-intent
+---
+```
 
 ## Which tracker
 
-**GitHub** and **local markdown** are both first-class here. Neither is a
-fallback for the other, and a repository may use either.
+**GitHub** and **local markdown** are both first-class; neither is a fallback. The `tracker` field declares which one this repository uses, and the prose says why where the choice is not obvious.
 
 | Tracker | Tickets live in | Driven by |
 | --- | --- | --- |
 | **GitHub** | this repository's issues | `gh` — the invocations are in `.claude/tools/github.md` |
 | **Local markdown** | `.claude/tickets/<effort>/` | files, one per ticket |
 
-{Delete whichever row this repository does not use, and say why in one line if
-the choice is not obvious — a repository with GitHub issues disabled, say.}
+{Delete whichever row this repository does not use. On GitLab the same shape holds with `glab`; see `.claude/tools/gitlab.md`.}
 
-On GitLab, the same shape holds with `glab`; see `.claude/tools/gitlab.md`.
-
-**Never guess the CLI.** A tracker operation with no entry in `tools/` is a
-docs fetch, not an assumption.
+- **Never guess the CLI** — a tracker operation with no entry in `tools/` is a docs fetch, not an assumption.
 
 ## Where a spec lives
 
 <!--
-  The detect test lives here and nowhere else: which of the two shapes does the
-  tree already hold? A `spec.md` sitting beside an effort's tickets is the
-  per-effort layout; spec files sitting directly in the designs directory are
-  the flat one.
-
-  A tree holding neither — a repository that has written no spec yet — takes
-  flat, the shape a new repository starts in, and never a blank: something reads
-  this answer whether or not a spec exists, and a blank sends it guessing.
-
-  A tree holding both is a defect to report rather than a choice to make,
-  because an index built over one of them drops every row of the other.
-
-  /configure answers this from the tree when the file is derived, and asks the
-  tree again on every audit run.
+  The detect test lives here and nowhere else: a `spec.md` beside an effort's
+  tickets is the per-effort layout; spec files sitting directly in the
+  designs directory are the flat one. A tree holding neither takes flat — the shape a
+  new repository starts in — never a blank, because something reads this
+  answer whether or not a spec exists. A tree holding both is a defect to
+  report, not a choice to make: an index built over one drops every row of the
+  other. /configure answers from the tree at derivation and re-asks on every
+  audit.
 -->
 
-{Declare one of the two, naming the path a spec is written to. Keep the
-paragraph that applies; delete the other.}
+{Declare in the `spec-home` field and name the path here. Keep the paragraph
+that applies; delete the other.}
 
-**Flat.** One spec per file, in the designs directory:
-`.claude/designs/<slug>.md`.
+**Flat.** One spec per file, in the designs directory: `.claude/designs/<slug>.md`.
 
-**One per effort.** Each spec sits beside the tickets it governs:
-`.claude/tickets/<effort>/spec.md`.
+**One per effort.** Each spec sits beside the tickets it governs: `.claude/tickets/<effort>/spec.md`.
 
-This is the **one home** for the answer. Anything that needs to know where a
-spec is written reads it here rather than assuming a path — the format guide,
-the stages that open a spec, and the script that regenerates the index over
-them.
+This is the **one home** for the answer — the format guide, the stages that open a spec, and the script that regenerates the index over them all read it here rather than assuming a path.
 
 ## What a ticket is
 
 <!--
   The detect test lives here and nowhere else: does the version-control policy
   tie one ticket to one branch — one commit, one pull request? If it does, a
-  ticket is branch-bound; if not, a ticket is tracked intent. /configure
-  answers it from `.claude/policies/version-control.md` when this file is
-  derived, and its audit re-reads that policy against the answer on every run.
+  ticket is branch-bound; if not, tracked intent. /configure answers it from
+  `.claude/policies/version-control.md` at derivation, and its audit re-reads
+  that policy against the answer on every run.
 -->
 
-{Declare one of the two, and cite the version-control line the answer came
-from. Keep the paragraph that applies; delete the other.}
+{Declare in the `ticket-model` field, citing the version-control line the
+answer came from. Keep the paragraph that applies; delete the other.}
 
-**Branch-bound.** One ticket becomes one branch, which lands as one unit of
-review. Work that produces no branch — a decision, an investigation — is not
-a ticket here; `.claude/policies/maps.md` says where decision work lives.
+**Branch-bound.** One ticket becomes one branch, which lands as one unit of review. Work that produces no branch — a decision, an investigation — is not a ticket here; `.claude/policies/maps.md` says where decision work lives.
 
-**Tracked intent.** A ticket is a unit of tracked work, branch or none.
-Decision tickets are tickets.
+**Tracked intent.** A ticket is a unit of tracked work, branch or none. Decision tickets are tickets.
 
 ## Assignment
 
-{How this repository records which human owns delivering a ticket — GitHub
-assignees, a name in the ticket body, a project board column. Say it once.}
+{How this repository records which human owns delivering a ticket — GitHub assignees, a name in the ticket body, a board column. Say it once.}
 
-AEP reads Assignment and never writes it unasked.
+- **AEP reads Assignment and never writes it unasked.**
 
 ## Roles
 
-The five canonical **state** roles, and the label strings this repository
-actually uses for them. The names on the left are what the skills say; the
-strings on the right are what the tracker holds, and they are often different.
+The five canonical **state** roles and the label strings this repository actually uses — the names on the left are what the skills say, the strings on the right are what the tracker holds:
 
 | Canonical | Label in this repository |
 | --- | --- |
@@ -115,19 +107,12 @@ The two **category** roles, the same way:
 | `bug` | {label} |
 | `enhancement` | {label} |
 
-These are **triage roles** — they describe an issue somebody else opened, and
-what has to happen before it can be worked. They are not the build lifecycle a
-ticket moves through once `/design` has cut it; that vocabulary is `/design`'s.
-Nothing carries both.
+- **These are triage roles — an incoming issue's vocabulary, never the build lifecycle** — that vocabulary is `/design`'s, and nothing carries both.
 
 ## External pull requests
 
-{Whether this repository treats external PRs as a request surface, and who
-counts as external — a non-member, a non-collaborator, anyone outside a named
-team. `/triage` uses this to decide which PRs appear unasked-for; a PR named
-explicitly is always triaged regardless.}
+{Whether this repository treats external PRs as a request surface, and who counts as external. `/triage` uses this to decide which PRs appear unasked-for; a PR named explicitly is always triaged.}
 
 ## Resolving a bare reference
 
-{What `#42` means here — an issue, a PR, or ambiguous and to be resolved by
-looking. Say it once, so no skill has to guess.}
+{What `#42` means here — an issue, a PR, or ambiguous and resolved by looking. Say it once, so no skill has to guess.}

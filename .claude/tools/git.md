@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # git — version control
 
 Derived from: aep/git.md

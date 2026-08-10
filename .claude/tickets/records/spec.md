@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: implemented
 sources:
   - skills/configure/tools/git.md

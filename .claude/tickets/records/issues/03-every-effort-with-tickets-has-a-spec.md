@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'fix(knowledge): every effort with tickets has a spec, and a reconstructed one says so'
 status: resolved
 blocked-by: []

@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: chore(skills): migrate this repository's decisions and contexts to declared fields
 status: resolved
 blocked-by: [08]

@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # gt — Graphite (stacked changes)
 
 Docs: https://graphite.com/docs

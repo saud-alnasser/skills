@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: how AEP is installed or distributed is in question
 sources: [.claude-plugin/]

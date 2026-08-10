@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: implemented
 sources:
   - scripts/verify.ps1

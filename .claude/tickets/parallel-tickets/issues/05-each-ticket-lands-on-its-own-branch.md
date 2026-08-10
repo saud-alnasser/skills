@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(implement): each ticket lands on its own branch, and collisions are resolved
 status: resolved
 blocked-by: [04]

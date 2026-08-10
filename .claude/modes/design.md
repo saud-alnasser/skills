@@ -1,3 +1,7 @@
+---
+owner: framework
+---
+
 # Mode: design
 
 <!-- Installed by /configure at `.claude/modes/design.md`, copied as-is. -->

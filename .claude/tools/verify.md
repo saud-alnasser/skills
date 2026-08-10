@@ -1,3 +1,7 @@
+---
+owner: repository
+---
+
 # verify.ps1 — the test runner
 
 This repository ships markdown, so there is no compiler and no package manifest. `scripts/verify.ps1` is the substitute: one assertion per mechanically-checkable acceptance criterion, named after the ticket demanding it. It is the only thing that catches a broken build here.

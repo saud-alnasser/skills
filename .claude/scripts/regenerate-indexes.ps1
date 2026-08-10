@@ -417,6 +417,10 @@ if ($designs) {
 }
 
 foreach ($index in $written) {
+  # Every generated index declares its owner like the hand-written files
+  # around it do — the corpus-wide ownership guard reads generated and
+  # authored files alike, and the generator is the only writer here.
+  $index.Text = "---`nowner: repository`n---`n`n" + $index.Text
   # `WriteAllText` rather than `Set-Content`, which appends its own line ending
   # to the string it is handed — the trailing newline is already in the output
   # and a second one is a byte of drift on every run.

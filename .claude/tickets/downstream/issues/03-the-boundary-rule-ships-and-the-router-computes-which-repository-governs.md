@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(rules): work for another repository leaves as a report, and the router computes which one governs'
 status: resolved
 blocked-by: []

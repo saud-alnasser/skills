@@ -1,4 +1,5 @@
 ---
+owner: repository
 kind: discussions
 falsifies: []
 ---

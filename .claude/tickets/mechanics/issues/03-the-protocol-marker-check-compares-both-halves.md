@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: feat(skills): the protocol's marker check compares both halves
 status: resolved
 blocked-by: [01, 02]

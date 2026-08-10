@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): split routing from vocabulary, and re-home the terms
 status: resolved
 blocked-by: [03]

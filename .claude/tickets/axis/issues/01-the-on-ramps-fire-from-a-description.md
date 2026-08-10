@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: 'feat(skills): work arriving from outside reaches its stage unasked'
 status: resolved
 blocked-by: []

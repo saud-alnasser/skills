@@ -1,4 +1,5 @@
 ---
+owner: repository
 status: accepted
 load-when: a build run has to decide whether to take another ticket, or how far autonomous work may go before stopping
 sources: [skills/implement/SKILL.md, specs.md, .claude/policies/tickets.md]

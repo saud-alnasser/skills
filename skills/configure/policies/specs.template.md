@@ -1,8 +1,12 @@
+---
+owner: framework
+---
+
 # Spec Format
 
 Standard and above. **Where a spec is written differs per repository, and `.claude/policies/tracker.md` declares which** — read the path there rather than assuming one.
 
-A spec is the reasoning behind the tickets — the thing that lets someone judge whether the tickets are the right ones. Tickets say what to build; the spec says why that and not something else.
+**A spec is the reasoning behind the tickets** — the thing that lets someone judge whether the tickets are the right ones. Tickets say what to build; the spec says why that and not something else.
 
 ## Template
 
@@ -69,6 +73,10 @@ creeping back in during review.
 `map.md` beside the specs, generated from the fields above — one row per spec, in name order:
 
 ```md
+---
+owner: repository
+---
+
 # Design map
 
 | Design | Status | Sources |
@@ -77,20 +85,17 @@ creeping back in during review.
 | [retries](retries.md) | implemented | — |
 ```
 
-The status column is what makes the index answer *which of these is live* without opening one, which is the question a reader of a directory of accumulated specs asks first.
-
-**It is generated, never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it. A spec declaring no status stops the regeneration and is named, so a row is never a second statement of the directory's contents.
-
-**The script that regenerates it is derived, and the directory it sits in takes nothing else.** `.claude/scripts/` is all-derived: every script there exists because the workflow's specification names one, and the configuration audit refuses anything sitting there that the specification does not. A repository needing a check of its own cannot drop one in — the specification grows the entry, and the directory is left alone. **That is deliberate, not an oversight to route around**: a script nobody derived forks the moment the specification moves, and a directory taking whatever is dropped in it can be neither re-derived nor audited. Hitting the constraint is not evidence the framework contradicts itself, and the enforcement above is the case that proves it — it is specified as a step in this repository's own build precisely so that no script has to be added here to hold it.
-
-The index sits beside the specs it indexes, in whichever of the two layouts this repository uses: flat in the designs directory, or one spec per effort beside the tickets it governs. **The two layouts are exclusive** — a tree holding both is refused rather than having one silently preferred, because preferring one drops every row of the other and reports it as a stale index.
+- **The status column answers *which of these is live* without opening one** — the first question a reader of a directory of accumulated specs asks.
+- **It is generated, never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it. A spec declaring no status stops the regeneration and is named, so a row is never a second statement of the directory's contents.
+- **The script that regenerates it is derived, and the directory it sits in takes nothing else.** `.claude/scripts/` is all-derived: every script there exists because the workflow's specification names one, and the configuration audit refuses anything sitting there that the specification does not — a repository needing a check of its own cannot drop one in; the specification grows the entry. **That is deliberate, not an oversight to route around**: a script nobody derived forks the moment the specification moves, and a directory taking whatever is dropped in it can be neither re-derived nor audited. Hitting the constraint is not evidence the framework contradicts itself.
+- **The index sits beside the specs it indexes**, in whichever of the two layouts this repository uses: flat in the designs directory, or one spec per effort beside the tickets it governs. **The two layouts are exclusive** — a tree holding both is refused rather than having one silently preferred, because preferring one drops every row of the other and reports it as a stale index.
 
 ## Rules
 
 - **`sources` is a list, one entry per line.** An entry may carry a section reference or a range alongside its path, and those contain commas — in YAML's inline `[a, b]` form the comma would split one pointer into two, silently.
 - **A spec with nothing to point at declares `sources: []`**, rather than leaving the field out. Absent and empty are the same fact, and only one of them can be told apart from a spec that lost its sources.
 - **No file paths outside the `sources` field, and no code.** Both go stale, and inside a spec they read as commitments. The exception is a snippet from a prototype that encodes a decision more precisely than prose can — a state machine, a reducer, a schema, a type shape. Inline it, say it came from a prototype, trim it to the decision-rich part.
-- **Use the repository's vocabulary.** Terms come from `.claude/contexts/repository.md` and the Domain Contexts the work touches. A spec that invents its own words for existing concepts forces every reader to translate.
+- **Use the repository's vocabulary.** Terms come from `.claude/contexts/repository.md` and the Domain Contexts the work touches; a spec that invents its own words for existing concepts forces every reader to translate.
 - **A section with nothing to say gets deleted, not padded.** Filler trains the reader to skim, and the sections that matter are the casualty.
 - **The spec is not the decision record.** When the grill produced something that passes the 3-of-3 test, it becomes an ADR in `.claude/decisions/` and the spec links to it. A spec is superseded by the next spec; an ADR is not.
 
@@ -98,18 +103,14 @@ The index sits beside the specs it indexes, in whichever of the two layouts this
 
 `draft` while the grill is still running, `accepted` when the user approves it and the tickets are cut, `implemented` when a commit completes the last acceptance criterion, `superseded by <path>` when a later spec replaces it, `abandoned` when the work is dropped. A spec that shipped stays on disk — it is the record of why the tickets looked like that.
 
-**Only the status field ever moves.** The reasoning is frozen the moment the spec is accepted: a spec edited afterwards to match what shipped stops being evidence of what was intended, which is the only thing it was kept for. Correct a spec by superseding it, never by rewriting it.
-
-`implemented` is the one status set outside conversation — `/commit` writes it, because only the last commit of a change knows every criterion is met.
-
-It is a field rather than a line because a stage writes it, and a stage that writes by matching running text breaks the first time somebody reflows the paragraph around it — the same reason contexts and decisions declare theirs.
+- **Only the status field ever moves.** The reasoning is frozen the moment the spec is accepted: a spec edited afterwards to match what shipped stops being evidence of what was intended, which is the only thing it was kept for. Correct a spec by superseding it, never by rewriting it.
+- **`implemented` is the one status set outside conversation** — `/commit` writes it, because only the last commit of a change knows every criterion is met.
+- **It is a field rather than a line because a stage writes it** — a stage that writes by matching running text breaks the first time somebody reflows the paragraph around it, the same reason contexts and decisions declare theirs.
 
 ## A spec written after its effort landed
 
-An effort that landed with no spec produces no row in the generated index, and the generation succeeds — so the index spans fewer efforts than exist and nothing reports it. Closing that gap means writing a spec for work already done, and such a spec is **reconstruction, not record**.
+An effort that landed with no spec produces no row in the generated index, and the generation succeeds — the index spans fewer efforts than exist and nothing reports it. Closing that gap means writing a spec for work already done, and such a spec is **reconstruction, not record**.
 
-It declares `reconstructed: true`, and says so in its opening lines where a reader who never looks at frontmatter will see it. **Both, because they answer different readers**: the field is what an assertion acts on, and the prose is what the person who opened the file sees. Either one alone leaves the other reader with a reconstruction that looks like a contemporaneous spec, which is worse than the missing row — it invites decisions to be traced to reasoning nobody had.
-
-**Derive every statement from the effort's own resolved tickets, the Decisions it produced, and what is in the tree.** Where reasoning is not recoverable from those, say so rather than supplying one; a section whose content is genuinely unrecoverable is kept and marked, which is the one place the delete-an-empty-section rule above does not apply, because *absent* and *unrecoverable* are different facts and only the second needs stating.
-
-The frozen-reasoning rule still holds from the moment it is written: a reconstruction is corrected by superseding it, never by rewriting.
+- **It declares `reconstructed: true`, and says so in its opening lines** where a reader who never looks at frontmatter will see it. Both, because they answer different readers: the field is what an assertion acts on, and the prose is what the person who opened the file sees — either one alone leaves the other reader with a reconstruction that looks like a contemporaneous spec.
+- **Derive every statement from the effort's own resolved tickets, the Decisions it produced, and what is in the tree** — and where reasoning is not recoverable from those, say so rather than supplying one. A section whose content is genuinely unrecoverable is kept and marked, the one place the delete-an-empty-section rule above does not apply, because *absent* and *unrecoverable* are different facts and only the second needs stating.
+- **The frozen-reasoning rule holds from the moment it is written**: a reconstruction is corrected by superseding it, never by rewriting.

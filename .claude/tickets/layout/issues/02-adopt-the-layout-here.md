@@ -1,4 +1,5 @@
 ---
+owner: repository
 title: refactor(knowledge): move this repository onto the dissolved layout
 status: resolved
 blocked-by: [01]
