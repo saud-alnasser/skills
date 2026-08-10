@@ -48,19 +48,24 @@ Not recorded — single maintainer, no assignee field, no board. Where a ticket 
 
 ## Roles
 
-The canonical roles and the strings this repository actually uses:
+The five canonical **state** roles and the label strings this repository actually uses — the names on the left are what the skills say, the strings on the right are what the tracker holds:
 
-| Canonical | String here |
+| Canonical | Label in this repository |
 | --- | --- |
 | `needs-triage` | *unused* |
 | `needs-info` | *unused* |
-| `ready-for-agent` | `ready-for-agent` |
-| `ready-for-human` | `ready-for-human` |
-| `wontfix` | `obsolete` |
+| `ready-for-agent` | *unused* |
+| `ready-for-human` | *unused* |
+| `wontfix` | *unused* |
 
-Category roles are not recorded separately — the Conventional Commits type in the ticket title carries it: `fix(...)` is a bug, `feat(...)` is an enhancement.
+The two **category** roles, the same way:
 
-- **One deviation from the standard shape, recorded rather than tidied away**: the tracker template holds that triage roles and the build lifecycle are separate vocabularies, and here one `status` field carries both — `ready-for-agent` and `ready-for-human` are triage roles, `resolved` is the build lifecycle's terminal state, and `blocked` is derived from `blocked-by` rather than written. Treat the union above as the vocabulary and the split as a known wrinkle, never as licence for a second field. Which strings are in the tree at any moment is a census read off the tickets, not recorded here.
+| Canonical | Label in this repository |
+| --- | --- |
+| `bug` | *unused* |
+| `enhancement` | *unused* |
+
+- **These are triage roles — an incoming issue's vocabulary, never the build lifecycle** — that vocabulary is `/design`'s, and nothing carries both.
 
 ## External pull requests
 
