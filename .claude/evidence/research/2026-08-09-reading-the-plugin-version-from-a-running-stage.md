@@ -5,6 +5,8 @@ falsifies: [.claude/tickets/axis/issues/04-the-protocol-records-its-version.md]
 
 # Reading the plugin's own version from a running stage
 
+Consumed: `.claude/tickets/axis/issues/04-the-protocol-records-its-version.md`, the blocked note this falsified — axis/04
+
 Taken 2026-08-09 against the Claude Code documentation at `code.claude.com/docs/en`, pages `plugins`, `plugins-reference`, and `hooks`, plus two local checks. AEP was at 1.13.0, running from a `directory` marketplace source.
 
 ## The question

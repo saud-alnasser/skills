@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - skills/configure/tools/git.md
   - skills/configure/policies/evidence.template.md

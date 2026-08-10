@@ -52,6 +52,22 @@ Rows are in filename order, which is date order, with `kind` breaking a tie. Chr
 
 **A kind earns its directory when it has a file.** An empty `prototypes/` is a claim that prototyping happened.
 
+## Consumption
+
+**A finding records its own consumption**, and the obligation is the `falsifies` field's rather than any one kind's. Every kind declares that field: a research finding that falsifies something and is then acted on owes the line exactly as a drift finding does, and a finding declaring `falsifies: []` owes nothing, having named nothing to heal. The directory the file sits in decides nothing.
+
+Once what the finding falsified has been healed, it carries a `Consumed:` line naming where the healing landed — the file, and the change that did it:
+
+```md
+Consumed: `.claude/policies/tracker.md`, "What a ticket is" — <effort>/NN
+```
+
+Without it a healed finding and a waiting one are the same file in the same directory, so every later design run re-derives which is which by opening the knowledge each one falsified. That is not a hypothetical cost: it is paid on every run, by the one stage obliged to read this directory.
+
+**The account itself is frozen, and the line sits beside it rather than inside it.** A finding is the dated record of a check; editing the account to say it was later fixed destroys the only thing it was kept for. Nothing about what was checked, when, or against which commit ever moves.
+
+**Whoever heals writes it, in the same change as the healing.** A finding healed in one change and marked in another has a window where it reads as waiting — the same reason a correction lands in the commit that falsified the statement rather than in a later one. A finding whose consumption cannot be established is left unmarked, which reads as waiting: that is the safe direction, and inferring the other one is the guess this format exists to prevent.
+
 ## Discussions
 
 A discussion records the grill that ended without a decision: what was asked, what was assumed, what was weighed, and what stayed open. **The open half is required, not optional** — a discussion with nothing open is a decision that has not been written down yet, and says so instead of being filed here.
@@ -63,18 +79,6 @@ It is a record, dated, never maintained. What was weighed on a Tuesday stays tru
 A drift finding records a knowledge statement checked in passing and found false: **what was checked, against which commit, and what it falsifies** — enough that a later reader can re-run the check without reconstructing it. It is written by whoever finds the drift, on whatever branch they stand on, and rides that branch; finding it does not interrupt the work that surfaced it.
 
 Where a live design effort owns the area, the finding is indexed on that effort's map — the form is `.claude/policies/maps.md`'s. With no live effort it waits here, and the next design run over the area reads it. Which drift becomes a finding at all, rather than being healed on the spot, is `.claude/policies/knowledge.md`'s to say.
-
-**A finding records its own consumption.** Once the drift it reports has been healed, the finding carries a `Consumed:` line naming where the healing landed — the file, and the change that did it:
-
-```md
-Consumed: `.claude/policies/tracker.md`, "What a ticket is" — <effort>/NN
-```
-
-Without it a healed finding and a waiting one are the same file in the same directory, so every later design run re-derives which is which by opening the knowledge each one falsified. That is not a hypothetical cost: it is paid on every run, by the one stage obliged to read this directory.
-
-**The account itself is frozen, and the line sits beside it rather than inside it.** A finding is the dated record of a check; editing the account to say it was later fixed destroys the only thing it was kept for. Nothing about what was checked, when, or against which commit ever moves.
-
-**Whoever heals writes it, in the same change as the healing.** A finding healed in one change and marked in another has a window where it reads as waiting — the same reason a correction lands in the commit that falsified the statement rather than in a later one. A finding whose consumption cannot be established is left unmarked, which reads as waiting: that is the safe direction, and inferring the other one is the guess this format exists to prevent.
 
 **Throwaway prototype code is not evidence.** The code goes to `.claude/position/prototypes/` and is deleted; the write-up goes to `.claude/evidence/prototypes/` and is kept. Ignoring the code is the intent — ignoring the record of what it proved is silent data loss, and the two sit under different parents so that no ignore pattern can reach one while aiming at the other.
 

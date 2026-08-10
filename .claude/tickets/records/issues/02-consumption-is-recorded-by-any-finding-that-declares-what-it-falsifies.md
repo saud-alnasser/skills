@@ -1,6 +1,6 @@
 ---
 title: 'fix(knowledge): any finding declaring what it falsifies records its consumption'
-status: open
+status: resolved
 blocked-by: []
 part-of: records
 ---

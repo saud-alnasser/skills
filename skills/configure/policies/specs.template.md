@@ -101,3 +101,13 @@ The index sits beside the specs it indexes, in whichever of the two layouts this
 `implemented` is the one status set outside conversation — `/commit` writes it, because only the last commit of a change knows every criterion is met.
 
 It is a field rather than a line because a stage writes it, and a stage that writes by matching running text breaks the first time somebody reflows the paragraph around it — the same reason contexts and decisions declare theirs.
+
+## A spec written after its effort landed
+
+An effort that landed with no spec produces no row in the generated index, and the generation succeeds — so the index spans fewer efforts than exist and nothing reports it. Closing that gap means writing a spec for work already done, and such a spec is **reconstruction, not record**.
+
+It declares `reconstructed: true`, and says so in its opening lines where a reader who never looks at frontmatter will see it. **Both, because they answer different readers**: the field is what an assertion acts on, and the prose is what the person who opened the file sees. Either one alone leaves the other reader with a reconstruction that looks like a contemporaneous spec, which is worse than the missing row — it invites decisions to be traced to reasoning nobody had.
+
+**Derive every statement from the effort's own resolved tickets, the Decisions it produced, and what is in the tree.** Where reasoning is not recoverable from those, say so rather than supplying one; a section whose content is genuinely unrecoverable is kept and marked, which is the one place the delete-an-empty-section rule above does not apply, because *absent* and *unrecoverable* are different facts and only the second needs stating.
+
+The frozen-reasoning rule still holds from the moment it is written: a reconstruction is corrected by superseding it, never by rewriting.
