@@ -12,6 +12,14 @@ The GitHub remote (`saud-alnasser/skills`) is a code remote only. Issues are ena
 
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a docs fetch, not an assumption.
 
+## Where a spec lives
+
+**One per effort.** Each spec sits beside the tickets it governs: `.claude/tickets/<effort>/spec.md`.
+
+Read off the tree rather than chosen: every effort directory here holds its spec beside its `issues/`, and there is no `.claude/designs/` directory at all. The flat shape — one spec per file in the designs directory — is what a repository that has written no spec yet starts in, and it is not this one.
+
+This is the **one home** for the answer. Anything that needs to know where a spec is written reads it here rather than assuming a path — the format guide, the stages that open a spec, and the script that regenerates the index over them, which writes that index to `.claude/tickets/map.md` because under this layout it spans every effort while each spec belongs to one.
+
 ## What a ticket is
 
 **Tracked intent.** A ticket here is a file recording work to be done — the file, not a branch, is the ticket. The detect test asks whether the version-control policy ties one ticket to one branch, one commit, and one pull request. It ties none of the three: the unit is the **effort**, and a ticket is one of several amending its single commit (`.claude/policies/version-control.md`, "The unit is the effort, not the ticket"). So a ticket exists and resolves as a file, the Claim is the effort's branch rather than the ticket's, and decision tickets are tickets exactly as `.claude/policies/maps.md` describes.

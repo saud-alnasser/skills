@@ -1,6 +1,6 @@
 ---
 title: 'feat(configure): a configured repository declares which spec layout it uses'
-status: open
+status: resolved
 blocked-by: []
 part-of: spec-home
 ---

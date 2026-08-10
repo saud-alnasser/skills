@@ -34,6 +34,39 @@ On GitLab, the same shape holds with `glab`; see `.claude/tools/gitlab.md`.
 **Never guess the CLI.** A tracker operation with no entry in `tools/` is a
 docs fetch, not an assumption.
 
+## Where a spec lives
+
+<!--
+  The detect test lives here and nowhere else: which of the two shapes does the
+  tree already hold? A `spec.md` sitting beside an effort's tickets is the
+  per-effort layout; spec files sitting directly in the designs directory are
+  the flat one.
+
+  A tree holding neither — a repository that has written no spec yet — takes
+  flat, the shape a new repository starts in, and never a blank: something reads
+  this answer whether or not a spec exists, and a blank sends it guessing.
+
+  A tree holding both is a defect to report rather than a choice to make,
+  because an index built over one of them drops every row of the other.
+
+  /configure answers this from the tree when the file is derived, and asks the
+  tree again on every audit run.
+-->
+
+{Declare one of the two, naming the path a spec is written to. Keep the
+paragraph that applies; delete the other.}
+
+**Flat.** One spec per file, in the designs directory:
+`.claude/designs/<slug>.md`.
+
+**One per effort.** Each spec sits beside the tickets it governs:
+`.claude/tickets/<effort>/spec.md`.
+
+This is the **one home** for the answer. Anything that needs to know where a
+spec is written reads it here rather than assuming a path — the format guide,
+the stages that open a spec, and the script that regenerates the index over
+them.
+
 ## What a ticket is
 
 <!--

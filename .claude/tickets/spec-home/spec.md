@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - skills/configure/policies/tracker.template.md
   - skills/configure/policies/specs.template.md

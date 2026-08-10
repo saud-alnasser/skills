@@ -67,7 +67,7 @@ A repository with no `.claude/` has no Context to contradict. Say so in one line
 
 Acceptance criteria can span several commits, so this is the only place the last one is knowable.
 
-When this commit completes them, set the spec's frontmatter field to `status: implemented`. **Only the status field moves** — never a word of the spec's content. Where a spec lives, the status vocabulary, and why the rest is frozen are all in `.claude/policies/specs.md`.
+When this commit completes them, set the spec's frontmatter field to `status: implemented`. **Only the status field moves** — never a word of the spec's content. The status vocabulary and why the rest is frozen are in `.claude/policies/specs.md`; where a spec lives is `.claude/policies/tracker.md`'s, because it differs per repository.
 
 Do this **before staging**, not after committing — the spec is a tracked file, and marking it afterwards leaves the tree dirty the moment the commit lands, defeating the Marker's clean path on the very next turn.
 

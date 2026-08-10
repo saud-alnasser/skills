@@ -1,6 +1,6 @@
 # Spec Format
 
-Standard and above. **Where a spec is written is `.claude/policies/tracker.md`'s** — read the path there.
+Standard and above. **Where a spec is written differs per repository, and `.claude/policies/tracker.md` declares which** — read the path there rather than assuming one.
 
 A spec is the reasoning behind the tickets — the thing that lets someone judge whether the tickets are the right ones. Tickets say what to build; the spec says why that and not something else.
 

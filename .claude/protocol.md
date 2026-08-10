@@ -134,7 +134,7 @@ Every stage also loads `.claude/contexts/repository.md` and routes from its tabl
 | `/triage` | review | `.claude/policies/tracker.md`, the forge reference |
 | `/design` | design | `.claude/policies/tickets.md`, `.claude/policies/specs.md`, `.claude/policies/maps.md`, `.claude/policies/decisions.md`, `.claude/policies/evidence.md`, `.claude/policies/knowledge.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md`, the forge reference |
 | `/implement` | implementation | `.claude/policies/tickets.md`, `.claude/policies/knowledge.md`, `.claude/policies/context.md`, `.claude/policies/tracker.md`, `.claude/policies/version-control.md`, `.claude/policies/sub-agents.md`, `.claude/tools/git.md`, the forge reference |
-| `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/rules/`, `.claude/decisions/map.md` and the Decisions it routes to, `.claude/tools/git.md`, the forge reference |
+| `/review` | review | `.claude/policies/decisions.md`, `.claude/policies/sub-agents.md`, `.claude/policies/tracker.md`, `.claude/rules/`, `.claude/decisions/map.md` and the Decisions it routes to, `.claude/tools/git.md`, the forge reference |
 | `/research` | research | `.claude/policies/evidence.md`, `.claude/policies/sub-agents.md` |
 | `/prototype` | prototype | `.claude/policies/evidence.md`, `.claude/.gitignore` |
 | `/commit` | maintenance | `.claude/policies/specs.md`, `.claude/policies/knowledge.md`, `.claude/policies/version-control.md`, `.claude/policies/tracker.md`, `.claude/tools/git.md` |
