@@ -12593,10 +12593,13 @@ Describe-Ticket 'declared-fields/08' 'a local ticket declares its lifecycle fact
     $true
   }
 
-  # The union in the tracker policy, not a narrowed set: the build lifecycle and
-  # the triage roles both live in one field here, which that policy records as a
-  # deliberate wrinkle. `superseded` joined the lifecycle in this ticket because
-  # nine files already used it under ADR 0030 and nothing defined it (ADR 0008).
+  # The build lifecycle alone: `tickets.md` forbids triage roles on a build
+  # ticket, and the tracker policy's role table maps every role *unused* — the
+  # 2026-08-11 audit conformed that table to the template, dissolving the
+  # one-field wrinkle this assertion previously unioned in, so a ticket
+  # carrying a triage role now fails below as a status the policies do not
+  # define. `superseded` joined the lifecycle in this ticket because nine
+  # files already used it under ADR 0030 and nothing defined it (ADR 0008).
   Assert "every ticket declares a status the policies define" {
     # Both copies, because ADR 0025 makes the template the one that leads and
     # deleting the fifth state from it alone left the whole suite green.
@@ -12611,14 +12614,7 @@ Describe-Ticket 'declared-fields/08' 'a local ticket declares its lifecycle fact
       # exactly the state this ticket added.
       '(?m)^(open|blocked|resolved|obsolete|superseded)[ \t]') | ForEach-Object { $_.Groups[1].Value })
     if ($lifecycle.Count -lt 5) { throw "the lifecycle block defines only: $($lifecycle -join ', ')" }
-    $roles = @([regex]::Matches(
-      (Get-Content (Join-Path $repo '.claude/policies/tracker.md') -Raw),
-      '(?m)^\|\s*`?([a-z-]+)`?\s*\|\s*`([a-z-]+)`\s*\|') | ForEach-Object { $_.Groups[2].Value })
-    # The roles half is asserted non-empty rather than merely collected: no
-    # ticket carries a triage role today, so a derivation that silently
-    # collapsed to nothing would narrow the union invisibly.
-    if ($roles.Count -lt 2) { throw "the tracker policy's role table yielded only: $($roles -join ', ')" }
-    $vocabulary = @($lifecycle + $roles | Sort-Object -Unique)
+    $vocabulary = @($lifecycle | Sort-Object -Unique)
     $offenders = @()
     foreach ($t in Get-LocalTicketFile) {
       $fm = Get-Frontmatter (Get-Content $t.FullName -Raw)
