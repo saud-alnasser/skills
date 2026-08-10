@@ -14771,6 +14771,375 @@ Describe-Ticket 'spec-home/02' 'every shipped surface reads the spec-layout decl
   }
 }
 
+# --- ticket records/01 — the git reference describes both facts the marker holds
+
+# The marker file holds two facts — the commit drift was last read against, and
+# the fingerprint of the tree it was read against — and only the tool reference
+# still described one, while its own next entry introduced the fingerprint as
+# the Marker's second fact.
+#
+# It is asserted over the shipped file *and* over this repository's derived copy,
+# and the crossing into `.claude/` is marked for the reason `layout/04` gives.
+# The derivation pin is why: a configured repository that corrects its own copy
+# fails the divergence check, so the sentence is only fixable at the source, and
+# a correction that reaches one file and not the other is a red build either way.
+Describe-Ticket 'records/01' 'the shipped git reference describes both facts the marker holds' {
+
+  $gitReference = 'configure/tools/git.md'
+  $markerEntry = 'Check the Marker'
+  $fingerprintEntry = 'Fingerprint the working tree'
+
+  # Anchored to the subject — a description of the marker file's contents —
+  # rather than to the corrected sentence. A guard written from the new wording
+  # passes while the old sentence sits elsewhere in the tree, which is the
+  # failure `.claude/rules/skills.md` says to assume you have just written. An
+  # object literal naming `commit` *is* a description of that file's contents
+  # whatever prose surrounds it, so this fires on any shipped restatement of the
+  # literal and not only on the one entry this ticket repaired. It reaches the
+  # literal and nothing else — the prose that introduces it is a separate claim
+  # with its own assertion below, which review established by restoring the
+  # original sentence and watching this one stay green.
+  Assert "no shipped description of the marker file's contents names the commit alone" {
+    $bad = @()
+    foreach ($f in (@(Get-SkillFiles) + @(Get-RoleFiles))) {
+      foreach ($m in [regex]::Matches((Get-SkillText $f), '(?s)\{[^{}]*"commit"[^{}]*\}')) {
+        if ($m.Value -notmatch '"tree"') {
+          $where = ($f.FullName.Substring($repo.Length + 1) -replace '\\', '/')
+          $bad += "$where — $($m.Value -replace '\s+', ' ')"
+        }
+      }
+    }
+    if ($bad) { throw "the marker holds two facts and is described as holding one at $($bad -join '; ')" }
+    $true
+  }
+
+  # The prose half, which the guard above cannot reach. Review restored the
+  # original sentence — "the commit Context was last verified against" — while
+  # leaving the corrected code block in place, and every assertion here passed:
+  # the object literal was right, the word "fingerprint" was supplied by that
+  # same block, and the sentence introducing the entry still described one fact.
+  # That sentence is what a reader reads first, so it gets its own check.
+  Assert "the sentence introducing the Marker names both facts, not just the commit" {
+    foreach ($f in @($gitReference, $null)) {
+      $text = if ($f) { Get-SkillFile $f } else { Get-Content (Join-Path $repo '.claude/tools/git.md') -Raw }
+      $where = if ($f) { "skills/$f" } else { '.claude/tools/git.md' }
+      $entry = [regex]::Match($text, "(?ms)^## $markerEntry\r?\n(.*?)(?=^## )")
+      if (-not $entry.Success) { throw "$where has no '$markerEntry' entry" }
+      $opening = ($entry.Groups[1].Value -split '\r?\n\r?\n' | Where-Object { $_.Trim() })[0]
+      if ($opening -notmatch '(?i)two facts|commit[^.]{0,80}(and|plus)[^.]{0,80}(tree|fingerprint)') {
+        throw "$where introduces the Marker as one fact: $($opening.Trim() -replace '\s+', ' ')"
+      }
+    }
+    $true
+  }
+
+  # The self-contradiction, checked as an agreement between two entries rather
+  # than against either one's wording. The fingerprint entry calls itself the
+  # Marker's second fact, so the entry that introduces the Marker has to name
+  # that fact too — and resolving the disagreement by deleting the later claim
+  # fails this as well, which is the direction a one-sided guard misses.
+  Assert "the git reference's two entries agree that the fingerprint is the Marker's second fact" {
+    $c = Get-SkillFile $gitReference
+    if ((Get-Section $c $fingerprintEntry) -notmatch '(?i)second fact') {
+      throw 'the fingerprint entry no longer presents itself as the Marker''s second fact'
+    }
+    if ((Get-Section $c $markerEntry) -notmatch '(?i)fingerprint') {
+      throw 'the entry introducing the Marker names no fingerprint, while the next entry calls it the second fact'
+    }
+    $true
+  }
+
+  # The shape written before the second fact existed still sits in clones, and a
+  # reader who meets one needs both halves: that it is not corruption, and which
+  # way it resolves. Two throws, because a single pattern spanning both passes
+  # while either half is deleted.
+  Assert "the git reference says what a marker carrying no tree fact means, and how it resolves" {
+    $s = Get-Section (Get-SkillFile $gitReference) $markerEntry
+    if ($s -notmatch '(?is)no tree fact|without a tree fact|only the commit|commit and no tree') {
+      throw 'the single-fact shape a pre-fingerprint clone still holds is not described'
+    }
+    if ($s -notmatch '(?is)read the tree live|fingerprint it') {
+      throw 'the older shape is described without saying it resolves to reading the tree'
+    }
+    $true
+  }
+
+  # Presence is asserted beside identity: `Get-DivergentEntries` compares only
+  # the entries a derived file kept, so a copy that dropped this one would pass
+  # an identity check it was never subject to.
+  Assert "this repository's derived git reference carries the corrected entry unchanged" {
+    $derivedPath = Join-Path $repo '.claude/tools/git.md'
+    if (-not (Test-Path $derivedPath)) { throw '.claude/tools/git.md is missing' }
+    $derived = Get-Content $derivedPath -Raw
+    $sections = Get-ToolSections $derived
+    if (-not $sections.Contains($markerEntry)) { throw "the derived file kept no '$markerEntry' entry to compare" }
+    if ($sections[$markerEntry] -notmatch '"tree"') { throw 'the derived entry still describes the marker as holding one fact' }
+    if ((Get-DivergentEntries $derived (Get-SkillFile $gitReference)) -contains $markerEntry) {
+      throw "the derived '$markerEntry' entry diverges from its shipped source"
+    }
+    $true
+  }
+}
+
+# --- ticket records/02 — consumption is recorded by what a finding falsifies --
+
+# The obligation sat under the drift heading and was phrased in terms of drift,
+# so whether it reached a research finding declaring the same field was a
+# reading rather than a rule. It is scoped by the field now, and both halves are
+# asked here: that the format says so where the obligation is stated, and that
+# the one finding whose consumption is establishable from a resolved ticket
+# citing it carries its line.
+#
+# Establishability is derived from the tree rather than read off a list, so a
+# second finding reaching that state fails the build instead of quietly reading
+# as waiting. What stays a list is the set already marked — widening the rule
+# does not make an unchecked finding consumed, and that is the direction a list
+# has to pin.
+Describe-Ticket 'records/02' 'consumption is recorded by any finding that declares what it falsifies' {
+
+  $evidenceDir = Join-Path $repo '.claude/evidence'
+
+  # Kind-then-file, relative to the evidence root.
+  $consumedFinding = 'research/2026-08-09-reading-the-plugin-version-from-a-running-stage.md'
+
+  # Every mark on disk. A finding healed later joins this in the change that
+  # heals it, which is the point at which its consumption becomes establishable.
+  $marked = @(
+    'drift/2026-08-03-tracked-intent-rests-on-a-falsified-landing-fact.md'
+    $consumedFinding
+  )
+
+  # Both ends of the format: the template every other repository is configured
+  # from, and the copy this one reads.
+  $formats = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/policies/evidence.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/evidence.md') -Raw }
+  }
+
+  # Every finding of every kind, minus the generated index. The obligation is
+  # the field's now, so nothing here may be scoped to one directory.
+  $findings = {
+    Get-ChildItem $evidenceDir -Recurse -File -Filter *.md |
+      Where-Object { $_.Name -ne 'map.md' }
+  }
+
+  $relative = {
+    param([System.IO.FileInfo]$File)
+    $File.FullName.Substring($evidenceDir.Length + 1) -replace '\\', '/'
+  }
+
+  # The `## ` heading the obligation is stated under. Anchored on the obligation
+  # rather than on the heading this change wrote: what the criterion forbids is
+  # the rule living under one kind's heading, whatever that heading is called
+  # and wherever it moves next.
+  $obligationHeading = {
+    param([string]$Text)
+    $t = $Text -replace "`r", ''
+    $m = [regex]::Match($t, '(?i)records its own consumption')
+    if (-not $m.Success) { throw 'the obligation is stated nowhere' }
+    $above = [regex]::Matches($t.Substring(0, $m.Index), '(?m)^##(?!#)[ \t]*([^\r\n]+)$')
+    if ($above.Count -eq 0) { throw 'the obligation sits under no heading' }
+    $above[$above.Count - 1].Groups[1].Value.Trim()
+  }
+
+  # The prose around the obligation, which is where its scope has to be stated.
+  # A file-wide probe for the field would pass on the field table two sections
+  # above while the obligation itself still spoke only of drift — the guard that
+  # matches a phrase travelling with its subject instead of the subject.
+  $obligationWindow = {
+    param([string]$Text)
+    $t = $Text -replace "`r", ''
+    $m = [regex]::Match($t, '(?i)records its own consumption')
+    if (-not $m.Success) { throw 'the obligation is stated nowhere' }
+    $start = [Math]::Max(0, $m.Index - 240)
+    $t.Substring($start, [Math]::Min($t.Length - $start, 900))
+  }
+
+  # One per format: an aggregate assertion passes while one of the two copies
+  # loses the scoping, and the copy that loses it is the one a repository reads.
+  foreach ($name in $formats.Keys) {
+    Assert "the consumption obligation states its scope as the declared field — $name" {
+      $w = & $obligationWindow (& $formats[$name])
+      if ($w -notmatch '(?i)`falsifies`|declares? what it falsifies|what it declares it falsifies') {
+        throw 'the obligation names no field, so which findings owe a line is left to a reading'
+      }
+      $true
+    }
+  }
+
+  foreach ($name in $formats.Keys) {
+    Assert "the obligation sits under no one kind's heading — $name" {
+      $h = & $obligationHeading (& $formats[$name])
+      if ($h -match '(?i)\b(drift|research|prototype|discussion|out-of-scope|rejected)') {
+        throw "stated under '$h', which a reader of another kind has no reason to open"
+      }
+      $true
+    }
+  }
+
+  # What a finding declares it falsifies, read through the one frontmatter
+  # reader. `[]` is the no-op, and is what most findings declare.
+  $declaredFalsifies = {
+    param([string]$Content)
+    $fm = Get-Frontmatter $Content
+    if (-not $fm) { return @() }
+    $line = [regex]::Match($fm, '(?m)^falsifies:[ \t]*\[(.*)\][ \t]*$')
+    if (-not $line.Success) { return @() }
+    ,@($line.Groups[1].Value -split ',' |
+        ForEach-Object { $_.Trim().Trim('`', '"', "'") } |
+        Where-Object { $_ })
+  }
+
+  # Consumption is establishable when what the finding falsified is a resolved
+  # ticket that cites the finding back by path — the ticket is done, and it says
+  # this finding is what lifted its block. Both halves are required: a resolved
+  # ticket that never names the finding establishes nothing, and a ticket citing
+  # it while still open has not healed anything yet.
+  $establishable = {
+    param([System.IO.FileInfo]$File)
+    $content = Get-Content $File.FullName -Raw
+    $self = '.claude/evidence/' + (& $relative $File)
+    foreach ($target in (& $declaredFalsifies $content)) {
+      $p = Join-Path $repo $target
+      if (-not (Test-Path $p)) { continue }
+      $t = Get-Content $p -Raw
+      $fm = Get-Frontmatter $t
+      if (-not $fm) { continue }
+      if ($fm -notmatch '(?m)^status:[ \t]*resolved[ \t]*$') { continue }
+      if ($t.Contains($self)) { return $target }
+    }
+    return $null
+  }
+
+  Assert "a finding whose consumption is establishable carries a line, whatever kind it is" {
+    $waiting = @()
+    foreach ($f in (& $findings)) {
+      $target = & $establishable $f
+      if (-not $target) { continue }
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?im)^Consumed:') { $waiting += "$(& $relative $f), healed at $target" }
+    }
+    if ($waiting) { throw "consumed and still reading as waiting: $($waiting -join '; ')" }
+    $true
+  }
+
+  # Waiting is the absence of the line, so only a claimed consumption can be
+  # malformed — and a bare `Consumed:` is worse than no line, because it reads
+  # as answered. Run over every kind: the drift-only walk this repeats could not
+  # see a malformed line on a research finding, which is exactly what the
+  # widened obligation now permits to exist.
+  Assert "a claimed consumption names where the healing landed, in every kind" {
+    $unnamed = @()
+    foreach ($f in (& $findings)) {
+      $c = Get-Content $f.FullName -Raw
+      $m = [regex]::Match($c, '(?im)^Consumed:\s*([^\r\n]*)')
+      if (-not $m.Success) { continue }
+      if ($m.Groups[1].Value -notmatch '[\w.-]+/[\w.-]+') { $unnamed += (& $relative $f) }
+    }
+    if ($unnamed) { throw "claims consumption and names no destination: $($unnamed -join ', ')" }
+    $true
+  }
+
+  Assert "the finding whose consumption is establishable names where the healing landed" {
+    $c = Get-Content (Join-Path $evidenceDir $consumedFinding) -Raw
+    $m = [regex]::Match($c, '(?im)^Consumed:\s*([^\r\n]*)')
+    if (-not $m.Success) { throw 'the finding is still unmarked' }
+    if ($m.Groups[1].Value -notmatch '04-the-protocol-records-its-version') {
+      throw "the mark does not name the ticket it healed: $($m.Groups[1].Value)"
+    }
+    $true
+  }
+
+  # The account is frozen, so the marking may not have moved any of it. Pinned
+  # on the provenance sentence verbatim — the date, what was read, and the
+  # version it was true of are the whole value of a finding — and on the
+  # sections that hold the check, plus the mark's position outside them.
+  Assert "the marked finding's account is unmoved, and the line sits beside it" {
+    $c = (Get-Content (Join-Path $evidenceDir $consumedFinding) -Raw) -replace "`r", ''
+    $provenance = 'Taken 2026-08-09 against the Claude Code documentation at `code.claude.com/docs/en`, pages `plugins`, `plugins-reference`, and `hooks`, plus two local checks. AEP was at 1.13.0, running from a `directory` marketplace source.'
+    if (-not $c.Contains($provenance)) { throw 'the dated account of what was checked was edited' }
+    foreach ($h in @('The question', 'What is true', 'What is false, and what stays true',
+                     'What this leaves', 'Untested')) {
+      if ($c -notmatch "(?m)^## $([regex]::Escape($h))$") { throw "the account lost its '$h' section" }
+    }
+    $mark = [regex]::Match($c, '(?im)^Consumed:')
+    if (-not $mark.Success) { throw 'the finding is unmarked' }
+    $body = [regex]::Match($c, '(?m)^## ')
+    if ($mark.Index -gt $body.Index) { throw 'the line was written inside the account rather than beside it' }
+    $true
+  }
+
+  Assert "no finding beyond those whose consumption was established carries a line" {
+    $extra = @()
+    foreach ($f in (& $findings)) {
+      $c = Get-Content $f.FullName -Raw
+      if ($c -notmatch '(?im)^Consumed:') { continue }
+      $rel = & $relative $f
+      if ($rel -notin $marked) { $extra += $rel }
+    }
+    if ($extra) { throw "marked without an establishable consumption: $($extra -join ', ')" }
+    $true
+  }
+}
+
+# --- ticket records/03 — every effort with tickets has a spec ----------------
+
+# The design index is generated from specs, one row per effort. An effort holding
+# tickets and no spec produces no row and the generation succeeds, so the index
+# spanned fewer efforts than existed and nothing said so. That is the failure
+# these two assertions close: the gap itself, and the honesty of the file written
+# to close it.
+Describe-Ticket 'records/03' 'every effort with tickets has a spec, and a reconstructed one says so' {
+
+  Assert "no effort holds tickets without a spec the index can reach" {
+    $root = Join-Path $repo '.claude/tickets'
+    $missing = @(Get-ChildItem $root -Directory | Where-Object {
+        (Test-Path (Join-Path $_.FullName 'issues')) -and
+        -not (Test-Path (Join-Path $_.FullName 'spec.md'))
+      } | ForEach-Object { $_.Name })
+    if ($missing) {
+      throw "these efforts hold tickets and produce no index row: $($missing -join ', ')"
+    }
+    $true
+  }
+
+  # Which specs are reconstructions is pinned rather than derived, and the
+  # direction is the point: nothing in a tree distinguishes a spec written after
+  # its effort landed from one written before it, so a derived answer would be a
+  # guess. A pinned list can only be wrong by being too small, and the agreement
+  # half below catches any spec that marks itself without being on it.
+  $reconstructions = @('agentic')
+
+  # Presence for the pinned set, agreement for the rest. The first version of
+  # this compared the field against the prose and nothing else, so it passed when
+  # *neither* was present — deleting both markers left a reconstruction reading
+  # exactly like a record, with a green build. Review found it; that deletion is
+  # now the fixture.
+  Assert "a reconstructed spec says so where a reader of the file will see it" {
+    $offenders = @()
+    foreach ($s in (Get-ChildItem (Join-Path $repo '.claude/tickets') -Directory |
+        ForEach-Object { Join-Path $_.FullName 'spec.md' } | Where-Object { Test-Path $_ })) {
+      $effort = Split-Path (Split-Path $s -Parent) -Leaf
+      $text = Get-Content $s -Raw
+      $fm = Get-Frontmatter $text
+      $declared = $fm -match '(?m)^reconstructed:[ \t]*true[ \t]*$'
+      $body = $text.Substring($text.IndexOf('---', 3) + 3)
+      $stated = $body -match '(?i)reconstructed after the fact'
+      if ($reconstructions -contains $effort) {
+        if (-not $declared) { $offenders += "${effort}: reconstruction declares no field" }
+        if (-not $stated) { $offenders += "${effort}: reconstruction says nothing a reader of it would see" }
+      }
+      elseif ($declared -ne $stated) {
+        $offenders += "${effort}: declares $declared, body says $stated"
+      }
+    }
+    if ($offenders) {
+      throw "a reconstruction is unmarked, declared where a reader cannot see it, or stated where nothing acts on it: $($offenders -join '; ')"
+    }
+    $true
+  }
+}
+
 # --- summary -----------------------------------------------------------------
 
 # A -Ticket that matches nothing must not read as a pass. Silently running zero

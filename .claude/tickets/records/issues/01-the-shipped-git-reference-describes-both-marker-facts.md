@@ -1,6 +1,6 @@
 ---
 title: 'fix(configure): the shipped git reference describes both facts the marker holds'
-status: open
+status: resolved
 blocked-by: []
 part-of: records
 ---

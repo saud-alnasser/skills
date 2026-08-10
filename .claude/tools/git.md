@@ -24,15 +24,17 @@ This entry is **this repository's own**, which is why it is a section rather tha
 
 ## Check the Marker
 
-The Marker is the commit Context was last verified against. `<marker>` below has exactly one source — the marker file, read fresh every time:
+The Marker is what Context was last verified against, and the marker file holds **two facts** about it: the commit drift was last read against, and a fingerprint of the working tree it was read against. `<marker>` and `<fingerprint>` below have exactly one source — that file, read fresh every time:
 
 ```
-.claude/position/marker.json                   # { "commit": "<marker>" } — the whole file
+.claude/position/marker.json                   # { "commit": "<marker>", "tree": "<fingerprint>" } — the whole file
 ```
 
 **Read the path from here, never from memory.** A recalled path that is wrong reads as a missing file — and a missing file is itself an answer, not a prompt to try another path: no marker file means nothing was ever verified in this clone, so treat everything the request touches as unverified and say so.
 
-Two questions about the value, in order.
+**A marker carrying no tree fact means the tree is unknown.** That shape is what clones written before the second fact existed still hold; it is not corrupt and nothing needs converting. Read the tree live — fingerprint it with the next entry and take the drift reads — rather than treating it as unchanged.
+
+Two questions about `<marker>`, in order.
 
 ```
 git cat-file -e "<marker>^{commit}"            # exit 1 → the Marker commit is gone
@@ -42,6 +44,8 @@ git merge-base --is-ancestor <marker> HEAD     # exit 1 → HEAD left the Marker
 Either failure means the Marker is not a base you can diff from — a branch switch, rebase, reset, or a rewritten commit moved HEAD off its line. There is no meaningful diff to take: treat everything the request touches as unverified.
 
 Quote `^{commit}` — bare `^` and `{` are metacharacters in PowerShell and in cmd.
+
+`<fingerprint>` takes no git question of its own: it is compared against the value the next entry builds from the tree as it stands now.
 
 ## Fingerprint the working tree
 

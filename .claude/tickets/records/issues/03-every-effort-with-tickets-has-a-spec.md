@@ -1,6 +1,6 @@
 ---
 title: 'fix(knowledge): every effort with tickets has a spec, and a reconstructed one says so'
-status: open
+status: resolved
 blocked-by: []
 part-of: records
 ---
