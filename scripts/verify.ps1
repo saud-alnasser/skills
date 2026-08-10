@@ -279,6 +279,31 @@ function Get-SpecStep {
   $m.Value
 }
 
+# The framework-owned template set is computed from the files' own owner
+# declarations rather than kept as a list — a template added later joins every
+# sweep here by declaring `owner: framework`, and a hand-kept list is the thing
+# that would not notice it. The derived-policy templates declare `owner:
+# repository` in their own text and so exclude themselves.
+function Get-FrameworkTemplates {
+  Get-ChildItem (Join-Path $skills 'configure') -Recurse -File -Filter *.template.md |
+    Where-Object {
+      $fm = Get-Frontmatter (Get-SkillText $_)
+      $fm -and $fm -match '(?m)^owner:[ \t]*framework[ \t]*$'
+    }
+}
+
+# Where a framework template's installed copy lives here, from the template's
+# path — the layout /configure writes.
+function Get-InstalledCopyPath {
+  param([System.IO.FileInfo]$Template)
+  $name = ($Template.FullName.Substring((Join-Path $skills 'configure').Length + 1) -replace '\\', '/') -replace '\.template\.md$', '.md'
+  switch -regex ($name) {
+    '^protocol\.md$' { return Join-Path $repo '.claude/protocol.md' }
+    '^(modes|policies)/' { return Join-Path $repo ".claude/$name" }
+    default { return Join-Path $repo ".claude/rules/$name" }
+  }
+}
+
 # --- ticket tenure/01 — vendor the primitives ---------------------------------------
 
 Describe-Ticket 'tenure/01' 'vendor the primitives and rewrite their paths' {
@@ -655,6 +680,12 @@ $rulePattern = [ordered]@{
   # exists to catch. Anchored on the removal question, which is the rule's test
   # rather than a phrase that would travel with a summary of it.
   'the placement rule'                 = '(?i)were AEP removed'
+  # provenance/01. The audit owns what a provenance stamp may do — route
+  # attention, settle nothing — because the audit's comparison is the one check
+  # the stamp could tempt into being skipped. Anchored on the routing verb: the
+  # router's own version sentence states which release last changed the file,
+  # a different fact, and must not restate this one.
+  'the stamp-routes-attention rule'    = '(?i)(stamp|`version`)[^\r\n]{0,160}routes attention'
   # `tdd` owns the loop, so it owns why a guessed test command wrecks it. This
   # reasoning had reached four files before the guard existed.
   'the guessed-test-command cost'      = '(?i)full-suite run per cycle'
@@ -17011,10 +17042,13 @@ Describe-Ticket 'crystallize/06' 'the stages speak norm form and read their exac
   # crystallize/09's run, where the router's flip to framework law added its
   # install statement and the audit's set-aside of the two extension points to
   # /configure — the exemption the delta review demanded so deviations survive
-  # the byte comparison. New law each time, never re-inflated essays.
+  # the byte comparison. New law each time, never re-inflated essays. Raised to
+  # 153,400 by provenance/01, which added the stamp constraint to the audit —
+  # the stamp routes attention and the comparison runs regardless — one bullet
+  # of new law binding the check the stamp could otherwise tempt into skipping.
   Assert "the skill bodies stay under their measured post-conversion ceiling" {
     $total = (Get-ChildItem $skills -Recurse -Filter 'SKILL.md' | Measure-Object -Property Length -Sum).Sum
-    if ($total -gt 153200) { throw "skill bodies total $total against a 153,200 ceiling" }
+    if ($total -gt 153400) { throw "skill bodies total $total against a 153,400 ceiling" }
     $true
   }
 
@@ -17298,6 +17332,164 @@ Describe-Ticket 'crystallize/09' 'the tickets, specs, and sub-agents policies co
       if ($len -gt $cap) { throw "$file is $len chars against a $cap ceiling" }
       $true
     }
+  }
+}
+
+# --- ticket provenance/01 — framework files declare the release that last changed them
+
+Describe-Ticket 'provenance/01' 'framework files declare the release that last changed them' {
+
+  $templates = @(Get-FrameworkTemplates)
+
+  # Computed sets fail vacuously first: a broken owner match sweeps nothing and
+  # every foreach below passes over an empty list. Twenty at the time of
+  # writing; the floor only guards against the sweep going dark.
+  Assert "the framework-owned template set is found by its owner declarations" {
+    if ($templates.Count -lt 15) { throw "only $($templates.Count) templates matched — the owner sweep went dark" }
+    $true
+  }
+
+  # The stamp is provenance for the reader of one installed file: which release
+  # of the workflow last changed what they are reading. It rides frontmatter so
+  # it reaches installations through the byte-lock, with no step of its own.
+  Assert "every framework-owned template declares the release that last changed it" {
+    foreach ($t in $templates) {
+      $fm = Get-Frontmatter (Get-SkillText $t)
+      if ($fm -notmatch '(?m)^version:[ \t]*\d+\.\d+\.\d+[ \t]*$') { throw "$($t.Name) declares no version" }
+    }
+    $true
+  }
+
+  Assert "every installed copy here carries its template's stamp" {
+    foreach ($t in $templates) {
+      $installed = Get-InstalledCopyPath $t
+      if (-not (Test-Path $installed)) { throw "$($t.Name) has no installed copy at $installed" }
+      $tv = [regex]::Match((Get-Frontmatter (Get-SkillText $t)), '(?m)^version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+      $iv = [regex]::Match((Get-Frontmatter (Get-Content $installed -Raw)), '(?m)^version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+      if ($tv -ne $iv) { throw "$($t.Name) is stamped '$tv' but its installed copy declares '$iv'" }
+    }
+    $true
+  }
+
+  # The router is the one file where the two version facts sit side by side —
+  # `aep-version` is the configured-at release, re-stamped by audits; `version`
+  # is the file's own — so it is the one place the difference must be stated,
+  # and it must be stated on both sides of the byte-lock.
+  Assert "the router distinguishes the file's own stamp from the configured-at release" {
+    foreach ($side in @((Get-SkillFile 'configure/protocol.template.md'), (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw))) {
+      if ($side -notmatch '(?i)`version`[^\r\n]{0,240}last changed') { throw 'a router copy does not state what its own stamp means' }
+    }
+    $true
+  }
+
+  Assert "the audit states the stamp routes attention and never settles it" {
+    if ((Get-AuditReach) -notmatch $rulePattern['the stamp-routes-attention rule']) { throw 'the audit does not state what the stamp may do' }
+    $true
+  }
+
+  Assert "the audit binds its comparison to run whatever the stamp says" {
+    if ((Get-AuditReach) -notmatch '(?i)(comparison|compared)[^\r\n]{0,160}whatever the stamp says') { throw 'the audit does not bind the comparison to the stamp' }
+    $true
+  }
+}
+
+# --- ticket provenance/02 — a changed template that kept its stamp fails the build
+
+Describe-Ticket 'provenance/02' 'a changed template that kept its stamp fails the build' {
+
+  # The verdict is pure — both contents and the three versions in, a refusal or
+  # $null out — so every polarity is asserted on synthetic input, without
+  # perturbing the tree. Normalisation is the audit's own comparison rule:
+  # carriage returns stripped, trailing whitespace ignored.
+  function Get-StampVerdict {
+    param($ReleasedContent, $CurrentContent, [string]$Stamp, [version]$ReleasedVersion, [version]$CurrentVersion)
+    $norm = {
+      param($s)
+      if ($null -eq $s) { return $null }
+      (($s -replace "`r", '') -replace '[ \t]+(?=\n|\z)', '').TrimEnd("`n")
+    }
+    if ((& $norm $ReleasedContent) -ceq (& $norm $CurrentContent)) { return $null }
+    if (-not $Stamp) { return 'changed but declares no stamp' }
+    $v = [version]$Stamp
+    if ($v -le $ReleasedVersion) { return "changed since $ReleasedVersion but still stamped $Stamp" }
+    if ($v -gt $CurrentVersion) { return "stamped $Stamp, ahead of the declared $CurrentVersion" }
+    return $null
+  }
+
+  $floor = [version]'1.0.0'
+  $ceiling = [version]'1.2.0'
+
+  Assert "editing content without moving the stamp is refused" {
+    if ($null -eq (Get-StampVerdict "a`n" "b`n" '1.0.0' $floor $ceiling)) { throw 'an unmoved stamp on changed content was accepted' }
+    $true
+  }
+  Assert "editing content and moving the stamp into the open range passes" {
+    $v = Get-StampVerdict "a`n" "b`n" '1.2.0' $floor $ceiling
+    if ($null -ne $v) { throw "an in-range stamp on changed content was refused: $v" }
+    $true
+  }
+  Assert "a template untouched since the release passes on any stamp age" {
+    $v = Get-StampVerdict "a`n" "a`n" '0.3.0' $floor $ceiling
+    if ($null -ne $v) { throw "unchanged content was refused over its stamp's age: $v" }
+    $true
+  }
+  Assert "a stamp ahead of the declared version is refused" {
+    if ($null -eq (Get-StampVerdict "a`n" "b`n" '9.9.9' $floor $ceiling)) { throw 'a stamp ahead of the declared version was accepted' }
+    $true
+  }
+  Assert "a template new since the release needs an in-range stamp" {
+    if ($null -eq (Get-StampVerdict $null "b`n" '1.0.0' $floor $ceiling)) { throw 'a new template with a floor-aged stamp was accepted' }
+    $v = Get-StampVerdict $null "b`n" '1.1.0' $floor $ceiling
+    if ($null -ne $v) { throw "a new template with an in-range stamp was refused: $v" }
+    $true
+  }
+  Assert "normalisation hides endings and trailing space, never content" {
+    $v = Get-StampVerdict "a`r`nb`n" "a`nb `n" '0.3.0' $floor $ceiling
+    if ($null -ne $v) { throw "an ending-only difference read as a change: $v" }
+    if ($null -eq (Get-StampVerdict "a`nb`n" "a`nB`n" '0.3.0' $floor $ceiling)) { throw 'a real content difference was hidden by normalisation' }
+    $true
+  }
+
+  # The baseline guard is its own function so the refusal is testable: a
+  # shallow clone finds no release commit, and that must fail with the
+  # condition named, never pass with nothing bounded.
+  function Resolve-ReleaseBaseline {
+    param([string]$Line)
+    if (-not $Line) { throw 'no release commit in history — the check cannot bound itself; fetch full history' }
+    $sha, $subject = $Line -split "`t", 2
+    $m = [regex]::Match($subject, 'release (\d+\.\d+\.\d+)')
+    if (-not $m.Success) { throw "the release commit names no version: $subject" }
+    @{ Sha = $sha; Version = [version]$m.Groups[1].Value }
+  }
+
+  Assert "a history with no release commit fails naming the condition" {
+    $threw = $null
+    try { Resolve-ReleaseBaseline '' | Out-Null } catch { $threw = $_.Exception.Message }
+    if (-not $threw) { throw 'an empty lookup was accepted as a baseline' }
+    if ($threw -notmatch 'no release commit') { throw "the failure does not name the condition: $threw" }
+    $true
+  }
+
+  # The real sweep. Releases are marked by dist commits rather than tags, so
+  # the baseline is the newest such commit in history.
+  Assert "every framework template changed since the last release moved its stamp" {
+    $baseline = Resolve-ReleaseBaseline (git log --fixed-strings --grep 'chore(dist): release' -1 --format='%H%x09%s')
+    $sha = $baseline.Sha
+    $released = $baseline.Version
+
+    $cm = [regex]::Match((Get-Content (Join-Path $repo 'specs.md') -Raw), '(?m)^\*\*Version:\*\*[ \t]*(\d+\.\d+\.\d+)')
+    if (-not $cm.Success) { throw 'specs.md declares no version to bound the stamps by' }
+    $current = [version]$cm.Groups[1].Value
+
+    foreach ($t in Get-FrameworkTemplates) {
+      $path = $t.FullName.Substring($repo.Length + 1) -replace '\\', '/'
+      $old = git show "${sha}:$path" 2>$null
+      $old = if ($LASTEXITCODE -ne 0) { $null } else { $old -join "`n" }
+      $stamp = [regex]::Match((Get-Frontmatter (Get-SkillText $t)), '(?m)^version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+      $verdict = Get-StampVerdict $old (Get-SkillText $t) $stamp $released $current
+      if ($verdict) { throw "$path — $verdict" }
+    }
+    $true
   }
 }
 

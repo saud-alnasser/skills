@@ -89,7 +89,7 @@ A routing table produced from fields the routed files declare, rather than writt
 _Avoid_: manifest, generated map, derived table
 
 **Declared Field**:
-A fact stated in frontmatter because something acts on it — a generated index, the configuration stage's derivation, or an assertion. A fact only a human reads stays prose. On what AEP ships the fields ride the harness's own `metadata` map rather than bare keys (ADR 0055), and whether a field restates its own path depends on how wide the index over it is (ADR 0056).
+A fact stated in frontmatter because something acts on it — a generated index, the configuration stage's derivation, or an assertion. A fact only a human reads stays prose. On the skills and agents AEP ships the fields ride the harness's own `metadata` map rather than bare keys (ADR 0055); the instruction files it installs declare bare keys — `owner`, `version` — read by the suite and the audit rather than the harness. Whether a field restates its own path depends on how wide the index over it is (ADR 0056).
 _Avoid_: metadata, header, tag, attribute
 
 **Owner**:
