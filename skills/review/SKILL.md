@@ -3,7 +3,7 @@ name: review
 description: Review a diff on two axes — does it implement what was asked, and does it follow this repository's own standards. Use when work is finished and about to be committed, or when the user asks for a review.
 metadata:
   mode: review
-  policies: [decisions, sub-agents]
+  policies: [decisions, sub-agents, tracker]
 ---
 
 # Review
@@ -54,7 +54,7 @@ In order, stopping at the first that answers:
 1. **The ticket the caller is holding.** `/implement` knows which ticket it claimed; that is the spec.
 2. **Issue references in the commit messages** — resolve them through the tracker (`.claude/tools/github.md`, `.claude/tools/gitlab.md`).
 3. **A path the user passed.**
-4. **A spec under `.claude/designs/`** matching the branch or the feature.
+4. **A spec matching the branch or the feature** — where specs are written is `.claude/policies/tracker.md`'s, and it is read rather than assumed.
 
 If none of these answers, ask. If the user says there is no spec, the Spec axis reports **no spec available** and is skipped — it does not reconstruct one from the diff. **Never invent, guess, or infer the requirements from the code being reviewed**: a spec derived from the diff agrees with the diff by construction, which turns the axis into a rubber stamp while still producing a report that reads like a review.
 

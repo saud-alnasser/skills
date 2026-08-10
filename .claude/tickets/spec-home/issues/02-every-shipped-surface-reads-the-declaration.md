@@ -1,6 +1,6 @@
 ---
 title: 'fix(configure): every shipped surface reads the spec-layout declaration instead of asserting a path'
-status: open
+status: resolved
 blocked-by: [01]
 part-of: spec-home
 ---

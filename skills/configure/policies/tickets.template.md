@@ -10,7 +10,7 @@ One ticket per file, or one per issue. Never a single combined file: tickets are
 
 Engineering knowledge lives in the Codebase, in Context, and in Decisions. **None of it lives in a ticket body.** A tracker that accumulates it becomes a fourth knowledge layer that nothing verifies and nothing prunes — and the one people read first, because it has the search box.
 
-So: **no implementation diary.** Not what you tried, not what went wrong on the way, not a running log of the session. Detailed engineering belongs in a spec under `.claude/designs/`, which the ticket **references** — never pastes.
+So: **no implementation diary.** Not what you tried, not what went wrong on the way, not a running log of the session. Detailed engineering belongs in a spec, which the ticket **references** — never pastes. Where a spec lives is `.claude/policies/tracker.md`'s, because it differs per repository.
 
 ## Format
 

@@ -110,7 +110,7 @@ Report the classification, the gates that fired, and the resulting tier. The use
 Formats are guides in the configured repository; `.claude/protocol.md`'s routing table is the index:
 
 - `.claude/policies/tickets.md` — always.
-- `.claude/policies/specs.md` — Standard and above. Written to `.claude/designs/`.
+- `.claude/policies/specs.md` — Standard and above. Where a spec is written is `.claude/policies/tracker.md`'s.
 - `.claude/policies/maps.md` — only when the fog gate fired. That branch exists; everything about it lives in that file.
 
 Read a format file when the tier selects it, not before.

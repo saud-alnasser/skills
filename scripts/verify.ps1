@@ -3535,7 +3535,11 @@ Describe-Ticket 'tenure/14' 'hierarchy, relationships, labels, and title convent
   Assert "a ticket tracks work and never becomes a knowledge store" {
     $c = Get-SkillFile $tickets
     if ($c -notmatch '(?i)(implementation|engineering) (diar|log|journal)|no diar') { throw 'nothing forbids an implementation diary' }
-    $c -match '(?is)\.claude/designs/[^.]{0,160}(referenc|link|point)|(?is)(referenc|link|point)[^.]{0,160}\.claude/designs/'
+    # Anchored to the spec rather than to its directory. The path left this
+    # sentence when the layout became a per-repository declaration; what the
+    # assertion was always about — a ticket *references* the engineering instead
+    # of pasting it — did not move.
+    $c -match '(?is)spec[^.]{0,160}(referenc|link|point)|(?is)(referenc|link|point)[^.]{0,160}spec'
   }
 
   # --- anti-booming ----------------------------------------------------------
@@ -4710,9 +4714,15 @@ Describe-Ticket 'layout/01' 'dissolve the docs level in the shipped layout' {
   # this, deleting every mention of a location passes the sweep.
 
   # skill that owns writing it → where it now writes.
+  #
+  # The spec row moved from the format guide to the tracker template when the
+  # layout became a per-repository declaration: the format guide no longer names
+  # a path, because there are two and only the tree decides which. The subject is
+  # unchanged — a home is named by the file that owns declaring it — so this is
+  # repointed rather than dropped, which would have retired the check silently.
   $homes = [ordered]@{
     'configure/policies/decisions.template.md' = '\.claude/decisions/'
-    'configure/policies/specs.template.md'         = '\.claude/designs/'
+    'configure/policies/tracker.template.md'   = '\.claude/designs/'
     'research/SKILL.md'             = '\.claude/evidence/research/'
     'prototype/SKILL.md'            = '\.claude/evidence/prototypes/'
     'triage/OUT-OF-SCOPE.md'        = '\.claude/evidence/out-of-scope/'
@@ -14576,6 +14586,187 @@ Describe-Ticket 'line-endings/02' 'the checkout pins its line ending, and the re
     if ($t -notmatch '(?i)defect in (a|the) (derived )?script|script defect') {
       throw 'the record does not say it was a defect in the script rather than a cost of the environment'
     }
+    $true
+  }
+}
+
+# --- ticket spec-home/01 — the tracker policy declares the spec layout --------
+
+# The regenerator was already told that a repository's tracker policy says which
+# of the two spec layouts applies, and nothing wrote that section: no template
+# gave the tracker policy one, and no step of the configuration stage derived
+# one. The instruction pointed at a declaration nothing produced. These
+# assertions hold the declaration at both ends — the template that installs it,
+# and the stage that fills it in and re-checks it.
+#
+# Deliberately not a `$rulePattern` entry, for the reason `layout/05` gives about
+# the stacking probe. That table is swept for exactly one home under `./skills`,
+# and the layout's subject — the two shapes a tree can hold — is carried
+# legitimately by `configure/SCRIPTS.md`, which has to name both because the
+# regenerator writes a different file under each. A duplication guard anchored on
+# the subject would fail on a correct tree. The single-home question is asked
+# below in the one place it can be asked without that false positive: the
+# derivation step, which is where a restatement of the test would land.
+
+Describe-Ticket 'spec-home/01' 'the tracker policy declares which spec layout the repository uses' {
+
+  $trackerTemplate = 'configure/policies/tracker.template.md'
+
+  # The section itself, and the shape that makes it readable on its own: both
+  # layouts, each with the path a spec is written to, and a placeholder telling
+  # the writer to pick. The placeholder is not decoration — a template that
+  # answers the question itself rather than handing it to the writer is the
+  # asserted flat path coming back in the file that was supposed to end it.
+  Assert "the tracker template declares where a spec lives, naming the path each layout writes to" {
+    $s = Get-Section (Get-SkillFile $trackerTemplate) 'Where a spec lives'
+    if ($s -notmatch '\.claude/designs/') { throw 'the flat layout names no path' }
+    if ($s -notmatch '\.claude/tickets/<effort>/spec\.md') { throw 'the per-effort layout names no path' }
+    if ($s -notmatch '\{[^}]+\}') { throw 'the section answers for the repository instead of asking the writer to declare' }
+    $true
+  }
+
+  # The detect test, scoped to the derivation instruction rather than to the
+  # section. Both recognitions also appear in the declared paragraphs a repository
+  # keeps, so a section-wide probe would stay green with the test deleted — the
+  # rule travelling with its own example, which is the failure the authoring
+  # standards name.
+  $derivation = {
+    $s = Get-Section (Get-SkillFile $trackerTemplate) 'Where a spec lives'
+    $m = [regex]::Match($s, '(?s)<!--(.*?)-->')
+    if (-not $m.Success) { throw 'the section carries no derivation instruction' }
+    $m.Groups[1].Value
+  }
+
+  Assert "the template says how the tree is read for the layout, shape by shape" {
+    $d = & $derivation
+    if ($d -notmatch '(?is)beside.{0,60}ticket') { throw 'the per-effort shape is not recognisable from the tree' }
+    if ($d -notmatch '(?is)designs directory') { throw 'the flat shape is not recognisable from the tree' }
+    $true
+  }
+
+  # The half that decides what a fresh repository gets. Without it the detect test
+  # has no answer for the commonest tree of all — one with no spec in it yet — and
+  # the file installs with the question open.
+  Assert "a tree holding neither shape takes the default rather than leaving a blank" {
+    $d = & $derivation
+    if ($d -notmatch '(?is)(neither|no spec)') { throw 'the tree holding neither shape is not addressed' }
+    if ($d -notmatch '(?is)(neither|no spec).{0,240}\bflat\b') { throw 'that case is addressed without saying which layout it takes' }
+    $true
+  }
+
+  $trackerStep = { Get-Paragraph (Get-SkillFile 'configure/SKILL.md') 'policies/tracker\.template\.md' }
+
+  Assert "/configure derives the declaration from the tree and never asks for it" {
+    $p = & $trackerStep
+    if ($p -notmatch '(?i)where a spec lives') { throw 'the generate step never names the declaration' }
+    if ($p -notmatch '(?i)tree') { throw 'the declaration is not sourced from the tree' }
+    if ($p -notmatch '(?i)(never ask|not asked|rather than ask|without asking|never by asking)') { throw 'nothing stops the layout being asked about' }
+    $true
+  }
+
+  # The single-home half. A derivation step that restates where a spec goes is a
+  # second answer to the question the declaration exists to hold, and it is the
+  # likeliest place for one — this is the paragraph that sends the writer to the
+  # test. Stated as a refusal of the subject in either form, path or prose, so a
+  # restatement that avoids the paths is caught too.
+  Assert "the generate step points at the test rather than restating where a spec goes" {
+    $p = & $trackerStep
+    if ($p -match '(?i)\.claude/designs|designs directory|spec\.md') { throw 'the generate step asserts a spec location of its own' }
+    $true
+  }
+
+  $auditBullet = {
+    $s = Get-Section (Get-SkillFile 'configure/SKILL.md') 'Audit'
+    $line = @($s -split '\r?\n' | Where-Object { $_ -match '(?i)where a spec lives' })
+    if ($line.Count -ne 1) { throw "the audit list carries $($line.Count) entries for the declaration" }
+    $line[0]
+  }
+
+  Assert "the audit writes the declaration where the tracker policy carries none" {
+    $b = & $auditBullet
+    if ($b -notmatch '(?i)(no such section|declares nothing|missing|absent|without one)') { throw 'the audit never considers a policy that declares nothing' }
+    if ($b -notmatch '(?i)(writ|add|backfill|detect)') { throw 'the audit finds the gap and does nothing about it' }
+    $true
+  }
+
+  # The other side of idempotence, and the reason the audit is safe to re-run: a
+  # repository that already answered is not answered at again. Without this the
+  # bullet above reads as licence to rewrite a correct declaration every run.
+  Assert "the audit reports nothing on a policy that already declares the layout" {
+    $b = & $auditBullet
+    if ($b -notmatch '(?i)(reports? nothing|nothing to report|no finding|left (as it is|alone|untouched)|is right)') {
+      throw 'a policy that already declares the layout has no stated outcome'
+    }
+    $true
+  }
+
+  # The dangling pointer, closed. The regenerator names the file; the file is
+  # installed from the template; the template now carries the section. Asserted as
+  # the chain rather than at either end, because either end alone was already true
+  # while the instruction resolved to nothing.
+  Assert "the regenerator's instruction to read the declaration resolves" {
+    $s = Get-Subsection (Get-SkillFile 'configure/SCRIPTS.md') 'designs index has two layouts'
+    if ($s -notmatch [regex]::Escape($trackerPolicy)) { throw "the regenerator does not send the reader to $trackerPolicy" }
+    $t = Get-SkillFile $trackerTemplate
+    if ($t -notmatch [regex]::Escape($trackerPolicy)) { throw "the template does not install to $trackerPolicy" }
+    Get-Section $t 'Where a spec lives' | Out-Null
+    $true
+  }
+}
+
+# --- ticket spec-home/02 — shipped surfaces read the declaration -------------
+
+# Four surfaces asserted the flat layout outright while the tree supported two.
+# Two were templates, so the wrong answer was installed; the other two are stages,
+# which nothing installs and no audit reads back — those had been telling every
+# configured repository to look somewhere it may not keep specs.
+#
+# One assertion per surface, deliberately. A single sweep over all four passes
+# while three are broken, which is the shape `.claude/rules/skills.md` names.
+Describe-Ticket 'spec-home/02' 'every shipped surface reads the spec-layout declaration' {
+
+  # Anchored to the subject rather than to the verbs the removed sentences used.
+  # The first version matched `written to` and `under`, so any other phrasing
+  # walked through it; these four files never legitimately name the designs
+  # directory — the ones that tabulate both layouts are elsewhere and are not on
+  # this list — so naming that path at all is the assertion.
+  $asserts = { param([string]$Text) $Text -match '\.claude/designs' }
+
+  # Anchored to the sentence, not the file. The first version asked whether the
+  # tracker policy was named *anywhere*, and two of these four name it for
+  # unrelated reasons — so the deferral this ticket installs could be deleted
+  # outright and the guard stayed green. Proximity to the subject is what makes
+  # it a deferral about where a spec lives rather than a coincidence.
+  $defers = {
+    param([string]$Text)
+    $Text -match '(?i)spec[^.\r\n]{0,120}\.claude/policies/tracker\.md' -or
+    $Text -match '(?i)\.claude/policies/tracker\.md[^.\r\n]{0,120}spec'
+  }
+
+  foreach ($surface in @(
+      'configure/policies/specs.template.md',
+      'configure/policies/tickets.template.md',
+      'design/SKILL.md',
+      'review/SKILL.md')) {
+    Assert "$surface reads where a spec lives rather than asserting it" {
+      $text = Get-SkillFile $surface
+      if (& $asserts $text) { throw "$surface still asserts where a spec is written" }
+      if (-not (& $defers $text)) {
+        throw "$surface names no declaration to read, so a reader is left to assume the default"
+      }
+      $true
+    }
+  }
+
+  # The self-contradiction the effort existed to remove: the format guide asserted
+  # a path near its top and stated eighty lines later that the layout varies. A
+  # reader could satisfy one or the other.
+  Assert "the spec format guide does not contradict itself about the layout" {
+    $text = Get-SkillFile 'configure/policies/specs.template.md'
+    if ($text -notmatch 'two layouts') {
+      throw 'the guide no longer states that the layout varies, so nothing is left to contradict'
+    }
+    if (& $asserts $text) { throw 'the guide states the layout varies and also asserts one' }
     $true
   }
 }
