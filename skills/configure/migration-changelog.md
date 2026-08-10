@@ -43,6 +43,46 @@ it declares no version
 
 ---
 
+## 1.16.0
+
+**Look at:** `.claude/rules/`, `CLAUDE.md`, `.claude/protocol.md`, `.claude/scripts/`, and the derived tool references.
+
+### A fourth always-on rule, which a repository configured earlier does not have
+
+`boundary.md` is new. It governs work belonging to a repository other than the one the session stands in: which acts are permitted there, which are not, and why permission to do a piece of work does not by itself settle where that work happens. A repository configured before this release has no such file, and its `CLAUDE.md` names three unconditional rules where four now load.
+
+The rule's own wording is not repeated here, and that is deliberate rather than terse: each of its clauses has exactly one home, and a changelog quoting them would become a second one.
+
+**Repaired**, both halves. A missing always-on rule is *absent* rather than declining — there is no repository-specific version to weigh against the template — so the audit installs it and adds it to the entrypoint's always-on list. The list is prose beside a set that is computed, which is exactly how it went wrong here; check the two against each other rather than reading the sentence.
+
+### The engineering standards gained two clauses
+
+One names the failure where a rule is satisfied in wording while the thing it existed to catch has been arranged out of reach. The other reaches a skill the user is meant to trigger, whose output gets produced by hand instead. Their wording lives in the engineering rules and is not repeated here, for the single-home reason given above.
+
+Both are **additive** — nothing installed became wrong — so they are **reported, not rewritten**. Do not re-derive an installed rules file to pick them up: a whole-file replacement reverts every standard that repository discovered for itself, and those are the point of the directory.
+
+### The router gained a stage-table row and a second judged line
+
+The routing table's first row now refuses a request that would change another repository, and it is first because every row beneath it matches such a request perfectly. The verification report's judgement half leads with which repository governs. A repository configured earlier routes such a request straight into `/design` and never asks the question.
+
+**Reported**, naming both sections, because a protocol file carries per-repository routing that a replacement would discard.
+
+### The generated-index prohibition gained something that enforces it
+
+Three installed policy files say a generated index is never hand-edited and that the prohibition is *enforced*. Until this release nothing in a configured repository enforced it. `SCRIPTS.md` now specifies a **regenerate-and-compare check** — a step in whatever already fails the build, not a third script, because `.claude/scripts/` holds only what that page specifies.
+
+**Repaired** by the audit's own re-check, which wires it in and runs its fixture first. Where the repository has nothing that fails a build, **say so and install nothing**: a gap somebody can see is better than a prohibition quietly asserted and enforced nowhere.
+
+### The index regenerator changed, and it is derived
+
+The evidence index's `Falsifies` cell now distinguishes a **waiting** finding from a **consumed** one, read off the finding's own mark and never inferred. **Re-derive the regenerator** from the page and regenerate; until then the committed index differs from what a regeneration produces, which the check above will report as drift rather than as the backfill it is.
+
+### Two derived tool references carried false facts
+
+The GitHub reference denied sub-issue and blocking flags that `gh` has had for releases. The stacking reference claimed a non-interactive submit opens pull requests as drafts, which `gt submit --help` does not say.
+
+**Reported.** These are derived per repository and are exactly where a repository keeps corrections that can be ahead of what ships, so refresh them **upward** through the refresh path rather than replacing them downward.
+
 ## 1.15.0
 
 **Look at:** the tracker policy, `.claude/policies/evidence.md`, and `.claude/policies/specs.md`.
