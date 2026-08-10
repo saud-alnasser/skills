@@ -1,5 +1,5 @@
 ---
-aep-version: 1.16.0
+aep-version: 1.17.0
 ---
 
 # Workflow protocol
