@@ -8224,10 +8224,9 @@ function Get-RoleFiles {
 }
 function Get-RoleFrontmatter {
   param([System.IO.FileInfo]$File)
-  $c = Get-Content $File.FullName -Raw
-  $m = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
-  if (-not $m.Success) { throw "$($File.Name) has no frontmatter" }
-  $m.Groups[1].Value
+  $fm = Get-Frontmatter (Get-Content $File.FullName -Raw)
+  if ($null -eq $fm) { throw "$($File.Name) has no frontmatter" }
+  $fm
 }
 
 Describe-Ticket 'orchestration/03' 'roles ship as named definitions' {
@@ -8365,10 +8364,9 @@ Describe-Ticket 'orchestration/03' 'roles ship as named definitions' {
   # The authoring standards are path-scoped, so a shipped surface they do not
   # name is one where they never load — the rules exist and simply do not fire.
   Assert "the authoring standards load when a role is edited" {
-    $c = Get-Content (Join-Path $repo '.claude/rules/skills.md') -Raw
-    $fm = [regex]::Match($c, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if (-not $fm.Success) { throw 'the authoring rules carry no frontmatter' }
-    if ($fm.Groups[1].Value -notmatch '(?m)^\s*-\s*"agents/\*\*"') {
+    $fm = Get-Frontmatter (Get-Content (Join-Path $repo '.claude/rules/skills.md') -Raw)
+    if ($null -eq $fm) { throw 'the authoring rules carry no frontmatter' }
+    if ($fm -notmatch '(?m)^\s*-\s*"agents/\*\*"') {
       throw 'agents/ ships but the authoring standards are not scoped to it'
     }
     $true
@@ -10017,9 +10015,11 @@ Describe-Ticket 'worktrees/02' 'adopt the covered ignore rule here' {
     if (-not (Test-Path $p)) { throw 'there is no installed ignore file' }
     $block = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?ms)^```gitignore\r?\n(.*?)^```')
     if (-not $block.Success) { throw 'the shipped block is gone' }
-    # Line endings only. The file is checked out with the platform's, and a
-    # comparison that failed on CRLF would fail on Windows and pass in CI —
-    # which is the shape of green that hides a real divergence.
+    # Line endings only. The checkout is pinned to LF now, so this normalisation
+    # is no longer what makes the comparison work — it is what keeps the
+    # comparison from depending on that pin. A raw comparison would fail on
+    # whichever ending it was not written for, which is the shape of green that
+    # hides a real divergence.
     $norm = { param($t) ($t -replace '\r\n', "`n").TrimEnd() }
     if ((& $norm $block.Groups[1].Value) -ne (& $norm (Get-Content $p -Raw))) {
       throw 'the installed ignore file has diverged from the block AEP distributes'
@@ -10259,10 +10259,12 @@ Describe-Ticket 'mechanics/05' 'a routing table is generated from declared field
 # the rule, and this one is the thing that would have caught the relationship
 # going wrong while nobody had declared there was one.
 #
-# `(?m)$` cannot be used to bound a table row here. The files are CRLF, so
-# `[^\r\n]*` stops before the `\r` while `$` matches before the `\n` — the two
-# positions differ by one character and every such match silently fails. Found
-# by a row check that reported "no row" for all seven stages.
+# `(?m)$` cannot be used to bound a table row here. Under CRLF `[^\r\n]*` stops
+# before the `\r` while `$` matches before the `\n` — the two positions differ by
+# one character and every such match silently fails. Found by a row check that
+# reported "no row" for all seven stages, on a checkout that was CRLF at the
+# time. The pin makes that checkout LF and does not make this safe to undo: a
+# pattern that only works under one ending is what `line-endings/01` removed.
 Describe-Ticket 'mechanics/09' 'the stage-dependency set has two homes, and the table wins' {
 
   $s5  = Get-SpecSection 5
@@ -10703,10 +10705,10 @@ Describe-Ticket 'mechanics/07' 'contexts declare their sources and their load co
 
   $parseFields = {
     param([string]$Text)
-    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if (-not $fm.Success) { return $null }
-    $lw = [regex]::Match($fm.Groups[1].Value, '(?m)^load-when:\s*(.+?)\s*$')
-    $sr = [regex]::Match($fm.Groups[1].Value, '(?m)^sources:\s*\[(.*?)\]\s*$')
+    $fm = Get-Frontmatter $Text
+    if ($null -eq $fm) { return $null }
+    $lw = [regex]::Match($fm, '(?m)^load-when:\s*(.+?)\s*$')
+    $sr = [regex]::Match($fm, '(?m)^sources:\s*\[(.*?)\]\s*$')
     if (-not $lw.Success -or -not $sr.Success) { return $null }
     @{
       LoadWhen = $lw.Groups[1].Value
@@ -10861,9 +10863,8 @@ Describe-Ticket 'mechanics/08' 'the decisions index is generated, and review rou
 
   $readFields = {
     param([string]$Text)
-    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if (-not $fm.Success) { return $null }
-    $b = $fm.Groups[1].Value
+    $b = Get-Frontmatter $Text
+    if ($null -eq $b) { return $null }
     $get = { param($n) $m = [regex]::Match($b, "(?m)^$n`:\s*(.*?)\s*$"); if ($m.Success) { $m.Groups[1].Value } else { $null } }
     $lw = & $get 'load-when'
     $st = & $get 'status'
@@ -11048,9 +11049,8 @@ Describe-Ticket 'mechanics/12' 'this repository''s decisions and contexts declar
 
   $readFields = {
     param([string]$Text)
-    $fm = [regex]::Match($Text, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if (-not $fm.Success) { return $null }
-    $b = $fm.Groups[1].Value
+    $b = Get-Frontmatter $Text
+    if ($null -eq $b) { return $null }
     $get = { param($n) $m = [regex]::Match($b, "(?m)^$n`:\s*(.*?)\s*$"); if ($m.Success) { $m.Groups[1].Value } else { $null } }
     $lw = & $get 'load-when'
     if (-not $lw) { return $null }
@@ -13100,10 +13100,9 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
 
   Assert "both protocol copies declare the release as a field" {
     foreach ($p in @((Join-Path $repo '.claude/protocol.md'), (Join-Path $skills 'configure/protocol.template.md'))) {
-      $c = Get-Content $p -Raw
-      $m = [regex]::Match($c, '(?ms)\A---\r?\n(.*?)\r?\n---')
-      if (-not $m.Success) { throw "$(Split-Path -Leaf $p) has no frontmatter" }
-      if ($m.Groups[1].Value -notmatch '(?m)^aep-version:[ \t]*(\S+)[ \t]*$') { throw "$(Split-Path -Leaf $p) declares no aep-version" }
+      $fm = Get-Frontmatter (Get-Content $p -Raw)
+      if (-not $fm) { throw "$(Split-Path -Leaf $p) has no frontmatter" }
+      if ($fm -notmatch '(?m)^aep-version:[ \t]*(\S+)[ \t]*$') { throw "$(Split-Path -Leaf $p) declares no aep-version" }
     }
     $true
   }
@@ -13115,7 +13114,7 @@ Describe-Ticket 'axis/04' 'the protocol records the release it was written by' {
   Assert "the manifest, the specification and the template agree on the release" {
     $manifest = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
     $spec = [regex]::Match((Get-Content (Join-Path $repo 'specs.md') -Raw), '(?m)^\*\*Version:\*\*\s*(\S+)\s*$').Groups[1].Value
-    $tpl = [regex]::Match((Get-SkillFile 'configure/protocol.template.md'), '(?m)^aep-version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
+    $tpl = [regex]::Match((Get-Frontmatter (Get-SkillFile 'configure/protocol.template.md')), '(?m)^aep-version:[ \t]*(\S+)[ \t]*$').Groups[1].Value
     $seen = @($manifest, $spec, $tpl) | Sort-Object -Unique
     if ($seen.Count -ne 1) { throw "manifest $manifest, spec $spec, template $tpl" }
     $true
@@ -14325,6 +14324,257 @@ Describe-Ticket 'receipt/04' 'commit refuses an unattested position, and the pro
         }
         if ($b -match '(?m)^\s*→') { throw "$f's example uses an arrow the report no longer emits" }
       }
+    }
+    $true
+  }
+}
+
+# --- ticket line-endings/01 — assertions do not depend on the checkout -------
+
+# `Get-Frontmatter` strips carriage returns and says it is "the one place
+# frontmatter is extracted". It was not — five other places extracted their own,
+# and the two failure shapes are different from each other:
+#
+#   read the whole file and match the field against it, extracting nothing.
+#     The `\r` sits between the value and the line end, `[ \t]*$` cannot consume
+#     it, and the field reads as absent. This is the one that failed.
+#
+#   extract frontmatter with a private copy of the pattern that does not strip.
+#     This one passed, and the reason is worth recording: both protocol files
+#     declare a single field, so the closing `\r?\n---` consumed the only
+#     carriage return there was. Declaring a second field would have broken it.
+#
+# One guard cannot cover both, because only the first has the read and the match
+# in one statement — which is why the guard that catches it is scoped to a
+# statement and the guard that catches the second is scoped to extraction. A
+# single line-scoped guard was written first and caught only the failing shape;
+# it is the guard-that-cannot-fire failure `.claude/rules/skills.md` describes,
+# found by review rather than by the suite.
+Describe-Ticket 'line-endings/01' 'assertions stop depending on the checkout''s line endings' {
+
+  # The mechanism, proved rather than assumed. Multi-line frontmatter
+  # deliberately: a single-line fixture passes even when the stripping is
+  # removed, which is exactly how the second site above hid.
+  Assert "the frontmatter reader returns every field from a CRLF file" {
+    $crlf = "---`r`naep-version: 9.9.9`r`nstatus: accepted`r`n---`r`n`r`n# Body`r`n"
+    $fm = Get-Frontmatter $crlf
+    if ($null -eq $fm) { throw 'no frontmatter was found in a CRLF file' }
+    if ($fm -match "`r") { throw 'the reader returned text still carrying a carriage return' }
+    foreach ($pair in @(@('aep-version', '9.9.9'), @('status', 'accepted'))) {
+      $m = [regex]::Match($fm, "(?m)^$($pair[0]):[ \t]*(\S+)[ \t]*$")
+      if (-not $m.Success) { throw "$($pair[0]) read as absent from a CRLF file" }
+      if ($m.Groups[1].Value -ne $pair[1]) { throw "$($pair[0]) read as '$($m.Groups[1].Value)'" }
+    }
+    $true
+  }
+
+  # The shape that failed. Scoped to a *statement* rather than a line, because
+  # the read and the match are routinely spread over several: the first version
+  # of this compared one line at a time and was blind to every multi-line form.
+  #
+  # Fragility is asked of the pattern rather than assumed from its spelling — an
+  # anchor that can consume `\r` is safe however it is written, and one that
+  # cannot is fragile however it is written. Safety is likewise asked of the
+  # expression, not looked up in a list of helper names: the first version named
+  # three readers and the suite has a dozen.
+  Assert "no statement matches a frontmatter field against text it read raw" {
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+      (Join-Path $repo 'scripts/verify.ps1'), [ref]$null, [ref]$parseErrors)
+    if ($parseErrors) { throw "the suite no longer parses: $($parseErrors[0].Message)" }
+
+    # Fragile means the match *fails* when a carriage return is present — not
+    # merely that it captures one. `(.+)$` and `\s*$` still match and are left
+    # alone; a field read ending in a class that excludes `\r` does not match at
+    # all, and that is the defect. The subject is therefore a frontmatter field
+    # read specifically, which is also what keeps markdown tables and headings —
+    # line-anchored, but not fields — out of this.
+    $fragile = {
+      param([string]$Pattern)
+      if ($Pattern -notmatch '^\(\?[a-z]*m[a-z]*\)\^\[?[\w \\t\]+-]*[\w-]+:') { return $false }
+      $bare = $Pattern -replace '\$[A-Za-z_{(]', ''
+      if ($bare -notmatch '\$') { return $false }
+      if ($bare -match '\\s\*\$') { return $false }
+      $bare -notmatch '\(\.[+*]\)\$'
+    }
+
+    $offenders = @()
+    foreach ($stmt in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.StatementAst] }, $true)) {
+      $text = $stmt.Extent.Text
+      if ($text -match 'Get-Frontmatter' -or $text -match '-replace\s*"`r"') { continue }
+      if ($text -notmatch 'Get-Content[^\r\n]*-Raw|Get-SkillFile|Get-SkillText|Get-RepoText|ReadAllText') { continue }
+      $patterns = $stmt.FindAll({
+          param($n) $n -is [System.Management.Automation.Language.StringConstantExpressionAst]
+        }, $true)
+      foreach ($p in $patterns) {
+        if (& $fragile $p.Value) {
+          $offenders += "line $($stmt.Extent.StartLineNumber): $($p.Value)"
+          break
+        }
+      }
+    }
+    if ($offenders) {
+      throw "a field is read from unstripped text at $($offenders -join '; ') — extract through Get-Frontmatter"
+    }
+    $true
+  }
+
+  # The shape that hid. Its defining act is extracting frontmatter with a private
+  # copy of the pattern, which no statement-scoped check can see — the extraction
+  # and the field read are separate statements joined only by a variable.
+  #
+  # So this asks the narrower question that actually distinguishes it: who
+  # extracts. The single home is allowed to; nothing else is, whether or not it
+  # remembers to strip. That is what makes `Get-Frontmatter`'s own comment true
+  # rather than aspirational.
+  Assert "frontmatter is extracted in one place, and that place strips carriage returns" {
+    $lines = Get-Content (Join-Path $repo 'scripts/verify.ps1')
+    $extractors = @()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+      # The frontmatter-capturing shape specifically. A pattern that captures
+      # what follows the closing delimiter is reading the body, which is a
+      # different subject and is left alone.
+      if ($lines[$i] -match '\\A---\\r\?\\n\(\.\*\\?\?\)') { $extractors += $i + 1 }
+    }
+    if ($extractors.Count -ne 1) {
+      throw "frontmatter is extracted at lines $($extractors -join ', ') — it belongs in Get-Frontmatter alone"
+    }
+    $first = $extractors[0] - 1
+    $last = [Math]::Min($first + 2, $lines.Count - 1)
+    if (($lines[$first..$last] -join "`n") -notmatch '-replace\s*"`r"') {
+      throw 'the one extractor no longer strips carriage returns'
+    }
+    $true
+  }
+}
+
+# --- ticket line-endings/02 — the checkout pins its ending, the script emits it
+
+# Every assertion here asks git, or runs the script and reads the bytes. None
+# reads the attributes file's text, for the reason the `agentic/01` block gives
+# about ignore rules: a pattern can be present and reach nothing — unanchored,
+# or shadowed by a later line — and only git knows which ending a path gets.
+#
+# Paths go to `git check-attr` as arguments rather than down `--stdin`. A
+# PowerShell pipe joins its input with the platform's ending, so a path arrives
+# as `scripts/verify.ps1\r` and git answers about a file of that name; here `*`
+# matches it anyway and the wrong answer is indistinguishable from the right
+# one. Verified by running it — the trailing `\r` comes back quoted in git's
+# own echo of the path.
+Describe-Ticket 'line-endings/02' 'the checkout pins its line ending, and the regenerator emits it' {
+
+  # Batched because the subject is *every* tracked file. A sample passes while a
+  # pattern that reaches only part of the tree leaves the rest a function of
+  # `core.autocrlf`, which is the divergence this ticket removes; 100 at a time
+  # keeps the argument list well inside what a process can be handed.
+  $eolValues = {
+    $all = @(& git -C $repo ls-files)
+    if ($all.Count -eq 0) { throw 'git reported no tracked files' }
+    $seen = @{}
+    for ($i = 0; $i -lt $all.Count; $i += 100) {
+      $chunk = $all[$i..([Math]::Min($i + 99, $all.Count - 1))]
+      foreach ($line in (& git -C $repo check-attr eol -- @chunk)) {
+        if ($line -match ':\s*eol:\s*(\S+)\s*$') { $seen[$Matches[1]] = $true }
+      }
+    }
+    $seen.Keys
+  }
+
+  # The outcome rather than the entry: what fails this is a tree where two
+  # clones can hold different bytes for one commit, however that came about.
+  # `unspecified` is the state before the pin existed, and one file left in it
+  # is enough — that file is the one whose ending is still a local setting's.
+  Assert "every tracked file has its working-tree ending pinned, asked of git" {
+    $values = @(& $eolValues)
+    if ($values -contains 'unspecified') {
+      throw "the checkout's ending is unpinned for at least one tracked file — it is still a function of core.autocrlf there"
+    }
+    if ($values.Count -ne 1) {
+      throw "the tree pins more than one ending: $($values -join ', ') — which files hold which becomes a fact somebody has to know"
+    }
+    $true
+  }
+
+  # ADR 0069 rejected pinning the generated indexes alone and pinning CRLF; what
+  # neither of those turns on is *detection*, and forcing `text` is the way this
+  # goes wrong silently. There is nothing binary tracked here today, so the
+  # damage would land on whoever adds the first one — which is why this checks
+  # the mechanism rather than counting the tree's current contents.
+  Assert "the pin lets git decide what is text, so nothing binary is converted" {
+    $probe = @('README.md', 'scripts/verify.ps1', '.claude/scripts/regenerate-indexes.ps1')
+    foreach ($line in (& git -C $repo check-attr text -- @probe)) {
+      if ($line -notmatch ':\s*text:\s*(\S+)\s*$') { throw "could not read the text attribute: $line" }
+      if ($Matches[1] -ne 'auto') {
+        throw "the text attribute is '$($Matches[1])', not auto — conversion no longer depends on git detecting text, so a binary file would be normalised"
+      }
+    }
+    $true
+  }
+
+  # The agreement, which is the whole of the defect: `SCRIPTS.md` requires the
+  # checkout's ending, and the script wrote the platform's because nothing made
+  # the checkout's obtainable. So the pinned value is read from git rather than
+  # written here — a literal would pass by matching itself while the two drifted
+  # apart, and the two drifting apart is the failure.
+  #
+  # What this cannot see, stated rather than left to be discovered: where the
+  # pin happens to name the running platform's own ending, the defect and the
+  # correct answer produce identical bytes and no behavioural check can tell
+  # them apart. It fires here, on Windows under an LF pin, which is the
+  # configuration the defect was invisible in.
+  Assert "the regenerator emits the ending the checkout pins, not the platform's" {
+    $pinned = $null
+    foreach ($line in (& git -C $repo check-attr eol -- '.claude/contexts/map.md')) {
+      if ($line -match ':\s*eol:\s*(\S+)\s*$') { $pinned = $Matches[1] }
+    }
+    if (-not $pinned -or $pinned -eq 'unspecified') { throw 'the tree pins no ending to compare the script against' }
+
+    $root = & $mkIndexTree @{}
+    try {
+      foreach ($family in 'contexts', 'decisions') {
+        Copy-Item (Join-Path $repo ".claude/$family") (Join-Path $root ".claude/$family") -Recurse
+      }
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      foreach ($family in 'contexts', 'decisions') {
+        $bytes = [System.IO.File]::ReadAllBytes((Join-Path $root ".claude/$family/map.md"))
+        # Read as bytes, because every text reader in .NET hides the difference
+        # this is looking for.
+        $cr = 0x0D; $lf = 0x0A
+        for ($i = 0; $i -lt $bytes.Length; $i++) {
+          if ($bytes[$i] -eq $lf) {
+            $precededByCr = ($i -gt 0 -and $bytes[$i - 1] -eq $cr)
+            if ($pinned -eq 'lf' -and $precededByCr) {
+              throw "$family/map.md was written CRLF at byte $i while the checkout pins lf — the byte comparison would report this as a stale index"
+            }
+            if ($pinned -eq 'crlf' -and -not $precededByCr) {
+              throw "$family/map.md was written LF at byte $i while the checkout pins crlf — the byte comparison would report this as a stale index"
+            }
+          }
+          if ($pinned -eq 'lf' -and $bytes[$i] -eq $cr) {
+            throw "$family/map.md carries a carriage return at byte $i while the checkout pins lf"
+          }
+        }
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The record, not the code. `declared-fields/05` filed this as a live cost of
+  # the environment, and that framing is why nothing acted on it for several
+  # releases — an environmental limitation has nobody to fix it. Anchored on the
+  # false claim itself rather than on the wording that replaced it, so it fires
+  # if the old framing comes back under any phrasing of the correction.
+  Assert "the limitation recorded against the regenerator is closed, as a script defect" {
+    $t = Get-Content (Join-Path $repo '.claude/tickets/declared-fields/issues/05-the-index-regenerator-and-its-comparison.md') -Raw
+    if ($t -match '(?i)remains a live limitation') {
+      throw 'the limitation is still recorded as live'
+    }
+    if ($t -notmatch '(?i)`?\.gitattributes`?') {
+      throw 'the record does not name what closed it'
+    }
+    if ($t -notmatch '(?i)defect in (a|the) (derived )?script|script defect') {
+      throw 'the record does not say it was a defect in the script rather than a cost of the environment'
     }
     $true
   }

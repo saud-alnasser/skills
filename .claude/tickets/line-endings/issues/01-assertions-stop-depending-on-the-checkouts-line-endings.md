@@ -1,6 +1,6 @@
 ---
 title: 'fix(verify): assertions stop depending on the checkout''s line endings'
-status: open
+status: resolved
 blocked-by: []
 part-of: line-endings
 ---
@@ -47,3 +47,28 @@ other effort ends its acceptance with the suite passing.
   guard is anchored to the subject rather than to the corrected wording.
 - No file's contents change beyond the suite itself.
 - `pwsh -NoProfile -File scripts/verify.ps1` passes.
+
+## Comments
+
+**The first criterion does not close here, and closes with ticket 02.** Review
+checked out the same commit with conversion disabled and ran this work against
+it: three index comparisons fail, because the regenerator emits the platform's
+ending into a tree holding the other one. That is ticket 02's defect and is
+correctly absent from this diff — but it means "the same verdict on a tree
+holding either ending" cannot be satisfied by hardening alone. Every other
+criterion is met here.
+
+**The class was five sites, not one.** Beyond the assertion that failed, four
+more places extracted frontmatter with a private copy of the pattern. One of
+them served four live assertions and returned text still carrying the carriage
+return; they gave the right verdict only because the reads that followed
+happened to absorb it. All are now routed through the single home, and a guard
+asserts that home is the only extractor — which is what makes its own comment
+true rather than aspirational.
+
+**The first guard written here could not fire on the defect that produced the
+ticket.** It compared one line at a time, so it caught the read-and-match-in-one-
+statement shape and was blind to the extract-then-match-later shape. Both
+reviewers found it independently. It was replaced rather than patched, and each
+guard is now confirmed against a deliberate reintroduction of *both* shapes
+rather than of the one that was convenient to reproduce.

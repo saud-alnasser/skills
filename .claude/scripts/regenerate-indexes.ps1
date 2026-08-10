@@ -43,19 +43,18 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# The checkout's own convention, which the repository does not pin: there is no
-# `.gitattributes`, so what lands on disk is whatever that clone's `core.autocrlf`
-# produced. Emitting a fixed ending would make byte-for-byte comparison fail on
-# every platform but the author's, and fail *as a stale index* rather than as the
-# line-ending disagreement it is.
+# The checkout's own ending, which this repository pins: `.gitattributes` sets
+# `eol=lf`, and that overrides every clone's `core.autocrlf`, so LF is what git
+# put on disk here whatever the platform and whatever the local setting says.
+# Byte-for-byte comparison is against what git put on disk, which is why this
+# tracks the pin rather than the platform.
 #
-# The platform's ending is right under the settings actually in use — this machine
-# resolves `autocrlf=true` from system scope, and POSIX clones default to leaving
-# LF alone. It is not right for a Windows clone configured `autocrlf=input`, which
-# would hold LF on disk and see the comparison fail. Pinning the ending with a
-# `.gitattributes` is the durable fix and is a repository-wide change nobody has
-# asked for; ticket 05 records it rather than making it here.
-$script:NL = [Environment]::NewLine
+# The platform's ending was here before the pin existed, and was correct under
+# exactly one configuration — `autocrlf=true` on Windows. Under `autocrlf=input`
+# the checkout held LF while this wrote CRLF, and the comparison failed *as a
+# stale index* rather than as the line-ending disagreement it was. ADR 0069 has
+# why the pin was chosen over teaching this script to detect the ending.
+$script:NL = "`n"
 
 # `map.md` is the output, so it is never also an input. Without this the first
 # regeneration after the first regeneration would index the index.
