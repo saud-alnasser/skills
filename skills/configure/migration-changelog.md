@@ -28,10 +28,14 @@ Every repair a repository needs because of **which release configured it**, grou
 ## How the audit reads this
 
 ```
-.claude/protocol.md declares aep-version: X
+.claude/protocol.md declares version: X
   → consider every repair below from a release newer than X
 
-it declares no version
+it declares only the legacy field
+  → read X by falling back to `aep-version` — retired in 1.19.0; a
+    repository still carrying it has not been audited since
+
+it declares no version at all
   → consider all of them
 ```
 
@@ -39,9 +43,17 @@ it declares no version
 
 **The cursor narrows what is considered, never what is verified.** Every repair below still recognises its shape by content before touching anything, so a repair considered against a repository that never had the shape is a no-op rather than a mistake.
 
-**The field arrived in 1.13.0.** Every repository configured before that declares nothing and receives all of these regardless of how they are filed, so the assignments below govern repositories configured from 1.13.0 onward.
+**The cursor field arrived in 1.13.0 as `aep-version`, and became `version` in 1.19.0.** Every repository configured before 1.13.0 declares nothing and receives all of these regardless of how they are filed, so the assignments below govern repositories configured from 1.13.0 onward.
 
 ---
+
+## 1.19.0
+
+**Look at:** `.claude/protocol.md`'s frontmatter, and every installed framework-owned file's.
+
+### `aep-version` retires — the value is dropped, never preserved
+
+A repository configured between 1.13.0 and 1.18.x declares `aep-version` in its protocol file. The field retired in 1.19.0: the entry's `version` carries the installation's release now, because every release stamps the entry template, so one field speaks for the whole. The verbatim replacement of the protocol file performs the repair on its own — **do not preserve the old field through the upgrade**: it stopped being an extension point, and a preserved copy would shadow the survivor for every later reader. The release hook and the cursor above both fall back to reading it until the replacement lands, so nothing goes silent in the window.
 
 ## 1.18.0
 
@@ -129,7 +141,7 @@ No repair. This release moved the dated repairs into this file and taught the au
 
 ### The protocol declares no release
 
-A protocol file with no `aep-version` field gains one, set to the release running the audit. The field is the only thing in that file an audit changes without the change being a repair. Left absent, the session hook cannot report anything and this cursor has nothing to read.
+**Retired by the 1.19.0 entry below — a repository reached today never gains the field.** The verbatim replacement writes the protocol file with its `version` stamp, which is what this repair existed to provide; writing `aep-version` now would plant the retired field for the same audit's later entry to drop. Kept as the record of what 1.13.0 required: a protocol file with no `aep-version` field gained one, set to the release running the audit.
 
 ## 1.11.0
 

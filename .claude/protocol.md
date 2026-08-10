@@ -1,12 +1,11 @@
 ---
-aep-version: 1.18.0
 owner: framework
-version: 1.18.0
+version: 1.19.0
 ---
 
 # Workflow protocol
 
-This repository runs the **Agentic Engineering Protocol**; this file is its router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted. It is framework law: nothing below is specific to any one repository — every path it names is protocol machinery identical wherever the protocol is installed, and the forge reference is a role precisely so the table never has to name a repository's choice. What a repository may vary is the `aep-version` value and the entries of a `## Deviations` section, and nothing else.
+This repository runs the **Agentic Engineering Protocol**; this file is its router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted. It is framework law: nothing below is specific to any one repository — every path it names is protocol machinery identical wherever the protocol is installed, and the forge reference is a role precisely so the table never has to name a repository's choice. What a repository may vary is the entries of a `## Deviations` section, and nothing else.
 
 <!--
   Installed by /configure at `.claude/protocol.md`, verbatim.
@@ -68,7 +67,7 @@ Every skill that relies on Context opens with a verification report — **includ
 
 ## The release this protocol was written by
 
-The `aep-version` field above declares which release of the workflow wrote this file; `/configure` sets it and nothing else changes it. **Nothing here compares it** — the comparison needs the *running* release, reachable only from what the framework ships, so a `SessionStart` hook the plugin carries makes it once per session, saying one line on a mismatch and nothing on a match. A file declaring no version is **unknown rather than stale**, and a reader without the plugin loses a notification rather than a rule. The `version` field every framework-owned file declares — this one included — is a different fact: the release that last changed that file's content, written where the file is authored and varied by nobody. `/configure` re-stamps `aep-version` and never touches `version`.
+The `version` field every framework-owned file declares is the release that last changed that file's content, written where the file is authored and varied by nobody. On this file it is more: every release stamps this template whether or not anything else in it moved, so the entry's stamp is always the release itself and one field speaks for the whole installation. **Nothing here compares it** — the comparison needs the *running* release, reachable only from what the framework ships, so a `SessionStart` hook the plugin carries makes it once per session, saying one line on a mismatch and nothing on a match. A file declaring no version is **unknown rather than stale**, and a reader without the plugin loses a notification rather than a rule.
 
 ## Recovering a broken Source Pointer
 
