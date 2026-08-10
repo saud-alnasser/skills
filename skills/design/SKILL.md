@@ -28,6 +28,8 @@ Then, in order:
 
    **Waiting is read off the finding, never derived.** Which line answers it is `.claude/policies/evidence.md`'s. Opening the knowledge a finding falsified in order to work out whether anyone had already healed it is the cost that line removes — and it is a cost paid *before* anyone knows the finding was spent.
 
+   **Raise every finding the index shows as waiting whose area this work touches** — not only the ones this run planned to open. The index already says which are waiting, so noticing them costs nothing beyond the read you have just done, and the alternative is a finding sitting unanswered until an audit happens to run. Raising it is putting it in front of somebody positioned to answer it; **it is never deciding that it was consumed.** Whether the healing landed is the reader's call on the evidence, and a wrong guess retires a finding nobody acted on.
+
 Open with the one-line verification report, including when there was nothing to verify.
 
 ## 2 — State your understanding
@@ -128,6 +130,8 @@ A ticket may also carry a **fan-out** — the declaration that its work divides.
 2. show it, iterate on it, get it approved
 3. only then create — root first, then each child, then the links
 ```
+
+**Step 3 opens by re-running the protocol-only check on the final set**, immediately before the first issue is created — not only when the set was cut, because step 2 iterates and creating is the act that publishes. `.claude/policies/tickets.md` has the test; read it off the diff each ticket would produce. A ticket that fails it leaves the set and rides its consumer, and the rest are created.
 
 The set lives in the design document until step 3: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal.
 

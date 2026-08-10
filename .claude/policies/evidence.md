@@ -64,6 +64,10 @@ Consumed: `.claude/policies/tracker.md`, "What a ticket is" — <effort>/NN
 
 Without it a healed finding and a waiting one are the same file in the same directory, so every later design run re-derives which is which by opening the knowledge each one falsified. That is not a hypothetical cost: it is paid on every run, by the one stage obliged to read this directory.
 
+**The index carries the answer, so a waiting finding is seen without opening one.** A finding that named something to heal reads as `waiting` on `.claude/evidence/map.md` until its `Consumed:` line lands, and as `consumed` afterwards; one declaring `falsifies: []` reads as neither, having named nothing. That is why the surfacing needs no sweep and no second mechanism: a stage already reads this index, and the state is a column on the read it was already doing.
+
+**The index reports the line and decides nothing.** It repeats what the finding says about itself and never works out from the healed knowledge whether somebody acted — an unmarked finding shows as waiting, which is the same safe direction the rule below sets, now visible to whoever is positioned to answer it rather than only to an audit months later.
+
 **The account itself is frozen, and the line sits beside it rather than inside it.** A finding is the dated record of a check; editing the account to say it was later fixed destroys the only thing it was kept for. Nothing about what was checked, when, or against which commit ever moves.
 
 **Whoever heals writes it, in the same change as the healing.** A finding healed in one change and marked in another has a window where it reads as waiting — the same reason a correction lands in the commit that falsified the statement rather than in a later one. A finding whose consumption cannot be established is left unmarked, which reads as waiting: that is the safe direction, and inferring the other one is the guess this format exists to prevent.

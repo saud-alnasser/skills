@@ -25,6 +25,14 @@ Read the reference — never try a flag and see. `.claude/tools/` covers every t
 
 Committing happens as part of building, without being asked. Pushing, opening a pull request, and submitting a stack are the human's call — the actions they cannot undo locally. A commit is reversible in this clone and nothing after it is; that is what makes committing unasked safe and the prohibition load-bearing.
 
+## Obeying a rule means letting its check fire
+
+A rule exists to force a check. Keeping its letter while arranging that the check cannot fire violates it more completely than defiance does — defiance at least leaves a trace in the command. Before satisfying a rule, ask what it would have caught and whether that is still reachable.
+
+## A user-invoked skill is invoked by the user
+
+Producing such a skill's deliverable by hand is invoking it without the user's decision. It covers every user-invoked skill AEP ships, and binds the run that never reached for one exactly as it binds the run that reached and was blocked.
+
 ## What gets written
 
 - Code explains itself: a comment that explains _what_ the code does marks code to improve, not annotate. Comments say _why_.

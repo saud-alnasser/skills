@@ -1,6 +1,6 @@
 ---
 title: 'fix(configure): the generated-index prohibition gains the mechanism it asserts'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---

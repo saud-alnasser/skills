@@ -1,6 +1,6 @@
 ---
 title: 'feat(rules): the standards name keeping a rule''s letter while removing its check'
-status: open
+status: resolved
 blocked-by: [03]
 part-of: downstream
 ---

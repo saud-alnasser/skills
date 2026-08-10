@@ -148,9 +148,13 @@ function Format-SourceCell {
   ($Sources | ForEach-Object { '`' + $_ + '`' }) -join ', '
 }
 
+# $Text is the file already read, for the one caller that needs the body as well
+# as the fields. Without it that caller reads every finding twice — the defect
+# `New-DesignIndex` records having fixed, reintroduced one family along.
 function Read-IndexedDocument {
-  param([System.IO.FileInfo]$File, [string[]]$Required)
-  $fields = Get-DeclaredField (Get-Content $File.FullName -Raw)
+  param([System.IO.FileInfo]$File, [string[]]$Required, [string]$Text)
+  if (-not $Text) { $Text = Get-Content $File.FullName -Raw }
+  $fields = Get-DeclaredField $Text
   if ($null -eq $fields) { throw "$($File.Name) declares no fields" }
   foreach ($r in $Required) {
     if (-not $fields.ContainsKey($r)) { throw "$($File.Name) declares no $r field" }
@@ -212,6 +216,32 @@ function New-ContextIndex {
   ($lines -join $script:NL) + $script:NL
 }
 
+# The finding's own consumption mark, taken from the body rather than from
+# frontmatter — the one value any index reads from outside the fields. The mark
+# is where a finding already records its healing, so a declared field mirroring
+# it would be a second home for one fact, free to disagree with the first.
+#
+# A mark naming nothing is not an answer, so it reads as waiting exactly as an
+# absent one does. Unknown resolving to *unhealed* is the safe direction: the
+# opposite retires evidence nobody acted on, which is the guess the format
+# exists to prevent.
+function Test-ConsumptionMark {
+  param([string]$Text)
+  [regex]::IsMatch($Text, '(?m)^Consumed:[ \t]*\S')
+}
+
+# What a finding falsifies, and whether that has been healed. Three states and
+# three renderings, because the reader's question — is anything still waiting? —
+# has to be answerable from this column without opening a file. A finding
+# declaring `[]` keeps the bare em dash: it named nothing to heal, so neither
+# state applies to it.
+function Format-FalsifiesCell {
+  param([string[]]$Falsifies, [bool]$Consumed)
+  if (-not $Falsifies -or $Falsifies.Count -eq 0) { return [char]0x2014 }
+  $state = if ($Consumed) { 'consumed' } else { 'waiting' }
+  "$state $([char]0x2014) $(Format-SourceCell $Falsifies)"
+}
+
 <#
 .SYNOPSIS
   The evidence index: one row per finding, spanning every kind.
@@ -225,6 +255,12 @@ function New-ContextIndex {
 
   Takes the findings already located, because a kind only has a directory once
   it has a file and finding them is a walk rather than a listing.
+
+  The falsifies cell carries the finding's consumption state, so a finding still
+  waiting to be healed is visible from the index without opening it. The state is
+  read off that finding's own mark and never inferred from the knowledge it
+  falsified — deciding consumption stays a reader's act, and this index only
+  reports what the file already says.
 #>
 function New-EvidenceIndex {
   param([object[]]$Findings)
@@ -236,7 +272,8 @@ function New-EvidenceIndex {
     # already refuses an absent one below, and while both checked it a mutation
     # removing either left the other refusing the same file — the redundancy
     # `declared-fields/05` found and resolved the same way.
-    $d = Read-IndexedDocument -File (Get-Item $f.Path) -Required @('kind')
+    $text = Get-Content $f.Path -Raw
+    $d = Read-IndexedDocument -File (Get-Item $f.Path) -Required @('kind') -Text $text
     # A declared kind that disagrees with the directory would put the row under
     # one kind and its link under another, silently — and the column ADR 0056
     # made load-bearing would be the half that lies.
@@ -244,7 +281,8 @@ function New-EvidenceIndex {
       throw "$($f.Name).md declares kind '$($d['kind'])' and sits in '$($f.Kind)'"
     }
     $falsifies = Split-DeclaredList "$($f.Name): falsifies" $d['falsifies']
-    "| [$($f.Name)]($($f.Kind)/$($f.Name).md) | $($d['kind']) | $(Format-SourceCell $falsifies) |"
+    $cell = Format-FalsifiesCell $falsifies (Test-ConsumptionMark $text)
+    "| [$($f.Name)]($($f.Kind)/$($f.Name).md) | $($d['kind']) | $cell |"
   }
   $lines = @('# Evidence map', '', '| Finding | Kind | Falsifies |', '| --- | --- | --- |')
   $lines += @($rows)

@@ -79,4 +79,10 @@ What to do when the entry still is not there is the never-guess rule in `.claude
 
 The relationship is a vendoring one: a fix AEP makes to its own reference does not reach an already-configured repository on its own.
 
-`/configure`'s audit branch re-checks `.claude/tools/` against the repository, and that is the only refresh path — the audit checks the file against the repository it describes, which is the check that matters; a repository whose tooling has not changed does not need the shipped text's changes.
+**Downward**, `/configure`'s audit branch re-checks `.claude/tools/` against the repository — the file against the repository it describes, which is the check that matters day to day; a repository whose tooling has not changed does not need the shipped text's changes.
+
+**Upward**, a repository that runs a command and finds the shipped entry wrong about the version it just ran writes that up as a record and hands it back. It does **not** edit the plugin: a finding about another repository leaves as a report, which is the always-on boundary rule and not a courtesy. The record carries the version it was checked against and what was actually observed, because a tool fact is true of a version and an entry that arrives without one cannot later be told from a fact that has merely gone stale.
+
+That direction exists because the first one cannot reach the case where the *repository* is right and the plugin is wrong. It is not hypothetical: two entries here asserted that `gh` lacked capabilities it had had for releases, while the repositories that had actually run the command carried the correction and had nowhere to send it.
+
+**One observation is not a version's behaviour.** Where two repositories report differently about the same version, the entry says the behaviour is configurable or unknown rather than picking the more recent report — a page that records the last thing somebody saw is a page that flips.

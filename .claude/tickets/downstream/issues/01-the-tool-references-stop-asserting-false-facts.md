@@ -1,6 +1,6 @@
 ---
 title: 'fix(configure): the tool references stop asserting false facts, and a verified correction has a way back'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---
