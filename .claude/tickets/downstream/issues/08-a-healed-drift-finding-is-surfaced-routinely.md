@@ -1,6 +1,6 @@
 ---
 title: 'fix(knowledge): a healed drift finding is surfaced routinely rather than only by an audit'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---

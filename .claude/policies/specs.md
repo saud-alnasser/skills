@@ -81,6 +81,8 @@ The status column is what makes the index answer *which of these is live* withou
 
 **It is generated, never hand-edited**, and the prohibition is enforced by regenerating and comparing rather than requested of whoever opens it. A spec declaring no status stops the regeneration and is named, so a row is never a second statement of the directory's contents.
 
+**The script that regenerates it is derived, and the directory it sits in takes nothing else.** `.claude/scripts/` is all-derived: every script there exists because the workflow's specification names one, and the configuration audit refuses anything sitting there that the specification does not. A repository needing a check of its own cannot drop one in — the specification grows the entry, and the directory is left alone. **That is deliberate, not an oversight to route around**: a script nobody derived forks the moment the specification moves, and a directory taking whatever is dropped in it can be neither re-derived nor audited. Hitting the constraint is not evidence the framework contradicts itself, and the enforcement above is the case that proves it — it is specified as a step in this repository's own build precisely so that no script has to be added here to hold it.
+
 The index sits beside the specs it indexes, in whichever of the two layouts this repository uses: flat in the designs directory, or one spec per effort beside the tickets it governs. **The two layouts are exclusive** — a tree holding both is refused rather than having one silently preferred, because preferring one drops every row of the other and reports it as a stale index.
 
 ## Rules

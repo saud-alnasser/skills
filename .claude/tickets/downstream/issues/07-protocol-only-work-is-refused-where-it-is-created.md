@@ -1,6 +1,6 @@
 ---
 title: 'fix(design): protocol-only work is refused where it is created, and the test reads the diff'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---

@@ -632,6 +632,14 @@ $rulePattern = [ordered]@{
   'the tools routing rule'             = '(?i)covers every tool this repository uses'
   'never guess an API'                 = '(?i)a CLI is an API'
   'conventions are defaults'           = '(?i)defaults? for when the repository is silent'
+  # `.claude/rules/skills.md`: placing a rule adds its guard here. `boundary.md`
+  # placed four and the table gained none, so a second home for any of them —
+  # a skill restating "authorization does not transfer" — would have gone unseen.
+  # Added by review of the downstream effort.
+  'the repository boundary'            = '(?i)work for any other leaves as a report'
+  'a finding is a report'              = '(?i)report,? not an options list'
+  'authorization does not transfer'    = '(?i)authoriz\w+ does not transfer'
+  'the crossing is named when reached' = '(?i)say it when it is reached'
   'one concept per file'               = '(?i)one concept per file'
   'the test-layout rule'               = '(?i)unnecessary test structure'
   'self-explanatory code'              = '(?i)self-explanatory'
@@ -7044,8 +7052,25 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   # concrete routing already lives; the ceiling relief is a consequence of the
   # correct placement rather than the reason for it. The tier keeps the
   # obligation, which is the part that must fire on every turn.
+  # Raised from 7300 to 8833 by `downstream/03`, which added a fourth
+  # unconditional rule. The ceiling is a ratchet rather than a budget with room
+  # in it, so it moves to the new measurement exactly and the next addition
+  # fails here as this one did. ADR 0070 accepted that the boundary rule is
+  # charged to every turn; what this records is the size of that charge, and
+  # that the rule was compressed to 1774 characters — from 2768, larger than
+  # `engineering.md` — before any of it was asked of the ceiling. Compressing
+  # first and raising second is the order: a ceiling raised to fit un-edited
+  # text stops measuring anything.
+  # Raised from 8833 to 9483 by `downstream/05`, which added two clauses to
+  # `engineering.md` — the letter-versus-check standard and the user-invoked-skill
+  # one — plus 29 characters in `CLAUDE.md`, where the always-on list was healed to
+  # name `boundary.md` as the fourth unconditional rule it had silently become.
+  # 621 of the 650 are the two clauses. They were compressed before the ceiling was
+  # asked for anything, and the pre-existing text was deliberately left alone:
+  # rewriting standards the ticket did not name would be a change nobody reviewed.
+  # The order stays compress-first, raise-second, and the ratchet still bites next.
   Assert "the always-on load is under the stated ceiling, measured rather than described" {
-    $ceiling = 7300
+    $ceiling = 9483
     $total = 0
     $unscoped = @('CLAUDE.md')
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
@@ -7058,14 +7083,22 @@ Describe-Ticket 'aep/08' 'the suite re-anchored: coverage, conformance, and the 
   }
 
   # Adding a rules/ file without paths: frontmatter is a permanent per-turn
-  # tax; the three named here are the only ones that earn it. `placement.md`
+  # tax; the four named here are the only ones that earn it. `placement.md`
   # joined them because it governs where a file is *created*, and a scoped rule
   # loads only after a covered file has been read — which is after the placement
-  # decision it exists to inform has already been made.
-  Assert "every rule beyond the three unconditional ones is path-scoped" {
+  # decision it exists to inform has already been made. `boundary.md` joined for
+  # the same argument one scope wider (ADR 0070): it governs whether another
+  # repository may be worked in at all, and the first read there is already past
+  # where a scoped rule would arrive.
+  #
+  # The set is named rather than counted. A count beside a list that grows is
+  # the bug `downstream/03` fixed in the configuration stage's own validation
+  # step, which said "the two rules" while installing three — and this assertion
+  # carried the same shape in its title.
+  Assert "every rule beyond the unconditional set is path-scoped" {
     $offenders = @()
     foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
-      if (@('precedence.md', 'engineering.md', 'placement.md') -contains $f.Name) { continue }
+      if (@('precedence.md', 'engineering.md', 'placement.md', 'boundary.md') -contains $f.Name) { continue }
       $c = Get-Content $f.FullName -Raw
       if ($c -notmatch '(?ms)\A---\r?\n.*?^paths:') { $offenders += $f.Name }
     }
@@ -15142,6 +15175,1118 @@ Describe-Ticket 'records/03' 'every effort with tickets has a spec, and a recons
     }
     if ($offenders) {
       throw "a reconstruction is unmarked, declared where a reader cannot see it, or stated where nothing acts on it: $($offenders -join '; ')"
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/01 — the tool references stop asserting false facts ----
+
+# Anchored on the *capability*, not on the sentence that denied it. The two
+# entries said `gh` has "no sub-issue subcommand" and "no blocking subcommand";
+# a guard written from those two phrasings would go green the moment somebody
+# reworded the denial, and the thing that makes it false is the flag existing.
+# So each assertion asks whether the entry shows the flag, and separately that
+# it does not deny it in any wording that names the same capability.
+Describe-Ticket 'downstream/01' 'the tool references stop asserting false facts' {
+
+  $ghRef = { Get-SkillFile 'configure/tools/github.md' }
+  $gtRef = { Get-SkillFile 'configure/tools/graphite.md' }
+
+  # `gh 2.96.0` takes each of these by issue number. Checked by running
+  # `gh issue create --help` and `gh issue edit --help`, not from memory.
+  Assert "the github reference shows the sub-issue and blocking flags rather than denying them" {
+    $c = & $ghRef
+    foreach ($flag in '--parent', '--add-sub-issue', '--remove-parent', '--blocked-by', '--blocking') {
+      if (-not $c.Contains($flag)) { throw "the reference never shows $flag" }
+    }
+    # The denial, matched by subject so a rewording does not escape it.
+    if ($c -match '(?i)no (sub-issue|blocking)\s+subcommand') {
+      throw 'the reference still denies a capability gh has'
+    }
+    if ($c -match '(?i)`gh` has \*\*no ') {
+      throw 'the reference denies a gh capability — check it against the installed version before asserting an absence'
+    }
+    $true
+  }
+
+  # A tool fact is true of a version. Without one, a reader cannot tell an entry
+  # that has gone stale from one that was wrong when it was written — which is
+  # exactly the state these two entries were found in.
+  Assert "an entry asserting what a tool does names the version it was checked against" {
+    foreach ($pair in @(@('github.md', (& $ghRef), 'gh 2\.96\.0'), @('graphite.md', (& $gtRef), 'gt 1\.8\.6'))) {
+      if ($pair[1] -notmatch $pair[2]) { throw "$($pair[0]) states behaviour without naming the version it was checked on" }
+    }
+    $true
+  }
+
+  # The correction that was *not* made, and the assertion exists to keep it
+  # unmade: two runs of one version disagreed, so the page refuses to say which.
+  # A later session holding one observation will find this refusal and be
+  # tempted to resolve it; the guard is what makes that a deliberate act.
+  Assert "the stacking entry refuses to state what a submit puts in the body, and says why" {
+    $c = & $gtRef
+    if ($c -notmatch '(?i)not documented') { throw 'the entry no longer refuses to claim the body' }
+    if ($c -notmatch '(?i)configurable') { throw 'the entry does not say why the refusal is right — the behaviour is configurable' }
+    if ($c -match '(?i)(does not|never) prefill') { throw 'the entry promoted one observation to a fact about the version' }
+    $true
+  }
+
+  # Rewritten after review. The old pair matched the bare word `draft` and the
+  # string `--publish` anywhere in the section, so deleting the binding sentence
+  # and keeping the flags bullet beneath it left the guard green — and what it
+  # was guarding was itself false: `gt submit --help` on 1.8.6 documents
+  # `--draft` and `--publish` as both defaulting to false and says nothing about
+  # a non-interactive submit drafting. The entry now states only what the help
+  # supports, and each half of the guard anchors to that sentence.
+  Assert "the stacking entry states the documented draft flags and refuses the undocumented default" {
+    $c = & $gtRef
+    if ($c -notmatch '(?is)(--draft[^.]{0,120}default[^.]{0,60}false|both default to false)') {
+      throw 'the entry does not state the documented default of the draft flags'
+    }
+    if ($c -notmatch '(?is)neither flag[^.]{0,200}not documented') {
+      throw 'the entry does not refuse to claim what a submit passing neither flag does'
+    }
+    if ($c -match '(?is)non-interactive submit[^.]{0,60}draft') {
+      throw 'the entry reinstated the drafting claim the help does not support'
+    }
+    $true
+  }
+
+  # The process gap behind the false facts. One direction cannot reach the case
+  # where the repository is right and the plugin is wrong, which is the case
+  # that produced this ticket.
+  Assert "the refresh path names both directions, and the upward one produces a record" {
+    $c = Get-SkillFile 'configure/TOOLS.md'
+    $s = Get-Section $c 'Refreshing a derived file'
+    if ($s -notmatch '(?i)downward|down\b') { throw 'the audit direction is not named as one of two' }
+    if ($s -notmatch '(?i)upward|hands it back|back upstream') { throw 'there is no return path for a verified correction' }
+    if ($s -notmatch '(?i)does \*\*not\*\* edit|not edit the plugin|leaves as a report|report') {
+      throw 'the return path does not say a correction returns as a record rather than an edit'
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/02 — the audit says how an installed file is compared --
+
+# The audit had no comparison method at all, so there was nothing to be wrong —
+# which is why the guard is written against the *outcome a missing method
+# produced* rather than against the absence. A run comparing raw bytes across a
+# CRLF plugin checkout and an LF-pinned repository reads every file as changed,
+# and the action that reading licenses destroys the derived corrections that are
+# the most valuable content in the directory.
+Describe-Ticket 'downstream/02' 'the audit says how an installed file is compared against its template' {
+
+  $audit = { Get-Section (Get-SkillFile 'configure/SKILL.md') '5 — Audit, where AEP is already here' }
+
+  # An *instruction* about endings, not a mention of them. The first version of
+  # this asked only that the section mention line endings somewhere, and the
+  # paragraph explaining *why* the naive comparison fails mentions them too — so
+  # deleting the instruction left the guard green. That is the guard-matches-a-
+  # phrase-travelling-with-the-subject failure `.claude/rules/skills.md` names,
+  # found by mutating the instruction away and watching nothing happen.
+  Assert "the audit states a comparison that does not depend on line endings" {
+    $s = & $audit
+    if ($s -notmatch '(?i)compare content') { throw 'the audit never says what is compared' }
+    if ($s -notmatch '(?i)(strip|ignor|normalis|normaliz)[^.]{0,80}(carriage return|line ending)') {
+      throw 'the comparison mentions endings but never says to discount them, which is the whole failure'
+    }
+    $true
+  }
+
+  # The tell, not the method. A method can be stated and still be applied by a
+  # run that already believes the files differ; this is what makes the wrong
+  # belief checkable from inside the run that holds it.
+  Assert "whole-file drift is named as a comparison fault before it is a finding" {
+    $s = & $audit
+    if ($s -notmatch '(?i)(every file at once|across every file)') { throw 'the tell is unstated' }
+    if ($s -notmatch '(?i)fault in the comparison|comparison (bug|fault)') {
+      throw 'total drift is not attributed to the comparison'
+    }
+    $true
+  }
+
+  # Re-derivation is the destructive branch, and the audit is the only pass that
+  # reaches these files at all. A repository's corrected tool reference can be
+  # ahead of the plugin's — TOOLS.md's upward path exists for exactly that — so
+  # a rule that re-derives on any difference reverts the case it should report.
+  Assert "a deliberate local correction is reported rather than re-derived" {
+    $s = & $audit
+    if ($s -notmatch '(?i)re-deriv') { throw 'the audit never names the repair it might apply' }
+    # Not an alternation including "reported": the paragraph above this one uses
+    # that word about drift, so a guard accepting it passed while the whole
+    # disposition rule was deleted. What distinguishes this site is the *other*
+    # disposition — the one that does nothing — so that is what is asked for.
+    if ($s -notmatch '(?i)(left alone|not re-derived|never re-derived)') {
+      throw 'every difference reads as re-derivable, including a deliberate correction'
+    }
+    if ($s -notmatch '(?i)destructive|discards|revert') {
+      throw 'nothing says what re-deriving costs when the file was corrected on purpose'
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/03 — the boundary rule, and the router's half of it ----
+
+# Both ends, because the rule is useless at either alone: the template that
+# installs it into every configured repository, and this repository's own copy,
+# which is what a session standing here actually loads.
+Describe-Ticket 'downstream/03' 'work for another repository leaves as a report' {
+
+  $ends = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/boundary.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/rules/boundary.md') -Raw }
+  }
+
+  # The tier is the rule. A boundary rule that arrives with a stage arrives after
+  # the first read in the other repository, which is the decision it exists to
+  # inform — so `paths:` frontmatter here would not weaken it, it would retire it.
+  Assert "the rule is always-on at both ends, carrying no paths frontmatter" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -match '(?ms)\A---\r?\n.*?^paths:') { throw "$k scoped the boundary rule with paths:" }
+    }
+    $true
+  }
+
+  # Reading is explicitly allowed. A rule that forbade it would be broken
+  # routinely and correctly — diagnosing a claim about a dependency means
+  # reading the dependency — and a rule broken correctly stops being read.
+  # Rewritten after review. The previous form asked only that the words `read`,
+  # `writ`, `plan` and `stage` appeared somewhere in the file, and every one of
+  # them travels with the subject — so flipping the reading row to "not allowed"
+  # left the guard green while the assertion's own title had become false. The
+  # polarity is the rule here, so the polarity is what gets read, row by row.
+  Assert "reading another repository is permitted and producing in one is not" {
+    foreach ($k in $ends.Keys) {
+      $rows = @(((& $ends[$k]) -replace "`r", '') -split "`n" | Where-Object { $_ -match '^\|' })
+      $reading = @($rows | Where-Object { $_ -match '(?i)read' })
+      if ($reading.Count -ne 1) { throw "$k has $($reading.Count) rows about reading, expected exactly one" }
+      if ($reading[0] -match '(?i)not allowed') { throw "$k forbids reading — a rule broken correctly stops being read" }
+      if ($reading[0] -notmatch '(?i)\ballowed\b') { throw "$k does not permit reading another repository" }
+      foreach ($act in 'writ', 'plan', 'entering a stage') {
+        $row = @($rows | Where-Object { $_ -match "(?i)$act" })
+        if ($row.Count -lt 1) { throw "$k has no row bounding '$act' in another repository" }
+        if ($row[0] -notmatch '(?i)not allowed') { throw "$k does not forbid '$act' in another repository" }
+      }
+    }
+    $true
+  }
+
+  # The clause that suppresses the escalation. Without it the design stage's
+  # options-and-recommend behaviour turns a diagnosis into a proposal, which is
+  # the step that carried one session across the boundary.
+  Assert "a finding about another repository is a report rather than an options list" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      # Two halves, and the second is the one that does the work. The framing
+      # sentence — "a report, not an options list" — is a topic sentence, and a
+      # guard accepting it alone passed while the imperative beneath it was
+      # replaced with "present the options and recommend one". Found by mutating
+      # exactly that. The imperative is what a session about to offer would have
+      # to read past.
+      if ($c -notmatch '(?i)options list|not.{0,20}a menu') {
+        throw "$k does not frame a finding as a report rather than a menu"
+      }
+      if ($c -notmatch '(?i)(do not|never|must not) offer') {
+        throw "$k frames the finding as a report but never forbids offering to do the work"
+      }
+    }
+    $true
+  }
+
+  Assert "authorization is stated not to transfer across the boundary" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?i)authoris|authoriz') { throw "$k never mentions authorization" }
+      if ($c -notmatch '(?i)(does not transfer|cannot thereby|not being told to fix it)') {
+        throw "$k lets an instruction to fix something read as permission to fix it here"
+      }
+    }
+    $true
+  }
+
+  # A crossing that is only visible in hindsight is one nobody could have stopped.
+  Assert "the boundary is stated when it is reached, not afterwards" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?i)(when it is reached|at the moment it is reached)') {
+        throw "$k does not require the crossing to be announced where it happens"
+      }
+    }
+    $true
+  }
+
+  # The configuration stage installs it, or no repository but this one has it.
+  Assert "the configuration stage installs the rule beside the other always-on three" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    if ($c -notmatch [regex]::Escape('.claude/rules/boundary.md')) { throw 'the install step never writes it' }
+    if ($c -notmatch [regex]::Escape('boundary.template.md')) { throw 'the install step names no source for it' }
+    $true
+  }
+
+  # The line this repository got wrong for two releases: a count written beside
+  # a list that grows. Anchored on the count being absent rather than on the
+  # right number, which would be wrong again at five.
+  Assert "the validation step counts the always-on rules rather than naming a number" {
+    $c = Get-SkillFile 'configure/SKILL.md'
+    $s = Get-Section $c '6 — Validate'
+    if ($s -match '(?i)the (two|three|four|five) rules under') {
+      throw 'the validation step hardcodes a count of the always-on rules again'
+    }
+    if ($s -notmatch '(?i)paths:') { throw 'the step no longer says which rules are the always-on ones' }
+    $true
+  }
+
+  # The router's half. Judgement rather than computation, deliberately: a script
+  # can report the repository it stands in, which is a different question from
+  # the one the request answers — so this must not migrate into the attested
+  # half, where the Receipt would appear to vouch for it.
+  Assert "the governing repository is judgement in both protocols, never computed" {
+    foreach ($pair in @(@('the template', (Get-SkillFile 'configure/protocol.template.md')),
+                        @('this repository', (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)))) {
+      $c = $pair[1] -replace "`r", ''
+      $judgement = [regex]::Match($c, '(?s)\*Judgement\* is the stage''s own.*?(?=\n## )')
+      if (-not $judgement.Success) { throw "$($pair[0]) has no judgement half to carry it" }
+      if ($judgement.Value -notmatch '(?i)which repository governs') {
+        throw "$($pair[0]) does not put the governing repository in the judgement half"
+      }
+      $computed = [regex]::Match($c, "(?s)\*Position\* is computed.*?(?=\*Judgement\*)")
+      if ($computed.Success -and $computed.Value -match '(?i)which repository governs') {
+        throw "$($pair[0]) moved the governing repository into the computed half, where a Receipt would seem to attest it"
+      }
+    }
+    $true
+  }
+
+  Assert "the stage table refuses a request for another repository, naming both" {
+    foreach ($pair in @(@('the template', (Get-SkillFile 'configure/protocol.template.md')),
+                        @('this repository', (Get-Content (Join-Path $repo '.claude/protocol.md') -Raw)))) {
+      $c = $pair[1] -replace "`r", ''
+      $table = [regex]::Match($c, '(?s)\| The request \| Enters \|.*?(?=\n\*\*)')
+      if (-not $table.Success) { throw "$($pair[0]) has no stage table" }
+      if ($table.Value -notmatch '(?i)repository other than this one') {
+        throw "$($pair[0])'s stage table has no row for a request about another repository"
+      }
+      # First match wins in that table, so a row below /design would never be
+      # reached — every row beneath it matches such a request perfectly.
+      $rows = @($table.Value -split "`n" | Where-Object { $_ -match '^\| ' })
+      if ($rows[2] -notmatch '(?i)repository other than this one') {
+        throw "$($pair[0]) placed the boundary row below a row that would match first"
+      }
+      if ($c -notmatch '(?i)refusal names both repositories') {
+        throw "$($pair[0]) does not require the refusal to name both repositories"
+      }
+    }
+    $true
+  }
+
+  # `.claude/rules/skills.md` requires a placed rule to gain a `$rulePattern`
+  # entry, and this ticket placed four with none. The entries exist now; this is
+  # what consumes them. Single-home is the property the table was built for: a
+  # boundary clause restated in a skill fires only when that skill runs, which is
+  # the silent failure the tier split exists to prevent. Added by review.
+  foreach ($boundaryRule in @('the repository boundary', 'a finding is a report',
+                              'authorization does not transfer', 'the crossing is named when reached')) {
+    Assert "'$boundaryRule' is stated in exactly one always-on file" {
+      $pattern = $rulePattern[$boundaryRule]
+      $homes = @(Get-AlwaysOnFiles | Where-Object {
+        (Get-Content (Join-Path $repo $_) -Raw) -match $pattern
+      })
+      if ($homes.Count -eq 0) { throw 'stated in nothing that loads unconditionally' }
+      if ($homes.Count -gt 1) { throw "two homes: $($homes -join ', ')" }
+      $true
+    }
+  }
+
+  # The tier is computed and the sentence naming it is prose, so the two drift
+  # without anything noticing — and did, in this ticket. `boundary.md` joined the
+  # unconditional tier here, and neither copy of the sentence gained it: both went
+  # on saying three rules load always and "the rest of that directory is
+  # path-scoped", beside a directory where four do. The ceiling assertion computes
+  # this exact set and never compares it to the prose, which is why the suite went
+  # green over a false sentence in the always-on file itself.
+  Assert "the always-on list names every unconditional rule, in both copies" {
+    $unscoped = @()
+    foreach ($f in (Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md')) {
+      if ((Get-Content $f.FullName -Raw) -notmatch '(?ms)\A---\r?\n.*?^paths:') { $unscoped += $f.Name }
+    }
+    if ($unscoped.Count -lt 2) { throw "expected several unconditional rules, found $($unscoped.Count)" }
+    $pairs = @(
+      @('CLAUDE.md', ((Get-Content (Join-Path $repo 'CLAUDE.md') -Raw) -replace "`r", '')),
+      @('configure/CLAUDE.template.md', ((Get-SkillFile 'configure/CLAUDE.template.md') -replace "`r", ''))
+    )
+    foreach ($pair in $pairs) {
+      # The section, never the file: every rule is named somewhere in a document
+      # about the rules, so a whole-file match passes with the list itself gutted.
+      $m = [regex]::Match($pair[1], '(?ms)^## Rules that always apply\r?\n(.*?)(?=^#{2}\s)')
+      if (-not $m.Success) { throw "$($pair[0]) has no always-apply section" }
+      foreach ($r in $unscoped) {
+        if ($m.Groups[1].Value -notmatch [regex]::Escape($r)) {
+          throw "$($pair[0]) omits $r from the always-on list, which loads it anyway"
+        }
+      }
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/06 — the handoff ends with a resume line ---------------
+
+# Asked for by hand in two consecutive sessions, which is the shape of a skill
+# that produces a file and stops. The guards are on the *obligation*, not on the
+# example block — a skill can show a resume line and still leave writing one
+# optional, and optional is what produced two identical requests.
+Describe-Ticket 'downstream/06' 'the handoff ends with a copy-paste resume line' {
+
+  $handoff = { Get-SkillFile 'handoff/SKILL.md' }
+
+  Assert "the resume line is required as the last section, not offered" {
+    $c = & $handoff
+    if ($c -notmatch '(?i)resume prompt|resume line') { throw 'the skill never mentions a resume prompt' }
+    if ($c -notmatch '(?i)(not optional|is required|always ends)') {
+      throw 'a resume line is describable as optional, which is how it went unwritten twice'
+    }
+    if ($c -notmatch '(?i)last section|ends with') { throw 'nothing fixes where the resume line goes' }
+    $true
+  }
+
+  # The path is the whole payload. A resume block that says "read the handoff"
+  # names nothing a fresh context can open.
+  #
+  # Matched against the prose with fenced blocks removed. The example block
+  # *contains* the words this asks for, so a guard reading the whole file passed
+  # while the requirement above it was replaced with "it is a pointer" — the
+  # example demonstrating a rule is not the rule, and only one of the two is
+  # binding on a run that decides to write something else.
+  Assert "the resume line carries the document's own absolute path" {
+    $prose = ((& $handoff) -replace "`r", '') -replace '(?ms)^```.*?^```', ''
+    if ($prose -notmatch '(?i)(own|its own)[^.]{0,40}path') {
+      throw 'the prose does not require the resume line to name the document itself'
+    }
+    if ($prose -notmatch '(?i)absolute') { throw 'a relative path would depend on where the next session starts' }
+    $true
+  }
+
+  # Reported in the conversation as well, because the user is reading the reply
+  # rather than the file — a document that names itself only inside itself has
+  # told nobody where it is.
+  #
+  # Proximity, not presence: "report", "reply" and "conversation" all appear in
+  # a skill about writing handoffs for other reasons, and the first version of
+  # this passed with the whole obligation deleted.
+  Assert "the path is reported in the reply, not only inside the document" {
+    $c = & $handoff
+    if ($c -notmatch '(?is)(reply|conversation|report)[^.]{0,90}path|path[^.]{0,90}(reply|conversation)') {
+      throw 'nothing requires the path to be surfaced outside the file it names'
+    }
+    $true
+  }
+
+  # The location rule existed and was violated anyway. What was missing is a
+  # single path rather than a category: "somewhere under the system temp" is not
+  # something a next session can be handed.
+  #
+  # Anchored to the *instruction* — where it says to save it — because the page
+  # legitimately mentions the scratchpad again while explaining why a category
+  # will not do, and a bare presence check passed on a file that had reverted
+  # the instruction and kept the explanation.
+  Assert "the handoff lands in the session scratchpad, and never in a repository" {
+    $c = ((& $handoff) -replace "`r", '')
+    if ($c -notmatch '(?is)sav\w+ it to[^.]{0,80}scratchpad') {
+      throw 'the save instruction names a category rather than the session scratchpad'
+    }
+    if ($c -notmatch '(?i)never into (the workspace|a repository)') {
+      throw 'the prohibition on writing into the workspace was lost'
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/04 — the index prohibition gains its mechanism ---------
+
+# The specification and the scripts page both asserted that the prohibition on
+# hand-editing a generated index *is enforced*, and the page credited "the
+# suite" — which exists in this repository alone and is not shipped. Every
+# configured repository inherited the assertion and no mechanism.
+#
+# So the guards are on the mechanism being specified where the derived surfaces
+# are, on it adding no script, and above all on the fixture. The fixture is the
+# half a previous session got wrong: it tampered in the working tree, watched the
+# regenerator erase the tamper before anything was compared, and reported that
+# the mechanism misses hand edits. A wrong test of an enforcement produces a
+# confident wrong answer with nothing to check it against.
+Describe-Ticket 'downstream/04' 'the generated-index prohibition gains the mechanism it asserts' {
+
+  $page = { (Get-SkillFile 'configure/SCRIPTS.md') -replace "`r", '' }
+
+  # The check's specification with its fixture excluded. The fixture restates the
+  # check's own vocabulary — staged, overwrites, clean — as the reason its tamper
+  # is staged, so a whole-page read would let the fixture satisfy an assertion
+  # about the contract. That is the failure `receipt/01` documents one script up,
+  # and it is the same page.
+  $check = {
+    $m = [regex]::Match((& $page), "(?ms)^## The regenerate-and-compare check\n(.*?)^### The check's fixture")
+    if (-not $m.Success) { throw 'the page specifies no regenerate-and-compare check ahead of a fixture' }
+    $m.Groups[1].Value
+  }
+
+  $fixture = {
+    $m = [regex]::Match((& $page), "(?ms)^### The check's fixture\n(.*?)(?=^## |\z)")
+    if (-not $m.Success) { throw 'the check carries no fixture' }
+    $m.Groups[1].Value
+  }
+
+  # One case, not the fixture. The paragraph explaining why staging matters says
+  # `git add` too, so a fixture-wide read stays green with the instruction gone.
+  $case = {
+    param([string]$Letter)
+    $m = [regex]::Match((& $fixture), "(?ms)^\*\*Case $Letter\b.*?(?=\n\n)")
+    if (-not $m.Success) { throw "the fixture has no case $Letter" }
+    $m.Value
+  }
+
+  # A third derived script was the option rejected: it would have put a new
+  # surface in every configured repository to perform a comparison that needs no
+  # code. Two halves — what the page specifies as a script, read from the page
+  # rather than from a list here, and the check saying in its own words that it
+  # is not one.
+  Assert "the enforcement is specified as a step and adds no third derived script" {
+    $specified = @([regex]::Matches((& $page), '`\.claude/scripts/([a-z-]+)\.<ext>`') |
+        ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
+    if (($specified -join ',') -ne 'regenerate-indexes,report-position') {
+      throw "the page specifies $($specified -join ', '); the enforcement was to add none"
+    }
+    if ((& $check) -notmatch '(?is)(not|never)[^.]{0,40}(a |another |third )script') {
+      throw 'the check does not say it is a step rather than a script, so the next derivation writes one'
+    }
+    $true
+  }
+
+  # The sentence the fixture rests on. A comparison reading the working tree alone
+  # is looking at a tree the regeneration has just corrected, and calls it clean —
+  # which is how a hand edit escapes, and what a session concluded the whole
+  # mechanism could not catch.
+  Assert "the check counts what git recorded, not the tree the regenerator just rewrote" {
+    $s = & $check
+    if ($s -notmatch '(?i)staged') { throw 'the check never says a staged difference counts' }
+    if ($s -notmatch '(?is)overwrit\w*[^.]{0,140}(before|by the time|already)') {
+      throw 'the check does not say the regeneration erases a working-tree edit before the comparison runs'
+    }
+    $true
+  }
+
+  # The criterion the ticket words as suite behaviour: the suite fails when the
+  # fixture's tamper is unstaged.
+  Assert "the fixture stages its tamper" {
+    if ((& $case 'B') -notmatch '(?i)git add') {
+      throw 'the tampering case never stages the edit, so the regeneration erases it and the case passes on a mechanism that did nothing'
+    }
+    $true
+  }
+
+  # Why the wrong test looks like a right one. Without this the staging reads as
+  # arbitrary, and the next session to doubt it re-runs it the way the last one
+  # did and gets the same clean report.
+  Assert "the fixture says why a tamper left in the working tree proves nothing" {
+    $f = & $fixture
+    if ($f -notmatch '(?is)(never staged|left in the working tree|unstaged)[^.]{0,120}(gone|erased|overwritten)') {
+      throw 'the fixture does not say an unstaged edit is erased before the comparison runs'
+    }
+    if ($f -notmatch '(?is)report\w*[^.]{0,80}clean') {
+      throw 'the fixture does not say the erased case reports clean, which is what makes the wrong test look like a passing one'
+    }
+    if ($f -notmatch '(?is)unstaged[^.]{0,80}prove') {
+      throw 'the fixture does not say what testing it unstaged actually proves'
+    }
+    $true
+  }
+
+  # Both outcomes. A fixture stating only the failing one proves the check can
+  # fail and never that it passes on a tree nobody touched, which is the half a
+  # false positive lives in.
+  Assert "the fixture states a clean tree passing and the tamper failing, naming the path" {
+    if ((& $case 'A') -notmatch '(?i)exits? zero') { throw 'the clean case states no passing outcome' }
+    if ((& $case 'B') -notmatch '(?i)non-zero|fails') { throw 'the tampering case states no failing outcome' }
+    if ((& $fixture) -notmatch '(?m)^\.claude/contexts/map\.md$') {
+      throw 'the fixture states no expected output naming the file that differs'
+    }
+    $true
+  }
+
+  # The specification's half of naming the mechanism, read as the asserting
+  # sentence alone. A file-wide match would be satisfied by any mention of the
+  # check anywhere, including in a section about something else.
+  Assert "the specification names what enforces the prohibition it asserts" {
+    $spec = (Get-Content (Join-Path $repo 'specs.md') -Raw) -replace "`r", ''
+    $m = [regex]::Match($spec, '(?i)the prohibition is enforced\*{0,2}[^.]{0,220}')
+    if (-not $m.Success) { throw 'the specification no longer asserts that the prohibition is enforced' }
+    if ($m.Value -notmatch '(?i)regenerate-and-compare') {
+      throw 'the specification asserts an enforcement without naming what performs it'
+    }
+    if ($m.Value -notmatch '(?i)install') {
+      throw 'the specification names the mechanism but not what puts it in a repository, which is how it stayed in one'
+    }
+    $true
+  }
+
+  # The page's half. "The suite" is the exact gesture: this repository has one
+  # and ships none, so the sentence was true here and false in every repository
+  # it was installed into.
+  Assert "the scripts page credits the specified check rather than an unshipped suite" {
+    $s = Get-Subsection (& $page) 'How the regenerator stays right afterwards'
+    if ($s -match '(?i)the suite') { throw 'the page still credits a suite it does not ship' }
+    if ($s -notmatch '(?is)regenerate-and-compare check[^.]{0,120}(specified|below|next section)') {
+      throw 'the page asserts an enforcement without pointing at the check that performs it'
+    }
+    $true
+  }
+
+  $installPara = {
+    $g = (Get-Section (Get-SkillFile 'configure/SKILL.md') '4 — Generate') -replace "`r", ''
+    $m = [regex]::Match($g, '(?m)^\*\*The regenerate-and-compare check\*\*[^\n]*$')
+    if (-not $m.Success) { throw 'the generate step installs no such check' }
+    $m.Value
+  }
+
+  # A specified step nobody wires up reproduces the gap one layer along, which is
+  # the whole failure being repaired. Anchored on the wiring instruction rather
+  # than on the paragraph's subject line, which names the check and commits to
+  # nothing.
+  Assert "the configuration stage wires the check into something that fails a build" {
+    $p = & $installPara
+    if ($p -notmatch '(?i)wire it into[^.]{0,60}(CI|build|check task)') {
+      throw 'the stage names the check and never says to put it anywhere that runs'
+    }
+    if ($p -notmatch '(?i)fixture') {
+      throw 'the check is installed without being run against its own fixture first'
+    }
+    $true
+  }
+
+  $auditBullet = {
+    $a = (Get-Section (Get-SkillFile 'configure/SKILL.md') '5 — Audit, where AEP is already here') -replace "`r", ''
+    $m = [regex]::Match($a, '(?m)^- \*\*Re-check the regenerate-and-compare[^\n]*$')
+    if (-not $m.Success) { throw 'the audit has no bullet for the check the stage installed' }
+    $m.Value
+  }
+
+  # The check is the one thing this stage installs into a file the repository
+  # owns, so nothing under `.claude/` records that it is meant to be there. A
+  # rewritten workflow drops it and every other check in this list still passes.
+  Assert "the audit re-checks that something still runs the check, and that it still works" {
+    $b = & $auditBullet
+    if ($b -notmatch '(?i)still runs it|still wired') {
+      throw 'the audit names the check but never asks whether the build still runs it'
+    }
+    if ($b -notmatch '(?i)fixture') {
+      throw 'the audit confirms the check is wired and never that it still does what it claims'
+    }
+    $true
+  }
+
+  # The constraint is enforced in every configured repository and was justified
+  # only in this repository's own specification, which is not installed — so a
+  # repository that hit it saw a prohibition with no reason and read the framework
+  # as contradicting itself. One did. Both ends, because the template is what
+  # reaches the next repository and the installed copy is what a session standing
+  # in this one actually loads.
+  Assert "the specification policy carries the reason the scripts directory holds only what is derived" {
+    $ends = [ordered]@{
+      'the shipped template' = { Get-SkillFile 'configure/policies/specs.template.md' }
+      'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/specs.md') -Raw }
+    }
+    foreach ($k in $ends.Keys) {
+      $c = (& $ends[$k]) -replace "`r", ''
+      if ($c -notmatch [regex]::Escape('.claude/scripts/')) {
+        throw "$k never names the directory the constraint governs"
+      }
+      if ($c -notmatch '(?is)refus\w*[^.]{0,160}(the specification does not|not specified)') {
+        throw "$k does not say the audit refuses what the specification did not name"
+      }
+      if ($c -notmatch '(?is)(deliberate|by design|on purpose)[^.]{0,200}(route around|contradict)') {
+        throw "$k leaves the constraint reading as a defect to route around, which is how it was read"
+      }
+    }
+    $true
+  }
+
+  # Installing the check makes `/configure` write a second file outside
+  # `.claude/`, so the formatter sentence had to move. The guard that bounded it
+  # (ADR 0033's, at "the decision is recorded here") pins only the phrase "only
+  # thing /configure writes outside" — which the reworded sentence still matches
+  # while asserting something weaker than it did. Satisfying that guard's letter
+  # is not keeping it, so the count it was standing for is asserted here instead.
+  Assert "the formatter exception names the second write and closes the set at two" {
+    $c = (Get-SkillFile 'configure/SKILL.md') -replace "`r", ''
+    $m = [regex]::Match($c, '(?ms)^\*\*Whatever formats this repository.*?(?=^#{2}\s)')
+    if (-not $m.Success) { throw 'the formatter instruction is gone from step 4' }
+    if ($m.Value -notmatch '(?is)regenerate-and-compare[^.]{0,120}only thing') {
+      throw 'the formatter exception does not name the regenerate-and-compare check as the other write outside .claude/'
+    }
+    if ($m.Value -notmatch '(?is)\bno third\b') {
+      throw 'the formatter exception bounds nothing — it names two writes and does not close the set'
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/05 — the letter-versus-check standards -----------------
+
+# Both ends, for the reason `downstream/03` gives: the template installs the
+# standard into every configured repository, and this repository's own copy is
+# what a session standing here actually loads. A standard present at one end is
+# either shipped and not held, or held and not shipped.
+#
+# The patterns bind *pairs* inside a single sentence rather than keywords. This
+# file is already dense with prohibitions in the neighbouring vocabulary — an act
+# the human owns, something never done without being asked — so a probe for
+# `never` plus a nearby noun passes with either new clause deleted, and a probe
+# for `check` passes on a heading that survives the paragraph beneath it.
+Describe-Ticket 'downstream/05' 'the standards name keeping a rule''s letter while removing its check' {
+
+  $ends = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/engineering.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/rules/engineering.md') -Raw }
+  }
+
+  # `letter` and the violation claim with no sentence break between them. The
+  # heading above the clause deliberately carries neither word: a guard a heading
+  # can satisfy goes green on the paragraph being gutted, which is the failure
+  # this whole ticket is about one level up.
+  Assert "keeping a rule's letter while its check cannot fire is stated to be a violation of it" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?is)letter[^.]{0,120}violat') {
+        throw "$k does not state that keeping the letter while the check cannot fire violates the rule"
+      }
+    }
+    $true
+  }
+
+  # A test of the shape, not a list. The two cases behind it — a worktree cleaned
+  # until its removal could not be refused, and a skill's deliverable typed out
+  # past a flag that blocks the tool rather than the act — share nothing but
+  # their shape, so a rule enumerating them would miss the third.
+  Assert "the letter-versus-check standard is a test of the shape, not a list of its instances" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      foreach ($instance in 'worktree', 'disable-model-invocation', 'handoff') {
+        if ($c -match "(?i)$instance") { throw "$k names the instance '$instance' where the shape belongs" }
+      }
+    }
+    $true
+  }
+
+  # `by hand` appears across the shipped surfaces for unrelated reasons, so the
+  # pair is what binds: the hand-production, and the decision that goes missing.
+  Assert "producing a user-invoked skill's deliverable by hand is stated to be invoking it" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?is)by hand[^.]{0,90}(without the user|user''s decision)') {
+        throw "$k does not equate hand-producing the deliverable with invoking the skill"
+      }
+    }
+    $true
+  }
+
+  # The flag this standard exists beside reaches one skill at a time. A standard
+  # naming a skill would reproduce exactly the gap it was written to close.
+  Assert "the hand-production standard covers every user-invoked skill rather than one" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?is)every user-invoked skill') {
+        throw "$k bounds the standard to less than every user-invoked skill"
+      }
+    }
+    $true
+  }
+
+  # The asymmetry the flag cannot fix: it stopped the run that reached for the
+  # skill and was blocked, and said nothing to the run that never reached. A
+  # standard that binds only the first is the flag again, in prose.
+  Assert "the hand-production standard binds the run that never reached for the skill" {
+    foreach ($k in $ends.Keys) {
+      $c = & $ends[$k]
+      if ($c -notmatch '(?is)never reached[^.]{0,120}blocked') {
+        throw "$k leaves the run that never reached for the skill outside the standard"
+      }
+    }
+    $true
+  }
+
+  # Clauses, not files. Earning the always-on tier is not earning a file in it —
+  # the tier is charged to every turn whether or not a stage runs. Checked in
+  # both directions at both ends: exactly one home, and that home the engineering
+  # standards, because a second statement in the tier is the duplication this
+  # tier can least afford.
+  Assert "both standards are clauses in the engineering rules, with no file of their own" {
+    $patterns = [ordered]@{
+      'the letter-versus-check standard' = '(?is)letter[^.]{0,120}violat'
+      'the hand-production standard'     = '(?is)by hand[^.]{0,90}(without the user|user''s decision)'
+    }
+    foreach ($p in $patterns.Keys) {
+      $installed = @(Get-ChildItem (Join-Path $repo '.claude/rules') -Filter '*.md' |
+        Where-Object { (Get-Content $_.FullName -Raw) -match $patterns[$p] } |
+        ForEach-Object { $_.Name })
+      if ($installed.Count -eq 0) { throw "$p is stated in no always-on rule" }
+      if ($installed.Count -gt 1) { throw "$p is stated in several rules: $($installed -join ', ')" }
+      if ($installed[0] -ne 'engineering.md') { throw "$p took a rules file of its own: $($installed[0])" }
+
+      $shipped = @(Get-SkillFiles |
+        Where-Object { (Get-SkillText $_) -match $patterns[$p] } |
+        ForEach-Object { $_.FullName.Substring($skills.Length + 1) -replace '\\', '/' })
+      if ($shipped.Count -eq 0) { throw "$p ships in nothing" }
+      if ($shipped.Count -gt 1) { throw "$p is restated in: $($shipped -join ', ')" }
+      if ($shipped[0] -ne 'configure/engineering.template.md') {
+        throw "$p ships from $($shipped[0]) rather than the engineering template"
+      }
+    }
+    $true
+  }
+
+  # Line endings are normalised before the comparison, deliberately. The plugin
+  # is checked out CRLF on Windows against an LF-pinned repository, and a raw
+  # byte comparison calls every line changed — reporting drift in a file that has
+  # none is the comparison fault `downstream/02` names, and it would land here
+  # first.
+  Assert "the shipped template and this repository's installed copy carry the same text" {
+    $t = ((& $ends['the shipped template']) -replace "`r", '')
+    $i = ((& $ends['this repository']) -replace "`r", '')
+    if ($t -cne $i) { throw 'the shipped engineering standards and the installed copy have drifted apart' }
+    $true
+  }
+}
+
+# --- ticket downstream/07 — protocol-only work is refused where it is created --
+
+# Three violations in one configured repository, every one noticed after the
+# issue was published. Two things were wrong and both are asserted here: the
+# test was stated as an outcome where the evidence a reader consults is a file
+# list, and the check sat where the set is drafted rather than where it is
+# created.
+#
+# Every guard below binds a *paragraph*, not the section. Each element this
+# ticket asks for has a near-synonym elsewhere in the same prose — the opening
+# sentence already carries "outcome" and "outside", the closing one already
+# carries the commit-type contrast, and `.claude/policies/version-control.md`
+# carries a diff-versus-label sentence of its own. A section-wide search would
+# have passed with the binding sentence deleted.
+Describe-Ticket 'downstream/07' 'protocol-only work is refused where it is created, and the test reads the diff' {
+
+  # Two copies of one rule. Asserted separately rather than once against
+  # whichever is convenient, because a rule with two homes drifts at one of
+  # them and a single read would report the surviving copy.
+  $copies = @(
+    @{ Name = 'the installed policy'; Path = (Join-Path $repo '.claude/policies/tickets.md') },
+    @{ Name = 'the shipped template'; Path = (Join-Path $repo 'skills/configure/policies/tickets.template.md') }
+  )
+
+  # The rule's section, fenced blocks removed, split into paragraphs. The page
+  # shows a ticket format and a lifecycle table in fences; an example that
+  # contains the words a guard matches is not the rule, and the heading line is
+  # dropped for the same reason — it names the subject without stating it.
+  $paragraphs = {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { throw "$Path is missing" }
+    $c = (Get-Content $Path -Raw) -replace "`r", ''
+    $s = Get-Section $c 'never carries protocol-only work'
+    $s = $s -replace '(?ms)^```.*?^```', ''
+    @($s -split "`n`n" | Where-Object { $_.Trim() -and $_ -notmatch '^#' })
+  }
+
+  foreach ($copy in $copies) {
+    $name = $copy.Name
+    $path = $copy.Path
+
+    # Presence of "diff" is not the claim — the claim is that the diff is what
+    # the *test* reads, and that the reading is exhaustive over the paths. All
+    # three bound to one paragraph, so deleting the definition cannot be
+    # covered by the word "diff" surviving in the prose that explains why.
+    Assert "$name states the protocol-only test as the diff, in one binding sentence" {
+      $paras = & $paragraphs $path
+      $hit = @($paras | Where-Object {
+        $_ -match '(?is)\btest\b[^.]{0,40}\bdiff\b' -and
+        $_ -match '(?i)every path' -and
+        $_ -match [regex]::Escape('.claude/')
+      })
+      if ($hit.Count -lt 1) {
+        throw 'no paragraph binds the test to the diff and reads it over every path the work changes'
+      }
+      $true
+    }
+
+    # The outcome-shaped formulation is the ambiguity, so its absence is
+    # asserted rather than merely the presence of a replacement: with both
+    # stated the rule has two readings again, which is the state that made the
+    # third violation arguable.
+    Assert "$name no longer states the protocol-only test as an outcome" {
+      $whole = (& $paragraphs $path) -join "`n`n"
+      if ($whole -match '(?i)(whole|entire)\s+(effect|purpose)') {
+        throw 'the outcome-shaped formulation is stated again, so the rule reads two ways'
+      }
+      $true
+    }
+
+    # The case that made the third violation arguable: protocol-only outcome,
+    # one path outside. Bound to the disposition — "not protocol-only" — rather
+    # than to the topic, because the section discusses outcomes and paths
+    # outside the directory in its opening sentence without ruling on anything.
+    Assert "$name says which way a protocol-only outcome with a path outside falls" {
+      $paras = & $paragraphs $path
+      $hit = @($paras | Where-Object {
+        $_ -match '(?is)outcome[^.]{0,60}(needs|requires)[^.]{0,60}outside' -and
+        $_ -match '(?i)not protocol-only'
+      })
+      if ($hit.Count -lt 1) {
+        throw 'nothing rules on a protocol-only outcome whose diff reaches outside the protocol directory'
+      }
+      $true
+    }
+  }
+
+  # Divergence is invisible to the two guards above: each copy passes on its
+  # own text, and the pair can carry different rules while both are green.
+  Assert "the installed policy and the shipped template carry the same protocol-only rule" {
+    $texts = @($copies | ForEach-Object { (& $paragraphs $_.Path) -join "`n`n" })
+    if ($texts[0] -ne $texts[1]) { throw 'the two copies of the protocol-only rule have diverged' }
+    $true
+  }
+
+  # Scoped to the creation subsection. The check is also stated at set-cutting
+  # time in §5, and a file-wide search would be satisfied by that statement
+  # alone — which is the arrangement that let the rule be caught after
+  # publication three times running.
+  Assert "the protocol-only check runs immediately before the issues are created" {
+    $c = (Get-SkillFile 'design/SKILL.md') -replace "`r", ''
+    $m = [regex]::Match($c, '(?ims)^###[^\r\n]*approved before it is created.*?(?=^#{1,3}\s|\z)')
+    if (-not $m.Success) { throw 'the shared-tracker creation section is gone' }
+    $s = $m.Value -replace '(?ms)^```.*?^```', ''
+    $hit = @(($s -split "`n`n") | Where-Object {
+      $_ -match '(?i)protocol-only' -and $_ -match '(?is)\bimmediately before\b[^.]{0,60}creat'
+    })
+    if ($hit.Count -lt 1) {
+      throw 'the creation step does not re-run the protocol-only check at the moment before publishing'
+    }
+    $true
+  }
+}
+
+# --- ticket downstream/08 — a waiting finding is surfaced by the index --------
+
+# The criterion is that the *index* tells a waiting finding from a consumed one,
+# so the assertions that matter here are structural: what the committed index
+# says about the findings on disk, and what the regenerator writes for a pair
+# differing in nothing but the mark. The prose assertions sit beside them and
+# never in place of them — a page can require the column while the index has
+# lost it, and only the two structural ones can see that.
+#
+# Every prose probe below strips fenced blocks first. This page is documented
+# with a worked example of the very table it requires, so a probe reading the
+# whole file is satisfied by the example's own words while the binding sentence
+# beside it is gone.
+Describe-Ticket 'downstream/08' 'a waiting drift finding is surfaced by the index, not only by an audit' {
+
+  $evidenceRoot = Join-Path $repo '.claude/evidence'
+  $committedIndex = Join-Path $evidenceRoot 'map.md'
+  $emDash = [string][char]0x2014
+
+  $unfenced = {
+    param([string]$Text)
+    [regex]::Replace(($Text -replace "`r", ''), '(?ms)^```.*?^```', '')
+  }
+
+  # The inline list, read the way the regenerator reads it. `[]` is the no-op,
+  # and it is what most findings declare.
+  $falsifiedBy = {
+    param([string]$Content)
+    $fm = Get-Frontmatter $Content
+    if (-not $fm) { return @() }
+    $line = [regex]::Match($fm, '(?m)^falsifies:[ \t]*\[(.*)\][ \t]*$')
+    if (-not $line.Success) { return @() }
+    ,@($line.Groups[1].Value -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  }
+
+  # The two families the regenerator refuses to run without, so an evidence
+  # fixture can be built without restating them at every call site.
+  $indexTreeFloor = @{
+    '.claude/contexts/repository.md' = "---`nload-when: a term is in question`nsources: []`n---`n`n# R`n"
+    '.claude/decisions/0001-x.md'    = "---`nstatus: accepted`nload-when: x`nsources: []`n---`n`n# X`n"
+  }
+
+  $withFindings = {
+    param([hashtable]$Findings)
+    $files = @{}
+    foreach ($k in $indexTreeFloor.Keys) { $files[$k] = $indexTreeFloor[$k] }
+    foreach ($k in $Findings.Keys) { $files[$k] = $Findings[$k] }
+    & $mkIndexTree $files
+  }
+
+  # The property asked of the real tree, finding by finding. A format rule can
+  # be stated and generated wrongly; this compares what each file says about
+  # itself against what its own row claims, so a row that has lost the state —
+  # or carries the wrong one — fails whichever half is at fault.
+  Assert "every row of the committed index states its finding's consumption, and states it right" {
+    if (-not (Test-Path $committedIndex)) { throw '.claude/evidence/map.md is missing' }
+    $map = (Get-Content $committedIndex -Raw) -replace "`r", ''
+    foreach ($f in (Get-ChildItem $evidenceRoot -Recurse -File -Filter *.md | Where-Object { $_.Name -ne 'map.md' })) {
+      $target = "$($f.Directory.Name)/$($f.Name)"
+      $row = [regex]::Match($map, "(?m)^\|[^\r\n]*\($([regex]::Escape($target))\)[^\r\n]*$")
+      if (-not $row.Success) { throw "no row for $target" }
+      $cell = (($row.Value -split '\|')[-2]).Trim()
+      $content = Get-Content $f.FullName -Raw
+      $falsifies = & $falsifiedBy $content
+      if (-not $falsifies) {
+        if ($cell -ne $emDash) { throw "$target names nothing to heal, and its row says '$cell'" }
+        continue
+      }
+      $marked = [regex]::IsMatch($content, '(?m)^Consumed:[ \t]*\S')
+      $expected = if ($marked) { 'consumed' } else { 'waiting' }
+      if ($cell -notmatch "^$expected\b") {
+        throw "$target is $expected on disk, and its row says '$cell'"
+      }
+    }
+    $true
+  }
+
+  # The distinction, at its root: two findings alike in everything but the mark.
+  # Run against the fixture `configure/SCRIPTS.md` now specifies, byte for byte,
+  # so a derivation that satisfied the page's older evidence example fails here
+  # rather than in the repository that derived it.
+  Assert "the regenerator writes a waiting finding differently from a consumed one" {
+    $root = & $withFindings @{
+      '.claude/evidence/drift/2026-08-03-a-thing.md' =
+        "---`nkind: drift`nfalsifies: [.claude/policies/tracker.md]`n---`n`n# A thing`n"
+      '.claude/evidence/drift/2026-08-04-b-thing.md' =
+        "---`nkind: drift`nfalsifies: [.claude/policies/knowledge.md]`n---`n`n# B thing`n`nConsumed: ``.claude/policies/knowledge.md``, `"Healing`" $emDash abc/01`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      $expected = (@(
+        '# Evidence map'
+        ''
+        '| Finding | Kind | Falsifies |'
+        '| --- | --- | --- |'
+        "| [2026-08-03-a-thing](drift/2026-08-03-a-thing.md) | drift | waiting $emDash ``.claude/policies/tracker.md`` |"
+        "| [2026-08-04-b-thing](drift/2026-08-04-b-thing.md) | drift | consumed $emDash ``.claude/policies/knowledge.md`` |"
+      ) -join "`n") + "`n"
+      $produced = Get-Content (Join-Path $root '.claude/evidence/map.md') -Raw
+      if ($produced -cne $expected) {
+        throw "the index does not match the specified fixture. produced:`n$produced"
+      }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # The safe direction, which is the half a wrong guess destroys. A mark naming
+  # nothing answers nothing, so it must read as waiting exactly as an absent one
+  # does — the inverse retires evidence nobody acted on, and does it silently.
+  Assert "a consumption mark naming nothing reads as waiting, never as consumed" {
+    $root = & $withFindings @{
+      '.claude/evidence/drift/2026-08-03-hollow.md' =
+        "---`nkind: drift`nfalsifies: [.claude/policies/tracker.md]`n---`n`n# Hollow`n`nConsumed:`n"
+    }
+    try {
+      $r = & $runRegenerator $root
+      if ($r.ExitCode -ne 0) { throw "the regenerator failed: $($r.Output)" }
+      $m = (Get-Content (Join-Path $root '.claude/evidence/map.md') -Raw) -replace "`r", ''
+      $row = [regex]::Match($m, '(?m)^\|[^\r\n]*hollow\.md\)[^\r\n]*$')
+      if (-not $row.Success) { throw "no row for the finding: $m" }
+      $cell = (($row.Value -split '\|')[-2]).Trim()
+      if ($cell -notmatch '^waiting\b') { throw "an empty mark was read as an answer: '$cell'" }
+    } finally { Remove-Item -LiteralPath $root -Recurse -Force }
+    $true
+  }
+
+  # Proximity rather than presence, and outside the fences: the page's evidence
+  # example carries both `waiting` and `consumed` as cell values, so a probe for
+  # either word alone passes on the example while the rule requiring it is gone.
+  Assert "the derivation page requires the falsifies cell to show that a finding is waiting" {
+    $c = & $unfenced (Get-SkillFile 'configure/SCRIPTS.md')
+    if ($c -notmatch '(?is)waiting[^.]{0,120}without opening') {
+      throw 'nothing requires the cell to answer whether a finding is waiting without the finding being opened'
+    }
+    $true
+  }
+
+  # The other half of the same page, and the one that keeps this from becoming a
+  # second decider: where the state comes from, and that it is not worked out.
+  Assert "the derivation page reads the state off the finding's mark and refuses to infer it" {
+    $c = & $unfenced (Get-SkillFile 'configure/SCRIPTS.md')
+    if ($c -notmatch '(?is)(consumption mark|`Consumed:` line)[^.]{0,160}(outside the frontmatter|from the body)') {
+      throw 'the page does not say the state is read from the mark rather than from a field'
+    }
+    if ($c -notmatch '(?is)never inferred[^.]{0,140}falsified') {
+      throw 'the page does not refuse inferring the state from the knowledge the finding falsified'
+    }
+    $true
+  }
+
+  $evidenceFormatCopies = [ordered]@{
+    'the shipped template' = { Get-SkillFile 'configure/policies/evidence.template.md' }
+    'this repository'      = { Get-Content (Join-Path $repo '.claude/policies/evidence.md') -Raw }
+  }
+
+  # One per copy: an aggregate passes while the copy a repository actually reads
+  # has lost the rule. Both are probed outside the fences for the same reason as
+  # the page above — the `Consumed:` example sits three lines from this rule.
+  foreach ($name in $evidenceFormatCopies.Keys) {
+    Assert "the format says the index answers waiting without a finding being opened $emDash $name" {
+      $c = & $unfenced (& $evidenceFormatCopies[$name])
+      if ($c -notmatch '(?is)(waiting|unconsumed)[^.]{0,120}without opening') {
+        throw 'the index is not required to answer it, so the answer stays inside the findings'
+      }
+      # The mechanism claim, which is what makes this not a new pass: the state
+      # rides the read a stage already does.
+      if ($c -notmatch '(?is)(no sweep|no second mechanism|already reads this index)') {
+        throw 'nothing says the surfacing rides the existing read rather than a new one'
+      }
+      $true
+    }
+  }
+
+  foreach ($name in $evidenceFormatCopies.Keys) {
+    Assert "the format says the index reports the mark and decides nothing $emDash $name" {
+      $c = & $unfenced (& $evidenceFormatCopies[$name])
+      if ($c -notmatch '(?is)(reports the line and decides nothing|repeats what the finding says)') {
+        throw 'the index is not bounded to reporting, so it reads as a second place consumption may be settled'
+      }
+      if ($c -notmatch '(?is)never works out[^.]{0,140}(healed|acted)') {
+        throw 'inferring consumption from the healed knowledge is not refused where the index is described'
+      }
+      $true
+    }
+  }
+
+  # The read already happens; what this ticket adds is what is done with the
+  # rows the run did not plan to open. Anchored on that contrast, because the
+  # step legitimately says "open only the findings whose area this request
+  # plans" two paragraphs above — a probe for "waiting" alone passes on it.
+  Assert "the design stage raises a waiting finding it did not plan to open" {
+    $discover = & $unfenced (Get-Section (Get-SkillFile 'design/SKILL.md') 'Discover')
+    if ($discover -notmatch '(?is)(raise|surface)[^.]{0,160}not only the ones[^.]{0,60}planned') {
+      throw 'the step still reaches only the findings the run planned to open'
+    }
+    if ($discover -notmatch '(?is)never deciding that it was consumed|is never deciding') {
+      throw 'raising a finding is not separated from deciding it was consumed'
+    }
+    $true
+  }
+
+  # Not a second home for `mechanics/15`'s guard, which asks whether the three
+  # migration cases are labelled apart. This asks the one sentence an index that
+  # now shows the state could erode: the audit still leaves an unmarked finding
+  # unmarked, rather than reading the new column as licence to settle it.
+  Assert "the audit still leaves every unmarked finding unmarked" {
+    $m = & $unfenced (Get-SkillFile 'configure/migration-changelog.md')
+    if ($m -notmatch '(?is)leave every unmarked finding unmarked') {
+      throw 'the instruction to leave an unmarked finding alone is gone'
+    }
+    if ($m -notmatch '(?is)(inference|infer)[^.]{0,120}guess') {
+      throw 'the reason inferring consumption is refused is gone from the audit'
     }
     $true
   }

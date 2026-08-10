@@ -1,6 +1,6 @@
 ---
 title: 'feat(skills): the handoff ends with a copy-paste resume line and names where it lives'
-status: open
+status: resolved
 blocked-by: []
 part-of: downstream
 ---

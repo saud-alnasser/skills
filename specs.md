@@ -136,7 +136,7 @@ A **source pointer** in a context says *start investigating here* — never what
 
 The load condition is a **sentence about when to load**, never a description of what the file is about. That distinction is the whole mechanism: subject matter answers a question nobody asked, and a keyword list answers it worse. A condition that describes a topic satisfies every mechanical check and is the one failure this shape can still produce.
 
-What generation buys is not brevity. **A generated table cannot disagree with its directory**, because it is not a second statement of the directory's contents — so a file added without fields cannot appear in one, and the obligation to audit a hand-written index for missing rows does not arise rather than being discharged. **A generated file is never hand-edited, and the prohibition is enforced** by comparing it against a regeneration rather than requested of whoever opens it.
+What generation buys is not brevity. **A generated table cannot disagree with its directory**, because it is not a second statement of the directory's contents — so a file added without fields cannot appear in one, and the obligation to audit a hand-written index for missing rows does not arise rather than being discharged. **A generated file is never hand-edited, and the prohibition is enforced** by the regenerate-and-compare check the configuration stage installs into a repository's own build, rather than requested of whoever opens it. Naming what enforces it is part of the claim: an enforcement asserted without one is satisfied by whatever the asserting repository happens to run, and every repository configured from it inherits the sentence and no mechanism.
 
 ## 9. Modes
 

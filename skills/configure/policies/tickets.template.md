@@ -83,7 +83,11 @@ Never create a ticket to rename a variable, move a file, or update a comment. Th
 
 ## A shared tracker never carries protocol-only work
 
-A ticket this workflow creates on a shared tracker states an outcome **outside the protocol directory**. Work whose whole effect sits under `.claude/` is scaffolding — an input to some deliverable, not a thing a tracker item can deliver — and a tracker item for it publishes the workflow's own bookkeeping onto a surface teammates read, whether or not they run the protocol.
+A ticket this workflow creates on a shared tracker states an outcome **outside the protocol directory**. Protocol-only work is scaffolding — an input to some deliverable, not a thing a tracker item can deliver — and a tracker item for it publishes the workflow's own bookkeeping onto a surface teammates read, whether or not they run the protocol.
+
+**The test is the diff.** Work is protocol-only when every path it changes sits under `.claude/`, and it stops being protocol-only the moment one path sits outside. Read the file list: it is the evidence anyone checking the rule reaches for anyway, and it has exactly one reading, where a claim about what the work is *for* has as many readings as it has readers.
+
+**Where a protocol-only outcome needs a change outside `.claude/`, the diff decides and the work is not protocol-only** — the tracker carries it, and no exception is argued for it. The path outside is the deliverable the rule was asking for all along: something a teammate who does not run the protocol can watch change. That is the case an outcome-shaped test gets wrong, because such work reads as scaffolding and is not.
 
 Protocol-only work rides its consumer instead:
 

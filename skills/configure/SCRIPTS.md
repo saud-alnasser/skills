@@ -13,6 +13,8 @@ Two scripts, and the rule is *every script this page specifies* — not this lis
 
 PowerShell, Node, Python, whatever the repository's own tooling is written in.
 
+**One more thing is specified here and it is not a script**: the regenerate-and-compare check, which runs the regenerator and fails on the difference. It is specified here because this is where the surface it holds is specified, and it needs no file of its own.
+
 ## What every derived script owes
 
 **Prove it on its fixture before running it on the repository.** Each specification below carries a worked fixture and its exact expected output, because a freshly configured repository has nothing to compare a first run against — a mis-derived script produces a wrong-but-self-consistent result that every later check agrees with. The fixture is the one check whose answer was not produced by the thing being checked. **Report that it was run and that it matched.**
@@ -29,7 +31,7 @@ Write files whole, and beware a write helper that appends its own trailing newli
 
 | | held by |
 | --- | --- |
-| index regenerator | its fixture, **and** regenerate-and-compare against what is committed |
+| index regenerator | its fixture, **and** the regenerate-and-compare check below |
 | position report | its fixture, and nothing else |
 
 A report is not a tracked file, so nothing can regenerate and compare it. For that script the fixture is not a first-run safeguard but the **only** check there will ever be, and a wrongly derived one emits a confident wrong fact that a stage then quotes as authority.
@@ -81,7 +83,9 @@ Four families, and the rule is *every index the workflow generates* — not this
 
 | Finding | Kind | Falsifies |
 | --- | --- | --- |
-| [2026-08-03-a-thing](drift/2026-08-03-a-thing.md) | drift | `.claude/policies/tracker.md` |
+| [2026-08-03-a-thing](drift/2026-08-03-a-thing.md) | drift | waiting — `.claude/policies/tracker.md` |
+| [2026-08-04-another](drift/2026-08-04-another.md) | drift | consumed — `.claude/policies/knowledge.md` |
+| [2026-08-05-a-question](research/2026-08-05-a-question.md) | research | — |
 ```
 
 ```md
@@ -103,9 +107,15 @@ Four families, and the rule is *every index the workflow generates* — not this
 
 **Path-valued cells are backticked and comma-joined.**
 
+**The evidence index's falsifies cell says whether the finding is still waiting**, so an unhealed finding is seen from the index without opening it. A finding that named something to heal renders `waiting — <paths>` until the healing has landed and `consumed — <paths>` once it has; one declaring `[]` keeps the bare em dash, having named nothing to heal.
+
+Which of the two comes from that finding's own consumption mark — a `Consumed:` line in its body, and **the one value any index reads from outside the frontmatter.** It is read there because the mark is where the file already records its healing, and a declared field mirroring it would be a second home for one fact, free to disagree with the first.
+
+**A finding with no mark, or a mark naming nothing, renders `waiting`.** The state is never inferred from the knowledge the finding falsified: unknown resolving to *unhealed* is the safe direction, and the opposite retires evidence nobody acted on. Deciding that a finding was consumed stays a reader's act, and this index only repeats what the file says.
+
 ### What the fields are, and what is refused
 
-A field is read from frontmatter and nothing else. Two list shapes exist and they are not interchangeable:
+A field is read from frontmatter and nothing else — the consumption mark above is not a field, and is the single exception stated as one. Two list shapes exist and they are not interchangeable:
 
 - **Inline** — `sources: [a, b]` — used by contexts, decisions, and evidence.
 - **Block** — the key alone on its line, then indented `- entry` lines — used by specs, because a single pointer can contain a comma (`src/api/handlers.ts L40-L90` is one entry) and inline form would split it silently.
@@ -170,7 +180,27 @@ superseded-by: []
 ---
 
 # Events, not HTTP
+
+.claude/evidence/drift/2026-08-03-a-thing.md
+---
+kind: drift
+falsifies: [.claude/policies/tracker.md]
+---
+
+# A thing
+
+.claude/evidence/drift/2026-08-04-b-thing.md
+---
+kind: drift
+falsifies: [.claude/policies/knowledge.md]
+---
+
+# B thing
+
+Consumed: `.claude/policies/knowledge.md`, "Healing" — abc/01
 ```
+
+The two findings differ in one thing only: the second carries a consumption mark and the first does not. **A derivation that renders them identically has lost the distinction the evidence index exists to show**, and that is what this pair is here to catch — the other two families cannot catch it, having no such state.
 
 Run the derived script against it. `.claude/contexts/map.md` must be exactly:
 
@@ -193,13 +223,52 @@ and `.claude/decisions/map.md` exactly:
 | [0002](0002-events-not-http.md) | two contexts need to communicate | accepted | `src/ordering/` |
 ```
 
-Both files end with a single newline. A mismatch is the derivation being wrong, not the fixture.
+and `.claude/evidence/map.md` exactly:
+
+```md
+# Evidence map
+
+| Finding | Kind | Falsifies |
+| --- | --- | --- |
+| [2026-08-03-a-thing](drift/2026-08-03-a-thing.md) | drift | waiting — `.claude/policies/tracker.md` |
+| [2026-08-04-b-thing](drift/2026-08-04-b-thing.md) | drift | consumed — `.claude/policies/knowledge.md` |
+```
+
+All three files end with a single newline. A mismatch is the derivation being wrong, not the fixture.
 
 ### How the regenerator stays right afterwards
 
-The enforcement is the regenerate-and-compare rule's: the suite regenerates each index and compares it against what is committed, so a stale index, a hand-edited one, or a script that has drifted from this page all fail the build.
+The enforcement is **the regenerate-and-compare check specified in the next section**: it regenerates each index and compares the result against what git has recorded, so a stale index, a hand-edited one, or a script that has drifted from this page all fail the build. It is a step in the checks this repository already runs, and nothing outside this repository runs it.
 
 Which is also why **a generated index is never hand-edited**. The prohibition holds by being checked, not by being asked of whoever opens the file.
+
+---
+
+## The regenerate-and-compare check
+
+The enforcement the prohibition above rests on, and a step in whatever already fails this repository's build — **not a third script.** Regenerating and then failing on the difference is two lines of checks a repository already runs, so it earns no derived surface of its own and `.claude/scripts/` goes on holding only what this page specifies. A script here would put a new file in every configured repository to perform a comparison that needs no code.
+
+Three steps:
+
+1. **Run the index regenerator** over the repository itself.
+2. **Ask git what changed**, limited to the directories that script writes into, so an unrelated build artefact cannot fail this check. The invocation is `.claude/tools/git.md`'s, as the position report's reads are.
+3. **Fail on any answer that is not empty, naming every path in it.** A count says an index is stale and never which one, and which one is the reader's next question.
+
+**Both halves of git's answer count — staged and unstaged.** Step 1 overwrites every index it produces, so a hand edit left only in the working tree is gone before step 2 looks at anything; what survives the overwrite is what git had already recorded. A comparison reading the working tree alone reports a tree the regeneration has just corrected, and calls it clean.
+
+### The check's fixture
+
+Build a git repository in a temporary directory: one context file declaring the fields the regenerator requires, and the `.claude/contexts/map.md` that regenerating produces from it. Commit both, so the tree starts clean.
+
+**Case A — a clean tree** — run the check: it exits zero and prints nothing.
+
+**Case B — a hand-edited index** — change one cell of the committed `map.md` by hand, `git add` the edit, then run the check: it exits non-zero, and its output is exactly
+
+```
+.claude/contexts/map.md
+```
+
+**The `git add` is the fixture rather than a detail of it.** Step 1 overwrites that file before step 2 looks at anything, so an edit left in the working tree and never staged is gone by the time the comparison runs — the check reports a clean tree, and it is right, because by then nothing was wrong. Staging is what puts the edit where the overwrite cannot reach it, which is what a *committed* hand edit does in the case this check exists for. **Testing it unstaged proves the opposite of what it appears to prove**: a session ran exactly that, read the clean report as the mechanism failing to catch hand edits, and reported that.
 
 ---
 

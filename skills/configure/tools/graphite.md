@@ -91,4 +91,8 @@ Verified against `gt submit --help` on gt 1.8.6, and against the command referen
 - **There is no `--title`, `--body`, `--body-file`, or stdin.** The metadata flags are prompts (`--edit`, `--edit-title`, `--edit-description`) and their negations, plus `--ai`. A pull request body cannot be pre-written and passed in.
 - **Whether it prefills the description from the commit message is not documented** — not in `--help`, not in the command reference. So nothing may depend on it. Treat the body as unknown until a human is looking at the prompt.
 
+  **This is not a gap waiting to be filled in by whoever runs it once.** Two runs of gt 1.8.6 have been observed doing opposite things: one left the body as an unfilled pull request template, another prefilled it from the commit in full. `gt submit --help` says submit behaviour is configurable through `gt config`'s *Submit settings*, and neither run recorded that configuration — so what a submit puts in the body is a fact about a machine rather than about the version, and an entry stating either answer would be wrong on somebody's tree.
+
+- **`-d, --draft` and `-p, --publish` both default to false**, verified against `gt submit --help` on gt 1.8.6: `--draft` creates every new pull request as a draft, `--publish` publishes them. **What a submit passing neither flag does is not documented there**, and no run recorded here settles it — every submit that has run on this repository passed `--publish`. A draft cannot be merged, so pass `--publish` whenever the intent is a pull request somebody can merge, rather than relying on a default nobody has checked.
+
 That is why the closing keyword goes in the commit body on a stacking repository: it is the only text AEP controls that reaches the pull request at all.

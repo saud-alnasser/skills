@@ -71,3 +71,13 @@ than a check.
   position report omits the governing repository — each confirmed against a
   deliberate reintroduction and then restored.
 - `pwsh -NoProfile -File scripts/verify.ps1` passes.
+
+
+## Reopened by review
+
+Only §4 Generate installs `boundary.md`. §5 Audit has no bullet that installs a missing
+always-on rule, and `skills/configure/migration-changelog.md` gained no entry — so an
+already-configured repository, which is the case that produced this effort, never
+receives the boundary rule, the two new `engineering.md` clauses, or the protocol
+changes. Precedent puts migration rows at release rather than at build, so this may be
+convention; reopened so the release cannot miss it.

@@ -86,7 +86,11 @@ Every skill that relies on Context opens with a verification report. **Including
 
 *Position* is computed — the Marker's two facts against the live two, and the drift lists when they differ. A script derived into `.claude/scripts/` produces it, and the stage **quotes that output rather than composing its own**: the invocations are recorded once in `.claude/tools/`, and reproducing them per stage gives one procedure as many homes as there are stages.
 
-*Judgement* is the stage's own — which Domain Contexts the request routes to, whether a Source Pointer still resolves, whether a Context statement is contradicted by source, and what was done about each. **No script can produce it**, and the stage prints it beneath.
+*Judgement* is the stage's own — which repository governs this request, which Domain Contexts it routes to, whether a Source Pointer still resolves, whether a Context statement is contradicted by source, and what was done about each. **No script can produce it**, and the stage prints it beneath.
+
+**The governing repository leads the judgement half**, because it is the only line that can make the rest moot. It is judgement rather than computation for a reason worth stating: a script can report the repository it is *standing in*, and that is a different question. Which repository a request is *for* is a fact about the request, and no read of the tree recovers it — which is also why it cannot be attested, and why putting it in the computed half would claim more than the Receipt can carry.
+
+The two answers usually match, and the line is one word when they do. When they differ, `.claude/rules/boundary.md` governs what may be produced, and the stage says so where it noticed rather than at the end.
 
 **The position half is attested; the judgement half is not.** The run that computes the position also writes a **Receipt** recording what was seen and which mode it was seen in, and `/commit` refuses a position no Receipt attests. Drawing the boundary is what makes any of this enforceable: the half that can be checked was previously not separated from the half that cannot, which is why the whole report read as something nobody could verify.
 
@@ -114,13 +118,18 @@ A mode is the reasoning posture a stage runs under: what it optimises for, what 
 
 | The request | Enters |
 | --- | --- |
+| it would change a repository other than this one | **nothing — write the report and hand it back** |
 | a question about how something works | nothing — answer it, and stop |
 | this tree already holds a Claim | `/implement`, resuming that ticket |
 | a ticket exists and is ready to build | `/implement` |
 | it arrived from outside — an issue, a pull request | `/triage` |
 | anything else that would change code | `/design` |
 
-**Four of the five rows are read rather than judged.** The Claim is the branch, a ticket is a file or an issue, and an arrival from outside carries a reference — so the only judgement is the first row, telling a question from a change. That is what makes stating a route affordable on every turn, and it is why the table lives here rather than in the always-on tier: the tier carries the obligation, and this carries the lookup.
+**The first row is first because every row below it assumes the answer.** `/design` plans work for this repository, `/implement` claims a branch in it — a request for somebody else's tree matches one of those rows perfectly and entering it is the mistake. `.claude/rules/boundary.md` carries the rule; this row is where the routing table stops handing the request to a stage that would carry it out.
+
+**The refusal names both repositories** — the one governing the request, and the one this tree is. A stage that refuses without saying which is which leaves a reader a wall instead of a claim they can check, and the answer is judgement, so it can be wrong and needs to be visible.
+
+**Four of the remaining five rows are read rather than judged.** The Claim is the branch, a ticket is a file or an issue, and an arrival from outside carries a reference — so judgement is confined to two rows: the first, naming which repository governs, and the one beneath it, telling a question from a change. That is what makes stating a route affordable on every turn, and it is why the table lives here rather than in the always-on tier: the tier carries the obligation, and this carries the lookup.
 
 **Stated, then taken.** A stage named but not entered is the round trip the rule exists to remove. The statement is not a gate — it is what lets a wrong route be corrected in one line, which is what makes an imperfect route acceptable at all.
 

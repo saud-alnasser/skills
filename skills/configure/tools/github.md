@@ -84,7 +84,21 @@ gh issue develop <number> --list                  # read-only: branches linked t
 
 ## Link a parent and its sub-issues
 
-`gh` has **no sub-issue subcommand**. Parent/child goes through the sub-issues REST API with `gh api`:
+`gh` takes the edge as flags, and they speak **issue numbers**. Checked against `gh 2.96.0`:
+
+```
+gh issue create --parent <number>                 # create it already attached
+gh issue edit <number> --parent <parent>          # attach an existing issue
+gh issue edit <number> --remove-parent            # detach it from above
+gh issue edit <parent> --add-sub-issue <child>    # attach from the parent's side
+gh issue edit <parent> --remove-sub-issue <child>
+```
+
+Each also accepts a URL where it accepts a number.
+
+**Prefer the flags to the API below**, for one reason worth stating: the flags take the number a human reads off the issue, and the API takes an internal id that the number is not. That is the trap the API path carries and the flags do not.
+
+The REST route stays because an older `gh` has none of the flags above, and because listing children still has no flag:
 
 ```
 gh api repos/{owner}/{repo}/issues/<parent>/sub_issues \
@@ -93,7 +107,7 @@ gh api repos/{owner}/{repo}/issues/<parent>/sub_issues
                                                   # list the children
 ```
 
-Two traps, either of which fails against the wrong target or not at all:
+Two traps on that route, either of which fails against the wrong target or not at all:
 
 - **`sub_issue_id` is the issue's `id`, not its number** — passing `#42`'s number succeeds against some other issue entirely. Read the id first:
 
@@ -116,9 +130,17 @@ Where the API is unavailable or refused, a **task list in the parent body** (`- 
 
 ## Record a blocking relationship
 
-`gh` has **no blocking subcommand**, and blocking is not the same edge as parent/child — see the entry above for that one.
+Blocking is not the same edge as parent/child — see the entry above for that one. `gh` carries it natively, by issue number. Checked against `gh 2.96.0`:
 
-**State the edge in the issue body.** "Blocked by #12, #14." Legible to humans, no API surface, and it is what the local-file tracker does anyway.
+```
+gh issue create --blocked-by <numbers> --blocking <numbers>
+gh issue edit <number> --add-blocked-by <number>    # ... and --remove-blocked-by
+gh issue edit <number> --add-blocking <number>      # ... and --remove-blocking
+```
+
+`create` takes a list; the `edit` flags take one edge at a time and repeat.
+
+Where an older `gh` has none of these, **state the edge in the issue body** — "Blocked by #12, #14." Legible to humans, no API surface, and it is what the local-file tracker does anyway.
 
 ## Open a pull request
 

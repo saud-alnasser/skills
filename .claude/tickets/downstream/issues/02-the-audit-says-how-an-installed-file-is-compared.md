@@ -53,3 +53,14 @@ corrected on purpose.
 - The suite fails when the audit branch carries no comparison method, confirmed
   against a deliberate removal and then restored.
 - `pwsh -NoProfile -File scripts/verify.ps1` passes.
+
+
+## Reopened by review
+
+The acceptance line is met literally and the root cause named in the Problem is not.
+`skills/configure/SKILL.md` now says "Several checks above compare an installed file
+against what AEP ships", but no §5 bullet does — the bullets compare tools against the
+repository, scripts against `SCRIPTS.md`, and the tracker policy against the
+version-control policy. The comparison method still attaches to nothing, which is the
+gap this ticket was cut to close. The Outcome also asked for a bullet; it was delivered
+as trailing prose.
