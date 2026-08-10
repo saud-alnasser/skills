@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 sources:
   - .claude/protocol.md
   - .claude/tools/git.md
