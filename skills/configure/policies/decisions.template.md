@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.19.0
+version: 1.20.0
 ---
 
 # ADR Format
@@ -13,6 +13,7 @@ Decisions are ADRs in `.claude/decisions/`, sequentially numbered `0001-slug.md`
 
 ```md
 ---
+owner: repository
 status: accepted
 load-when: {the condition under which a reader should open this}
 sources: [{where the subject of this decision lives}]
@@ -30,10 +31,11 @@ superseded-by: []
 
 ## Declared fields
 
-Every ADR declares these five, and no others — a field nothing acts on is deleted rather than maintained.
+Every ADR declares these six, and no others — a field nothing acts on is deleted rather than maintained.
 
 | Field | Holds | Read by |
 | --- | --- | --- |
+| `owner` | `repository` — a decision record is the repository's to write | the configuration audit's coverage sweep |
 | `status` | `proposed \| accepted \| deprecated \| superseded` | a reader deciding whether this is live |
 | `load-when` | the condition under which to open this file | the generated index |
 | `sources` | where the subject of this decision lives | the generated index, and anyone navigating |

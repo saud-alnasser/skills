@@ -93,7 +93,7 @@ A fact stated in frontmatter because something acts on it — a generated index,
 _Avoid_: metadata, header, tag, attribute
 
 **Owner**:
-The frontmatter field deciding who may change an installed instruction file: `framework` is law — installed verbatim, byte-locked to its template, never healed or debated; `repository` is this repository's to heal (ADR 0073).
+The frontmatter field deciding who may change a governed file: `framework` is law — installed verbatim, byte-locked to its template, never healed or debated; `repository` is this repository's to heal (ADR 0073). Declared explicitly on every governed file the sweep reaches — knowledge artifacts included; ticket issue files and the entrypoint excepted — and read by the configuration audit's coverage sweep (ADR 0082).
 _Avoid_: maintainer, author
 
 **Extension Point**:

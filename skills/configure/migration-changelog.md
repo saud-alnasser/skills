@@ -47,6 +47,30 @@ it declares no version at all
 
 ---
 
+## 1.20.0
+
+**Look at:** `.claude/contexts/`, `.claude/decisions/`, `.claude/evidence/`, the standards under `.claude/rules/` that the repository discovered for itself, the tool references under `.claude/tools/`, the two derived policies `.claude/policies/tracker.md` and `.claude/policies/version-control.md`, and wherever `.claude/policies/tracker.md` declares a spec lives.
+
+### Governed files that predate the owner declaration
+
+The formats for repository-owned files name an `owner` field as of this release — the domain contexts and `.claude/contexts/repository.md`, the decision records, the evidence findings, the specs, and the standards a repository discovered in its own tree under `.claude/rules/`. The derived surfaces — the tool references under `.claude/tools/` and the two derived policies — have named it since an earlier release, and a repository configured before that release holds them undeclared too, so they are this entry's subject on the same recognition. A repository configured earlier holds all of those files and none of the declaration, which leaves two states indistinguishable from the file itself and leaves them that way permanently: repository-owned by design, and written before the field existed.
+
+Nothing else reaches them. The generate step passes over a file that already exists — under the shape it was written for it is correct — and a repository configured once does not run generation again on its own. Without this entry an existing repository keeps the undeclared shape while the framework ships the declared one.
+
+**Recognise it by content before writing anything**: a governed file whose frontmatter declares no `owner` key. A file already declaring one is current, whatever value it declares; a repository whose governed files all declare one is a **no-op**, and the plan says so rather than staying silent. That is what makes this entry safe to consider against a repository that never had the shape.
+
+**Repaired, one field per file.** Write `owner: repository` into every file found. Where the file already carries a frontmatter block, the field is added to that block and nothing else in it moves; where it carries none — `.claude/contexts/repository.md` and an always-on discovered rule both carry none under the old shape — a block is added holding that one field and nothing else.
+
+**No prose changes, in any file.** A decision record and an evidence finding are frozen accounts of what was decided and what was observed, and this repair does not rewrite them: the field sits *beside* the account rather than in it, and every body is left exactly as found. The same holds for each of the other categories. That is what makes a repair touching a repository's whole knowledge tree in one pass safe to run — the diff is one line per file, and a diff that is anything more is this repair going wrong.
+
+**What it is not the subject of**, named here rather than left to a run's judgement:
+
+- **Tickets.** A ticket's format declares its own fields and `owner` is not among them, so a ticket under `.claude/tickets/` is left as it is. A spec filed beside tickets is a spec and is stamped like any other.
+- **The per-clone set `.claude/.gitignore` defines.** Those files are not committed and are not the same in two clones, so there is nothing durable for a declaration to be true of.
+- **Framework-owned files.** Each already declares `owner` and the `version` of the release that last changed it, and the computed comparison against that release's template is what governs them. This repair never writes into one — a framework-owned file whose declaration is wrong is that comparison's finding rather than this entry's.
+
+The declaration is what the audit's coverage sweep reads, so a governed file this repair leaves undeclared is one every later audit reports. That is the point of the field: absence becomes a finding somebody can repair instead of the permanent default it was.
+
 ## 1.19.0
 
 **Look at:** `.claude/protocol.md`'s frontmatter, and every installed framework-owned file's.

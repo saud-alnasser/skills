@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.19.0
+version: 1.20.0
 ---
 
 # Evidence
@@ -24,10 +24,11 @@ version: 1.19.0
 
 ## Declared fields, and the one index
 
-Every evidence file declares two fields:
+Every evidence file declares three fields:
 
 ```yaml
 ---
+owner: repository
 kind: drift
 falsifies: [.claude/policies/tracker.md]
 ---
@@ -35,6 +36,7 @@ falsifies: [.claude/policies/tracker.md]
 
 | Field | Holds | Read by |
 | --- | --- | --- |
+| `owner` | `repository` — a finding is the repository's record | the configuration audit's coverage sweep |
 | `kind` | which of the five this is | the index |
 | `falsifies` | what the finding contradicts — `[]` where it contradicts nothing | the index, and whoever heals it |
 
