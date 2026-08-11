@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.19.0
+version: 1.20.0
 ---
 
 # Context Format
@@ -46,6 +46,10 @@ owner: repository
 Repository-wide terms, ownership, and the constraints that outlive the implementation:
 
 ```md
+---
+owner: repository
+---
+
 # {Repo or system name}
 
 {One or two sentences: what this repository is and why it exists.}
@@ -73,6 +77,7 @@ The same shape minus anything repository-wide, with its declared fields at the t
 
 ```md
 ---
+owner: repository
 load-when: the request touches schema, migrations, or queries
 sources: [src/db/, migrations/]
 ---

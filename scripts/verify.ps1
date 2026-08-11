@@ -17058,9 +17058,20 @@ Describe-Ticket 'crystallize/06' 'the stages speak norm form and read their exac
   # Raised to 153,430 by retire/02 — measured, not rounded: the cursor read
   # gained its legacy fallback and the advance became the verbatim replacement,
   # reworded law rather than essays, and review priced the exact bytes.
+  # Raised to 153,589 by coverage/01 — the discovered-standards guidance now
+  # names the owner declaration the coverage sweep reads: one clause of new law.
+  # Raised to 156,688 by coverage/02 — measured, not rounded: the audit's
+  # owner-contract re-check stopped naming four categories and became a sweep of
+  # the whole committed tree, which is five bullets of new law (the enumeration
+  # and classification, the computed output, the uncategorised finding, the
+  # missing-owner finding, the per-clone exemption). Law the audit had nowhere
+  # else to state, never re-inflated essays. Raised to 157,074 by the coverage
+  # effort's review, whose fixes corrected the ticket contract's home, split the
+  # spec beside tickets out of the ticket exemption, and named what is swept
+  # without a declaration — reworded and completed law, priced exactly.
   Assert "the skill bodies stay under their measured post-conversion ceiling" {
     $total = (Get-ChildItem $skills -Recurse -Filter 'SKILL.md' | Measure-Object -Property Length -Sum).Sum
-    if ($total -gt 153430) { throw "skill bodies total $total against a 153,430 ceiling" }
+    if ($total -gt 157074) { throw "skill bodies total $total against a 157,074 ceiling" }
     $true
   }
 
@@ -17628,6 +17639,352 @@ Describe-Ticket 'retire/02' 'aep-version retires, and the entry stamp is the rel
     $s = Get-Content (Join-Path $repo 'specs.md') -Raw
     if ($s -match '(?i)two named extension points') { throw 'the specification still names two' }
     if ($s -notmatch '(?i)one named extension point') { throw 'the specification does not name the surviving point' }
+    $true
+  }
+}
+
+# --- ticket coverage/02 — the audit sweeps the whole protocol directory -------
+
+Describe-Ticket 'coverage/02' 'the audit sweeps the whole protocol directory' {
+
+  $cfg      = Get-SkillFile 'configure/SKILL.md'
+  $audit    = Get-Section $cfg 'Audit'
+  $generate = Get-Section $cfg 'Generate'
+
+  # The layout the generate step draws is the single source for what a category
+  # is. Parsed from that block rather than listed here, because a list here is
+  # the second home whose drift this ticket exists to prevent — and the sweep is
+  # checked *against* it below, in both directions.
+  $layoutEntries = @([regex]::Matches($generate, '(?m)^[├└]──\s+(\S+)') |
+                     ForEach-Object { $_.Groups[1].Value })
+
+  # A parse that matched nothing would make every set assertion below pass on an
+  # empty set. The floor only has to be high enough that a broken regex cannot
+  # sneak through — the layout's exact size is the parse's to know, not this
+  # comment's.
+  Assert "the generated layout still parses into categories" {
+    if ($layoutEntries.Count -lt 12) { throw "the layout parsed to $($layoutEntries.Count) entries" }
+    if ($layoutEntries -notcontains 'protocol.md') { throw 'the loose router is not in the parse' }
+    if ($layoutEntries -notcontains 'contexts/') { throw 'a directory category is not in the parse' }
+    $true
+  }
+
+  # The criterion this ticket exists for: the re-check used to name four
+  # categories and stop. Matched on the old enumeration itself rather than on the
+  # replacement's wording, so re-introducing it anywhere in the file fails.
+  Assert "the owner-contract re-check no longer names a fixed list of categories" {
+    if ($cfg -match '(?i)the rules, the modes,[^\r\n]{0,60}protocol file') {
+      throw 'the four-category enumeration is back'
+    }
+    $m = [regex]::Match($audit, "(?m)^[^\r\n]*Re-check every installed instruction file against its owner's contract[^\r\n]*$")
+    if (-not $m.Success) { throw 'the owner-contract re-check is gone' }
+    if ($m.Value -notmatch '(?i)sweep') { throw 'the re-check names no swept set to run against' }
+    $true
+  }
+
+  Assert "the sweep enumerates the committed set from version control, not a tree walk" {
+    if ($audit -notmatch '(?i)git ls-files[^\r\n]{0,20}\.claude') { throw 'nothing enumerates the committed set' }
+    if ($audit -notmatch '(?i)committed[^\r\n]{0,200}rather than[^\r\n]{0,200}working tree') {
+      throw 'the enumeration does not say why the working tree is the wrong input'
+    }
+    $true
+  }
+
+  Assert "the sweep classifies each file by category and by declared owner" {
+    if ($audit -notmatch '(?is)classify each file by[^.]{0,400}`owner`') { throw 'classification names no owner axis' }
+    if ($audit -notmatch '(?is)check it against that category''s contract') { throw 'classification leads to no contract check' }
+    $true
+  }
+
+  # The ticket's own recorded risk: a category table restated in the sweep drifts
+  # from the layout as releases add directories. Both directions are asserted —
+  # the sweep points at the layout, and every category it names is one the layout
+  # declares. A category invented here would pass the first and fail the second.
+  Assert "the sweep reads its categories off the generated layout" {
+    if ($audit -notmatch '(?i)categor(y|ies)[^\r\n]{0,200}step 4') { throw 'the sweep does not point at the layout' }
+    if ($audit -notmatch '(?i)never off a list restated here|rather than[^\r\n]{0,40}a list restated') {
+      throw 'nothing forbids a restated list'
+    }
+    $true
+  }
+
+  Assert "every category the sweep names by name is one the layout declares" {
+    $named = @([regex]::Matches($audit, '`([a-z][a-z-]*)/`') |
+               ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    if ($named.Count -lt 3) { throw "the sweep names $($named.Count) categories — the match is broken or the contracts are gone" }
+    $unknown = @($named | Where-Object { $layoutEntries -notcontains "$_/" })
+    if ($unknown) { throw "named in the audit, absent from the layout: $($unknown -join ', ')" }
+    $true
+  }
+
+  Assert "the sweep quotes computed output rather than asserting coverage in prose" {
+    if ($audit -notmatch '(?is)(quote|print)[^.]{0,300}\bcounts?\b') { throw 'no counts are quoted' }
+    if ($audit -notmatch '(?i)count equals the[^\r\n]{0,40}count') { throw 'the swept set is never reconciled against the enumerated one' }
+    $true
+  }
+
+  Assert "a committed file fitting no category is a finding" {
+    if ($audit -notmatch '(?i)fitting no category[^\r\n]{0,60}finding') { throw 'an unclassifiable file is not a finding' }
+    if ($audit -notmatch '(?i)never filed under the nearest') { throw 'nothing stops it being absorbed into a neighbouring category' }
+    $true
+  }
+
+  Assert "a governed file declaring no owner is a finding, not a default" {
+    if ($audit -notmatch '(?i)governed file declaring no owner is a finding') { throw 'a missing owner declaration is not a finding' }
+    if ($audit -notmatch '(?i)Absence is not read as a default') { throw 'absence is still readable as repository-owned by default' }
+    $true
+  }
+
+  # The one category swept without the field, and the reason: its shipped format
+  # declares none, so requiring one would report every conforming ticket. The
+  # contract is the ticket format's — the tracker policy only selects the form —
+  # and a spec or index filed beside tickets keeps its own format, so the
+  # exemption cannot swallow the directory.
+  Assert "tickets are swept against the ticket format and owe no owner declaration" {
+    if ($audit -notmatch '(?i)`tickets/` against the ticket format `\.claude/policies/tickets\.md`') { throw 'tickets are swept against no contract' }
+    if ($audit -notmatch '(?i)no owner declaration is required of a ticket') { throw 'the ticket exemption is unstated' }
+    if ($audit -notmatch '(?i)(spec|index)[^\r\n]{0,120}beside tickets[^\r\n]{0,120}own format') { throw 'the exemption swallows the spec and index beside the tickets' }
+    $true
+  }
+
+  # Exactly the ignore file's set, computed from the ignore file the generate
+  # step writes — so an exemption invented in the audit, or an entry the ignore
+  # file gains and the audit does not, both fail here.
+  $ignoreEntries = @(([regex]::Match($generate, '(?ms)^```gitignore\r?\n(.*?)^```').Groups[1].Value -split '\r?\n') |
+                     ForEach-Object { $_.Trim() } |
+                     Where-Object { $_ -and $_ -notmatch '^#' })
+
+  Assert "the per-clone exemptions are exactly what the ignore file defines" {
+    if ($ignoreEntries.Count -lt 3) { throw "the ignore block parsed to $($ignoreEntries.Count) entries" }
+    $line = @($audit -split '\r?\n' | Where-Object { $_ -match '(?i)per-clone set' -and $_ -match '\.gitignore' })
+    if ($line.Count -ne 1) { throw "the exemption is stated $($line.Count) times, not once" }
+    foreach ($e in $ignoreEntries) {
+      if ($line[0] -notmatch [regex]::Escape($e)) { throw "the ignore file exempts $e and the sweep does not" }
+    }
+    $rooted = @([regex]::Matches($line[0], '`(/[^`]+)`'))
+    $expected = @($ignoreEntries | Where-Object { $_ -like '/*' })
+    if ($rooted.Count -ne $expected.Count) {
+      throw "the sweep exempts $($rooted.Count) rooted paths against the ignore file's $($expected.Count)"
+    }
+    $true
+  }
+
+  Assert "the committed harness file is swept rather than exempted" {
+    if ($audit -notmatch '(?i)settings\.json[^\r\n]{0,80}committed') { throw 'the committed harness file is not distinguished from the per-clone one' }
+    $true
+  }
+
+  # The sweep run against this repository, which is the acceptance criterion no
+  # amount of prose-matching reaches: every committed path lands in a category
+  # the layout names, and every governed file declares its owner.
+  $committed = @(& git -C $repo ls-files '.claude')
+
+  Assert "this repository's committed protocol directory holds no file fitting no category" {
+    if ($committed.Count -lt 50) { throw "the enumeration returned $($committed.Count) paths — git read the wrong tree" }
+    $strays = @()
+    foreach ($p in $committed) {
+      $seg = ($p -split '/')[1]
+      if ($layoutEntries -contains $seg -or $layoutEntries -contains "$seg/") { continue }
+      $strays += $p
+    }
+    if ($strays) { throw "committed and in no category: $($strays -join ', ')" }
+    $true
+  }
+
+  Assert "every governed file this repository commits declares its owner" {
+    $missing = @()
+    foreach ($p in $committed) {
+      if ($p -notlike '*.md' -or $p -like '.claude/tickets/*/issues/*') { continue }
+      $c = Get-Content (Join-Path $repo $p) -Raw
+      if ($null -eq $c) { $c = '' }
+      $fm = Get-Frontmatter $c
+      if (-not $fm -or $fm -notmatch '(?m)^owner:\s*(framework|repository)\s*$') { $missing += $p }
+    }
+    if ($missing) { throw "governed and undeclared: $($missing -join ', ')" }
+    $true
+  }
+}
+
+
+# --- ticket coverage/01 — repository-owned formats declare their owner --------
+
+Describe-Ticket 'coverage/01' 'repository-owned formats declare their owner' {
+
+  # The prose count and the field table are asserted against each other, so a
+  # field added or removed without moving the "no others" claim fails in either
+  # direction — the two drift apart silently otherwise, which is exactly the
+  # five-versus-six deviation this ticket healed.
+  $countWords = @{ 'two' = 2; 'three' = 3; 'four' = 4; 'five' = 5; 'six' = 6; 'seven' = 7 }
+
+  function Get-DeclaredFieldRows {
+    param([string]$Content, [string]$HeadingPattern)
+    @([regex]::Matches((Get-Section $Content $HeadingPattern), '(?m)^\|\s*`[^`]+`\s*\|'))
+  }
+
+  Assert "the decision format's template block declares repository ownership" {
+    if ((Get-Section (Get-SkillFile 'configure/policies/decisions.template.md') 'Template') -notmatch '(?m)^owner:\s*repository\s*$') { throw 'the ADR template block declares no owner' }
+    $true
+  }
+
+  Assert "the decision format's field count matches its no-others claim, owner among them" {
+    $c = Get-SkillFile 'configure/policies/decisions.template.md'
+    $m = [regex]::Match($c, '(?i)declares these (\w+), and no others')
+    if (-not $m.Success) { throw 'the no-others claim is gone' }
+    $claimed = $countWords[$m.Groups[1].Value.ToLower()]
+    if (-not $claimed) { throw "unparseable count word: $($m.Groups[1].Value)" }
+    $rows = Get-DeclaredFieldRows $c 'Declared fields'
+    if ($rows.Count -ne $claimed) { throw "the claim says $claimed fields, the table holds $($rows.Count)" }
+    if (-not ($rows | Where-Object { $_.Value -match '`owner`' })) { throw 'the field table has no owner row' }
+    $true
+  }
+
+  Assert "the domain-context format declares repository ownership" {
+    if ((Get-Section (Get-SkillFile 'configure/policies/context.template.md') 'contexts/<domain>') -notmatch '(?m)^owner:\s*repository\s*$') { throw 'the domain-context block declares no owner' }
+    $true
+  }
+
+  Assert "the repository-context format declares repository ownership" {
+    if ((Get-Section (Get-SkillFile 'configure/policies/context.template.md') 'contexts/repository') -notmatch '(?m)^owner:\s*repository\s*$') { throw 'the repository.md block declares no owner' }
+    $true
+  }
+
+  Assert "the evidence format's field count matches its declared-fields claim, owner among them" {
+    $c = Get-SkillFile 'configure/policies/evidence.template.md'
+    $m = [regex]::Match($c, '(?i)declares (\w+) fields')
+    if (-not $m.Success) { throw 'the declared-fields claim is gone' }
+    $claimed = $countWords[$m.Groups[1].Value.ToLower()]
+    if (-not $claimed) { throw "unparseable count word: $($m.Groups[1].Value)" }
+    if ((Get-Section $c 'Declared fields') -notmatch '(?m)^owner:\s*repository\s*$') { throw 'the evidence example block declares no owner' }
+    $rows = Get-DeclaredFieldRows $c 'Declared fields'
+    if ($rows.Count -ne $claimed) { throw "the claim says $claimed fields, the table holds $($rows.Count)" }
+    if (-not ($rows | Where-Object { $_.Value -match '`owner`' })) { throw 'the field table has no owner row' }
+    $true
+  }
+
+  Assert "the spec format declares repository ownership" {
+    if ((Get-Section (Get-SkillFile 'configure/policies/specs.template.md') 'Template') -notmatch '(?m)^owner:\s*repository\s*$') { throw 'the spec template block declares no owner' }
+    $true
+  }
+
+  Assert "the discovered-standards guidance says each declares repository ownership" {
+    $m = [regex]::Match((Get-SkillFile 'configure/SKILL.md'), '(?m)^\*\*More `\.claude/rules/\*\.md`\*\*[^\r\n]*$')
+    if (-not $m.Success) { throw 'the discovered-standards guidance is gone' }
+    if ($m.Value -notmatch 'owner:\s*repository') { throw 'the guidance never says a discovered standard declares its owner' }
+    $true
+  }
+}
+
+# --- ticket coverage/03 — a release entry backfills the owner stamp -----------
+
+Describe-Ticket 'coverage/03' 'a release entry backfills the owner stamp' {
+
+  $running = (Get-Content (Join-Path $repo '.claude-plugin/plugin.json') -Raw | ConvertFrom-Json).version
+
+  # Every assertion below reads the running release's entry alone, never the
+  # whole changelog. `owner`, frozen prose, the ignore file and the exemptions
+  # all appear in older entries and in the cursor prose above them, so a
+  # file-wide match would stay green with this entry deleted — which is the one
+  # thing these guards exist to catch. `changelog/02` asserts the heading is
+  # present; this asserts the entry under it says what it does.
+  $release = [regex]::Match(
+    (Get-SkillFile 'configure/migration-changelog.md'),
+    '(?ms)^##\s+' + [regex]::Escape($running) + '\s*$.*?(?=^##\s|\z)')
+  $entry = if ($release.Success) { $release.Value } else { '' }
+
+  Assert "the running release's entry writes the repository owner declaration" {
+    if (-not $release.Success) { throw "no entry for $running" }
+    if ($entry -notmatch 'owner:\s*repository') { throw 'the entry never says what it writes' }
+    $true
+  }
+
+  Assert "the entry recognises its subject by content before it writes" {
+    if ($entry -notmatch '(?is)by content') { throw 'the entry acts on a release number alone' }
+    if ($entry -notmatch '(?is)declares no `owner`') { throw 'the entry does not say what the missing shape looks like' }
+    $true
+  }
+
+  Assert "a repository that never had the shape is a no-op" {
+    if ($entry -notmatch '(?i)no-op') { throw 'the entry does not state its own no-op case' }
+    $true
+  }
+
+  # The categories, each by the path it lives at rather than by the noun the
+  # entry happens to use for it — a rewording of "evidence findings" must not
+  # be able to drop `.claude/evidence/` from what the backfill reaches.
+  $governed = @{
+    'the domain contexts'    = '\.claude/contexts/'
+    'the repository context' = '\.claude/contexts/repository\.md'
+    'the decision records'   = '\.claude/decisions/'
+    'the evidence findings'  = '\.claude/evidence/'
+    'the discovered rules'   = '\.claude/rules/'
+    # Anchored to the format-list occurrence: bare '(?i)spec' also matched the
+    # Look-at line and the ticket exemption, so deleting the list item stayed
+    # green — the travelling-phrase failure the authoring rule names.
+    'the specs'              = '(?i)\bthe specs\b'
+  }
+  foreach ($name in $governed.Keys) {
+    Assert "the entry reaches $name" {
+      if ($entry -notmatch $governed[$name]) { throw 'the category is outside what the backfill names' }
+      $true
+    }
+  }
+
+  Assert "a file with no frontmatter gains a block, and one with a block gains the field" {
+    if ($entry -notmatch '(?is)already carries a frontmatter block') { throw 'the entry does not say what happens to a file that has one' }
+    if ($entry -notmatch '(?is)a block is added') { throw 'the entry does not say what happens to a file that has none' }
+    $true
+  }
+
+  # The freeze is the constraint the whole repair rests on: it runs across every
+  # knowledge file a repository has, and the only thing making that acceptable
+  # is that nothing but frontmatter moves.
+  Assert "the entry states that no prose changes" {
+    if ($entry -notmatch '(?is)No prose changes') { throw 'the entry does not bound itself to frontmatter' }
+    $true
+  }
+
+  # Both halves are pinned inside the one sentence that makes the claim. Written
+  # loosely they went green against text that travels *with* the entry rather
+  # than with the claim: the two nouns also sit in the opening list of what the
+  # backfill reaches, and a bare `beside` is matched by the ticket exemption's
+  # "a spec filed beside tickets" — so deleting the freeze left the guard green.
+  Assert "the frozen accounts stay frozen, the field sitting beside them" {
+    if ($entry -notmatch '(?is)decision record[^.]{0,160}evidence finding[^.]{0,80}frozen account') { throw 'the two frozen categories are not named as frozen' }
+    if ($entry -notmatch '(?is)beside\W{0,3}the account') { throw 'the field is not placed beside the account it does not edit' }
+    $true
+  }
+
+  Assert "the entry exempts tickets" {
+    if ($entry -notmatch '(?is)\.claude/tickets/') { throw 'tickets are not named as exempt' }
+    if ($entry -notmatch '(?is)`owner` is not among them') { throw 'the reason a ticket is exempt is not stated' }
+    $true
+  }
+
+  Assert "the entry exempts the per-clone set the ignore file defines" {
+    if ($entry -notmatch '(?is)\.claude/\.gitignore') { throw 'the ignore file does not define the exemption' }
+    if ($entry -notmatch '(?i)per-clone') { throw 'the per-clone set is not named' }
+    $true
+  }
+
+  Assert "the entry states that framework-owned files are not its subject" {
+    if ($entry -notmatch '(?i)framework-owned') { throw 'framework-owned files are not addressed' }
+    if ($entry -notmatch '(?is)never writes into one') { throw 'the entry does not keep its hands off framework law' }
+    if ($entry -notmatch '(?is)comparison') { throw 'the entry does not say what governs a framework-owned file instead' }
+    $true
+  }
+
+  # A release entry is frozen once written, so a new one is filed above the
+  # newest and never between two existing releases. Descending order is the
+  # cheapest check that a new entry was added rather than spliced in.
+  Assert "the changelog's releases stay in descending order, the new entry filed first" {
+    $log = Get-SkillFile 'configure/migration-changelog.md'
+    $releases = @([regex]::Matches($log, '(?m)^##\s+(\d+\.\d+\.\d+)\s*$') |
+                  ForEach-Object { [version]$_.Groups[1].Value })
+    if ($releases.Count -lt 7) { throw "only $($releases.Count) releases are recorded" }
+    if ($releases[0] -ne [version]$running) { throw "the newest entry is $($releases[0]), not the running $running" }
+    for ($i = 1; $i -lt $releases.Count; $i++) {
+      if ($releases[$i] -ge $releases[$i - 1]) { throw "$($releases[$i]) is filed after $($releases[$i - 1])" }
+    }
     $true
   }
 }

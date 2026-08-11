@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.19.0
+version: 1.20.0
 ---
 
 # Spec Format
@@ -13,6 +13,7 @@ Standard and above. **Where a spec is written differs per repository, and `.clau
 
 ```markdown
 ---
+owner: repository
 status: draft
 sources:
   - <a path worth starting from>
