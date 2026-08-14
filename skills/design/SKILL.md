@@ -16,11 +16,11 @@ Everything between a request and a plan `/implement` can build — discovery, th
 
 **Check the Marker first**, before anything is read — the rule and both drift reads are in `.claude/protocol.md`, and the position script it names computes them; a tool guide is opened only when an operation needs one. Then, in order:
 
-1. Load `.claude/contexts/map.md`.
+1. Query the store for the repository's `context` records.
 2. **Route** — its table says which Domain Contexts this request touches. Load those, and only those.
 3. **Verify** what you are about to rely on — scoped to what routing selected, which is why it comes after routing: verifying everything is the startup scan the Marker exists to avoid.
 4. **Read the code.** `.claude/rules/engineering.md` has the rule; discovery is where it bites hardest.
-5. **Read the waiting drift.** `.claude/evidence/map.md` indexes every finding with what each falsifies — route through it and open only the findings whose area this request plans, then fold their healing into this run's deliverable. Reading the directory whole is the cost the index exists to remove. **Waiting is read off the finding, never derived** — which line answers it is `.claude/policies/evidence.md`'s, and opening the knowledge a finding falsified to work out whether anyone healed it is the cost that line removes. **Raise every finding the index shows as waiting whose area this work touches** — not only the ones this run planned to open; raising one is putting it in front of somebody positioned to answer, and **it is never deciding that it was consumed** — a wrong guess retires a finding nobody acted on.
+5. **Read the waiting drift.** Every `evidence` record declares its kind and what it falsifies, so one filter over the store answers which findings bear on this request — open only those whose area this request plans, then fold their healing into this run's deliverable. Reading the directory whole is the cost the index exists to remove. **Waiting is read off the finding, never derived** — which line answers it is the `evidence` norm's, and opening the knowledge a finding falsified to work out whether anyone healed it is the cost that line removes. **Raise every finding the index shows as waiting whose area this work touches** — not only the ones this run planned to open; raising one is putting it in front of somebody positioned to answer, and **it is never deciding that it was consumed** — a wrong guess retires a finding nobody acted on.
 
 Open with the one-line verification report, including when there was nothing to verify.
 
@@ -37,7 +37,7 @@ Grill the idea, proportionate to the work, one question at a time, using `grilli
 
 ## 4 — Evidence, when the scope fits
 
-`/research` for facts, `/prototype` for feel. Gating and graduation are `.claude/policies/evidence.md`'s; what is `/design`'s to *do*: a gate stops this stage, and this stage promotes a durable finding into Context or a Decision — nothing downstream reads the findings. A grill that ends without a decision **may be recorded as a discussion** in evidence — `/design` writes it because `/design` ran the grill, and later promotes it through the graduation it owns.
+`/research` for facts, `/prototype` for feel. Gating and graduation are the `evidence` norm's; what is `/design`'s to *do*: a gate stops this stage, and this stage promotes a durable finding into Context or a Decision — nothing downstream reads the findings. A grill that ends without a decision **may be recorded as a discussion** in evidence — `/design` writes it because `/design` ran the grill, and later promotes it through the graduation it owns.
 
 ## Scope assessment
 
@@ -71,10 +71,10 @@ Report the classification, the gates that fired, and the resulting tier. The use
 | Heavyweight | evidence, then spec, then tickets with edges |
 | + fog gate | a map, worked before any spec exists |
 
-- **No ticket in the set is protocol-only** — `.claude/policies/tickets.md` says what counts and where that work rides instead; a set still containing one is a set-cutting error, caught here while nothing has been created.
-- The formats are the stage's guides: `.claude/policies/tickets.md` always; `.claude/policies/specs.md` at Standard and above (where a spec is written is `.claude/policies/tracker.md`'s); `.claude/policies/maps.md` only when the fog gate fired. The row loads whole; **a format is applied when the tier selects it** — applying a map format to an Express fix is the tier being ignored, not the row being read.
-- **A ticket may carry declared increments** — decisions only partial code can answer; `.claude/policies/tickets.md` has the declaration, `/implement` what reaching one does. Declare one only where the answer genuinely needs the partial build: increments on questions answerable up front are the scope assessment being dodged.
-- A ticket may also carry a **fan-out** — the declaration that its work divides. `/design` writes it, for the reason the format gives; the format is `.claude/policies/tickets.md`'s, and this is where the reason is grilled. Declare one only where the portions are genuinely separable — a split whose parts keep reaching into each other costs more to integrate than it saved, and that shows while the declaration is being written.
+- **No ticket in the set is protocol-only** — the `tickets` norm says what counts and where that work rides instead; a set still containing one is a set-cutting error, caught here while nothing has been created.
+- The formats are the stage's own norms: `tickets` always; `specs` at Standard and above (where a spec is written is the `tracker` norm's); `maps` only when the fog gate fired. The row loads whole; **a format is applied when the tier selects it** — applying a map format to an Express fix is the tier being ignored, not the row being read.
+- **A ticket may carry declared increments** — decisions only partial code can answer; the `tickets` norm has the declaration, `/implement` what reaching one does. Declare one only where the answer genuinely needs the partial build: increments on questions answerable up front are the scope assessment being dodged.
+- A ticket may also carry a **fan-out** — the declaration that its work divides. `/design` writes it, for the reason the format gives; the format is the `tickets` norm's, and this is where the reason is grilled. Declare one only where the portions are genuinely separable — a split whose parts keep reaching into each other costs more to integrate than it saved, and that shows while the declaration is being written.
 
 ### On a shared tracker, the set is approved before it is created
 
@@ -84,13 +84,13 @@ Report the classification, the gates that fired, and the resulting tier. The use
 2. Show it, iterate on it, get it approved.
 3. only then create — root first, then each child, then the links. **Step 3 opens by re-running the protocol-only check on the final set**, immediately before the first issue is created — step 2 iterates, and creating is the act that publishes. A ticket that fails leaves the set and rides its consumer.
 
-The set lives in the design document until step 3: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal. **Which kind this repository has is in `.claude/policies/tracker.md`**, read rather than inferred.
+The set lives in the design document until step 3: a context reset loses nothing, and a teammate can argue with the breakdown while arguing is still cheap. On a local-markdown tracker there is nothing to gate — the files are the proposal. **Which kind this repository has is in the `tracker` norm**, read rather than inferred.
 
-**One run creates exactly one top-level issue** — every other ticket goes underneath it, and a design that yields a single ticket makes *that* ticket the root: the top level grows by one per design, so booming is visible at a glance. `.claude/policies/tickets.md` has the hierarchy and edges; `.claude/tools/github.md` the invocations.
+**One run creates exactly one top-level issue** — every other ticket goes underneath it, and a design that yields a single ticket makes *that* ticket the root: the top level grows by one per design, so booming is visible at a glance. The `tickets` norm has the hierarchy and edges; the `github` reference the invocations.
 
 ## 6 — Capture
 
-Vocabulary and Decisions are `/design`'s to write, and this is the stage that writes them — `.claude/policies/knowledge.md` says why the pen sits here. Use `domain-modeling`. The bar a Decision must clear is `.claude/policies/decisions.md`'s: a convention is not a decision.
+Vocabulary and Decisions are `/design`'s to write, and this is the stage that writes them — the `knowledge` norm says why the pen sits here. Use `domain-modeling`. The bar a Decision must clear is the `decisions` norm's: a convention is not a decision.
 
 ## An incoming issue is an input, not a plan
 

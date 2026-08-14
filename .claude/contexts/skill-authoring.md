@@ -63,7 +63,7 @@ _Avoid_: canonical location, source of truth (for rules)
 
 ## Constraints
 
-- **A skill's own tests are assertions in `scripts/verify.ps1`.** There is no test runner here, so a skill change that adds a checkable claim and no assertion is untested by construction.
+- **A skill's own tests are assertions in `build/verify.js`.** There is no test runner here, so a skill change that adds a checkable claim and no assertion is untested by construction.
 
 ## The external authoring standard
 

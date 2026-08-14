@@ -13,7 +13,7 @@ If the question is *what should this look like* — wrong branch. Use [UI.md](UI
 
 ## 1 — State the question
 
-Before writing code, write down the state model and the question. One paragraph, at the top of the write-up in `.claude/evidence/prototypes/<name>.md`.
+Before writing code, write down the state model and the question. One paragraph, at the top of the write-up — the `evidence` record this run writes into the store.
 
 A logic prototype that answers the wrong question is pure waste, and the question is only checkable later if it was written down at the start — before the result had a chance to reshape it.
 

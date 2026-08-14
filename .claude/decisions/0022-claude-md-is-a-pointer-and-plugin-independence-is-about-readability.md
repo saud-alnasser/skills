@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: the entrypoint is being added to, or plugin independence is in question
 sources: [CLAUDE.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0083]
 ---
 
 # `CLAUDE.md` becomes a pointer, and plugin independence is restated as a property of the files

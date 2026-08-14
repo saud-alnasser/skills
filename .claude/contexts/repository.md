@@ -41,7 +41,7 @@ A navigation coordinate — "start investigating here." Never a claim about what
 _Avoid_: reference, path, link
 
 **Decision**:
-Why an approach was selected, preserved as an ADR at `.claude/decisions/`. A draft until committed; after that its reasoning is frozen and only its status moves. A changed mind is a new file that supersedes it.
+Why an approach was selected, preserved as an ADR at `.claude/decisions/`. A draft until committed; after that its reasoning is frozen and only `status` and the supersession edges move — never the prose. A changed mind is a new file that supersedes it, written at both ends in one change.
 _Avoid_: rationale doc, design doc
 
 **Evidence**:
@@ -108,6 +108,10 @@ _Avoid_: exception, fork, workaround
 A checkable imperative or table carrying its one-line why — the form every framework-owned normative file states its rules in; the essays stay in this repository's specification and Decisions, un-installed (ADR 0074).
 _Avoid_: guideline, directive
 
+**Shipped Script**:
+An executable the plugin carries and a repository receives as a byte-identical copy, declaring the release it was copied from. Distinguished from a **derived** script, which each repository re-implemented from a behavioural page — the model ADR 0097 replaced once plugin independence and regenerate-and-compare, the two supports under it, were superseded. The copy is the one thing 2.0 still copies, so it is the one place the byte-lock keeps a subject; its staleness is reported by the session hook, which is the only surface holding both releases at once.
+_Avoid_: derived script, generated script, tool
+
 ## Boundaries
 
 - **`skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.** This repository both builds AEP and is configured by it, and confusing the two is the easiest mistake available here. A change to how AEP behaves for its users goes in the shipped surfaces. A change to how *this* repository is understood goes in `.claude/`. Neither is edited to fix a problem belonging to the other.
@@ -120,3 +124,5 @@ _Avoid_: guideline, directive
 - **Attribution follows vendored text, not borrowed shape.** A file holding text copied from mattpocock/skills attributes it; a file that derived only a structure does not, because copyright protects expression rather than shape and the upstream licence binds copies and substantial portions. `NOTICE` stays while any vendored text ships. Licence-derived in both directions — attributing where nothing was copied asserts an obligation that does not exist.
 - **The root `CLAUDE.md` stays under 200 lines.** It is always-on, so every turn pays for it whether or not a skill runs.
 - **Nothing committed may assume AEP is installed.** A teammate who clones this repository without the plugin must be able to follow every rule in `CLAUDE.md` and `.claude/rules/` on their own — the harness loads both without it.
+- **A release is declared long before it is cut, and the gap between the two is what makes a stamp legal.** The version carried by the plugin manifest, the specification, and the router template is a *declaration*; the release commit is the *cut*. A framework-owned file's stamp must sit above the last cut release and at or below the declared one, so cutting closes that window onto a point and no file may then change until a new declaration reopens it. Several releases standing declared and uncut is the normal state here, not a backlog.
+- **Inside that gap the framework specifies more than any repository has yet been converted to hold**, this one included — it converts last, by the same rule that puts a template in the plugin and the file it writes in `.claude/`. So a check asking *does this repository have what the framework specifies* is bounded by the newest **cut** release; bounded by the declared one it turns a declaration into a demand for a conversion nobody has run.

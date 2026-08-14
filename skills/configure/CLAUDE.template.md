@@ -2,45 +2,49 @@
 
 <!--
   Installed by /configure. The root entrypoint: every turn pays for it, and it
-  is committed, so every Claude that opens the repository loads it — plugin or
-  not. It carries only what holds either way, and reaches the rest by pointer;
-  every file it points at is committed too, so a reader without the plugin
-  follows the same pointers — only the slash commands need it.
+  is committed, so every Claude opening the repository loads it — plugin or
+  not. It carries only what holds either way and reaches the rest by pointer;
+  what it points at is committed too, so a reader without the plugin follows
+  the same pointers — only the slash commands need it.
 
-  Placement is by **loading mechanism**, not by subject — the three tiers the
-  AEP specification names:
+  Placement is by loading mechanism, not subject:
 
-    boot tier      this file, and `.claude/rules/` with no `paths:` frontmatter
-                   — always-on, loaded by the harness on every turn
-    scoped tier    `.claude/rules/` with `paths:` — loads when a covered file is read
-    pointer tier   everything reached by a pointer, including `.claude/protocol.md`
+    boot tier      this file and `.claude/rules/` with no `paths:`, loaded
+                   every turn, plus what the framework pushes
+    scoped tier    `.claude/rules/` with `paths:` — a pointer the harness fires
+    pointer tier   everything else, reached through the store
 
-  Membership in the boot tier is selected by one test — would this norm's
-  absence on a turn cause behavioral drift. A rule that must fire
-  unconditionally goes in the first two tiers, never behind a pointer a stage
-  has to follow — that fires only when the stage runs, which is a silent
-  failure. Keep this file under 200 lines.
+  A norm is boot tier only if its absence on a turn nobody started causes
+  drift. All else is queried. Keep this file under 200 lines.
 -->
 
 {One or two sentences: what this repository is.}
 
 ## Rules that always apply
 
-`.claude/rules/precedence.md`, `.claude/rules/engineering.md`, `.claude/rules/placement.md`, and `.claude/rules/boundary.md` are always-on and never restated here — a standard with two homes drifts at one of them. The rest of that directory is path-scoped by `paths:` frontmatter.
+`.claude/rules/precedence.md`, `.claude/rules/engineering.md`, `.claude/rules/placement.md`, and `.claude/rules/boundary.md` are always-on and never restated here. They stay files, not records: the harness reaches them in a clone without the plugin, and nothing else does.
 
 ## Knowledge layers
 
-| Layer | Answers | Lives in |
-| --- | --- | --- |
-| Codebase | what currently exists | source |
-| Context | how this repository thinks | `.claude/contexts/**` |
-| Decisions | why this approach was selected | `.claude/decisions/` |
+| Layer | Answers |
+| --- | --- |
+| Codebase | what currently exists |
+| Context | how this repository thinks |
+| Decisions | why this approach was selected |
 
-The order is absolute: where they disagree, the Codebase is right — fix the documentation, never the reverse. Load `.claude/contexts/map.md` at session start — routing only; Domain Contexts load on demand.
+All three are records below. The order is absolute: where they disagree, the Codebase is right — fix the record, never the reverse.
 
 ## Machinery
 
-`.claude/protocol.md` is the router — the verification machinery and the stage table — reached by pointer, so a question turn never pays for it. `.claude/modes/` holds one posture per file; `.claude/policies/tracker.md` where tickets live; `.claude/policies/version-control.md` how work lands; `.claude/tools/` how to *type* it.
+`.claude/protocol.md` is the router — verification machinery and the stage table — reached by pointer, so a question turn never pays for it. The rest is records: the postures, where tickets live, how work lands, how to type a command.
+
+## The store
+
+`.claude/knowledge/` is the flat store of typed records, and everything outside this tier is reached through it. **How to reach it is stated here rather than served by it** — anything it served would arrive only once the server connects, so a store describing itself goes silent exactly when it goes down.
+
+Two faces over one index: a tool for the model, a command line for the fallback and CI. **A stage that can reach neither rebuilds the index and carries on — and says so in its opening report, running degraded.** It never proceeds as though nothing were wrong: a stage quietly doing the wrong thing is the failure this tier prevents, a slow one is not.
+
+A path-scoped rule is a **pointer only** — query the store for what fires there. The harness alone can notice that a covered file was touched, so the tier survives for that.
 
 ## Verification at use
 
@@ -65,12 +69,12 @@ Top to bottom, first match wins — the four lower rows are read rather than jud
 
 ## Framework law
 
-**A file declaring `owner: framework` is followed as written — never edited, healed, or debated.** Variation enters only through the extension points it names; anything else is a declared deviation, loud in every audit. Unstamped files are the repository's, healed as ever.
+**A record declaring `owner: framework` is followed as written — never edited, healed, or debated.** Variation enters as a `deviates-from` edge, which every build reports until it is removed. Unstamped records are the repository's, healed as ever.
 
 ## Writing knowledge
 
-CI never modifies repository knowledge: `.claude/contexts/**` and `.claude/decisions/**` change only through the workflow's commands. Before any write into knowledge, the compression test: *will this improve a future engineering decision?* If not, don't write it. What belongs in Context: `.claude/policies/context.md`.
+CI never modifies the store: `.claude/knowledge/` changes only through the workflow's commands. Before any write into it, the compression test: *will this improve a future engineering decision?* If not, don't write it.
 
 ## Conventions
 
-**The workflow's conventions are defaults for when the repository is silent**: detect before asserting, and where the repository's own convention is genuinely worse, say so once, with reasoning, then follow it. Defaults: `.claude/policies/version-control.md`.
+**The workflow's conventions are defaults for when the repository is silent**: detect before asserting, and where the repository's own is genuinely worse, say so once, with reasoning, then follow it.

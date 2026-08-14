@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: a generated index needs to be produced, or something proposes to maintain one
 sources: [.claude/scripts/, .claude/policies/context.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0090]
 ---
 
 # One regenerator, enforced by comparison — never a role and never a hook

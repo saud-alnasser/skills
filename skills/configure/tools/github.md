@@ -1,5 +1,6 @@
 ---
 owner: repository
+type: reference
 ---
 
 # gh — GitHub CLI
@@ -54,7 +55,7 @@ gh label create "<name>" --color <hex> --description "<text>"
 
 ## Pin and unpin an issue
 
-The map lives as a pinned issue — `.claude/policies/maps.md` has that rule; these are the invocations. Both take a number or a URL.
+The map lives as a pinned issue — the maps guide has that rule; these are the invocations. Both take a number or a URL.
 
 ```
 gh issue pin <number>
@@ -154,7 +155,7 @@ gh pr create --title "<conventional title>" --body-file - --base main
 
 AEP does not open PRs unasked — creating one publishes work, which is the human's call. Same standing rule as pushing (see [git.md](git.md)).
 
-What the body covers is a convention, not an invocation: `.claude/policies/version-control.md` has it.
+What the body covers is a convention, not an invocation: `version-control.md` has it.
 
 ## Close an issue by merging
 
@@ -180,4 +181,4 @@ Docs: https://docs.github.com/en/issues/tracking-your-work-with-issues/using-iss
 gh issue close <number> --reason "not planned" --comment "<one-line reason>"
 ```
 
-`--reason` takes `completed`, `not planned`, or `duplicate` — the flag's full set, per `gh issue close --help`. `--comment` posts the closing comment in the same invocation, so the closure and its reason land together rather than as two calls with a failure window between them. Which lifecycle state takes this form, and what the comment must carry, is `.claude/policies/tickets.md`'s.
+`--reason` takes `completed`, `not planned`, or `duplicate` — the flag's full set, per `gh issue close --help`. `--comment` posts the closing comment in the same invocation, so the closure and its reason land together rather than as two calls with a failure window between them. Which lifecycle state takes this form, and what the comment must carry, is the ticket format's.

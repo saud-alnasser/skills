@@ -47,6 +47,86 @@ it declares no version at all
 
 ---
 
+## 2.0.0
+
+**Look at:** the knowledge tree — `.claude/contexts/`, `.claude/decisions/`, `.claude/evidence/`, and wherever `.claude/policies/tracker.md` declares a spec lives — together with the generated `map.md` index in each of those directories, and the scripts under `.claude/scripts/`.
+
+### The corpus becomes a store of addressable records
+
+A 1.x repository holds its norms as whole files across three directories, and nothing can address a statement *inside* one — so a norm cannot be cited, superseded, or checked apart from the file carrying it, and a stage that needs one loads every file that might hold it. 2.0 converts those files into `.claude/knowledge/`, one flat directory of typed records, each span carrying an id the build mints. Until a repository is converted it keeps a corpus nothing can query, and index files that a size check cannot tell apart from prose somebody wrote.
+
+**Recognise it by content before writing anything**: no `.claude/knowledge/` directory, and knowledge files whose frontmatter declares no `spans`. A repository already holding the store is current, and one already converted is a **no-op**. **The recognition is per file, not per repository** — which is the whole of what makes an interrupted conversion finish on a second run instead of duplicating what it already wrote. There is no journal to lose: a file that already declares `spans` has been converted, and a file that does not has not.
+
+**Install `.claude/knowledge/records.md`**, from this release's template. It is a new file rather than a changed one, so nothing a repository already holds will be recognised as its predecessor and nothing else will write it — the generate step passes over files that exist and a repository configured once does not run generation again on its own. It carries the record format the conversion writes to and the build reads, so a converted store without it is a store nobody can check the shape of.
+
+**Copy the three new scripts in before converting anything.** [SCRIPTS.md](SCRIPTS.md) carries the store builder, the store query, and the row assembler as of this release; a 1.x repository has none of them. The conversion depends on all three — the builder mints the ids, and the diff below cannot be computed without the query — so the standing re-check of `.claude/scripts/` against that page is not enough here, and the copy is ordered ahead of the repair.
+
+#### Every surface has a destination, and one without stops the conversion
+
+The table below is the whole inventory. **A file under `.claude/` matching no row is named in the error, with its path, and nothing is written.** A surface quietly skipped is the dangerous failure of this conversion, not a crash: it is discovered months later by somebody looking for a norm that used to be there, and by then nothing records that it was ever dropped.
+
+| 1.x surface | Destination |
+| --- | --- |
+| `.claude/contexts/repository.md`, and each domain file | one `context` record per file, one span per `##` heading |
+| a standard the repository discovered in its own tree, under `.claude/rules/` | one `norm` record per file — `fires-when: every-turn` where it carries no `paths:` frontmatter, `fires-when: path` where it does, and the pattern comes across as the declared field |
+| `.claude/decisions/*.md` | one `decision` record per file, **not decomposed** |
+| a landed spec, wherever `.claude/policies/tracker.md` declares specs live | one `spec` record per file, **not decomposed** |
+| `.claude/evidence/**` | one `evidence` record per finding, **not decomposed** |
+| `.claude/tools/*.md` | one `reference` record per file |
+| the generated `map.md` in each converted directory | deleted — the ledger the builder rebuilds replaces it, and nothing derived is committed |
+| the eight framework guides under `.claude/policies/`, and `.claude/modes/*.md` | **deleted** — the framework store holds them and nothing is copied, so a repository that keeps its copies keeps a second, drifting one |
+| `.claude/policies/tracker.md` and `.claude/policies/version-control.md` | one `norm` record each, `owner: repository`, keeping this repository's declared facts |
+| the four unconditional rules under `.claude/rules/`, and `.claude/protocol.md` | framework law that stays a file — replaced verbatim by this release, never converted and never decomposed into records |
+| `.claude/scripts/*` | replaced by this release's copies; the index regenerator retires here and its copy is **deleted**, which [SCRIPTS.md](SCRIPTS.md)'s `Until` column is what says so |
+| `CLAUDE.md` | merged from this release's template as ever, gaining the store's two members |
+| `.claude/tickets/**` | the tracker store — untouched; `ticket` is not a type in this store |
+| `.claude/position/`, `.claude/worktrees/`, `.claude/settings*.json`, `.claude/.gitignore` | per-clone, or the harness's — untouched |
+
+**The two derived policies keep their repository's facts** and are rewritten around them from this release's templates, exactly as every earlier release's repair states. What changes at 2.0 is where they land: they become records like everything else the repository owns, so their machine-read facts are declared fields on the record and their prose elaborates those fields. The record format arrives with them, from the template this release ships, and it is the one file here that is new rather than converted.
+
+**A directory the conversion leaves empty is reported and not removed.** Records move to one flat store, so a directory that held nothing else has nothing left; whether it should then go is a question about the generated layout rather than about this repair, and the two are not the same question — a directory still named by the layout is one the next configuration run will recreate. Reporting puts the emptied set in front of somebody who can answer it, which deleting would not.
+
+#### A frozen account gains identity and no edits
+
+An accepted decision, a landed spec, and an evidence finding are accounts of what was decided, agreed, or observed. **Each receives exactly one id, for the file rather than for each of its headings, and its prose comes through byte-identical.** A diff showing anything but added frontmatter is this repair going wrong, and that is the check worth running over the whole conversion in one pass.
+
+Decomposing them would mint a citable id for `## Considered Options`, and a citation of that says nothing — their `##` headings are one record's sections rather than separate statements. Which records decompose is computed from the type; `.claude/knowledge/records.md`, installed by this release, carries the rule.
+
+#### Nothing mints an id during the conversion
+
+The conversion classifies and relocates; **the builder mints the ids, in its own run, afterwards.** An id that appeared during a conversion session is one nobody can cite from the commit it was supposed to land in, and the rule against minting mid-session is not suspended for the run that creates the store. So the order is fixed: derive, convert, then build — and a heading still carrying no id after the build has run fails the build and names itself.
+
+#### Every stage's row is diffed against the file list it replaces
+
+For each row of the router's stage table, the 1.x row is the set of norms held in the files that row named; the 2.0 row is the set the query returns for that stage. **Report the difference in both directions**, and **do not close the conversion on an unexplained drop**: a norm the diff shows dropped is either named in the report with why it no longer fires there, or the classification that dropped it is wrong and is fixed before anything is committed.
+
+**Write the report even when it is empty.** A conversion that reports nothing and a conversion that never ran the diff leave the same tree, and the second is the one that loses norms.
+
+#### Run it twice and nothing changes
+
+The second run finds every file declaring `spans`, recognises the whole repository as converted, and writes nothing. That is the same property as resumability seen from the other end, and it is why neither needs a mechanism of its own.
+
+#### The conversion's fixture
+
+Prove it against a fixture tree rather than against the repository being converted — the repository is the one tree where a wrong conversion cannot be compared with anything.
+
+Build a 1.x fixture holding: one context file with two `##` headings; one discovered rule with `paths:` frontmatter; one accepted decision with three `##` headings; one evidence finding; one generated `map.md`; and one loose file at `.claude/` root that no row above matches.
+
+- **Case A — the loose file** — the conversion exits non-zero before writing anything, and its output names that file's path. Remove it for the cases below.
+- **Case B — a first run** — exits zero. The context file has become a `context` record with two spans, the rule a `norm` declaring `fires-when: path` and its pattern, the decision a `decision` record with **one** span, the finding an `evidence` record with one span, and the `map.md` is gone.
+- **Case C — the frozen prose** — the decision's and the finding's bodies are byte-identical to the fixture's, and the only diff on either is the added frontmatter.
+- **Case D — interrupted** — restore the fixture, run the conversion, kill it after the first file is written, and run it again: the result is byte-identical to Case B's. **This case is the specification, not a repetition of B** — a conversion that re-converts an already-converted file passes B and corrupts every tree an interruption touches.
+- **Case E — a second run** — run again on Case B's output: exits zero, writes nothing, and the tree is unchanged.
+- **Case F — a dropped norm** — delete one `##` heading from the context file before converting, and the row diff names it. A fixture that only ever runs clean cannot tell a diff that found nothing from a diff nobody computed.
+
+#### What it is not the subject of
+
+- **Framework-owned files.** Each is replaced verbatim by this release and governed by the comparison against its template. This repair never writes into one, and never converts one into a record: the framework's own norms arrive as installed files because a repository must be able to follow them without the plugin.
+- **Tickets.** The tracker is its own store with its own types, and a ticket is not addressed from this one.
+- **A repository that has never been configured.** There is no corpus to convert; a first configuration writes the 2.0 shape directly, and this entry is a no-op it says nothing about.
+
+**A converted surface that no repair above names is reported rather than left to a reader to notice.** The table is the inventory and this entry is the whole repair list for the release, so the two are checkable against each other — and the check is worth running, because a surface converted by machinery nobody documented is a surface nobody can audit the conversion of.
+
 ## 1.20.0
 
 **Look at:** `.claude/contexts/`, `.claude/decisions/`, `.claude/evidence/`, the standards under `.claude/rules/` that the repository discovered for itself, the tool references under `.claude/tools/`, the two derived policies `.claude/policies/tracker.md` and `.claude/policies/version-control.md`, and wherever `.claude/policies/tracker.md` declares a spec lives.

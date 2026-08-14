@@ -1,8 +1,10 @@
-# Deriving `.claude/tools/`
+# Deriving the tool references
 
-One directory, one format, one place to look for how to type any command — the workflow's tools and this repository's, together and committed.
+One `reference` record per tool, one format, one query for how to type any command — the workflow's tools and this repository's, together in the store and committed.
 
 Committed is the point: the reference used to ship inside the plugin, so a teammate who cloned without AEP had none of it while still bound by the rule against guessing a CLI. Deriving into a file git tracks is what closes that.
+
+Each lands in the repository's store — `.claude/knowledge/<tool>.md`, flat, beside every other record — never in a directory of its own. A directory per type restates what the `type` field already says, which is why the store has none.
 
 ## Write a file only for a tool the repository uses
 
@@ -15,6 +17,8 @@ Detection is off the repository, never off the list below.
 | `glab` | a remote points at GitLab |
 | `gt` | Graphite is initialised here, which is not the same as `gt` being on the machine |
 | the repository's own | the manifest, scripts, or CI name it |
+
+A tool reference is a `reference` record: it describes rather than binds, so it declares no firing condition, carries no rank, and is reached by the query rather than delivered on a stage's row.
 
 A tool the repository does not use gets no file. A stacking reference in a repository with no stack is a page that answers a question nobody standing here can ask, and it will be read as permission to start.
 
@@ -50,15 +54,18 @@ Derived from: aep/git.md
 
 Every section kept from that source **keeps its heading exactly**, and its body byte-for-byte. That is what makes the rule checkable rather than a promise: the verifier pairs sections by heading and compares bodies, so a filtered entry passes by being absent and a summarized one fails by differing.
 
+The heading is also the record's address: each `##` is one record, and the build mints the id binding it into `spans`. So keeping a heading exactly keeps the id attached to it, and renaming one fails the build rather than silently unbinding.
+
 Entries newly written for this repository are ordinary sections with no counterpart upstream, and nothing compares them. Put them under their own heading in the same file — a repository's own `git` entries belong beside the workflow's, not in a second document.
 
 ## The format
 
-Every file: `owner: repository` frontmatter — a derived reference is the repository's to heal, and the field is what the audit reads — then what it is for, the docs URL, **and the condition for fetching it** — a URL with no trigger is decoration.
+Every file: `owner: repository` and `type: reference` frontmatter — a derived reference is the repository's to heal, and the two fields are what the build reads — then what it is for, the docs URL, **and the condition for fetching it** — a URL with no trigger is decoration.
 
 ```markdown
 ---
 owner: repository
+type: reference
 ---
 
 # <tool> — <what it is for here>
@@ -67,15 +74,19 @@ Docs: https://...
 Fetch the docs when: <the condition>
 ```
 
+No release stamp: a stamp exists to route attention at a copied file, and nothing here is copied — what a repository's own reference is checked against is the tooling it describes.
+
 Then task-to-command pairs under task-shaped headings. The question a reader arrives with is always *"how do I do X here"*, never *"what does `-n` mean"*. A flag catalogue is what the docs are for.
 
 Leave out what is already certain. An entry for `git log` earns nothing; an entry for the exact `--porcelain` column layout earns its place. **Note the gotcha, not the syntax.**
 
 ## A missing entry is a configuration gap
 
-When an operation is needed and no file has an entry for it, that is a gap in the configuration — **not licence to guess**.
+When an operation is needed and no record has an entry for it, that is a gap in the configuration — **not licence to guess**.
 
 Say so, naming `/configure` as what fills it, and re-run it to derive the entry. That remedy is all this file carries, because it is the half that means nothing without AEP installed.
+
+**The single-file test command is the one entry whose absence is reported rather than merely noticed.** It is the most-run command in the framework and the least guessable, so a derivation that could not find it says so — naming the tool it looked in — instead of writing a reference that reads complete. A gap that is reported is one somebody can close; a gap nobody states is a guessed command waiting to happen.
 
 What to do when the entry still is not there is the never-guess rule in `.claude/rules/engineering.md`. It lives there rather than here because it has to hold for someone working in this repository with no plugin at all.
 
@@ -83,7 +94,7 @@ What to do when the entry still is not there is the never-guess rule in `.claude
 
 The relationship is a vendoring one: a fix AEP makes to its own reference does not reach an already-configured repository on its own.
 
-**Downward**, `/configure`'s audit branch re-checks `.claude/tools/` against the repository — the file against the repository it describes, which is the check that matters day to day; a repository whose tooling has not changed does not need the shipped text's changes.
+**Downward**, `/configure`'s audit branch re-checks each reference record against the repository — the record against the repository it describes, which is the check that matters day to day; a repository whose tooling has not changed does not need the shipped text's changes.
 
 **Upward**, a repository that runs a command and finds the shipped entry wrong about the version it just ran writes that up as a record and hands it back. It does **not** edit the plugin: a finding about another repository leaves as a report, which is the always-on boundary rule and not a courtesy. The record carries the version it was checked against and what was actually observed, because a tool fact is true of a version and an entry that arrives without one cannot later be told from a fact that has merely gone stale.
 

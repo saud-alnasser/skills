@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: the directory layout under .claude/ is being changed
 sources: [.claude/]
 supersedes: []
-superseded-by: []
+superseded-by: [0090]
 ---
 
 # The knowledge layers are visible in the tree

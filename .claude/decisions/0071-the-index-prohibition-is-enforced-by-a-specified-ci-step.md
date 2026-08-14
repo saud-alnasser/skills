@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: the enforcement of a generated index is in question, or what `.claude/scripts/` may hold
 sources: [skills/configure/SCRIPTS.md, skills/configure/SKILL.md, specs.md, .claude/tickets/downstream/spec.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0090]
 ---
 
 # The generated-index prohibition is enforced by a specified step, not a third script

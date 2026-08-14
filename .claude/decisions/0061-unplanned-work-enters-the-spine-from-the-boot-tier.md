@@ -2,7 +2,7 @@
 owner: repository
 status: accepted
 load-when: a request has to reach a stage without the user naming it, or which invocation axis a skill sits on is in question
-sources: [CLAUDE.md, skills/configure/CLAUDE.template.md, skills/design/SKILL.md, scripts/verify.ps1]
+sources: [CLAUDE.md, skills/configure/CLAUDE.template.md, skills/design/SKILL.md, build/verify.js]
 supersedes: []
 superseded-by: []
 ---

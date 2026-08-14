@@ -10,7 +10,7 @@ metadata:
 
 The on-ramp for work **Claude did not create**. `/design` cuts tickets that are agent-ready by construction; this is for everything that arrives from outside and has to be made agent-ready first.
 
-Which tracker this repository uses, the label string behind each role, who counts as an external contributor, and what a bare `#42` resolves to are all in `.claude/policies/tracker.md`. Read it first — it is the only place any of that is recorded.
+Which tracker this repository uses, the label string behind each role, who counts as an external contributor, and what a bare `#42` resolves to are all in the `tracker` norm. Read it first — it is the only place any of that is recorded.
 
 If this repository treats external pull requests as a request surface, triage covers them too: **a PR is an issue with attached code.** Same roles, same states, same machine, with the deltas marked *for a PR* below.
 
@@ -45,14 +45,14 @@ Every triaged item carries **exactly one category role and one state role**. Con
 
 ### Reuse a label before creating one
 
-The canonical names above are what this skill says; the strings the tracker actually holds are in `.claude/policies/tracker.md`. When a role has no string recorded, or a new label is genuinely wanted:
+The canonical names above are what this skill says; the strings the tracker actually holds are in the `tracker` norm. When a role has no string recorded, or a new label is genuinely wanted:
 
 1. **List what exists** — `gh label list`, or the repository's own label file.
 2. **Map onto an existing label.** The expected outcome — a repository triaged by humans usually already has a word for every role, and inventing a parallel one leaves the maintainer with two.
 3. **Create only when nothing fits**, matching the style already there: the prefix convention (`type:`, `kind/`, or bare), the casing, the separator, the colour family.
 4. **Never create a label for workflow state the ticket's own status already carries.** That is a second answer to the same question, and the two will disagree.
 
-Record whatever is created back into `.claude/policies/tracker.md`, or the next session creates it again.
+Record whatever is created back into the `tracker` norm, or the next session creates it again.
 
 Transitions: an unlabelled item goes to `needs-triage` first, and from there to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer overrides at any time — flag a transition that looks unusual and ask.
 
@@ -70,18 +70,18 @@ Query the tracker and present three buckets, oldest first:
 2. **`needs-triage`** — evaluation in progress.
 3. **`needs-info` with reporter activity since the last triage notes** — needs another look.
 
-Where PRs are in scope, include external ones and tag each line `[PR]` or `[issue]`. Discovery surfaces only *external* PRs — a collaborator's in-flight branch is not triage work — and `.claude/policies/tracker.md` says who counts. That filter is discovery-only: a PR named explicitly is always triaged, whoever opened it.
+Where PRs are in scope, include external ones and tag each line `[PR]` or `[issue]`. Discovery surfaces only *external* PRs — a collaborator's in-flight branch is not triage work — and the `tracker` norm says who counts. That filter is discovery-only: a PR named explicitly is always triaged, whoever opened it.
 
 Counts, and one line each. Let the maintainer choose.
 
 ## Triage one item
 
-**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through `.claude/contexts/repository.md` and the Domain Contexts its routing table points at, and read the ADRs in `.claude/decisions/` covering the area — those are not to be re-litigated here.
+**1 — Gather context.** Read the whole thing: body, comments, labels, author, dates, and for a PR the diff. Parse any prior triage notes so resolved questions are not re-asked. Explore the codebase through the repository's `context` records, and read the `decision` records covering the area — those are not to be re-litigated here.
 
 Then two checks the maintainer should not have to do from memory:
 
 - **Redundancy.** Search for an existing implementation of the requested behaviour **by domain concept, not by the words the reporter used**, and report where you looked. Found means already-implemented, which is a `wontfix` with a pointer.
-- **Prior rejection.** Read `.claude/evidence/out-of-scope/` and surface anything the request resembles.
+- **Prior rejection.** Query the store for `evidence` records declaring `kind: out-of-scope` and surface anything the request resembles.
 
 **2 — Recommend.** State the category and state you would apply, with reasoning, plus what the codebase already does about it. Then wait. This is a recommendation to a maintainer, not a decision.
 

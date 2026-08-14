@@ -10,11 +10,11 @@ metadata:
 
 `/research` answers a question with **facts**, from the sources that own them. Its sibling `/prototype` answers questions about **feel** — whether a state model works, what something should look like. Facts here; feel there.
 
-What it produces is **Evidence**: a record of what was checked and when, filed apart from Context and never inside it. `.claude/policies/evidence.md` says why that separation holds.
+What it produces is **Evidence**: a record of what was checked and when, filed apart from Context and never inside it. The `evidence` norm says why that separation holds.
 
 ## 0 — Has this already been answered?
 
-Read `.claude/evidence/research/` before starting new research. A finding whose question matches and whose assumptions still hold is the answer — cite it and move on.
+Query the store for `evidence` records declaring `kind: research` before starting new research. A finding whose question matches and whose assumptions still hold is the answer — cite it and move on.
 
 Check its **verified-against line** first. A finding recorded against a version you are no longer on has not aged into being wrong, it has aged into being unknown, and it is re-run rather than trusted.
 
@@ -22,7 +22,7 @@ Check its **verified-against line** first. A finding recorded against a version 
 
 The research runs in a **subagent**, for **context isolation**: twenty pages of documentation read to extract four facts would otherwise spend the parent's window on nineteen pages nobody needs again. The subagent burns its own window and returns one small cited file.
 
-Dispatch the shipped **`researcher`** role by name rather than describing the job again at the call site. What the brief adds is the question and the paths, and what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s — this stage restates none of it.
+Dispatch the shipped **`researcher`** role by name rather than describing the job again at the call site. What the brief adds is the question and the paths, and what a dispatched child is bound by is the `sub-agents` norm's — this stage restates none of it.
 
 **Isolation is not the same as not waiting.** Whether the caller blocks on the answer is a separate axis, and it is the caller's — `/design` decides it at the gate, and the rule is in `/design`. Conflating the two is what turns a load-bearing question into a background one.
 
@@ -36,7 +36,7 @@ The rule against guessing an API — and a CLI counts — is in `.claude/rules/e
 
 ## 3 — Write one cited file
 
-One question, one Markdown file, in `.claude/evidence/research/`.
+One question, one Markdown file, written into the store as an `evidence` record declaring `kind: research`.
 
 ```markdown
 # <the question, as a question>
@@ -67,4 +67,4 @@ resting on a secondary source.
 
 The file stays as the trail showing how a claim was earned. `/research` writes that trail and stops there.
 
-**Never write Context directly**, and never promote a finding yourself. Both rules, and what does happen to a durable finding, are in `.claude/policies/evidence.md`.
+**Never write Context directly**, and never promote a finding yourself. Both rules, and what does happen to a durable finding, are in the `evidence` norm.

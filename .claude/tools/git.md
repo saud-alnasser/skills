@@ -208,12 +208,15 @@ The harness creates a worktree for an isolated child; nothing removes one unless
 ```
 git worktree list --porcelain                     # what exists, and which branch each holds
 git worktree remove <path>                        # remove a spent one
+git worktree remove --force <path>                # ... one this repository spent — see below
 git worktree prune                                # bookkeeping only — see below
 ```
 
-**`remove` refuses a worktree that is not clean**, and that refusal is the point: *"Only clean worktrees (no untracked files and no modification in tracked files) can be removed."* A worktree that will not come away is one still holding work, so the refusal is a second opinion on the decision to remove it.
+**`remove` refuses a worktree that is not clean**, and elsewhere that refusal is the point: *"Only clean worktrees (no untracked files and no modification in tracked files) can be removed."* A worktree that will not come away is one still holding work, so the refusal reads as a second opinion on the decision to remove it.
 
-**`--force` exists and is not used here.** It removes an unclean worktree, and doubled (`--force --force`) removes a locked one. Reaching for it discards exactly the evidence that the judgement was wrong.
+**Here it is not one, and `.claude/policies/version-control.md` says why**: a child's work reaches history through integration into the effort's one commit and is never committed in the worktree, so every spent worktree is dirty by construction and the refusal fires on all of them alike. Forced removal is the sanctioned exit, and the policy sets the bar it is taken at — the work verified integrated against the child's change record, and the suite green. **State that verification where the removal is done.** Doubled (`--force --force`) removes a locked one; nothing here has needed it.
+
+The caution the refusal used to carry has not gone away, it has moved: what stops a worktree being removed while it still holds work is now the verification above, and cleaning a tree until `remove` accepts it would keep the rule's letter while destroying its check.
 
 **`prune` deletes no working directory.** It removes *"worktree information in `$GIT_DIR/worktrees` for worktrees whose working trees are missing"* — bookkeeping for directories already gone, and nothing else. A reader who assumes otherwise will believe stale checkouts were cleaned up when only their metadata was.
 

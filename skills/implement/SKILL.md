@@ -14,7 +14,7 @@ One ticket, built and closed out. `/design` always leaves at least one ticket on
 
 ## 0 — Verification. Every invocation. No exceptions.
 
-Open with the verification report — not conditional on tier, size, or the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit. The rule and both drift reads live in `.claude/protocol.md`; `.claude/tools/git.md` has the invocations.
+Open with the verification report — not conditional on tier, size, or the work looking trivial: this is the command that turns Context into code, so a stale belief here becomes a wrong edit. The rule and both drift reads live in `.claude/protocol.md`; the `git` reference has the invocations.
 
 ```
 Position
@@ -66,7 +66,7 @@ frontier = tickets open, unblocked, unclaimed
   further changes amend that commit. nothing is pushed.
 ```
 
-**Where the tickets are comes from `.claude/policies/tracker.md`** — the only place that records which tracker this repository uses. `.claude/policies/tickets.md` has the ticket format and lifecycle; `.claude/tools/github.md` has the invocations. Read the config rather than assuming.
+**Where the tickets are comes from the `tracker` norm** — the only place that records which tracker this repository uses. The `tickets` norm has the ticket format and lifecycle; the `github` reference has the invocations. Read the config rather than assuming.
 
 If the frontier is empty, say so rather than inventing work — and where the invocation carried a *request* rather than a ticket, enter `/design` with it rather than stopping. Being told to go and type the planning command is the round trip the entry rule exists to remove. If everything left is blocked, name what blocks it.
 
@@ -102,7 +102,7 @@ set from the frontier: 04, 05, 07 — no edge orders them against each other
 
 **Claiming is creating the ticket's branch, and it is the first act of the run** — before the first read of source, and long before the first edit. A claim made after the first edit is not a claim; it is a report of a race already lost.
 
-Nothing about the Claim is written to the tracker: a tracker carries human-level facts, and which instance is building something right now is not one — see `.claude/policies/tickets.md`.
+Nothing about the Claim is written to the tracker: a tracker carries human-level facts, and which instance is building something right now is not one — see the `tickets` norm.
 
 The branch name is **AEP's own convention**, not the default of whichever tool created the branch, because two tools must produce the same name for the same ticket or the claim stops being a claim:
 
@@ -111,9 +111,9 @@ The branch name is **AEP's own convention**, not the default of whichever tool c
                                         142-retry-a-failed-payment
 ```
 
-The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and `.claude/policies/version-control.md` records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
+The id leads so the ticket is recoverable from the name by reading up to the first `-`. Slug from the ticket's summary: lowercase, `-` for spaces, punctuation dropped. Where the repository already has a branch convention, that one wins and the `version-control` norm records it — the detect-before-asserting rule in `CLAUDE.md` applies here as everywhere.
 
-**Check before creating, on both sides.** `.claude/tools/git.md` has the reads:
+**Check before creating, on both sides.** The `git` reference has the reads:
 
 ```
 claimed here      a local branch of that name exists
@@ -129,7 +129,7 @@ A claim **this clone's own branch identifies** is not someone else's: resume it,
 
 `blocked-by: [01]` means *wait until 01 is resolved* on plain git. Where the repository uses stacked changes it means *stack on top of 01*, and waiting is the thing the tool exists to remove.
 
-**`.claude/policies/version-control.md` states which one applies**, and how to confirm it. Read it and do what it says. Getting the model wrong is expensive in both directions: assume plain git on a stacking repository and the frontier empties — every blocker sits committed-and-unmerged forever; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
+**The `version-control` norm states which one applies**, and how to confirm it. Read it and do what it says. Getting the model wrong is expensive in both directions: assume plain git on a stacking repository and the frontier empties — every blocker sits committed-and-unmerged forever; assume stacking on a plain repository and branches get built on unmerged work that was supposed to wait.
 
 **Never substitute a probe for the read** — a fact rediscovered silently is a fact nobody can review, and verifying the file costs the same command the probe was already running.
 
@@ -148,7 +148,7 @@ a ticket joins the frontier once its blockers are COMMITTED
 
 Say the cost too, because it is being accepted on the user's behalf: **a rejected review low in the stack invalidates every branch above it.** That is the trade for not waiting.
 
-Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. `.claude/tools/graphite.md` has the invocation and what it restacks.
+Amend through the stacking tool, never with a bare `git commit --amend` — the plain amend leaves every descendant pointing at a commit that no longer exists. The `graphite` reference has the invocation and what it restacks.
 
 The closing keyword also moves, into the commit body, reversing the split that applies to plain git. `/commit` has the rule and the reason.
 
@@ -158,11 +158,11 @@ An instance that has lost its context reads the branch it is standing on: the br
 
 ### Assignment is not this
 
-**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, `.claude/tools/github.md` has the invocation. Assignment already separates humans, so the Claim only arbitrates between one person's own instances — which is why a branch is enough.
+**Assignment** — which human owns delivering the ticket — lives on the tracker and belongs to them. `/implement` reads it and **never writes it unasked**; if the user asks to take a ticket, the `github` reference has the invocation. Assignment already separates humans, so the Claim only arbitrates between one person's own instances — which is why a branch is enough.
 
 ## 2 — Build
 
-Drive `tdd` at the seams agreed during design — the ticket states an observable outcome, and the loop is what proves it, one vertical slice at a time. Typecheck often, run the single test file often, and run the **full suite once**, at the end, before handing back; the command for each is in `.claude/tools/` — read it rather than guessing, for the reason `tdd` gives.
+Drive `tdd` at the seams agreed during design — the ticket states an observable outcome, and the loop is what proves it, one vertical slice at a time. Typecheck often, run the single test file often, and run the **full suite once**, at the end, before handing back; the command for each is in that tool's `reference` record — query for it rather than guessing, for the reason `tdd` gives.
 
 **Stay inside the approved design.** A deviation that changes architecture goes back to `/design`, not into the diff.
 
@@ -176,7 +176,7 @@ Where the new code lands and what it is called is `codebase-design`'s — read i
 
 ### A declared increment is reached
 
-A build ticket may carry design increments — decisions only partial code can answer, each declared with its step, question, and type; the declaration lives in `.claude/policies/tickets.md`. Reaching one invokes the design activity **scoped to that increment alone**, never widening:
+A build ticket may carry design increments — decisions only partial code can answer, each declared with its step, question, and type; the declaration lives in the `tickets` norm. Reaching one invokes the design activity **scoped to that increment alone**, never widening:
 
 - **AFK types** (`research`, `task`) resolve inline: answer the question where the build just made it measurable, record the resolution where any design decision lands, and keep building. The answer and the code ship in the same commit.
 - **HITL types** (`grilling`, `prototype`) stop the build at the declared step, **holding the claim** — the branch stays, the ticket stays open, and the session hands back naming the increment it stopped at. This is not `blocked`: the plan is right and only the human is absent. A declared stop is a session the human can schedule; a discovered one loses the run.
@@ -185,7 +185,7 @@ A build ticket may carry design increments — decisions only partial code can a
 
 ### A fan-out is declared, or there is none
 
-A build ticket may also carry a **fan-out**: the declaration that its work divides, and what each part of it may touch. The shape is `.claude/policies/tickets.md`'s; what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s.
+A build ticket may also carry a **fan-out**: the declaration that its work divides, and what each part of it may touch. The shape is the `tickets` norm's; what a dispatched child is bound by is the `sub-agents` norm's.
 
 **`/implement` never invents a fan-out.** The declaration is the licence, and only `/design` writes one — why that is so belongs to the format. A ticket with no declaration is built by one instance, not by a split that looked obvious once the code was open.
 
@@ -193,13 +193,13 @@ A ticket that turns out to divide differently than declared is the plan being wr
 
 Where a fan-out and an increment needing a human meet, the format states the order and the case it refuses. Reaching such an increment after children are already running is the same event as discovering an undeclared decision.
 
-**Confirm a child's base before integrating anything of its.** The claim must be an ancestor of what the child built on; `.claude/tools/git.md` has the read. `/configure` writes the setting that makes this true, and this check exists because a repository can be configured by hand or by an older version — a setting nobody verified is a setting that is right until it is not.
+**Confirm a child's base before integrating anything of its.** The claim must be an ancestor of what the child built on; the `git` reference has the read. `/configure` writes the setting that makes this true, and this check exists because a repository can be configured by hand or by an older version — a setting nobody verified is a setting that is right until it is not.
 
 A child based on anything but the claim is **not integrated**. The refusal **names what it found** — which child, the base it has, and the base it should have had. A generic failure sends the reader into the diff, and the diff is the one place this defect does not show: the child's work is coherent, it is merely coherent with the wrong tree.
 
 ### Running one
 
-`.claude/policies/sub-agents.md` says what a child may do and what its two artifacts contain; the declaration says which roles run and what each owns. Neither is repeated below. What follows is only what this stage does with them.
+The `sub-agents` norm says what a child may do and what its two artifacts contain; the declaration says which roles run and what each owns. Neither is repeated below. What follows is only what this stage does with them.
 
 **Dispatch one child per declared role.** Each gets a brief built from the policy's template, composed now rather than carried on the ticket, because only now has anything read the code. Each runs in its own isolated worktree, so no child can reach another's files — and an isolated child's version-control commands fail if they reach the main checkout, so the boundary holds whether or not a brief mentioned it. Where that worktree is based is configuration rather than anything this stage states, which is why the base is checked above rather than asserted here.
 
@@ -222,11 +222,11 @@ That is also the bound on the inline path above. `research` and `task` increment
 
 ### Working a set
 
-Everything under the two headings above is a fan-out's. A set is the other axis, and its unit is a whole ticket rather than a portion, so **no rule crosses from there to here without being restated** — the two agree on what a child is and disagree on nearly everything done with one. What `.claude/policies/sub-agents.md` says about a child holds for both and is repeated in neither.
+Everything under the two headings above is a fan-out's. A set is the other axis, and its unit is a whole ticket rather than a portion, so **no rule crosses from there to here without being restated** — the two agree on what a child is and disagree on nearly everything done with one. What the `sub-agents` norm says about a child holds for both and is repeated in neither.
 
 **One child per ticket, in the role the plan named**, briefed from the policy's template exactly as a portion child is, and each working an isolated worktree on the branch this stage already created for its ticket. Nothing here reads a declaration: the members were computed from edges, and a fan-out one of them declares is not this stage's to run.
 
-**A set child's base is checked for equality, and never for ancestry.** The parent created that ticket's branch and handed the child that branch, so the only correct base is **that branch as it stood at dispatch** — with the base chosen rather than inherited there is nothing to weigh, and an ancestor of it is a child that started somewhere else and will land work its ticket's own history cannot explain. **As it stood at dispatch**, because the tip moves: this stage restacks below, and a check against the branch's current tip would refuse a late child for a base that was right when it was given one. `.claude/tools/git.md` has the read, and the refusal names the same three things it names for a portion.
+**A set child's base is checked for equality, and never for ancestry.** The parent created that ticket's branch and handed the child that branch, so the only correct base is **that branch as it stood at dispatch** — with the base chosen rather than inherited there is nothing to weigh, and an ancestor of it is a child that started somewhere else and will land work its ticket's own history cannot explain. **As it stood at dispatch**, because the tip moves: this stage restacks below, and a check against the branch's current tip would refuse a late child for a base that was right when it was given one. The `git` reference has the read, and the refusal names the same three things it names for a portion.
 
 **Check each child's record against that child's diff before anything of its lands**, by the same read a portion's gets and at the bar the policy sets for one. Of the two mismatches named there, one carries over and one has nothing to test: **undeclared** is the same question here, while **unowned** tests a declaration a set never makes. What that second check would have caught arrives instead as a collision, below.
 
@@ -240,7 +240,7 @@ Everything under the two headings above is a fan-out's. A set is the other axis,
 
 **Two children writing one path is a collision, and the orchestrator resolves it.** The edges never promised against this — an edge gates work, and says nothing about files — so it is discovered at integration rather than predicted before dispatch. It is resolved rather than refused: the children are finished, and a stage that stopped here would hand back two worktrees and a question.
 
-**The mechanism is the repository's own**, and comes from `.claude/policies/version-control.md`. **This stage names no merge strategy**: one chosen here would be right on the repositories that happened to match it and silently wrong on the rest. What the orchestrator has that no merge tool has is **both change records** — it knows what each child believed it was doing, which is the difference between reconciling two intents and reconciling two hunks.
+**The mechanism is the repository's own**, and comes from the `version-control` norm. **This stage names no merge strategy**: one chosen here would be right on the repositories that happened to match it and silently wrong on the rest. What the orchestrator has that no merge tool has is **both change records** — it knows what each child believed it was doing, which is the difference between reconciling two intents and reconciling two hunks.
 
 **Where the intents conflict rather than the text, that is a decision, and this stage does not make it.** Two children that each did what their ticket asked, in ways that cannot both stand, is not a merge problem in disguise. It takes the route every decision this stage cannot make already takes.
 
@@ -264,7 +264,7 @@ A worktree is **spent when the work it held has landed** — integrated, committ
 
 **What is kept is still kept.** A failed or stopped child's worktree stays, for the reason given above — a resumed session continues from it instead of rebuilding. Removal reaches what has landed, retention reaches what may still be resumed, and neither reaches the other's case.
 
-**Never force it.** `git worktree remove` refuses a worktree that still holds uncommitted or untracked work, and that refusal is a **second opinion on this stage's judgement** rather than an obstacle to it: one that will not come away cleanly is one whose work had not all landed after all. Forcing past it destroys the evidence that the determination was wrong. `.claude/tools/git.md` has the invocations, and what `prune` does not do.
+**Never force it.** `git worktree remove` refuses a worktree that still holds uncommitted or untracked work, and that refusal is a **second opinion on this stage's judgement** rather than an obstacle to it: one that will not come away cleanly is one whose work had not all landed after all. Forcing past it destroys the evidence that the determination was wrong. The `git` reference has the invocations, and what `prune` does not do.
 
 ## 3 — When the plan turns out wrong
 
@@ -290,13 +290,13 @@ A ticket that is merely **harder than expected** is not a wrong plan. Build it.
 
 `/review` runs **both axes**, and its fixes are applied, **before** anything is committed — reviewing afterwards would land work about to be reviewed rather than work that has been.
 
-Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read; `.claude/policies/tickets.md` has why, `.claude/policies/tracker.md` which kind this repository has. There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree — safe because of the push prohibition below, which keeps every effect locally reversible.
+Then **commit — without asking**: close out through `/commit` — invoke the `commit` skill, never a hand-rolled `git commit` — then set `status: resolved` and stop. **On a shared tracker, do not resolve** — the merge resolves the ticket there, and `/implement` never closes an issue other people read; The `tickets` norm has why, the `tracker` norm which kind this repository has. There is no prompt because there was never a choice: one ticket is one commit and further changes amend it, so "not yet, change this" and "commit, then change this" reach an identical tree — safe because of the push prohibition below, which keeps every effect locally reversible.
 
 `/commit` owns the commit itself, the whole-diff knowledge check, and the Marker. **`/implement` never writes the Marker directly** — one writer, so there is one answer to what Context was last verified against. A `/commit` that refuses stops the close-out; it is not worked around, and the ticket stays open.
 
 ### Never push. Amend instead.
 
-`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `.claude/rules/engineering.md`; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect.
+`/implement` **never runs `git push`.** Publishing is the user's decision, always. The rule is in `.claude/rules/engineering.md`; the `git` reference names the invocations it covers, including the ones that push as a side effect.
 
 That guard is what makes the rest safe: `/implement` **amends** rather than stacking `fix typo` commits, so **one ticket stays one commit** — and amending rewrites history, which is only safe while nothing has been pushed.
 
@@ -326,4 +326,4 @@ An **AFK increment does not stop it** — it resolves inline and the run carries
 
 ## 5 — Record what moved
 
-Update the **concepts, boundaries, and Source Pointers** this change moved, in `.claude/contexts/repository.md` and the Domain Contexts. `.claude/policies/knowledge.md` says which layers this stage may write, and `.claude/policies/context.md` what belongs in Context at all — read them rather than deciding here: the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.
+Update the **concepts, boundaries, and Source Pointers** this change moved, in the repository's `context` records. The `knowledge` norm says which layers this stage may write, and the `context` norm what belongs in Context at all — read them rather than deciding here: the row for `/implement` is narrower than it looks, and the two things it excludes are exactly the two that feel most natural to write while holding a finished diff.

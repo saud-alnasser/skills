@@ -41,15 +41,15 @@ Four questions about state; none re-executes anything.
 
 ## 2 — The diff against knowledge
 
-The one question no earlier stage could ask: `/implement` sees one ticket at a time, and `/commit` sees the change entire. Read the diff and ask: did this move a boundary, retire a concept, or relocate something a Source Pointer names — and does `.claude/contexts/repository.md` still say so?
+The one question no earlier stage could ask: `/implement` sees one ticket at a time, and `/commit` sees the change entire. Read the diff and ask: did this move a boundary, retire a concept, or relocate something a Source Pointer names — and does the repository's own context still say so?
 
 - **Where the diff contradicts Context, the commit is blocked until Context is corrected, and the correction goes into this commit** — so the change and the thing it falsified never land apart.
-- **The `/commit` row in `.claude/policies/knowledge.md` is the narrowest in the table** — a diff revealing a concept nobody had named is a finding to report, never a licence to name it here.
+- **The `/commit` row in the `knowledge` norm is the narrowest in the table** — a diff revealing a concept nobody had named is a finding to report, never a licence to name it here.
 - A repository with no `.claude/` has no Context to contradict — say so in one line and carry on.
 
 ## 3 — Mark the spec implemented
 
-When this commit completes a spec's acceptance criteria, set the spec's frontmatter field to `status: implemented` — this is the only place the last criterion is knowable. **Only the status field moves**, never the content; the vocabulary and the freeze are `.claude/policies/specs.md`'s, and where a spec lives is `.claude/policies/tracker.md`'s. Do it **before staging** — the spec is tracked, and marking it after the commit leaves the tree dirty the moment it lands, defeating the Marker's clean path on the next turn.
+When this commit completes a spec's acceptance criteria, set the spec's frontmatter field to `status: implemented` — this is the only place the last criterion is knowable. **Only the status field moves**, never the content; the vocabulary and the freeze are the `specs` norm's, and where a spec lives is the `tracker` norm's. Do it **before staging** — the spec is tracked, and marking it after the commit leaves the tree dirty the moment it lands, defeating the Marker's clean path on the next turn.
 
 ## 4 — Regenerate the generated indexes
 
@@ -61,24 +61,24 @@ Commit is the last point at which the tree is known complete — an index regene
 
 ## 5 — The message
 
-`.claude/policies/version-control.md` carries the convention AEP defaults to, and `CLAUDE.md` the standing rule that a convention is detected before it is asserted — so detect here: read `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`, then the recent `git log`. Where the repository documents or demonstrates another convention, follow it **silently**.
+The `version-control` norm carries the convention AEP defaults to, and `CLAUDE.md` the standing rule that a convention is detected before it is asserted — so detect here: read `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE*`, then the recent `git log`. Where the repository documents or demonstrates another convention, follow it **silently**.
 
-Say what capability changed, and why — **never a file-by-file account**; the diff already lists the files. Reference the ticket; whether the tracker is shared is `.claude/policies/tracker.md`'s. **Which form the reference takes** depends on how this commit reaches the default branch — `.claude/policies/version-control.md` states it, read rather than inferred:
+Say what capability changed, and why — **never a file-by-file account**; the diff already lists the files. Reference the ticket; whether the tracker is shared is the `tracker` norm's. **Which form the reference takes** depends on how this commit reaches the default branch — the `version-control` norm states it, read rather than inferred:
 
 | How the work lands | The commit carries | Because |
 | --- | --- | --- |
 | a branch merged by a pull request the human writes | a reference that closes nothing | a closing keyword in a commit stays live — a cherry-pick or rebase later closes an issue nobody merged; the keyword goes in the pull request body |
 | a branch in a stack, submitted by the stacking tool | the closing keyword | the commit reaches the default branch only by merging that branch's own pull request, so the hazard above cannot happen — and the commit body is the only text AEP can pre-write that reaches the pull request at all |
 
-`.claude/tools/github.md` has both forms; `.claude/tools/graphite.md` records what was and was not verified about the submit path. Read them — several words that look equivalent are not.
+The `github` reference has both forms; the `graphite` reference records what was and was not verified about the submit path. Read them — several words that look equivalent are not.
 
 ## 6 — Make the commit
 
-The staging rule, the commit invocation, and the amend that further changes take are `.claude/tools/git.md`'s — read it rather than reaching for a flag from memory. What belongs to `/commit` is the consequence: an amend rewrites the commit, so the step below runs again.
+The staging rule, the commit invocation, and the amend that further changes take are the `git` reference's — read it rather than reaching for a flag from memory. What belongs to `/commit` is the consequence: an amend rewrites the commit, so the step below runs again.
 
 ## 7 — Advance the Marker
 
-Last, once the commit exists — **a commit cannot contain its own SHA**, which is why the Marker is machine-local and written here. Write **both facts** to the marker file (`.claude/tools/git.md` names its path, the read, and the fingerprint invocation):
+Last, once the commit exists — **a commit cannot contain its own SHA**, which is why the Marker is machine-local and written here. Write **both facts** to the marker file (the `git` reference names its path, the read, and the fingerprint invocation):
 
 ```json
 {
@@ -95,7 +95,7 @@ Last, once the commit exists — **a commit cannot contain its own SHA**, which 
 
 ## Never push
 
-`/commit` **never runs `git push`.** The rule and its reasoning are `.claude/rules/engineering.md`'s; `.claude/tools/git.md` names the invocations it covers, including the ones that push as a side effect. Stated here because this is the file a reader opens to learn whether the commit skill publishes.
+`/commit` **never runs `git push`.** The rule and its reasoning are `.claude/rules/engineering.md`'s; the `git` reference names the invocations it covers, including the ones that push as a side effect. Stated here because this is the file a reader opens to learn whether the commit skill publishes.
 
 ## What stays with the caller
 

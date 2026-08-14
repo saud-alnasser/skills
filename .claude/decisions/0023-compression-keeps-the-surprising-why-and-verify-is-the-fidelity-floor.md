@@ -2,7 +2,7 @@
 owner: repository
 status: accepted
 load-when: text is being compressed, or a claim is about to be dropped for brevity
-sources: [scripts/verify.ps1]
+sources: [build/verify.js]
 supersedes: []
 superseded-by: []
 ---

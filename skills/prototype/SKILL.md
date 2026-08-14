@@ -14,7 +14,7 @@ The durable output is not the code. It is a **write-up**, and the code is delete
 
 ## 0 — Has this already been answered?
 
-Read `.claude/evidence/prototypes/` first. **Reuse operates on the write-up, not on the code** — the code is gone by design, and rebuilding an experiment whose answer is already recorded is the waste this directory exists to prevent.
+Query the store for `evidence` records declaring `kind: prototypes` first. **Reuse operates on the write-up, not on the code** — the code is gone by design, and rebuilding an experiment whose answer is already recorded is the waste this directory exists to prevent.
 
 Same question, assumptions still hold, conclusion recorded: trust it.
 
@@ -32,7 +32,7 @@ Getting the branch wrong wastes the whole prototype. If the question is genuinel
 | What | Where | Fate |
 | --- | --- | --- |
 | The code | `.claude/position/prototypes/<name>/` | deleted, always |
-| The write-up | `.claude/evidence/prototypes/<name>.md` | kept |
+| The write-up | an `evidence` record in the store, `kind: prototypes` | kept |
 
 The two are deliberately **apart**, because the write-up outlives the code and a document filed next to something that is about to be deleted invites deleting both.
 
@@ -60,7 +60,7 @@ The interesting feedback is the moment they say *wait, that shouldn't be possibl
 
 **Before deleting anything.** A prototype is not finished until its conclusion is recorded — a write-up deferred until after the deletion is a write-up that never gets written.
 
-`.claude/evidence/prototypes/<name>.md`:
+`.claude/knowledge/<name>.md`, declaring `type: evidence` and `kind: prototypes`:
 
 ```markdown
 # <the question tested, as a question>
@@ -103,6 +103,6 @@ There is **no reusable-harness exception.** That carve-out gets claimed for almo
 
 ## 6 — Evidence is not knowledge
 
-The write-up is **Evidence**: the trail showing how a claim was earned, recording what was verified and when. `.claude/policies/evidence.md` says why that is not a knowledge layer.
+The write-up is **Evidence**: the trail showing how a claim was earned, recording what was verified and when. The `evidence` norm says why that is not a knowledge layer.
 
-**Never write Context directly**, and never promote a write-up yourself. Both rules, and what does happen to a durable result, are in `.claude/policies/evidence.md`.
+**Never write Context directly**, and never promote a write-up yourself. Both rules, and what does happen to a durable result, are in the `evidence` norm.

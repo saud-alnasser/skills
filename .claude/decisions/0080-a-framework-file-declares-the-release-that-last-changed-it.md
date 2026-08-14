@@ -2,7 +2,7 @@
 owner: repository
 status: accepted
 load-when: a version or provenance field on shipped or installed files is proposed, or the release check's scope is in question
-sources: [skills/configure/, scripts/verify.ps1, .claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md]
+sources: [skills/configure/, build/verify.js, .claude/decisions/0064-the-release-check-is-a-hook-because-only-shipped-content-knows-the-release.md]
 supersedes: []
 superseded-by: []
 ---

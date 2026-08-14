@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: something AEP ships needs to exist as code in a configured repository, or the regenerator's source of truth is in question
 sources: [skills/configure/, .claude/decisions/0057-one-regenerator-enforced-by-comparison.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0097]
 ---
 
 # The regenerator is derived from a behavioural specification, not shipped as code

@@ -1,5 +1,6 @@
 ---
 owner: repository
+type: reference
 ---
 
 # glab — GitLab CLI

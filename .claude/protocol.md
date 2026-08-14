@@ -1,11 +1,11 @@
 ---
 owner: framework
-version: 1.20.0
+version: 2.0.0
 ---
 
 # Workflow protocol
 
-This repository runs the **Agentic Engineering Protocol**; this file is its router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted. It is framework law: nothing below is specific to any one repository — every path it names is protocol machinery identical wherever the protocol is installed, and the forge reference is a role precisely so the table never has to name a repository's choice. What a repository may vary is the entries of a `## Deviations` section, and nothing else.
+This repository runs the **Agentic Engineering Protocol**; this file is its router — what every stage opens to learn the mode it runs under, the guides it reads, and whether Context can be trusted. It is framework law: nothing below is specific to any one repository — every path it names is protocol machinery identical wherever the protocol is installed, and the forge reference is a role precisely so the table never has to name a repository's choice. **This file names no extension point.** A repository that must depart from it declares a `deviates-from` edge on the record that departs, which every build reports until it is removed — so a deviation is loud by construction rather than by somebody opening the right file, and removing it removes the report with no other edit. A prose section here could only be read by whoever thought to look.
 
 <!--
   Installed by /configure at `.claude/protocol.md`, verbatim.

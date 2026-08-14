@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: where a mode's text lives is in question
 sources: [.claude/modes/]
 supersedes: []
-superseded-by: []
+superseded-by: [0084]
 ---
 
 # Amendment: modes move out of the protocol file into `.claude/modes/`

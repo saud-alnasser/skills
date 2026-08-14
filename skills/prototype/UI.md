@@ -31,7 +31,7 @@ Before choosing B, ask once more whether there is really no page this could be e
 
 **Three variants** by default. Past five they stop being radically different and start being noise.
 
-Write the plan in one line at the top of the write-up in `.claude/evidence/prototypes/<name>.md`:
+Write the plan in one line at the top of the write-up — the `evidence` record this run writes into the store:
 
 > Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route.
 

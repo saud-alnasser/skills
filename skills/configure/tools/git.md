@@ -1,5 +1,6 @@
 ---
 owner: repository
+type: reference
 ---
 
 # git — version control
@@ -96,7 +97,7 @@ git rev-list --count <marker>..HEAD
 
 `--count` is in `git rev-list -h`'s option list, and returns `0` for an empty range rather than printing nothing.
 
-Exclude the knowledge paths. A commit that only edited `.claude/contexts/` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
+Exclude the knowledge paths. A commit that only edited `.claude/knowledge/` is not drift in the Codebase, and counting it re-verifies Context against its own edits.
 
 ## Read uncommitted drift
 

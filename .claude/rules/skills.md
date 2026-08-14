@@ -3,7 +3,7 @@ owner: repository
 paths:
   - "skills/**"
   - "agents/**"
-  - "scripts/verify.ps1"
+  - "build/verify.js"
 ---
 
 # Authoring skills
@@ -11,29 +11,33 @@ paths:
 <!--
   The scope is the frontmatter above, not prose. It was prose until this rule
   cost 3,405 chars on every turn, including turns that never opened `skills/`.
-  `scripts/verify.ps1` is in scope because the first standard below is an
+  `build/verify.js` is in scope because the first standard below is an
   obligation *on* that file — a rule about the suite that did not load when
   the suite was open would fire only where it was not needed.
 -->
 
 Standards this repository holds itself to when changing what ships. The vocabulary behind them is in `.claude/contexts/skill-authoring.md`; these are the checkable obligations.
 
-## Every change to `skills/` moves `scripts/verify.ps1` in the same pass
+## Every change to what ships moves `build/verify.js` in the same pass
 
-There is no package manifest and no test runner here. `verify.ps1` asserts each ticket's mechanically-checkable acceptance criteria against `./skills`, and it is the only thing that catches a broken build.
+There is no package manifest and no test runner here. `build/verify.js` asserts that **what ships adheres to `specs.md`** — `skills/`, `agents/`, `knowledge/`, `scripts/`, and the configure skill's remaining templates — and it is the only thing that catches a broken build.
 
 ```
-pwsh -NoProfile -File scripts/verify.ps1                    # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket tenure/09  # one, as <effort>/NN
+node build/verify.js                          # every group
+node build/verify.js --ticket conversion/01   # one, as <effort>/NN
 ```
 
 Ticket numbers restart at `01` in each effort, so the effort is part of the id. An unknown id exits `2` and lists what it knows, rather than passing with nothing run.
 
+**Assertions are grouped under the ticket that introduced them**, which is what makes the group name an `<effort>/NN` and what lets a change be checked against the ticket that asked for it rather than against the whole suite.
+
 A change that adds a checkable claim and no assertion is untested by construction, not merely under-tested.
 
-## Placing a rule adds an entry to the `$rulePattern` table
+**The suite never checks this repository's `.claude/` against anything** — no template-to-installed byte-lock, no sweep of the committed protocol directory, no assertion asking whether this repository holds what the framework specifies. Such a check couples what ships to what this repository happens to run on, so a shipped template cannot change shape until this repository is converted — inverting the ordering that builds into what ships first and converts this repository last. A guard failing because a shipped file no longer matches something under `.claude/` **is the defect, not the file**: rescope it or delete it, and never contort shipped content to satisfy it.
 
-Single-home is asserted, not trusted. When a rule is placed, add its guard to `$rulePattern` in `verify.ps1`.
+## Placing a rule in shipped text adds an assertion under the ticket that placed it
+
+Single-home is asserted, not trusted. When a rule is placed in what ships — a skill, an agent definition, or a template — add a guard for it to `build/verify.js`, in the group named for the ticket doing the placing. A rule this repository places in its own `.claude/` is single-homed by the same standard and guarded by nothing here, because guarding it would mean reading the protocol directory, which is the coupling the section above refuses.
 
 **Check that the guard would actually fire.** The recurring failure is a guard that matches a phrase travelling *with* the thing it checks rather than the thing itself — it passes while what it existed to catch sits in the tree. It has happened often enough not to be worth counting; assume you have just written one. Write the guard, then confirm it fails against a deliberate reintroduction before trusting it.
 
@@ -49,7 +53,31 @@ Delete the citation. Where it was carrying a reason the surrounding prose does n
 
 This repository's own knowledge is not shipped and keeps its citations, and the derived guides are written per repository from that repository's facts, so theirs are read where they resolve. Upstream attribution is exempt for the reason below: it is provenance the licence requires, not navigation.
 
-`verify.ps1` asserts this over the shipped surfaces.
+`build/verify.js` asserts the two unambiguous forms over the shipped surfaces — an ADR number, and a section mark on a line naming no file. A bare `specs.md` is deliberately unguarded: the canonical specification and the shipped guide `policies/specs.md` share a filename, so a guard on the bare name fires on correct content, and a guard that fires on correct content gets rescoped by whoever hits it. The standard above still binds; only part of it is mechanical.
+
+## Shipped text names a record by subject, never by location
+
+A norm, a context, a decision, a reference — every record in the store is reached by delivery
+or by query, and **nothing in the store is reached by opening a file somebody chose**. So a
+path in shipped prose is not a stale detail: it instructs the one behaviour the delivery
+mechanism exists to remove, and it goes on instructing it after the path is corrected.
+
+**Correcting a path is therefore the wrong repair. The path goes.** What replaces it is
+decided by what the record's type does at delivery:
+
+| The passage names | It becomes |
+| --- | --- |
+| a norm the stage receives in its row | the subject alone — the norm is already inlined ahead of the skill's own content, so a pointer would point inside the window |
+| a `reference` | the subject, and a pointer that survives — a `reference` carries no firing condition, is never delivered, and is fetched at the operation that needs it |
+| an instruction to open a file | a query against the store, and the passage says what happens when the store cannot be reached |
+
+The subject stays rather than the pointer being deleted outright, because a skill still
+points at what governs a passage: a reader outside a running stage has no row, and the
+frontmatter declaration alone does not say which passage answers to which record.
+
+**`.claude/rules/` is not covered by any of this.** The boot tier stays files because the
+harness is the only channel that reaches a clone without the plugin, so a reference to it
+resolves where it is read and is correct as written.
 
 ## Vendored files carry attribution; borrowed shapes do not
 
@@ -59,7 +87,7 @@ This repository's own knowledge is not shipped and keeps its citations, and the 
 
 `NOTICE` reproduces the upstream terms in full and stays while any vendored text ships. It is the repository-level notice; the per-file lines are the file-level one, and only vendored files need them.
 
-`verify.ps1` pins the vendored set by name and fails in both directions — vendored text without attribution, and attribution on a file that vendored nothing.
+`build/verify.js` pins the vendored set by name and fails in both directions — vendored text without attribution, and attribution on a file that vendored nothing.
 
 ## Short names are for the keyboard; descriptive names are for the model
 
@@ -69,8 +97,8 @@ Model-invoked: an expressive name, and a `description` that states when to use i
 
 This bans shortening **for brevity**, not every short name. `review` is model-invoked and one word because the namespace removed the collision its old prefix existed to avoid, and it still says when to use it.
 
-`verify.ps1` asserts the split against each skill's frontmatter, so a rename that crosses the axis fails the build.
+`build/verify.js` asserts the split against each skill's frontmatter, so a rename that crosses the axis fails the build.
 
 ## Nothing shipped names a pre-migration path
 
-`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what AEP migrates *away from*, and `.claude/docs/` is AEP's own superseded layout (ADR 0018) — the same guard covers both kinds. A file under `skills/` naming one is either a bug or a migration row, and `verify.ps1`'s `$legacy` table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.
+`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`, and `.scratch/` are what AEP migrates *away from*, and `.claude/docs/` is AEP's own superseded layout (ADR 0018) — the same guard covers both kinds. A file under `skills/` naming one is either a bug or a migration row, and `build/verify.js`'s legacy table enforces it. Only `configure/SKILL.md` and `configure/MIGRATION.md` are exempt, because detecting and converting those paths is their job.

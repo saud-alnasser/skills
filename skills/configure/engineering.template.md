@@ -8,7 +8,7 @@ version: 1.19.0
 # Engineering standards
 
 - **Inspect source before any repository-specific claim** — a claim is either checked or a guess in the same words; **names are not proof**, nor memory, nor a plausible API.
-- **Never guess an API, and a CLI is an API** — read the reference, never try a flag and see. `.claude/tools/` covers every tool this repository uses, with or without the plugin; a missing entry is a configuration gap — say so, and fall back to the tool's own documentation.
+- **Never guess an API, and a CLI is an API** — read the reference, never try a flag and see. A `reference` record covers every tool this repository uses, and is queried at the operation that needs it rather than delivered with a row; a tool with no reference is a configuration gap — say so, and fall back to the tool's own documentation.
 - **Never push and never publish** — committing happens as part of building, without being asked; pushing, opening a pull request, and submitting a stack are the human's call, the actions they cannot undo locally. A commit is reversible in this clone and nothing after it is — what makes committing unasked safe and the prohibition load-bearing.
 - **Obeying a rule means letting its check fire** — keeping its letter while arranging that the check cannot fire violates it more completely than defiance, which leaves a trace. Before satisfying a rule, ask what it would have caught and whether that is still reachable.
 - **A user-invoked skill is invoked by the user** — producing its deliverable by hand is invoking it without the user's decision. It covers every user-invoked skill AEP ships, binding the run that never reached for one exactly as the one that was blocked.

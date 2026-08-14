@@ -45,16 +45,16 @@ Then prove it, here, in the parent:
 
 A bad ref or an empty subject fails at this step, before two subagents are spawned to review nothing — inside a subagent that failure comes back as a confident report on no content.
 
-The committed side compares against the **merge-base**, not the raw ref, so commits that landed on the base branch since this work started are not attributed to it. Every invocation — the diff, the commit list, and the working-tree read — is in `.claude/tools/git.md`.
+The committed side compares against the **merge-base**, not the raw ref, so commits that landed on the base branch since this work started are not attributed to it. Every invocation — the diff, the commit list, and the working-tree read — is in the `git` reference.
 
 ## 2 — Find what was asked for
 
 In order, stopping at the first that answers:
 
 1. **The ticket the caller is holding.** `/implement` knows which ticket it claimed; that is the spec.
-2. **Issue references in the commit messages** — resolve them through the tracker (`.claude/tools/github.md`, `.claude/tools/gitlab.md`).
+2. **Issue references in the commit messages** — resolve them through the tracker (the `github` or `gitlab` reference).
 3. **A path the user passed.**
-4. **A spec matching the branch or the feature** — where specs are written is `.claude/policies/tracker.md`'s, and it is read rather than assumed.
+4. **A spec matching the branch or the feature** — where specs are written is the `tracker` norm's, and it is read rather than assumed.
 
 If none of these answers, ask. If the user says there is no spec, the Spec axis reports **no spec available** and is skipped — it does not reconstruct one from the diff. **Never invent, guess, or infer the requirements from the code being reviewed**: a spec derived from the diff agrees with the diff by construction, which turns the axis into a rubber stamp while still producing a report that reads like a review.
 
@@ -63,8 +63,8 @@ If none of these answers, ask. If the user says there is no spec, the Spec axis 
 This repository's own standards, always first:
 
 - `.claude/rules/` — the standards `/configure` discovered here, path-scoped where they apply to part of the tree
-- `.claude/contexts/map.md` and the Domain Contexts it routes to — boundaries and ownership
-- `.claude/decisions/` — the ADRs
+- the repository's `context` records — boundaries and ownership
+- its `decision` records — the ADRs
 - `CONTRIBUTING.md` and whatever else this repository documents about how code is written
 
 Under those sits a fallback vocabulary of design smells, in [SMELLS.md](SMELLS.md). It exists so that a repository documenting nothing still gets a review with something to say. **The repository always overrides it.** Where a documented standard endorses something the baseline would flag, the standard wins and the smell is suppressed — silently, without a note explaining that AEP would have preferred otherwise.
@@ -75,7 +75,7 @@ Skip anything a linter, formatter, or type-checker already enforces. A finding a
 
 **In parallel, as two subagents**, spawned in a single message. Parallel is for latency; separate subagents are for correctness — an axis that can see the other's findings starts agreeing with them, and that pollution is invisible in the output. Two contexts that never touch cannot converge.
 
-Dispatch the shipped roles by name — **`spec-reviewer`** for the first axis, **`standards-reviewer`** for the second. Each carries what its axis reports and how, so nothing of that is retyped here; what a dispatched child is bound by is `.claude/policies/sub-agents.md`'s, and this stage restates none of that either.
+Dispatch the shipped roles by name — **`spec-reviewer`** for the first axis, **`standards-reviewer`** for the second. Each carries what its axis reports and how, so nothing of that is retyped here; what a dispatched child is bound by is the `sub-agents` norm's, and this stage restates none of that either.
 
 What the brief adds is the subject, which is the part no role can know: the fixed point and both diff invocations, the commit list, where the spec is, and — for the Standards axis — [SMELLS.md](SMELLS.md) as the fallback baseline, since a role shipped to every repository cannot carry this one's.
 
@@ -99,7 +99,7 @@ A finding with no outcome is a finding that will be raised again next review.
 
 The third is the one that gets skipped. *"That's fine, leave it"* is a deliberate trade-off and it needs a home — a trade-off nobody wrote down is re-discovered, re-argued, and re-accepted on every future review.
 
-Record an acceptance as an **ADR** when it clears the 3-of-3 test in `.claude/policies/decisions.md` — most do not clear it. Otherwise it is a note on the ticket. Either way the next review reads it and does not re-raise it.
+Record an acceptance as an **ADR** when it clears the 3-of-3 test in the `decisions` norm — most do not clear it. Otherwise it is a note on the ticket. Either way the next review reads it and does not re-raise it.
 
 **Accepting is the user's call, never the reviewer's.** A reviewer that accepts its own findings has reviewed nothing.
 

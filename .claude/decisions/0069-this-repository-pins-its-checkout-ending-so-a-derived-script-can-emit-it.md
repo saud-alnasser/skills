@@ -1,10 +1,10 @@
 ---
 owner: repository
-status: accepted
+status: superseded
 load-when: the working tree's line endings are in question, or what a derived script may emit
 sources: [.claude/scripts/regenerate-indexes.ps1, skills/configure/SCRIPTS.md, .claude/tickets/declared-fields/issues/05-the-index-regenerator-and-its-comparison.md, .claude/tickets/line-endings/spec.md]
 supersedes: []
-superseded-by: []
+superseded-by: [0098]
 ---
 
 # This repository pins its checkout ending so a derived script can emit it

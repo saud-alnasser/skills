@@ -1,5 +1,6 @@
 ---
 owner: repository
+type: reference
 ---
 
 # gt — Graphite (stacked changes)

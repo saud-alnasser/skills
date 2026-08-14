@@ -1,6 +1,6 @@
 ---
 owner: framework
-version: 1.19.0
+version: 2.0.0
 ---
 
 <!-- Unconditional: no `paths:` frontmatter, deliberately — precedence must hold on every turn, and adding to this tier is a permanent always-on cost. -->
@@ -12,7 +12,7 @@ When instructions conflict, the later source loses:
 1. What the user said in this conversation
 2. `CLAUDE.md` and the unconditionally-loaded rules beside this file
 3. `.claude/contexts/repository.md` and the Domain Contexts
-4. `.claude/decisions/` — an accepted ADR
+4. An accepted decision record in the store
 5. Path-scoped rules in `.claude/rules/` and `CONTRIBUTING.md`
 6. `README.md` and the rest of the documentation
 

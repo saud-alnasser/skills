@@ -45,7 +45,7 @@ Top to bottom, first match wins — the four lower rows are read rather than jud
 
 ## Framework law
 
-**A file declaring `owner: framework` is followed as written — never edited, healed, or debated.** Variation enters only through the extension points it names; anything else is a declared deviation, loud in every audit. Unstamped files are the repository's, healed as ever.
+**A record declaring `owner: framework` is followed as written — never edited, healed, or debated.** Variation enters as a `deviates-from` edge, which every build reports until it is removed. Unstamped records are the repository's, healed as ever.
 
 ## Writing knowledge
 

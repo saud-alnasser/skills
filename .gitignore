@@ -3,9 +3,11 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Build output. `build/` is deliberately absent: this repository produces no
+# build output, and that directory holds its build *script* — the one thing that
+# catches a broken change to what ships. Ignoring it shipped a clean checkout
+# with no build in it at all.
 dist/
-build/
 *.tsbuildinfo
 
 # Environment
