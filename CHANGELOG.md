@@ -35,8 +35,18 @@ compute. Nothing is deleted, every collision stops, and the result passes
   the declared field, never inferred from a path.
 - **Seeds** — repository-owned starting points installed once, only where their
   evidence is detected: a version-control rule, a repository context, an
-  entrypoint, and references for git, GitHub, GitLab, Graphite, pnpm, npm, yarn,
-  Bun, Docker, and Make.
+  entrypoint, and a reference per tool.
+- **A wide reference catalogue.** Sixty-odd tools ship a starting point, each
+  gated on that tool's own evidence — version control and forges, JavaScript
+  package managers and runtimes, linters and formatters, test runners, bundlers
+  and monorepo orchestration, application frameworks, desktop and mobile shells,
+  the Rust, Go, Python, Ruby, PHP, JVM, .NET and Nix toolchains, database and
+  schema tooling, containers, infrastructure and deployment targets, release
+  automation, task runners, and git hooks. Breadth costs an installing
+  repository nothing, because the detector decides: a tool it does not use is
+  never seeded. Each reference leads with the hazard that tool actually
+  presents — a cached task that ran nothing, a `--remote` flag one word away
+  from real data, a generated migration that drops a column.
 - **Templates** for every artifact kind, so a new rule, reference, context,
   spec, ticket, or role starts from the shape it must hold.
 - **Skill notes** — depth at `skills/<skill>/<note>.md`, reached by link from the

@@ -456,6 +456,30 @@ section('seeds', () => {
       /^(contexts|references|rules)\//.test(seed.target));
   }
 
+  // A seed file nothing declares ships in the distribution and installs
+  // nowhere. Nothing else notices: the tree looks complete, the file reads as
+  // authoritative, and no repository ever receives it. Across a catalogue this
+  // size that is one forgotten line in the manifest.
+  assert('every file under seed/ is declared in SEEDS', () => {
+    const declared = new Set(SEEDS.map((seed) => seed.source));
+    const orphans = walk(path.join(SRC, 'seed'))
+      .map((file) => toPosix(SRC, file))
+      .filter((source) => !declared.has(source));
+    if (orphans.length > 0) throw new Error(`declared by nothing: ${orphans.join(', ')}`);
+    return true;
+  });
+
+  // `detect: { paths: [] }` is truthy and matches nothing, so it reads as a
+  // gated seed and behaves as a retired one.
+  assert('every reference seed is gated on evidence that can actually match', () => {
+    const dead = SEEDS.filter((seed) => seed.target.startsWith('references/')).filter(
+      (seed) => !(seed.detect?.paths?.length > 0 || isNonEmptyString(seed.detect?.remote)));
+    if (dead.length > 0) {
+      throw new Error(`cannot ever install: ${dead.map((seed) => seed.target).join(', ')}`);
+    }
+    return true;
+  });
+
   const targets = SEEDS.map((seed) => seed.target);
   assert('no seed target is declared twice', () => new Set(targets).size === targets.length);
   assert('exactly one seed targets the repository root, and it is the entrypoint', () => {
@@ -712,9 +736,17 @@ section('install fixture', () => {
     fs.existsSync(path.join(aep, 'contexts', 'repository.md')));
   assert('git is detected in a git repository', () =>
     fs.existsSync(path.join(aep, 'references', 'git.md')));
-  assert('undetected references are not installed', () =>
-    !fs.existsSync(path.join(aep, 'references', 'pnpm.md')) &&
-    !fs.existsSync(path.join(aep, 'references', 'docker.md')));
+  assert('no reference installs without its evidence', () => {
+    const wrongly = SEEDS
+      .filter((seed) => seed.target.startsWith('references/'))
+      .filter((seed) => seed.target !== 'references/git.md')
+      .filter((seed) => fs.existsSync(path.join(aep, ...seed.target.split('/'))));
+    if (wrongly.length > 0) {
+      throw new Error(`installed into a bare repository: ${
+        wrongly.map((seed) => seed.target).join(', ')}`);
+    }
+    return true;
+  });
 
   assert('installing writes the entrypoint at the repository root', () =>
     fs.existsSync(path.join(dir, 'AGENTS.md')));
