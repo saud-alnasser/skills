@@ -1,7 +1,7 @@
 ---
-aep: 2.0.0
+aep: 2.1.1
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [prototype]
 use-when: "answering can-this-work by building something disposable"
@@ -28,7 +28,7 @@ hypothesis, experiment, observation, result, conclusion.
 
 - **State the hypothesis and what would falsify it before building.** A
   prototype with no failure condition confirms whatever you hoped.
-- Build in a worktree (`[[worktrees]]`), never in the working checkout.
+- Build in a worktree (under `.aep/worktrees/`), never in the working checkout.
 - **Prototype code MUST NOT automatically become production code.** Promotion is
   an explicit decision recorded in the effort's `spec.md`, and what gets promoted
   is rewritten under `[[modes/implement]]` — the value was the answer, and

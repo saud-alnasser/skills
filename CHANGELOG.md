@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.1.1
+
+A link that only resolved on the machine that wrote it, and one field that now
+answers one question.
+
+### Changed
+
+- **`aep:` is the release an artifact ships in, and every release stamps every
+  protocol-owned artifact** — reversing the 2.1.0 decision below, which made the
+  field the release that *last changed* the artifact. Both readings cannot hold
+  at once, so this supersedes it rather than sitting beside it.
+
+  The comparison an upgrade actually makes is *did this artifact come from the
+  release the tree declares* — one question, answered by equality. Per-artifact
+  provenance answered a different question and made the first one unanswerable,
+  since a legitimately old stamp and a file the installation never received were
+  the same value. Provenance is what this changelog and the git history are for.
+
+  `verify.mjs` enforces it as equality rather than a range: a stamp behind the
+  release now fails exactly as a stamp ahead of it always did. Confirmed to fire
+  before landing.
+
+### Fixed
+
+- **The prototype skill and mode no longer link to `worktrees/`.** It was the one
+  link in the distribution pointing at a gitignored, per-clone directory, so it
+  resolved wherever an install had created the empty directory and resolved to
+  nothing in every fresh clone — passing locally and failing in CI. The path is
+  stated as text; there was nothing to link to, and creating something to satisfy
+  a link is what a dangling link must never cause.
+
 ## 2.1.0
 
 A repository is met by a reference for every tool it actually runs.

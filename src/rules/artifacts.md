@@ -1,7 +1,7 @@
 ---
-aep: 2.0.0
+aep: 2.1.1
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: rule
 paths:
   - .aep/**/*.md
@@ -16,9 +16,9 @@ Every Markdown file under `.aep/` MUST open with YAML frontmatter:
 
 ```yaml
 ---
-aep: 2.0.0
+aep: <release>
 owner: protocol | repository
-date: 2026-08-16
+date: <YYYY-MM-DD>
 ---
 ```
 

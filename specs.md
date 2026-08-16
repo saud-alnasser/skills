@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.1.0
+**Version:** 2.1.1
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -160,7 +160,7 @@ A runtime's own entrypoint — `AGENTS.md`, `CLAUDE.md`, or the runtime's equiva
 
 Every artifact declares an owner, and the owner is read off the declaration — never inferred from a directory.
 
-**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is the release that last changed its content, and an upgrade compares it.
+**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is the release it ships in — **every release stamps every protocol-owned artifact it ships**, not only the ones it changed — and an upgrade compares it. *Why the whole tree moves together: the question an upgrade asks is whether an installed artifact came from the release the tree declares, and a field carrying per-artifact provenance answers a different question at the cost of the one being asked. Provenance is what the changelog and the history are for.*
 
 **`owner: repository`** — the artifact describes this repository. It evolves with the repository, and an upgrade MUST preserve it unless an explicit migration applies. A protocol upgrade MUST NEVER silently overwrite repository-owned governance.
 
@@ -226,7 +226,7 @@ Field contract:
 
 | Field | Required | Contract |
 | --- | --- | --- |
-| `aep` | **yes** | The AEP version associated with the artifact. For protocol-owned artifacts, the release that last changed it — **except `protocol.md`, which every release stamps** (§6). |
+| `aep` | **yes** | The release the artifact ships in. Every release stamps **every** protocol-owned artifact, `protocol.md` included (§6), so a protocol-owned artifact declaring anything other than the release its tree declares is out of date and reinstalled (§7). |
 | `owner` | **yes** | Exactly `protocol` or `repository`. No other value is legal. |
 | `date` | **yes** | Last modified, as `YYYY-MM-DD`. No other format is legal. |
 | `kind` | situational | One of the listed values. Omitted only where the directory makes it redundant. |
@@ -798,7 +798,7 @@ The suite MUST also prove **its own failure path fires** before any result it re
 The suite MUST assert at least:
 
 - the frontmatter contract (§8) on every payload artifact — required fields present, `owner` in its two legal values, `date` well-formed, `mode` an array of legal modes, `kind` a legal value, `status` legal and only where permitted;
-- `aep` on every payload artifact and seed is a real release **no newer than the one being built**, and `protocol.md` declares that release exactly (§8). *A stamp ahead of the release names something that does not exist; a blanket stamp across artifacts a release did not touch is the same defect in the other direction, because it destroys the comparison an upgrade makes (§7).*
+- `aep` on every payload artifact and seed is **exactly the release being built**, `protocol.md` included (§8). *A stamp ahead of the release names something that does not exist, and a stamp behind it makes a shipped artifact look like one an installation is missing — both break the single comparison an upgrade makes (§7).*
 - `use-when` present on every rule, reference, and context;
 - every `[[...]]` link resolves (§9);
 - the skill set is exactly the seventeen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
