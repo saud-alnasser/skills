@@ -1,12 +1,47 @@
 # AEP — the Agentic Engineering Protocol
 
-A Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline. It derives from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering) and adds a persistent repository-knowledge layer on top. The framework's canonical definition is [`specs.md`](specs.md); it was named **Tenure** first and the **AI Engineering Protocol** after that, so records written under either name still say so.
+An **agent-agnostic, filesystem-first engineering protocol** for AI-assisted
+software work. All of its state is plain Markdown under `.aep/` — no runtime, no
+database, no resident process. Claude Code, Codex, Cursor, Gemini, and unassisted
+humans are all consumers; what a runtime provides is an *adapter*, never AEP.
+
+The guiding principle: **make correct engineering behaviour easy to discover,
+hard to violate, and cheap for an agent to understand.**
+
+`specs.md` is the normative specification.
+
+## The model
+
+```
+rules       what MUST be done — the only governance layer
+references  how a tool is operated here
+contexts    what to know about an area, and where to look
+evidence    what has been discovered — research, prototypes
+efforts     what change is being made; spec.md is its truth
+tasks       executable work derived from the spec
+modes       how to think during an activity
+agents      who does the work, in what role
+skills      reusable capabilities
+worktrees   isolated execution — never knowledge
+position    lightweight operational state — never truth
+```
+
+Every artifact declares **when it applies** (`use-when`, `paths`, `mode`), so
+knowledge loads by relevance rather than by stage. Nothing tells an agent to read
+all the rules before starting.
+
+## The workflow
+
+```
+/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+```
+
+`research`, `prototype`, `survey`, and grill are **capabilities, not stages**.
+Pick the smallest process that produces a reliable result.
 
 ## Install
 
-AEP ships as a plugin published from this repository, and installs at **`local` scope** — recorded in that project's `.claude/settings.local.json`, which is gitignored. It is therefore personal but not global: enabled in the projects you choose, absent everywhere else, and copied into neither.
-
-From inside the project you want it in:
+AEP ships as a Claude Code plugin published from this repository:
 
 ```
 /plugin marketplace add saud-alnasser/skills
@@ -14,52 +49,78 @@ From inside the project you want it in:
 /reload-plugins
 ```
 
-`marketplace add` also takes a git URL or a path to a local checkout — use the
-path when you want the project to track your working copy rather than what is
-pushed.
-
-Choose **local** when the install prompt asks for a scope. The other scopes do not express what AEP wants: `user` enables it in every project, and `project` commits the choice for the whole team.
-
 Then, once per repository:
 
 ```
-/aep:configure
+/aep:install
 ```
 
-`/aep:configure` writes the repository's knowledge and machinery — the root `CLAUDE.md`, `.claude/protocol.md`, `.claude/rules/`, `.claude/policies/`, `.claude/contexts/`, and `.claude/tools/`. Nothing else works properly until it has run.
+That writes `.aep/`, seeds the repository-owned starting points its setup calls
+for — a version-control rule, and references for the tools it actually detects —
+and points the entrypoint at `.aep/protocol.md`.
 
-To see what to reach for and when, `/aep:help`.
+**Already running AEP 1.x?** Run `/aep:update` instead. `/aep:install` and the
+installer both refuse a 1.x repository, because 1.x has no `.aep/` and a fresh
+install would land beside the live tree and orphan everything in it.
 
-## What a teammate without the plugin sees
-
-A repository AEP has configured stays useful to them. `CLAUDE.md` and `.claude/rules/` are committed and carry only rules that hold with or without the plugin — precedence, the knowledge layers, verifying before claiming, healing documentation where it has gone stale. The harness loads both whether or not AEP is installed. The protocol itself is in `.claude/protocol.md`, reached by pointer, and nothing committed assumes an AEP command exists.
-
-## Repository layout
-
-```
-specs.md                 the AEP specification — the framework's canonical definition
-.claude-plugin/          the plugin manifest and the marketplace that publishes it
-skills/                  the plugin's skills — the whole framework
-scripts/verify.ps1       asserts the build tickets' acceptance criteria against ./skills
-.claude/                 this repository's own knowledge, written by AEP
-├── decisions/           the decisions behind the framework
-├── scripts/             scripts serving AEP's own process
-└── tickets/<effort>/    each effort's spec and build tickets
-```
-
-Where AEP's own files go — and why `scripts/verify.ps1` is not one of them — is `.claude/rules/placement.md`.
-
-This repository is itself configured by AEP, so `.claude/` here is an example of the output as well as the input to it. `skills/` and `agents/` are what ships; `.claude/` is what this repository runs on.
-
-There is no package manifest and no test runner. `scripts/verify.ps1` stands in for one:
+**Without the plugin**, run the installer directly; nothing about AEP requires it:
 
 ```
-pwsh -NoProfile -File scripts/verify.ps1                    # all tickets
-pwsh -NoProfile -File scripts/verify.ps1 -Ticket tenure/20  # one, as <effort>/NN
+node <checkout>/src/scripts/install.mjs --into <repository> --adapters claude
 ```
 
-Ticket identifiers keep their historical effort names — `tenure/`, `layout/`, `streamline/`, `aep/` — because the tickets are the build record.
+## Layout of this repository
+
+```
+specs.md                  the normative specification
+AGENTS.md                 the entrypoint — points at .aep/protocol.md
+src/                      everything that ships
+├── protocol.md           the bootstrap installed as .aep/protocol.md
+├── rules/ modes/ skills/ agents/ templates/   protocol-owned payload
+│   └── skills/<skill>/    depth read only when that skill branches to it
+├── seed/                 repository-owned starting points, installed on detection
+├── scripts/              install, verify, and the scripts .aep/ gets
+├── gitignore             becomes .aep/.gitignore
+└── adapters/claude/      the Claude Code adapter — pointers, never copies
+.claude-plugin/           the plugin manifest and its marketplace
+.aep/                     this repository's own installation
+```
+
+## Checks
+
+```
+node src/scripts/verify.mjs        # shipped surfaces against specs.md, plus a fixture install
+node src/scripts/adapters.mjs      # regenerate the Claude adapter
+node .aep/scripts/validate.mjs     # any installed tree against the artifact contract
+node .aep/scripts/index.mjs        # regenerate the discovery index
+```
+
+There is no package manifest and no dependency. Every script is dependency-free
+ESM run by a bare Node runtime.
+
+## Prior work
+
+AEP 2.0 takes the **specify → plan → tasks → implement** spine from
+[GitHub's Spec Kit](https://github.com/github/spec-kit) and the **composable
+skill** shape from [mattpocock/skills](https://github.com/mattpocock/skills). It
+depends on neither and requires neither installed.
+
+What it adds to both: applicability metadata on every artifact, so knowledge
+loads by relevance rather than by stage; a declared ownership boundary, so an
+upgrade cannot eat repository knowledge; and evidence bound to the effort that
+motivated it, so investigation survives the conversation.
+
+**What is taken from each is a shape, not text.** AEP 2.0 vendors no code or
+prose from either project — every shipped file was written for this protocol — so
+no third-party licence condition attaches to it.
+
+AEP 1.x was a Claude Code skill framework rooted in `.claude/`. 2.0 is a rewrite
+of the framework, so none of it upgrades in place — `specs.md` §33 lists what was
+removed and what replaced it. A 1.x repository's **own** knowledge does move
+across: `/update` detects the old layout and runs a carry-across that installs
+2.0 fresh, re-homes the contexts, tool guides, specs, tickets, and evidence, and
+reports every assumption it made on your behalf.
 
 ## Licence
 
-See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Apache 2.0 — see [LICENSE](LICENSE).

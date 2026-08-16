@@ -28,5 +28,5 @@ Desktop.ini
 .idea/
 *.swp
 
-# Tickets live at .claude/tickets/ and are tracked. Position — the per-clone
-# state that must never be committed — is defined by .claude/.gitignore.
+# What per-clone means inside .aep/ is defined by .aep/.gitignore, which the
+# installer writes: position/ and worktrees/.

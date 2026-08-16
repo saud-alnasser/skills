@@ -1,7 +1,7 @@
 # The working tree's line ending is pinned so that it is a fact rather than a
-# function of each clone's `core.autocrlf`. A derived script is required to emit
-# the checkout's ending, and until something pinned one there was no such value
-# to emit. ADR 0069 has the reasoning and what was rejected.
+# function of each clone's `core.autocrlf`. Scripts that generate committed files
+# — the index, the runtime adapters — must emit the checkout's ending, and until
+# something pinned one there was no such value to emit.
 #
 # `text=auto` rather than `text`: git decides per file whether it is text, so
 # nothing binary is converted. The `eol` attribute has effect only where that

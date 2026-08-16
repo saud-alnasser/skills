@@ -8,7 +8,7 @@
     {
       "name": "aep",
       "source": "./",
-      "description": "The Agentic Engineering Protocol — a Claude Code skill framework that makes Claude a partner whose understanding of a repository compounds over time, rather than a stateless execution pipeline."
+      "description": "The Agentic Engineering Protocol — an agent-agnostic, filesystem-first engineering protocol. Canonical state lives in .aep/; this plugin is the Claude Code adapter for it."
     }
   ]
 }
