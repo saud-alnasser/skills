@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/adapters/claude/hooks/check-version.mjs"]
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/check-version.mjs"]
           }
         ]
       }

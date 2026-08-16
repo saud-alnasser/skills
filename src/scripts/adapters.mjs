@@ -22,6 +22,21 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readArtifact, topLevel, walk } from './contract.mjs';
 
+/**
+ * From the plugin's root back to the payload it wraps.
+ *
+ * The plugin root is this adapter's own directory — `<distribution>/adapters/
+ * claude` — because that is what the marketplace entry publishes, and it has to
+ * be: Claude Code scans `<plugin root>/agents/` for a plugin's agents and a
+ * manifest `agents` path does not redirect that scan. Naming a directory there
+ * fails manifest validation outright, and naming the files loads none of them.
+ * Publishing the adapter itself is what puts every wrapper — skills and agents
+ * alike — where the runtime already looks, with no manifest paths at all.
+ *
+ * The payload is two levels up from there, which is what this prefix spells.
+ */
+const PAYLOAD_FROM_PLUGIN_ROOT = '../..';
+
 /** The sentence a runtime matches on, derived from the canonical artifact. */
 function describe(artifact, { isAgent }) {
   const useWhen = typeof artifact.fields['use-when'] === 'string'
@@ -55,7 +70,7 @@ function describe(artifact, { isAgent }) {
   return [what, when].filter(Boolean).join(' ');
 }
 
-function skillWrapper(name, description, shape, payloadPrefix) {
+function skillWrapper(name, description, shape) {
   const canonical = `.aep/skills/${name}.md`;
   const lines = [
     '---',
@@ -71,15 +86,14 @@ function skillWrapper(name, description, shape, payloadPrefix) {
   ];
 
   if (shape === 'plugin') {
-    // `CLAUDE_PLUGIN_ROOT` is the repository root, and the payload lives one
-    // level down — so the prefix is derived from the distribution's own
-    // directory name rather than written out. A wrong fallback here breaks the
-    // single path that has to work before AEP exists anywhere: `/aep:install`
-    // in a repository that has no `.aep/` yet.
+    // `CLAUDE_PLUGIN_ROOT` is the adapter's own directory, so the payload is
+    // reached by climbing out of it — see `PAYLOAD_FROM_PLUGIN_ROOT`. A wrong
+    // fallback here breaks the single path that has to work before AEP exists
+    // anywhere: `/aep:install` in a repository that has no `.aep/` yet.
     lines.push(
       `If \`${canonical}\` does not exist, this repository has not installed AEP.`,
       'For `/aep:install` and `/aep:help`, fall back to',
-      '`${CLAUDE_PLUGIN_ROOT}/' + payloadPrefix + '/skills/' + name + '.md` and continue.',
+      '`${CLAUDE_PLUGIN_ROOT}/' + PAYLOAD_FROM_PLUGIN_ROOT + '/skills/' + name + '.md` and continue.',
       'For anything else, say AEP is not installed here and offer `/aep:install` —',
       'do not improvise the skill.',
       '',
@@ -121,7 +135,6 @@ function agentWrapper(name, description) {
  */
 export function renderClaudeAdapter(distributionRoot, shape) {
   const files = [];
-  const payloadPrefix = path.basename(distributionRoot);
 
   // Top-level files only. `skills/<skill>/<note>.md` is depth reached by link
   // from its own skill, not an entry point — wrapping one would publish a
@@ -133,7 +146,7 @@ export function renderClaudeAdapter(distributionRoot, shape) {
     const artifact = readArtifact(file);
     files.push({
       relativePath: `skills/${name}/SKILL.md`,
-      contents: skillWrapper(name, describe(artifact, { isAgent: false }), shape, payloadPrefix),
+      contents: skillWrapper(name, describe(artifact, { isAgent: false }), shape),
     });
   }
 

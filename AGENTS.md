@@ -22,7 +22,7 @@ It is both the protocol's source and one of its consumers.
 | `specs.md` | the **normative specification**. It defines the protocol; the implementation conforms to it or amends it in the same change |
 | `src/` | what ships — the payload, the seeds, the templates, the scripts, and the Claude adapter |
 | `.aep/` | this repository's own installation, produced by running the installer on `src/` |
-| `.claude-plugin/` | the plugin manifest, pointing at the adapter in `src/` |
+| `.claude-plugin/` | the marketplace, publishing the adapter in `src/` as the plugin |
 
 **`src/` is the source; `.aep/` is output.** Change the protocol in `src/`, then
 reinstall. Editing `.aep/` directly changes nothing that ships, and the next

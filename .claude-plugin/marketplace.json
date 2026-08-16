@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "aep",
-      "source": "./",
+      "source": "./src/adapters/claude",
       "description": "The Agentic Engineering Protocol — an agent-agnostic, filesystem-first engineering protocol. Canonical state lives in .aep/; this plugin is the Claude Code adapter for it."
     }
   ]

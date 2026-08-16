@@ -4,8 +4,5 @@
   "description": "The Agentic Engineering Protocol — an agent-agnostic, filesystem-first engineering protocol. Canonical state lives in .aep/; this plugin is the Claude Code adapter for it.",
   "author": {
     "name": "SAUD ALNASSER"
-  },
-  "skills": "./src/adapters/claude/skills/",
-  "agents": "./src/adapters/claude/agents/",
-  "hooks": "./src/adapters/claude/hooks/hooks.json"
+  }
 }
