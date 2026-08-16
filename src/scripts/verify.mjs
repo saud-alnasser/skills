@@ -114,21 +114,22 @@ const release = (value) => {
 };
 
 /**
- * Whether `value` is a release no newer than the one being built.
+ * Whether `value` is exactly the release being built.
  *
- * An artifact stamps the release that last changed it, so most of them stamp
- * something older than the current one — that is the field working, not drift.
- * Ahead of the release is the real error: it names a release that does not
- * exist yet, and an upgrade comparing the field would read it as newer than
- * whatever it is upgrading to.
+ * Everything a release ships stamps that release, so there is one legal value
+ * and this is an equality test rather than a range. Both directions are real
+ * errors: ahead names a release that does not exist yet, and behind makes a
+ * shipped artifact look like one the installation never received — which is the
+ * single comparison an upgrade makes.
+ *
+ * Parsed rather than string-compared, so a malformed stamp fails as a bad
+ * release rather than passing as an unequal string.
  */
-const notAhead = (value) => {
-  const [major, minor, patch] = release(value) ?? [];
-  const [specMajor, specMinor, specPatch] = release(specVersion) ?? [];
-  if (major === undefined || specMajor === undefined) return false;
-  if (major !== specMajor) return major < specMajor;
-  if (minor !== specMinor) return minor < specMinor;
-  return patch <= specPatch;
+const stampsRelease = (value) => {
+  const parsed = release(value);
+  const current = release(specVersion);
+  if (parsed === null || current === null) return false;
+  return parsed.every((part, index) => part === current[index]);
 };
 
 // --- the install fixture ----------------------------------------------------
@@ -224,8 +225,8 @@ section('frontmatter', () => {
     if (!artifact.hasFrontmatter) continue;
 
     assert(`${rel} frontmatter parses`, artifact.errors.length === 0);
-    assert(`${rel} declares a real release, no newer than ${specVersion}`,
-      notAhead(artifact.fields.aep));
+    assert(`${rel} declares the release being built (${specVersion})`,
+      stampsRelease(artifact.fields.aep));
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
@@ -256,12 +257,11 @@ section('protocol.md', () => {
   const artifact = readArtifact(path.join(SRC, 'protocol.md'));
   assert('protocol.md declares kind: protocol', artifact.fields.kind === 'protocol');
 
-  // Every other artifact stamps the release that last changed it. protocol.md
-  // is stamped by every release, because it is what an installed tree declares
-  // its release *as*: `index.mjs` reads the version from here, and `update`
-  // decides whether a repository is behind by comparing it. Left at whatever
-  // release last edited the prose, a current installation would report itself
-  // as an old one.
+  // Asserted separately from the blanket stamp above, because this one carries
+  // more weight: protocol.md is what an installed tree declares its release
+  // *as*. `index.mjs` reads the version from here, and `update` decides whether
+  // a repository is behind by comparing it, so a stale stamp here makes a
+  // current installation report itself as an old one.
   assert(`protocol.md declares the release being built (${specVersion})`,
     artifact.fields.aep === specVersion);
 
@@ -481,8 +481,8 @@ section('seeds', () => {
     }
 
     assert(`${seed.source} declares owner: repository`, artifact.fields.owner === 'repository');
-    assert(`${seed.source} declares a real release, no newer than ${specVersion}`,
-      notAhead(artifact.fields.aep));
+    assert(`${seed.source} declares the release being built (${specVersion})`,
+      stampsRelease(artifact.fields.aep));
     assert(`${seed.source} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`${seed.source} says it is a starting point rather than a description`, () =>
       /This file is yours/.test(artifact.body));

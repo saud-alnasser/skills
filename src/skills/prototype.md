@@ -1,7 +1,7 @@
 ---
-aep: 2.0.0
+aep: 2.1.1
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [prototype]
 use-when: "a technical or design question will not settle on paper and needs building to answer"
@@ -25,8 +25,8 @@ API behave as documented under our load. `[[rules/evidence]]` routes facts to
 
 1. **State the hypothesis, and what would falsify it.** Both, in writing, before
    any code. *A prototype with no failure condition confirms whatever you hoped.*
-2. **Create a worktree.** `[[worktrees]]` — never prototype in the working
-   checkout; the whole point is that this code is going to be deleted.
+2. **Create a worktree.** Under `.aep/worktrees/` — never prototype in the
+   working checkout; the whole point is that this code is going to be deleted.
 3. **Build only what answers the question.** No error handling you do not need to
    observe the result, no abstraction, no tests beyond the ones that prove the
    point. Everything else is time spent on code with a known expiry.
