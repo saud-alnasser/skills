@@ -81,8 +81,9 @@ src/                      everything that ships
 ├── seed/                 repository-owned starting points, installed on detection
 ├── scripts/              install, verify, and the scripts .aep/ gets
 ├── gitignore             becomes .aep/.gitignore
-└── adapters/claude/      the Claude Code adapter — pointers, never copies
-.claude-plugin/           the plugin manifest and its marketplace
+└── adapters/claude/      the Claude Code adapter — pointers, never copies, and
+                          the plugin itself: its manifest, skills, and agents
+.claude-plugin/           the marketplace that publishes that adapter
 .aep/                     this repository's own installation
 ```
 

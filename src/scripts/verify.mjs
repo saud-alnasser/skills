@@ -177,9 +177,15 @@ section('manifest', () => {
   assert('the distribution needs no package manifest to run', () =>
     !fs.existsSync(path.join(REPO, 'package.json')));
 
+  // A payload directory at the repository root is a real hazard: a second
+  // `skills/`, `agents/`, or `rules/` there reads as canonical and drifts from
+  // the one that ships. Nothing needs to sit there — the plugin is published
+  // from the adapter's own directory, so the runtime's scans land inside `src/`.
   assert('every shipped surface lives under src/', () => {
-    const stray = ['skills', 'agents', 'modes', 'rules', 'scripts', 'templates', 'protocol.md'];
-    return stray.every((name) => !fs.existsSync(path.join(REPO, name)));
+    const stray = ['skills', 'agents', 'modes', 'rules', 'scripts', 'templates', 'protocol.md']
+      .filter((name) => fs.existsSync(path.join(REPO, name)));
+    if (stray.length > 0) throw new Error(`at the repository root: ${stray.join(', ')}`);
+    return true;
   });
 });
 
@@ -532,8 +538,12 @@ section('adapter', () => {
     rendered.length ===
       topLevel(path.join(SRC, 'skills')).length + topLevel(path.join(SRC, 'agents')).length);
 
+  // The adapter's own directory is the plugin root, so every wrapper — skill
+  // and agent alike — is committed under it and nowhere else.
+  const adapterDir = path.join(SRC, 'adapters', 'claude');
+
   for (const { relativePath, contents } of rendered) {
-    const committed = path.join(SRC, 'adapters', 'claude', ...relativePath.split('/'));
+    const committed = path.join(adapterDir, ...relativePath.split('/'));
     assert(`adapters/claude/${relativePath} is committed`, fs.existsSync(committed));
     if (!fs.existsSync(committed)) continue;
     assert(`adapters/claude/${relativePath} is current — regenerate with scripts/adapters.mjs`,
@@ -541,9 +551,9 @@ section('adapter', () => {
   }
 
   // Only the generated subdirectories are swept. The adapter also carries
-  // hand-written runtime glue — a hook and its configuration — which the
-  // generator does not produce and must not be reported as stale.
-  const adapterDir = path.join(SRC, 'adapters', 'claude');
+  // hand-written runtime glue — a hook, its configuration, and the plugin
+  // manifest — which the generator does not produce and must not be reported
+  // as stale.
   const committedFiles = ['skills', 'agents']
     .map((sub) => path.join(adapterDir, sub))
     .filter((dir) => fs.existsSync(dir))
@@ -559,8 +569,8 @@ section('adapter', () => {
 
   // The fallback is the only path that has to work before AEP exists anywhere:
   // `/aep:install` in a repository with no `.aep/` yet. It is resolved against
-  // the repository root, because that is what `CLAUDE_PLUGIN_ROOT` is for a
-  // plugin published from this repository — so a path that is merely plausible
+  // the adapter's directory, because that is what `CLAUDE_PLUGIN_ROOT` is once
+  // the marketplace publishes the adapter — so a path that is merely plausible
   // fails silently, at the one moment nobody can fall back any further.
   for (const { relativePath, contents } of rendered) {
     if (!relativePath.startsWith('skills/')) continue;
@@ -568,31 +578,45 @@ section('adapter', () => {
     assert(`${relativePath} declares a plugin fallback`, Boolean(fallback));
     if (!fallback) continue;
     assert(`${relativePath} falls back to a file that exists in the distribution`, () => {
-      const target = path.join(REPO, ...fallback[1].split('/'));
+      const target = path.join(adapterDir, ...fallback[1].split('/'));
       if (!fs.existsSync(target)) throw new Error(`${fallback[1]} does not exist`);
       return true;
     });
   }
 
-  const manifest = JSON.parse(fs.readFileSync(path.join(REPO, '.claude-plugin', 'plugin.json'), 'utf8'));
+  // The manifest sits inside the adapter, not at the repository root, and that
+  // placement is the whole mechanism: Claude Code reads a plugin's agents from
+  // `<plugin root>/agents/` and a manifest `agents` path does not redirect that
+  // scan — a directory there fails validation outright, and naming the files
+  // loads none of them. Publishing the adapter as the plugin puts both kinds of
+  // wrapper where the runtime already looks, which is why neither key is set.
+  const pluginRoot = adapterDir;
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(pluginRoot, '.claude-plugin', 'plugin.json'), 'utf8'),
+  );
   assert('plugin.json version matches specs.md', manifest.version === specVersion);
-  assert('plugin.json points skills at the adapter, not the payload', () =>
-    typeof manifest.skills === 'string' && manifest.skills.includes('src/adapters/claude'));
-  assert('plugin.json replaces the default agents path with the adapter', () =>
-    typeof manifest.agents === 'string' && manifest.agents.includes('src/adapters/claude'));
+  assert('the plugin manifest sits in the adapter, which is the plugin root', () =>
+    !fs.existsSync(path.join(REPO, '.claude-plugin', 'plugin.json')));
 
-  assert('plugin.json points at a hooks file that exists', () => {
-    if (typeof manifest.hooks !== 'string') return false;
-    return fs.existsSync(path.join(REPO, ...manifest.hooks.replace(/^\.\//, '').split('/')));
-  });
+  // Every standard directory at the plugin root loads on its own, and naming
+  // one in the manifest is never a no-op: `agents` and `skills` replace the
+  // scan, and `hooks` registers the same file twice — which the runtime rejects
+  // as a duplicate, taking the plugin's hooks down with it. Each key reads like
+  // configuration and behaves like a deletion, so each absence is asserted.
+  const standard = { skills: 'skills', agents: 'agents', hooks: path.join('hooks', 'hooks.json') };
+  for (const [key, location] of Object.entries(standard)) {
+    assert(`plugin.json declares no ${key} path — the standard location loads itself`, () =>
+      !(key in manifest));
+    assert(`the runtime's standard ${key} location exists to be found`, () =>
+      fs.existsSync(path.join(pluginRoot, location)));
+  }
+
   assert('every command the hooks file runs exists', () => {
-    const hooks = JSON.parse(
-      fs.readFileSync(path.join(REPO, ...manifest.hooks.replace(/^\.\//, '').split('/')), 'utf8'),
-    );
+    const hooks = JSON.parse(fs.readFileSync(path.join(pluginRoot, standard.hooks), 'utf8'));
     const args = JSON.stringify(hooks).match(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^"]+)/g) ?? [];
     if (args.length === 0) return false;
     return args.every((arg) =>
-      fs.existsSync(path.join(REPO, arg.replace('${CLAUDE_PLUGIN_ROOT}/', ''))));
+      fs.existsSync(path.join(pluginRoot, arg.replace('${CLAUDE_PLUGIN_ROOT}/', ''))));
   });
 
   assert('the marketplace advertises the plugin this repository builds', () => {
@@ -600,6 +624,16 @@ section('adapter', () => {
       fs.readFileSync(path.join(REPO, '.claude-plugin', 'marketplace.json'), 'utf8'),
     );
     return market.plugins?.some((entry) => entry.name === manifest.name);
+  });
+  assert('the marketplace publishes the adapter, so the plugin root is the adapter', () => {
+    const market = JSON.parse(
+      fs.readFileSync(path.join(REPO, '.claude-plugin', 'marketplace.json'), 'utf8'),
+    );
+    const entry = market.plugins?.find((plugin) => plugin.name === manifest.name);
+    const source = typeof entry?.source === 'string' ? entry.source : '';
+    const published = path.resolve(REPO, source.replace(/^\.\//, ''));
+    if (published !== pluginRoot) throw new Error(`publishes ${source || '(nothing)'}`);
+    return true;
   });
 });
 
