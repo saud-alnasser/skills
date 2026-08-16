@@ -1,5 +1,5 @@
 ---
-aep: 2.0.0
+aep: 2.1.0
 owner: protocol
 date: 2026-08-16
 kind: skill
@@ -140,7 +140,7 @@ spec fails validation, which is the correct outcome and a confusing one to debug
 
 | 2.0 field | Where it comes from |
 | --- | --- |
-| `aep:` | `2.0.0`, replacing 1.x's `version:` |
+| `aep:` | the release being installed — read it from the `aep:` of the `protocol.md` this migration just wrote, never from memory — replacing 1.x's `version:` |
 | `owner:` | `repository` on everything converted — a converted file is the repository's by construction |
 | `date:` | the file's own last real change: `git log -1 --format=%ad --date=short -- <path>`. **Never today's date**, which would claim every carried artifact was reviewed during the migration |
 | `kind:` | where it lands |

@@ -107,6 +107,30 @@ function payloadArtifacts() {
 const specText = fs.readFileSync(path.join(REPO, 'specs.md'), 'utf8');
 const specVersion = /^\*\*Version:\*\*\s*(\S+)/m.exec(specText)?.[1] ?? null;
 
+/** A release, as three numbers, or null if the string is not one. */
+const release = (value) => {
+  const parsed = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(value ?? ''));
+  return parsed ? parsed.slice(1, 4).map(Number) : null;
+};
+
+/**
+ * Whether `value` is a release no newer than the one being built.
+ *
+ * An artifact stamps the release that last changed it, so most of them stamp
+ * something older than the current one — that is the field working, not drift.
+ * Ahead of the release is the real error: it names a release that does not
+ * exist yet, and an upgrade comparing the field would read it as newer than
+ * whatever it is upgrading to.
+ */
+const notAhead = (value) => {
+  const [major, minor, patch] = release(value) ?? [];
+  const [specMajor, specMinor, specPatch] = release(specVersion) ?? [];
+  if (major === undefined || specMajor === undefined) return false;
+  if (major !== specMajor) return major < specMajor;
+  if (minor !== specMinor) return minor < specMinor;
+  return patch <= specPatch;
+};
+
 // --- the install fixture ----------------------------------------------------
 // Declared before any section, because two of them use it and a section body
 // runs the moment it is declared.
@@ -200,8 +224,8 @@ section('frontmatter', () => {
     if (!artifact.hasFrontmatter) continue;
 
     assert(`${rel} frontmatter parses`, artifact.errors.length === 0);
-    assert(`${rel} declares aep matching specs.md (${specVersion})`,
-      artifact.fields.aep === specVersion);
+    assert(`${rel} declares a real release, no newer than ${specVersion}`,
+      notAhead(artifact.fields.aep));
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
@@ -231,6 +255,15 @@ section('protocol.md', () => {
 
   const artifact = readArtifact(path.join(SRC, 'protocol.md'));
   assert('protocol.md declares kind: protocol', artifact.fields.kind === 'protocol');
+
+  // Every other artifact stamps the release that last changed it. protocol.md
+  // is stamped by every release, because it is what an installed tree declares
+  // its release *as*: `index.mjs` reads the version from here, and `update`
+  // decides whether a repository is behind by comparing it. Left at whatever
+  // release last edited the prose, a current installation would report itself
+  // as an old one.
+  assert(`protocol.md declares the release being built (${specVersion})`,
+    artifact.fields.aep === specVersion);
 
   const body = artifact.body;
   for (const heading of [
@@ -448,13 +481,38 @@ section('seeds', () => {
     }
 
     assert(`${seed.source} declares owner: repository`, artifact.fields.owner === 'repository');
-    assert(`${seed.source} declares aep matching specs.md`, artifact.fields.aep === specVersion);
+    assert(`${seed.source} declares a real release, no newer than ${specVersion}`,
+      notAhead(artifact.fields.aep));
     assert(`${seed.source} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`${seed.source} says it is a starting point rather than a description`, () =>
       /This file is yours/.test(artifact.body));
     assert(`${seed.source} targets a repository-owned directory`, () =>
       /^(contexts|references|rules)\//.test(seed.target));
   }
+
+  // A seed file nothing declares ships in the distribution and installs
+  // nowhere. Nothing else notices: the tree looks complete, the file reads as
+  // authoritative, and no repository ever receives it. Across a catalogue this
+  // size that is one forgotten line in the manifest.
+  assert('every file under seed/ is declared in SEEDS', () => {
+    const declared = new Set(SEEDS.map((seed) => seed.source));
+    const orphans = walk(path.join(SRC, 'seed'))
+      .map((file) => toPosix(SRC, file))
+      .filter((source) => !declared.has(source));
+    if (orphans.length > 0) throw new Error(`declared by nothing: ${orphans.join(', ')}`);
+    return true;
+  });
+
+  // `detect: { paths: [] }` is truthy and matches nothing, so it reads as a
+  // gated seed and behaves as a retired one.
+  assert('every reference seed is gated on evidence that can actually match', () => {
+    const dead = SEEDS.filter((seed) => seed.target.startsWith('references/')).filter(
+      (seed) => !(seed.detect?.paths?.length > 0 || isNonEmptyString(seed.detect?.remote)));
+    if (dead.length > 0) {
+      throw new Error(`cannot ever install: ${dead.map((seed) => seed.target).join(', ')}`);
+    }
+    return true;
+  });
 
   const targets = SEEDS.map((seed) => seed.target);
   assert('no seed target is declared twice', () => new Set(targets).size === targets.length);
@@ -712,9 +770,17 @@ section('install fixture', () => {
     fs.existsSync(path.join(aep, 'contexts', 'repository.md')));
   assert('git is detected in a git repository', () =>
     fs.existsSync(path.join(aep, 'references', 'git.md')));
-  assert('undetected references are not installed', () =>
-    !fs.existsSync(path.join(aep, 'references', 'pnpm.md')) &&
-    !fs.existsSync(path.join(aep, 'references', 'docker.md')));
+  assert('no reference installs without its evidence', () => {
+    const wrongly = SEEDS
+      .filter((seed) => seed.target.startsWith('references/'))
+      .filter((seed) => seed.target !== 'references/git.md')
+      .filter((seed) => fs.existsSync(path.join(aep, ...seed.target.split('/'))));
+    if (wrongly.length > 0) {
+      throw new Error(`installed into a bare repository: ${
+        wrongly.map((seed) => seed.target).join(', ')}`);
+    }
+    return true;
+  });
 
   assert('installing writes the entrypoint at the repository root', () =>
     fs.existsSync(path.join(dir, 'AGENTS.md')));

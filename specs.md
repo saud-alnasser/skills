@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -152,6 +152,8 @@ Additional directories MUST NOT be introduced unless this specification names th
 
 `protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 8 KB**, asserted by the verification suite (§32) — a bootstrap that costs what it saves is not a bootstrap.
 
+**`protocol.md` also declares which release a tree is running.** Every release stamps its `aep` field, whether or not the prose moved, and it is the one artifact of which that is true (§8): the index derives the installation's version from it (§27), and an upgrade decides whether a repository is behind by reading it (§31). Left at whichever release last edited the text, a current installation would report itself as an old one and an upgrade would offer to redo work already done.
+
 A runtime's own entrypoint — `AGENTS.md`, `CLAUDE.md`, or the runtime's equivalent — MUST point at `.aep/protocol.md` and MUST NOT restate its content. Restating it creates a second home that drifts at one of them.
 
 ## 7. Ownership
@@ -224,7 +226,7 @@ Field contract:
 
 | Field | Required | Contract |
 | --- | --- | --- |
-| `aep` | **yes** | The AEP version associated with the artifact. For protocol-owned artifacts, the release that last changed it. |
+| `aep` | **yes** | The AEP version associated with the artifact. For protocol-owned artifacts, the release that last changed it — **except `protocol.md`, which every release stamps** (§6). |
 | `owner` | **yes** | Exactly `protocol` or `repository`. No other value is legal. |
 | `date` | **yes** | Last modified, as `YYYY-MM-DD`. No other format is legal. |
 | `kind` | situational | One of the listed values. Omitted only where the directory makes it redundant. |
@@ -796,6 +798,7 @@ The suite MUST also prove **its own failure path fires** before any result it re
 The suite MUST assert at least:
 
 - the frontmatter contract (§8) on every payload artifact — required fields present, `owner` in its two legal values, `date` well-formed, `mode` an array of legal modes, `kind` a legal value, `status` legal and only where permitted;
+- `aep` on every payload artifact and seed is a real release **no newer than the one being built**, and `protocol.md` declares that release exactly (§8). *A stamp ahead of the release names something that does not exist; a blanket stamp across artifacts a release did not touch is the same defect in the other direction, because it destroys the comparison an upgrade makes (§7).*
 - `use-when` present on every rule, reference, and context;
 - every `[[...]]` link resolves (§9);
 - the skill set is exactly the seventeen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;

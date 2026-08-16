@@ -1,5 +1,57 @@
 # Changelog
 
+## 2.1.0
+
+A repository is met by a reference for every tool it actually runs.
+
+### Added
+
+- **A wide reference catalogue.** Fifty-three tools join the ten 2.0.0 shipped,
+  each gated on that tool's own evidence — the JavaScript and TypeScript
+  toolchain, test runners, bundlers, monorepo orchestration, application
+  frameworks, desktop and mobile shells, the Rust, Go, Python, Ruby, PHP, JVM,
+  .NET and Nix toolchains, database and schema tooling, containers,
+  infrastructure and deployment targets, release automation, task runners, and
+  git hooks.
+
+  Ten references left most repositories with a nearly empty `references/`, which
+  is where an agent starts guessing invocations — the failure references exist to
+  prevent. Breadth is safe because the detector decides: a repository receives a
+  starting point only for what it demonstrably runs, and each still opens by
+  saying it is a draft.
+
+  Each leads with the hazard that tool actually presents rather than its feature
+  list — a cached task that ran nothing, a `--remote` flag one word from real
+  data, a generated migration that drops a column, a `--fix` that rewrites files
+  nobody reviewed.
+
+### Changed
+
+- **The seed manifest takes a `reference` helper**, so a seed is one line and
+  the catalogue reads as a catalogue.
+- **`aep:` is enforced as the release that last changed an artifact**, rather
+  than as the current one. Every payload artifact and seed must declare a real
+  release no newer than the one being built; only what a release touches is
+  restamped. A blanket stamp would make every artifact look changed on every
+  release, which destroys the comparison an upgrade makes.
+- **`protocol.md` is the exception, and is now specified as one.** Every release
+  stamps it, because it is what an installed tree declares its release *as* —
+  the index reads the version from there and `/update` compares it. The suite
+  asserts both halves.
+- **`/update`'s field mapping no longer names a literal release.** A migration
+  stamps converted artifacts with the release it just installed, read from the
+  `protocol.md` it wrote.
+
+### Fixed
+
+- **Three gaps in the verification suite**, each confirmed to fire before
+  landing: a seed file the manifest declares nowhere — shipped, installed
+  nowhere, and invisible because the tree looks complete; a detector whose
+  `paths` are empty, which reads as gated and behaves as retired; and any
+  reference installing into a repository that shows no evidence of its tool. The
+  last replaces a hand-written check naming two references, which would not have
+  scaled past them.
+
 ## 2.0.0
 
 A rewrite of the framework. AEP 1.x was a Claude Code skill framework rooted in

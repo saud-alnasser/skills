@@ -1,5 +1,5 @@
 ---
-aep: 2.0.0
+aep: 2.1.0
 owner: protocol
 date: 2026-08-16
 kind: skill
@@ -48,12 +48,17 @@ runtime adapter.
    | Seeded | On detecting |
    | --- | --- |
    | `rules/version-control.md`, `contexts/repository.md` | always |
-   | `references/git.md` | a git repository |
-   | `references/github.md` / `gitlab.md` | the remote host, or its CI directory |
-   | `references/graphite.md` | Graphite configuration |
-   | `references/pnpm.md` / `npm.md` / `yarn.md` / `bun.md` | the lockfile |
-   | `references/docker.md` | a Dockerfile or Compose file |
-   | `references/make.md` | a Makefile |
+   | one reference per tool, under `references/` | that tool's own evidence — a lockfile, a configuration file, a remote host |
+
+   The reference catalogue is wide: version control and forges, package managers
+   and runtimes, linters and formatters, test runners, bundlers and monorepo
+   orchestration, application frameworks, desktop and mobile shells, the other
+   language toolchains, database and schema tooling, containers, infrastructure
+   and deployment targets, release automation, task runners and git hooks.
+
+   **Read the installer's report rather than assuming which arrived** — it names
+   every seed it wrote and every one it skipped, and a wide catalogue makes
+   guessing worse, not better.
 
    A seed already present is left alone. **Seeds are written once and never
    revisited** — that is what makes shipping them safe.
@@ -67,6 +72,10 @@ runtime adapter.
    **A seeded command that this repository does not have is worse than no
    reference**, because it will be trusted (`[[rules/engineering]]`). Delete what
    you cannot confirm.
+
+   **Delete a reference outright where the tool is configured but not used.** A
+   detector fires on a configuration file, and an abandoned one is evidence
+   enough for the installer and not enough for a reference.
 
 3. **Fill in `contexts/repository.md`** — what this repository is, its shape, its
    vocabulary. Keep it small; areas earn their own context later.
