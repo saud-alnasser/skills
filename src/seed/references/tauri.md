@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, prototype, test]
 use-when: "building or running this Tauri desktop application, or changing what its frontend may call"
@@ -44,7 +44,7 @@ frontend may reach is what `tauri.conf.json` and the capability files allow.
 a fix.** A command that fails because the capability does not grant it is the
 model working. Raise it with what it would open up; never widen a scope, add a
 capability, or relax the CSP to make an error go away
-(`[[rules/engineering]]`).
+(`[[policies/engineering]]`).
 
 A `#[tauri::command]` is a public entry point reachable by any code running in
 the webview. Validate its arguments there, not in the caller.

@@ -38,9 +38,11 @@ import { renderClaudeAdapter } from './adapters.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
   GITIGNORE_SOURCE,
+  MOVES,
   PAYLOAD_DIRS,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
+  REPOSITORY_DIRS,
   SEEDS,
 } from './payload.mjs';
 
@@ -50,6 +52,16 @@ const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const REPO = path.dirname(SRC);
 
 const PROTOCOL_BUDGET_BYTES = 8192;
+
+/**
+ * The release the upgrade fixture pretends to be coming from.
+ *
+ * It is a literal on purpose and must stay behind the release being built: it
+ * names a tree that predates the declared moves, which is the only kind of tree
+ * those moves apply to. Bumping it with the release would quietly turn the
+ * upgrade fixture into a no-op that still reads as a pass.
+ */
+const PRE_MOVE_RELEASE = '2.1.1';
 
 const args = process.argv.slice(2);
 const only = args.includes('--section') ? args[args.indexOf('--section') + 1] : null;
@@ -161,6 +173,12 @@ function installFixture() {
 section('manifest', () => {
   assert('specs.md declares a version', isNonEmptyString(specVersion));
 
+  // The specification and the payload cannot disagree about which primitives
+  // exist, so the one that was added last is read back out of the table rather
+  // than assumed to have been written there.
+  assert('specs.md lists Policies among the primitives', () =>
+    /\|\s*\*\*Policies\*\*\s*\|/.test(specText));
+
   const scriptFiles = fs
     .readdirSync(path.join(SRC, 'scripts'))
     .filter((name) => name.endsWith('.mjs'))
@@ -202,12 +220,23 @@ section('manifest', () => {
   assert('the distribution needs no package manifest to run', () =>
     !fs.existsSync(path.join(REPO, 'package.json')));
 
+  // A move is only meaningful in both directions: the destination has to be
+  // something this release ships, and the source has to be something it no
+  // longer does. An entry failing either is a rename nobody finished.
+  for (const move of MOVES) {
+    assert(`MOVES: ${move.to} is shipped`, inSrc(...move.to.split('/')));
+    assert(`MOVES: ${move.from} is no longer shipped`, !inSrc(...move.from.split('/')));
+    assert(`MOVES: ${move.from} declares the release that moved it`,
+      Boolean(release(move.since)));
+  }
+
   // A payload directory at the repository root is a real hazard: a second
-  // `skills/`, `agents/`, or `rules/` there reads as canonical and drifts from
-  // the one that ships. Nothing needs to sit there — the plugin is published
-  // from the adapter's own directory, so the runtime's scans land inside `src/`.
+  // `skills/`, `agents/`, or `policies/` there reads as canonical and drifts
+  // from the one that ships. Nothing needs to sit there — the plugin is
+  // published from the adapter's own directory, so the runtime's scans land
+  // inside `src/`.
   assert('every shipped surface lives under src/', () => {
-    const stray = ['skills', 'agents', 'modes', 'rules', 'scripts', 'templates', 'protocol.md']
+    const stray = ['skills', 'agents', 'modes', 'policies', 'scripts', 'templates', 'protocol.md']
       .filter((name) => fs.existsSync(path.join(REPO, name)));
     if (stray.length > 0) throw new Error(`at the repository root: ${stray.join(', ')}`);
     return true;
@@ -273,12 +302,15 @@ section('protocol.md', () => {
     'How to discover what matters',
     'The workflow',
     'The invariants',
-    'Rules that load when they apply',
+    'Governance that loads when it applies',
   ]) {
     assert(`protocol.md answers "${heading}"`, body.includes(`## ${heading}`));
   }
 
-  assert('protocol.md does not become a second rules system', () => !/^##\s+Rules\s*$/m.test(body));
+  assert('protocol.md routes to both governance layers', () =>
+    /\[\[policies\/\w/.test(body) && /`?\[\[rules/.test(body));
+  assert('protocol.md does not become a second governance layer', () =>
+    !/^##\s+(Rules|Policies)\s*$/m.test(body));
 });
 
 // --- §16 the skill set ------------------------------------------------------
@@ -423,38 +455,59 @@ section('agents', () => {
     assert(`agents/${name} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`agents/${name} states a purpose the adapter can derive`,
       /\*\*Purpose\.\*\*/.test(artifact.body));
-    assert(`agents/${name} is bound by the sub-agent rule`, /rules\/sub-agents/.test(artifact.body));
+    assert(`agents/${name} is bound by the sub-agent policy`,
+      /policies\/execution/.test(artifact.body));
     assert(`agents/${name} is dispatched by some skill`, skillText.includes(`agents/${name}`));
   }
 });
 
-// --- §10 rules --------------------------------------------------------------
+// --- §10 policies -----------------------------------------------------------
+// Governance ships as policies; `rules/` is the repository's own and ships
+// nothing but the version-control seed. So this section asserts the shipped
+// governance layer, and the fixture asserts that the other one arrives empty.
 
-section('rules', () => {
-  const rules = listMarkdown('rules');
-  assert('at least one rule ships', rules.length > 0);
-  for (const file of rules) {
+section('policies', () => {
+  const policies = listMarkdown('policies');
+  assert('at least one policy ships', policies.length > 0);
+  for (const file of policies) {
     const rel = toPosix(SRC, file);
     const artifact = readArtifact(file);
-    assert(`${rel} declares kind: rule`, artifact.fields.kind === 'rule');
+    assert(`${rel} declares kind: policy`, artifact.fields.kind === 'policy');
+    assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares use-when — without it, it cannot be selected`,
       isNonEmptyString(artifact.fields['use-when']));
   }
 
-  for (const expected of ['precedence', 'engineering', 'boundary', 'placement', 'ownership',
-    'artifacts', 'change-control', 'evidence', 'sub-agents']) {
-    assert(`rules/${expected}.md ships`, inSrc('rules', `${expected}.md`));
+  for (const expected of ['authority', 'engineering', 'execution', 'artifacts']) {
+    assert(`policies/${expected}.md ships`, inSrc('policies', `${expected}.md`));
   }
 
-  assert('version-control is a repository-owned seed, not a protocol rule', () =>
-    !inSrc('rules', 'version-control.md') &&
+  // The consolidation is the point: a governance layer that grows a file per
+  // concern is the sprawl this shape replaced, so the count is asserted rather
+  // than left to drift back.
+  assert('the shipped governance layer stays small', () => {
+    if (policies.length > 5) throw new Error(`${policies.length} policies ship`);
+    return true;
+  });
+
+  assert('the distribution ships no rules/ — that directory is the repository\'s', () =>
+    !inSrc('rules'));
+  assert('version-control is a repository-owned seed, not protocol governance', () =>
     inSrc('seed', 'rules', 'version-control.md'));
 
-  const subAgents = readSrc('rules', 'sub-agents.md');
-  assert('rules/sub-agents forbids splitting one task across children', () =>
-    /never split across sub-agents/i.test(subAgents));
-  assert('rules/sub-agents requires independence to be read, not inferred', () =>
-    /never infer independence/i.test(subAgents));
+  // Two statements from the absorbed rules that carry the most weight, pinned by
+  // name so a rewrite of the surrounding prose cannot quietly drop them.
+  const execution = readSrc('policies', 'execution.md');
+  assert('policies/execution forbids splitting one task across children', () =>
+    /never split across sub-agents/i.test(execution));
+  assert('policies/execution requires independence to be read, not inferred', () =>
+    /never infer independence/i.test(execution));
+
+  const authority = readSrc('policies', 'authority.md');
+  assert('policies/authority places policies above rules', () =>
+    /policies\s+→\s+rules/.test(authority));
+  assert('policies/authority forbids a rule softening a policy', () =>
+    /never soften it/i.test(authority));
 });
 
 // --- §7, §30 the seeds ------------------------------------------------------
@@ -571,7 +624,7 @@ section('links', () => {
 // --- §5, §15.2, §17 structures that must not exist --------------------------
 
 section('forbidden', () => {
-  for (const dir of ['decisions', 'policies', 'tools', 'grill']) {
+  for (const dir of ['decisions', 'tools', 'grill']) {
     assert(`no ${dir}/ in the distribution`, !inSrc(dir));
   }
   assert('no plan.md ships', !inSrc('plan.md'));
@@ -581,7 +634,11 @@ section('forbidden', () => {
     .map((file) => fs.readFileSync(file, 'utf8'))
     .join('\n');
 
-  assert('nothing instructs an agent to load every rule', () => !/load all (the )?rules/i.test(all));
+  // Both layers, because the newer one is the likelier place to slip: a policy
+  // is rigid in authority, and the tempting mistake is to make it rigid in
+  // loading too.
+  assert('nothing instructs an agent to load every policy or rule', () =>
+    !/load all (the )?(policies|rules)/i.test(all));
   assert('the payload never treats a runtime directory as canonical state', () =>
     !/canonical[^.\n]{0,40}\.(claude|cursor|codex)\//i.test(all));
   assert('shipped text cites no record that exists only in this repository', () =>
@@ -751,9 +808,20 @@ section('install fixture', () => {
     assert(`.gitignore excludes ${perClone}/`, () =>
       fs.readFileSync(path.join(aep, '.gitignore'), 'utf8').includes(`${perClone}/`));
   }
-  for (const owned of ['contexts', 'references', 'efforts']) {
+  for (const owned of REPOSITORY_DIRS) {
     assert(`installing creates ${owned}/`, fs.existsSync(path.join(aep, owned)));
   }
+
+  // `rules/` is the repository's half of the governance split, so a fresh
+  // install must hand it over empty of anything the protocol owns.
+  assert('installing puts nothing protocol-owned in rules/', () => {
+    const intruders = walk(path.join(aep, 'rules'))
+      .filter((file) => file.endsWith('.md'))
+      .filter((file) => readArtifact(file).fields.owner !== 'repository')
+      .map((file) => toPosix(aep, file));
+    if (intruders.length > 0) throw new Error(intruders.join(', '));
+    return true;
+  });
   for (const script of PAYLOAD_SCRIPTS) {
     assert(`installing ships scripts/${script}`, fs.existsSync(path.join(aep, 'scripts', script)));
   }
@@ -887,17 +955,42 @@ section('install fixture', () => {
       { stdio: 'ignore' },
     );
 
-  assert('an upgrade preserves a repository-owned rule sharing a shipped filename', () => {
-    const ruleFile = path.join(aep, 'rules', 'ownership.md');
+  // A repository-owned file standing where a shipped one lands is preserved by
+  // the installer and then failed by the validator: the two governance
+  // directories admit one owner each, so the misplacement is a defect to report
+  // rather than one for an upgrade to correct on the repository's behalf. Both
+  // halves are asserted, because either alone is the wrong behaviour.
+  assert('an upgrade preserves a repository-owned file standing in policies/', () => {
+    const intruder = path.join(aep, 'policies', 'engineering.md');
     fs.writeFileSync(
-      ruleFile,
-      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-16', 'kind: rule',
+      intruder,
+      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-16', 'kind: policy',
         'use-when: "a repository-owned file stands where a shipped one would land"',
         '---', '', '# Local', ''].join('\n'),
       'utf8',
     );
     update();
-    return readArtifact(ruleFile).fields.owner === 'repository';
+    return readArtifact(intruder).fields.owner === 'repository';
+  });
+
+  assert('validate then rejects it, rather than the upgrade correcting it', () => {
+    const intruder = path.join(aep, 'policies', 'engineering.md');
+    let failed = false;
+    let output = '';
+    try {
+      execFileSync(process.execPath, [path.join(aep, 'scripts', 'validate.mjs'), '--root', aep],
+        { stdio: 'pipe' });
+    } catch (error) {
+      failed = true;
+      output = String(error.stderr ?? '');
+    }
+    // Restore the shipped file before anything downstream reads this tree.
+    fs.copyFileSync(path.join(SRC, 'policies', 'engineering.md'), intruder);
+    if (!failed) throw new Error('validate passed on a repository-owned file in policies/');
+    if (!/policies\/ holds only owner: protocol/.test(output)) {
+      throw new Error(`failed for some other reason: ${output}`);
+    }
+    return true;
   });
 
   assert('an upgrade replaces a protocol-owned file that was edited locally', () => {
@@ -919,6 +1012,205 @@ section('install fixture', () => {
     fs.writeFileSync(entrypoint, '# Ours\n\nRead `.aep/protocol.md`.\n', 'utf8');
     update();
     return fs.readFileSync(entrypoint, 'utf8').startsWith('# Ours');
+  });
+
+  // --- upgrading a tree that predates the moves ------------------------------
+  //
+  // Built from the nine real filenames rather than from a guess at what the
+  // earlier layout looked like: a fixture that invents the shape it is testing
+  // proves only that the invention is handled.
+  //
+  // One of the nine is deliberately repository-owned. It is the case the whole
+  // design turns on — a repository that wrote its own rule under a name the
+  // protocol has since vacated — and it is simultaneously the negative case for
+  // the link rewriter, whose link must be left exactly as it is.
+
+  const legacyTree = ({ dryRun = false } = {}) => {
+    const old = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-premove-'));
+    execFileSync('git', ['init', '--quiet'], { cwd: old, stdio: 'ignore' });
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', old],
+      { stdio: 'ignore' });
+    const tree = path.join(old, '.aep');
+
+    // Wind the tree back: governance lived in rules/, policies/ did not exist,
+    // and — the part that decides whether the moves apply at all — the tree
+    // declared the earlier release.
+    fs.rmSync(path.join(tree, 'policies'), { recursive: true, force: true });
+    const bootstrap = path.join(tree, 'protocol.md');
+    fs.writeFileSync(
+      bootstrap,
+      fs.readFileSync(bootstrap, 'utf8').replace(/^aep: .*$/m, `aep: ${PRE_MOVE_RELEASE}`),
+      'utf8',
+    );
+    const frontmatter = (owner, kind) =>
+      ['---', `aep: ${PRE_MOVE_RELEASE}`, `owner: ${owner}`, 'date: 2026-08-16', `kind: ${kind}`,
+        'use-when: "a trigger that predates the move"', '---', ''];
+
+    for (const move of MOVES) {
+      const name = path.basename(move.from);
+      const owner = name === 'evidence.md' ? 'repository' : 'protocol';
+      fs.writeFileSync(
+        path.join(tree, 'rules', name),
+        [...frontmatter(owner, 'rule'), `# Rule — ${name.replace('.md', '')}`, ''].join('\n'),
+        'utf8',
+      );
+    }
+
+    fs.writeFileSync(
+      path.join(tree, 'contexts', 'moved.md'),
+      [...frontmatter('repository', 'context'), '# Context — links across the move', '',
+        'Governed by `[[rules/engineering]]`, and by our own `[[rules/evidence]]`.', '',
+        'The syntax, shown rather than used:', '',
+        '```', '[[rules/change-control]]', '```', ''].join('\n'),
+      'utf8',
+    );
+
+    const output = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', old, '--update',
+        ...(dryRun ? ['--dry-run'] : [])],
+      { encoding: 'utf8' },
+    );
+    return { old, tree, output };
+  };
+
+  const upgraded = legacyTree();
+
+  assert('an upgrade removes every protocol-owned file the release moved', () => {
+    const left = MOVES
+      .map((move) => move.from)
+      .filter((from) => path.basename(from) !== 'evidence.md')
+      .filter((from) => fs.existsSync(path.join(upgraded.tree, ...from.split('/'))));
+    if (left.length > 0) throw new Error(`still governing: ${left.join(', ')}`);
+    return true;
+  });
+
+  assert('and reports each one it removed', () =>
+    MOVES
+      .filter((move) => path.basename(move.from) !== 'evidence.md')
+      .every((move) => upgraded.output.includes(`${move.from} → ${move.to}`)));
+
+  assert('the policies the moves point at are all present afterwards', () =>
+    [...new Set(MOVES.map((move) => move.to))]
+      .every((to) => fs.existsSync(path.join(upgraded.tree, ...to.split('/')))));
+
+  assert('a repository-owned file at a vacated path survives, and is reported', () => {
+    const kept = path.join(upgraded.tree, 'rules', 'evidence.md');
+    if (!fs.existsSync(kept)) throw new Error('the upgrade removed a file the repository owns');
+    if (readArtifact(kept).fields.owner !== 'repository') throw new Error('it was overwritten');
+    if (!upgraded.output.includes('rules/evidence.md is the repository\'s')) {
+      throw new Error('the collision was not reported');
+    }
+    return true;
+  });
+
+  assert('links into a vacated path are repaired, and the file is named', () => {
+    const text = fs.readFileSync(path.join(upgraded.tree, 'contexts', 'moved.md'), 'utf8');
+    if (!text.includes('[[policies/engineering]]')) throw new Error('the moved link was not repaired');
+    if (!upgraded.output.includes('links repaired')) throw new Error('no repair was reported');
+    return true;
+  });
+
+  assert('a link to a path the repository still occupies is left alone', () => {
+    const text = fs.readFileSync(path.join(upgraded.tree, 'contexts', 'moved.md'), 'utf8');
+    if (!text.includes('[[rules/evidence]]')) {
+      throw new Error('redirected a live link to a file the repository owns');
+    }
+    return true;
+  });
+
+  assert('the upgraded tree validates', () => {
+    execFileSync(process.execPath,
+      [path.join(upgraded.tree, 'scripts', 'index.mjs'), '--root', upgraded.tree],
+      { stdio: 'ignore' });
+    execFileSync(process.execPath,
+      [path.join(upgraded.tree, 'scripts', 'validate.mjs'), '--root', upgraded.tree],
+      { stdio: 'pipe' });
+    return true;
+  });
+
+  // The rewriter and the link checker have to agree about what a link is. The
+  // checker strips fences because a link inside one is syntax being shown; a
+  // rewriter that does not strip them edits the example instead of repairing a
+  // reference.
+  assert('a link inside a fenced block is left as the example it is', () => {
+    const text = fs.readFileSync(path.join(upgraded.tree, 'contexts', 'moved.md'), 'utf8');
+    if (!text.includes('[[rules/change-control]]')) {
+      throw new Error('rewrote a link inside a fence, where nothing was resolving it anyway');
+    }
+    return true;
+  });
+
+  assert('a repaired file has its last-modified date moved with it', () => {
+    const artifact = readArtifact(path.join(upgraded.tree, 'contexts', 'moved.md'));
+    if (artifact.fields.date === '2026-08-16') {
+      throw new Error('the link was repaired and the file still claims it was not touched');
+    }
+    return /^\d{4}-\d{2}-\d{2}$/.test(artifact.fields.date);
+  });
+
+  // The bound that keeps a vacated name usable. Without it, a repository that
+  // later writes its own rule under one of these names is told it collides, on
+  // every upgrade, forever.
+  assert('the moves do not apply to a tree that already declares this release', () => {
+    const current = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-postmove-'));
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', current],
+      { stdio: 'ignore' });
+    const tree = path.join(current, '.aep');
+    const mine = path.join(tree, 'rules', 'precedence.md');
+    fs.writeFileSync(
+      mine,
+      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-17', 'kind: rule',
+        'use-when: "a name the protocol vacated, and this repository then took"',
+        '---', '', '# Rule — ours', ''].join('\n'),
+      'utf8',
+    );
+    const output = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', current, '--update'],
+      { encoding: 'utf8' },
+    );
+    if (/name collisions/.test(output)) {
+      throw new Error('reported a collision against a name this release already vacated');
+    }
+    return fs.existsSync(mine);
+  });
+
+  assert('a dry run previews the repairs a real run would make', () => {
+    const preview = legacyTree({ dryRun: true });
+    if (!/protocol files moved by this release/.test(preview.output)) {
+      throw new Error('previewed no moves');
+    }
+    if (!/links repaired/.test(preview.output)) {
+      throw new Error('previewed moves but no link repairs — the preview understates the upgrade');
+    }
+    return true;
+  });
+
+  assert('running the same upgrade again changes nothing', () => {
+    const output = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', upgraded.old, '--update'],
+      { encoding: 'utf8' },
+    );
+    if (/protocol files moved by this release/.test(output)) throw new Error('moved again');
+    if (/links repaired/.test(output)) throw new Error('rewrote links again');
+    return true;
+  });
+
+  // `.aep/policies/` is the current layout; `.claude/policies/` is 1.x. The word
+  // is shared and the meanings are opposite, so the detector is asserted from
+  // both sides rather than trusted to be path-scoped.
+  assert('a tree with .aep/policies/ is not mistaken for 1.x', () => {
+    const current = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-current-'));
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', current],
+      { stdio: 'ignore' });
+    if (!fs.existsSync(path.join(current, '.aep', 'policies'))) {
+      throw new Error('the install produced no policies/ to test with');
+    }
+    execFileSync(process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', current, '--update'], { stdio: 'ignore' });
+    return true;
   });
 
   // Local tickets earn a section in the index only by existing. Built here

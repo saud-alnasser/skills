@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "running this repository's local Supabase stack, or changing its database schema"
@@ -39,7 +39,7 @@ operation, and neither is run unasked.
 
 Row-level security is the access model. **A policy widened to make a query work
 is a security change**, not a fix — raise it with what it exposes
-(`[[rules/engineering]]`).
+(`[[policies/engineering]]`).
 
 ## Failure handling
 

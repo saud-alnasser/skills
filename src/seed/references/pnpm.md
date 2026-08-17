@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "installing dependencies, running scripts, or working across workspace packages"
@@ -35,7 +35,7 @@ Fill these in from `package.json`, and delete any that do not exist:
 | types | `pnpm run typecheck` |
 
 **Do not invent a script.** A command named here that `package.json` does not
-define will be trusted and will fail (`[[rules/engineering]]`).
+define will be trusted and will fail (`[[policies/engineering]]`).
 
 ## Adding a dependency
 
@@ -46,7 +46,7 @@ pnpm add -w <pkg>                # workspace root
 ```
 
 Adding a dependency is an architectural decision, not a mechanical one — it is
-put to the human with its alternatives (`[[rules/engineering]]`).
+put to the human with its alternatives (`[[policies/engineering]]`).
 
 ## Failure handling
 

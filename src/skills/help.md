@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 use-when: "the question is about AEP itself — what to reach for, and when"
 ---
@@ -19,7 +19,8 @@ that first; everything else loads when its `use-when` fires.
 
 | Primitive | Answers |
 | --- | --- |
-| `[[rules]]` | what MUST be done — the only governance layer |
+| `[[policies]]` | what MUST be done, in every repository AEP governs |
+| `[[rules]]` | what MUST be done *here* |
 | `[[references]]` | how a tool is operated *here* |
 | `[[contexts]]` | what to know about an area, and where to look |
 | evidence | what has been discovered — research and prototypes |

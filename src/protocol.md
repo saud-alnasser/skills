@@ -1,5 +1,5 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
 date: 2026-08-17
 kind: protocol
@@ -9,7 +9,7 @@ use-when: "at the start of every session, before doing anything else in a reposi
 # AEP — the Agentic Engineering Protocol
 
 The bootstrap. It orients you and gets out of the way. It does not govern —
-governance is `[[rules]]`.
+governance is `[[policies]]` and `[[rules]]`.
 
 ## What AEP is
 
@@ -24,7 +24,8 @@ to it.
 
 | Primitive | Answers | Lives in |
 | --- | --- | --- |
-| **Rules** | what MUST be done | `rules/` |
+| **Policies** | what MUST be done — AEP's, everywhere | `policies/` |
+| **Rules** | what MUST be done **here** — yours | `rules/` |
 | **References** | how a tool or procedure is operated here | `references/` |
 | **Contexts** | what to know about an area, and where to look | `contexts/` |
 | **Evidence** | what has been discovered | `efforts/<e>/evidence/` |
@@ -36,8 +37,11 @@ to it.
 | **Worktrees** | isolated execution environments | `worktrees/` |
 | **Position** | lightweight operational state | `position/` |
 
-Never substitute one for another. A requirement is a rule, not a reference. An
-orientation is a context, not a rule. A discovery is evidence, not a decision.
+Never substitute one for another. A requirement is governance, not a reference.
+An orientation is a context, not a requirement. A discovery is evidence, not a
+decision. **A policy is AEP's and you never edit it; a rule is yours and an
+upgrade never touches it** — a policy outranks a rule, and a rule may tighten one
+but never soften it.
 
 ## Where state is
 
@@ -45,7 +49,8 @@ orientation is a context, not a rule. A discovery is evidence, not a decision.
 .aep/
 ├── protocol.md    this file
 ├── index.md       derived discovery index — regenerate, never edit
-├── agents/  contexts/  modes/  references/  rules/  scripts/  skills/
+├── policies/      AEP's governance      rules/  yours
+├── agents/  contexts/  modes/  references/  scripts/  skills/
 ├── templates/     skeletons for authoring a new artifact
 ├── efforts/<effort>/{spec.md, evidence/{research,prototypes}/, tickets/}
 ├── position/      per-clone, gitignored
@@ -57,9 +62,9 @@ Before writing any new artifact, copy its shape from `templates/` — one
 
 ## How to discover what matters
 
-**Load by applicability, never by existence.** Never read all rules, all
-contexts, or all references before starting. Each artifact declares when it
-applies:
+**Load by applicability, never by existence.** Never read all policies, all
+rules, all contexts, or all references before starting — a policy is rigid in
+authority, never in when it loads. Each artifact declares when it applies:
 
 - `use-when:` — the trigger that makes it relevant
 - `paths:` — the repository paths it covers
@@ -67,7 +72,7 @@ applies:
 - wiki links — explicit relationships from what you already loaded
 
 ```
-repository state → index.md → current effort → applicable rules
+repository state → index.md → current effort → applicable policies and rules
 → relevant contexts → required references → relevant evidence → task → work
 ```
 
@@ -75,7 +80,7 @@ repository state → index.md → current effort → applicable rules
 skill you are running.
 
 Links between AEP files are double-bracketed, relative to `.aep/`, without the
-`.md` — as in `[[rules/artifacts]]`, which is one. A link that does not resolve
+`.md` — as in `[[policies/artifacts]]`, which is one. A link that does not resolve
 is repaired or reported, **never invented**.
 
 ## The workflow
@@ -130,30 +135,29 @@ freely; an upgrade preserves it. Variation with nowhere to enter is a **declared
 deviation**: record it in a repository rule, with its reason, loudly — never by
 quietly editing protocol-owned text.
 
-**No hidden memory.** Durable knowledge is explicit — in rules, contexts,
-evidence, specs, or the source. Never in session state, task descriptions,
-worktree metadata, or position.
+**No hidden memory.** Durable knowledge is explicit — in policies, rules,
+contexts, evidence, specs, or the source. Never in session state, task
+descriptions, worktree metadata, or position.
 
 **Nothing is invented.** Where an artifact already defines protocol state, use
 it. Where a script can compute an answer, run it and quote the output:
 `scripts/index.mjs` regenerates `index.md`, `scripts/validate.mjs` checks the
 tree, `scripts/position.mjs` reads and stamps the marker.
 
-## Rules that load when they apply
+## Governance that loads when it applies
 
 The invariants above hold always, which is why they are here. Everything else
-AEP governs is a rule you load when its trigger fires — read the `use-when:` and
-decide before opening it. Your repository's own rules sit beside these.
+AEP governs is a policy you load when its trigger fires — read the `use-when:`
+and decide before opening it.
 
-| Load when | Rule |
+| Load when | Policy |
 | --- | --- |
-| two sources disagree | `[[rules/precedence]]` |
-| writing code, or claiming anything about this repository | `[[rules/engineering]]` |
-| an effort is in progress | `[[rules/change-control]]` |
-| you are about to guess | `[[rules/evidence]]` |
-| dispatching sub-agents, or being one | `[[rules/sub-agents]]` |
-| committing or branching | `[[rules/version-control]]` |
-| changing anything under `.aep/` | `[[rules/ownership]]` |
-| writing a `.aep/` artifact | `[[rules/artifacts]]` |
-| deciding where a new file belongs | `[[rules/placement]]` |
-| the work touches another repository | `[[rules/boundary]]` |
+| two sources disagree, or the work reaches another repository | `[[policies/authority]]` |
+| writing code, or about to state something you have not verified | `[[policies/engineering]]` |
+| an effort is in progress — tasks, dispatch, implementation, review | `[[policies/execution]]` |
+| creating, changing, or removing anything under `.aep/` | `[[policies/artifacts]]` |
+
+**Your repository's own rules sit beside these**, in `rules/`, selected the same
+way — `[[index]]` lists them. They are yours to write and an upgrade preserves
+them; version control arrives as one, because how work lands here is a fact about
+this repository rather than about AEP (`[[rules/version-control]]`).

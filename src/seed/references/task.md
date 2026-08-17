@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "running this repository's commands through its Taskfile"
@@ -34,7 +34,7 @@ task --force <name>              # ignore up-to-date checks
 A task declaring `sources` and `generates` is skipped when its inputs have not
 changed, and the run reports it as up to date. **A green run may have executed
 nothing** — when the result is the evidence, `--force` it
-(`[[rules/evidence]]`).
+(`[[policies/engineering]]`).
 
 ## Failure handling
 

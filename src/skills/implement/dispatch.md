@@ -1,14 +1,14 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 use-when: "writing the brief a sub-agent will build from"
 ---
 
 # Implement — writing the brief
 
-`[[rules/sub-agents]]` fixes **what a brief must contain** and the boundaries a
+`[[policies/execution]]` fixes **what a brief must contain** and the boundaries a
 child works under. This is how to write those fields so the child builds the
 right thing.
 

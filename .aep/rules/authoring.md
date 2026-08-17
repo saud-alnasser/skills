@@ -1,7 +1,7 @@
 ---
 aep: 2.1.1
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: rule
 mode: [implement, review]
 paths:
@@ -39,7 +39,7 @@ perturbation actually removed the subject.
 A file under `src/` is read inside whatever repository AEP is installed in. So it
 may name only what exists there.
 
-- `[[rules/artifacts]]` resolves in every configured repository. **`specs.md`,
+- `[[policies/artifacts]]` resolves in every configured repository. **`specs.md`,
   a section number, or anything else that exists only here does not** — and there
   it is worse than a dead link, because it is indistinguishable from a reference
   to something of theirs.

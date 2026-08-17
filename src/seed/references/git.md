@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, review]
 use-when: "running any git operation — reading state, branching, staging, committing, or working with worktrees"
@@ -84,4 +84,4 @@ Worktrees are infrastructure, never knowledge. `.aep/worktrees/` is gitignored.
   in the run, not as the answer to the question you were asking.
 - A detached HEAD holds no claim. Do not guess the task from the diff.
 - An operation no section above covers is a gap: say so rather than guessing a
-  flag (`[[rules/engineering]]`).
+  flag (`[[policies/engineering]]`).

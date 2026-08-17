@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [test, implement]
 use-when: "building a behaviour test-first, or pinning a bug down before fixing it"

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, plan, test]
 use-when: "changing this repository's database schema, or generating and applying a migration"
@@ -45,6 +45,6 @@ run it against anything shared, and never run it to skip generating a migration.
   is not the one you edited.
 - `check` reporting a conflict means two branches generated migrations from the
   same parent. Resolving that by deleting a migration discards whatever already
-  ran against a real database — raise it (`[[rules/engineering]]`).
+  ran against a real database — raise it (`[[policies/engineering]]`).
 - **Never point any of these at a production or shared database**, and never run
   a migration outside a local environment unasked.

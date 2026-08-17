@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, plan, review]
 use-when: "reading or changing this repository's Kubernetes manifests, charts, or overlays"
@@ -21,7 +21,7 @@ kubectl config get-contexts
 
 **Every command below acts on whichever context happens to be current**, and the
 output gives no hint which cluster that was. Print the context before acting and
-quote it in what you report (`[[rules/evidence]]`).
+quote it in what you report (`[[policies/engineering]]`).
 
 ## Reading and rendering
 

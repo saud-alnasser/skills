@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "writing a local task under efforts/<effort>/tickets/"
 ---
 
@@ -12,7 +12,7 @@ repository has no external tracker.** AEP never mirrors an external system.
 
 A task is **a whole unit of work with its own acceptance criteria** — that is
 also the unit a sub-agent may be given, and the reason a task is never split
-across several (`[[rules/sub-agents]]`).
+across several (`[[policies/execution]]`).
 
 ```markdown
 ---

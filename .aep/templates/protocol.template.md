@@ -1,14 +1,14 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "auditing what the bootstrap must contain, or porting AEP to a runtime whose entrypoint differs"
 ---
 
 # Template — protocol.md
 
 **You do not write this file.** `protocol.md` is `owner: protocol`, installed
-verbatim, and replaced by every upgrade (`[[rules/ownership]]`). This template
+verbatim, and replaced by every upgrade (`[[policies/artifacts]]`). This template
 records the shape it must hold — so an audit can check it, and so a port to
 another runtime knows what the bootstrap is obliged to answer.
 
@@ -44,9 +44,9 @@ what the workflow is, and what holds on every turn.
 the verification suite. A bootstrap that costs what it saves is not a bootstrap,
 and this is the file every session pays for.
 
-**It routes; it never governs.** It is not a second rules system, a policy
-database, or a replacement for rules, contexts, or specs. Governance is
-`[[rules]]`, and the bootstrap points at them.
+**It routes; it never governs.** It is not a third governance layer, and not a
+replacement for policies, rules, contexts, or specs. Governance is
+`[[policies]]` and `[[rules]]`, and the bootstrap points at them.
 
 **Nothing restates it.** A runtime entrypoint — `AGENTS.md`, or a runtime's own
 equivalent — **points at** this file and never summarises it. A summary in the

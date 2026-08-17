@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "adding a capability this repository wants alongside the shipped skills"
 ---
 
@@ -69,7 +69,7 @@ change. A repository may add one beside a shipped skill: declare
 
 ## What a skill is not
 
-**A skill is never governance.** It operates under `[[rules]]`. Where a skill and
+**A skill is never governance.** It operates under `[[policies]]` and `[[rules]]`. Where a skill and
 a rule would say the same thing, the rule is the one that exists and the skill
 links to it — a requirement stated in a skill applies only while that skill is
 running, which is exactly when it is least needed.

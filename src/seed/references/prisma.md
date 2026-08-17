@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, plan, test]
 use-when: "changing this repository's Prisma schema, or generating and applying a migration"
@@ -48,5 +48,5 @@ looks tidy — read the generated SQL before applying it.
   since the last edit.
 - Drift detected on a shared database means something changed outside the
   migration history. That is a finding to raise, never something to resolve by
-  resetting (`[[rules/engineering]]`).
+  resetting (`[[policies/engineering]]`).
 - Never run any of these against production.

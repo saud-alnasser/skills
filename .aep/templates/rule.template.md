@@ -1,19 +1,25 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "adding a rule this repository discovered about how work must be done here"
 ---
 
-# Template — rule
+# Template — rule, this repository's own governance
 
-Copy to `rules/<name>.md`. A rule the repository adds is `owner: repository`.
+Copy to `rules/<name>.md`. **Every rule is `owner: repository`** — `rules/` holds
+what this repository decides for itself, and nothing else.
+
+AEP's own governance ships as `[[policies]]`, which are protocol-owned and never
+written or edited in a repository. So this template is the only governance
+template there is: a constraint you need that AEP does not impose is a rule.
 
 **Before writing one, check it is a rule at all:**
 
 | If it is | It belongs in |
 | --- | --- |
-| a requirement on behaviour | a rule — here |
+| a requirement on behaviour, decided here | a rule — here |
+| a requirement AEP places on every repository | already a `[[policies]]`; do not restate it |
 | how a tool is operated here | `[[references]]` |
 | what is true about an area | `[[contexts]]` |
 | something about one change | that effort's spec |
@@ -54,6 +60,7 @@ write down yet.
 
 ## Where it must not go
 
-A rule that contradicts a protocol-owned rule is a **declared deviation**: record
-what differs, why, and the release it was declared under
-(`[[rules/ownership]]`). Do not edit the protocol-owned file.
+**A rule may tighten a policy; it may never soften one.** Requiring more than a
+policy does is yours to decide. Requiring less — or contradicting it outright —
+is a **declared deviation**: record what differs, why, and the release it was
+declared under (`[[policies/artifacts]]`). Do not edit the policy.

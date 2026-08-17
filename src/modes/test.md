@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [test]
 use-when: "writing or judging tests, and establishing that a behaviour's absence would be caught"

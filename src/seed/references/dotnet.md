@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "building or testing this .NET solution"
@@ -40,5 +40,5 @@ dotnet --info                                    # installed SDKs, for diagnosin
   under them. A setting you cannot find in a `.csproj` usually lives there.
 - A warning treated as an error is `TreatWarningsAsErrors`, which is a
   deliberate setting. Suppressing the warning to build is a change to what this
-  repository enforces (`[[rules/engineering]]`).
+  repository enforces (`[[policies/engineering]]`).
 - **Never `dotnet nuget push` or `dotnet publish` to a feed.**

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [implement]
 use-when: "building production code against an approved plan"
@@ -19,7 +19,7 @@ wrong. Read before you modify. Match what surrounds the code you are writing.
 **What this gives up.** Creative latitude. An improvement you notice that is not
 in the task is raised, not taken — the diff stays about one thing.
 
-**Inputs.** The task. The effort's `spec.md`. Applicable `[[rules]]`, relevant
+**Inputs.** The task. The effort's `spec.md`. Applicable `[[policies]]` and `[[rules]]`, relevant
 `[[contexts]]`, required `[[references]]`, the relevant source.
 
 **Outputs.** Working code, tests, and whatever documentation the rules require.

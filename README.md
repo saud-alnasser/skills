@@ -13,7 +13,8 @@ hard to violate, and cheap for an agent to understand.**
 ## The model
 
 ```
-rules       what MUST be done — the only governance layer
+policies    what MUST be done — AEP's, protocol-owned, never edited here
+rules       what MUST be done here — yours, and an upgrade preserves them
 references  how a tool is operated here
 contexts    what to know about an area, and where to look
 evidence    what has been discovered — research, prototypes
@@ -28,7 +29,8 @@ position    lightweight operational state — never truth
 
 Every artifact declares **when it applies** (`use-when`, `paths`, `mode`), so
 knowledge loads by relevance rather than by stage. Nothing tells an agent to read
-all the rules before starting.
+the whole governance layer before starting — a policy is rigid in authority, not
+in when it loads.
 
 ## The workflow
 

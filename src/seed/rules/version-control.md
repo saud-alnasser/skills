@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: rule
 mode: [implement, review]
 use-when: "committing, branching, or preparing work to land"
@@ -47,7 +47,7 @@ Conventional Commits — `type(scope): summary`.
 One branch per task, named `<task-id>-<slug>` — the id first, so the task is
 recoverable from the branch name by reading up to the first `-`.
 
-**The branch is the claim** (`[[rules/sub-agents]]`): create it before the first
+**The branch is the claim** (`[[policies/execution]]`): create it before the first
 read of source, not after the first edit.
 
 ## How work reaches the default branch

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 use-when: "a request is being declined rather than specified, or a new request resembles one declined before"
 ---
@@ -81,4 +81,4 @@ Three answers, and all three are the human's:
 
 **Never decline a request yourself on the strength of a match.** The entry is
 evidence that a human decided this once; it is not standing authority to decide
-it again (`[[rules/engineering]]`).
+it again (`[[policies/engineering]]`).

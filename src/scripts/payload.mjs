@@ -1,16 +1,51 @@
-// What a release installs, declared once.
+// What a release installs — and what it moved to get there — declared once.
 //
 // Both the installer and the verification suite read this, so "what ships" has a
 // single home. A file that is neither payload, nor seed, nor listed as
 // build-only is a verification failure rather than a silent omission — the
 // failure this manifest exists to remove is a new protocol artifact that nobody
 // installs because nobody remembered to add it to a copy list.
+//
+// `MOVES` is the exception to the file's title and sits here deliberately: a
+// move is not a thing a release installs, it is an instruction about a tree that
+// already exists. It belongs beside the payload because it is read by the same
+// two callers and describes the same release, and giving it its own module would
+// buy separation nobody needs at the cost of a second import for one array.
 
 /** Protocol-owned files installed at the root of `.aep/`. */
 export const PAYLOAD_FILES = ['protocol.md'];
 
 /** Protocol-owned directories copied wholesale into `.aep/`. */
-export const PAYLOAD_DIRS = ['rules', 'modes', 'skills', 'agents', 'templates'];
+export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates'];
+
+/**
+ * Protocol-owned files a release moved, and where their content now ships.
+ *
+ * A move is not a retirement. `copyDir` reports a protocol-owned file the
+ * release no longer ships and never deletes it, because deciding a file is
+ * obsolete is a human's call — right for a concept that was dropped, and wrong
+ * for one that only changed address. Left in place, the old file keeps
+ * resolving, and the tree is governed by two copies of one text.
+ *
+ * So the release declares its moves and the installer applies them under
+ * `--update`: it removes the protocol-owned source, repairs the links that
+ * pointed at it, and reports both. One declaration drives the removal, the
+ * rewrite, and the verification, so the three cannot disagree.
+ *
+ * `since` is the release that made the move. An entry may be dropped once no
+ * supported tree predates it — a manifest that only grows is one nobody prunes.
+ */
+export const MOVES = [
+  { from: 'rules/precedence.md', to: 'policies/authority.md', since: '2.2.0' },
+  { from: 'rules/boundary.md', to: 'policies/authority.md', since: '2.2.0' },
+  { from: 'rules/engineering.md', to: 'policies/engineering.md', since: '2.2.0' },
+  { from: 'rules/evidence.md', to: 'policies/engineering.md', since: '2.2.0' },
+  { from: 'rules/change-control.md', to: 'policies/execution.md', since: '2.2.0' },
+  { from: 'rules/sub-agents.md', to: 'policies/execution.md', since: '2.2.0' },
+  { from: 'rules/artifacts.md', to: 'policies/artifacts.md', since: '2.2.0' },
+  { from: 'rules/ownership.md', to: 'policies/artifacts.md', since: '2.2.0' },
+  { from: 'rules/placement.md', to: 'policies/artifacts.md', since: '2.2.0' },
+];
 
 /** Scripts installed to `.aep/scripts/`, available to every configured repository. */
 export const PAYLOAD_SCRIPTS = [
@@ -34,8 +69,14 @@ export const BUILD_ONLY_SCRIPTS = [
 /** Source of `.aep/.gitignore`. Kept undotted in the distribution so it governs nothing here. */
 export const GITIGNORE_SOURCE = 'gitignore';
 
-/** Directories a repository owns. Created so there is somewhere to put things. */
-export const REPOSITORY_DIRS = ['contexts', 'references', 'efforts'];
+/**
+ * Directories a repository owns. Created so there is somewhere to put things.
+ *
+ * `rules/` is one of them: governance the protocol defines ships as policies,
+ * and `rules/` holds what this repository decides for itself. It arrives empty
+ * apart from the version-control seed.
+ */
+export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
 
 /** Directories that are per-clone and gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];

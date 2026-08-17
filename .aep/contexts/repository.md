@@ -28,7 +28,7 @@ survive an upgrade like anyone else's.
 | Directory | Holds |
 | --- | --- |
 | `src/protocol.md` | the bootstrap, installed as `.aep/protocol.md` |
-| `src/rules/` `src/modes/` `src/skills/` `src/agents/` `src/templates/` | the protocol-owned payload |
+| `src/policies/` `src/modes/` `src/skills/` `src/agents/` `src/templates/` | the protocol-owned payload |
 | `src/seed/` | repository-owned starting points, installed where detected |
 | `src/scripts/` | the scripts `.aep/` gets, plus install, adapters, and verify |
 | `src/adapters/claude/` | the Claude Code adapter — generated, never hand-edited |

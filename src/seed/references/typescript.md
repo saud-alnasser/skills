@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, review]
 use-when: "type-checking this repository, or reading what its compiler is actually configured to enforce"
@@ -48,6 +48,6 @@ both before claiming a change compiles.
 - An error in `node_modules` usually means two versions of a type package, not a
   defect in the dependency.
 - `// @ts-expect-error` and `any` silence the checker rather than answer it. Each
-  one added is a finding worth raising (`[[rules/engineering]]`).
+  one added is a finding worth raising (`[[policies/engineering]]`).
 - A stale `tsconfig.tsbuildinfo` produces errors that vanish under `-b --force`.
   That is the diagnosis, not the fix — a build that needs `--force` is a finding.

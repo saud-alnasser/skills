@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [refine]
 use-when: "attacking a specification to expose ambiguity, weak criteria, and unresolved tradeoffs"
@@ -20,7 +20,7 @@ correct. Agreement is not the goal and is often the failure.
 obstruction while it is happening and like foresight afterwards. Accept the first
 and aim for the second.
 
-**Inputs.** The effort's `spec.md`. Applicable `[[rules]]`, relevant
+**Inputs.** The effort's `spec.md`. Applicable `[[policies]]` and `[[rules]]`, relevant
 `[[contexts]]` and `[[references]]`.
 
 **Outputs.** The **same** `spec.md`, clarified. Resolved questions become

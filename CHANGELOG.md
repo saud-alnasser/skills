@@ -1,5 +1,80 @@
 # Changelog
 
+## 2.2.0
+
+Governance splits into two named primitives, and the nine shipped rules become
+four policies.
+
+### Added
+
+- **Policies — `.aep/policies/`.** AEP's own governance, protocol-owned,
+  installed verbatim, and never edited in a repository. Four ship: `authority`
+  (which source wins, and which repository is yours to act on), `engineering`
+  (how a claim is made, and what to do on finding you cannot make one),
+  `execution` (an effort from accepted spec to landed change, sub-agents
+  included), and `artifacts` (whose a file is, where it goes, what shape it
+  takes).
+
+  *Why a second directory when `owner:` already said this: `rules/` already held
+  two layers — the shipped nine and whatever the repository added — separated
+  only by a field inside each file. An agent listing the directory could not tell
+  AEP's law from local convention without opening every file. The hierarchy in
+  §10 has not changed; it was already `protocol rules → repository rules`. What
+  changed is that you can now see it.*
+
+- **Declared moves.** A release states which protocol-owned artifacts it
+  relocated, and an upgrade applies them: it removes the old file, repairs links
+  that pointed at it inside repository-owned artifacts, and reports every
+  removal, repair, and collision. A move is not a retirement — the content still
+  exists, and leaving the old file would govern a repository with two copies of
+  one text, both of which resolve.
+
+  This is the **only** circumstance in which an upgrade writes into a file the
+  repository owns. It is confined to the declared targets, only where the source
+  path is now vacant, and only the link target changes.
+
+### Changed
+
+- **Rules are now repository-owned, exclusively.** `rules/` ships nothing and
+  arrives holding only the version-control seed. `policies/` admits only
+  `owner: protocol` and `rules/` only `owner: repository` — the one place a
+  directory constrains ownership, and it does not weaken the rule that ownership
+  is read off the declared field: an installer still reads the field before
+  overwriting anything, so a misplaced file is **preserved and then reported**,
+  never silently corrected.
+
+- **A repository cannot author a policy.** However non-negotiable a local
+  constraint is, it is a rule. The moment the directory admits either owner,
+  reading it tells an agent nothing.
+
+- **Rigidity is authority, not loading.** A policy outranks every rule and cannot
+  be edited, but it is selected by its `use-when` exactly like any other
+  conditional artifact. Nothing became always-on.
+
+- **Nine rules became four policies**, grouped by the moment they fire rather
+  than by subject. Two of the merges were already visible in the old text:
+  `evidence` opened by conceding that *how a claim is made at all* belonged to
+  `engineering`, and `ownership` closed by handing the reader to `artifacts`. A
+  rule that must point at another rule to be complete is one file split in two.
+
+  The cost, recorded because it was priced rather than missed: merging drops
+  `mode:` from all four, since each union covered six or seven of the eight. It
+  is honest for `engineering`, whose trigger already fired in modes its `mode:`
+  did not list, and least honest for `execution`, whose sub-agent half is
+  genuinely narrow.
+
+### Migration
+
+Existing 2.1.x trees upgrade in place — the nine rule files are removed, links
+are repaired, and anything the repository owns is untouched. Read the report.
+
+**`policy` means the opposite of what it meant in 1.x.** A 1.x policy was the
+repository's, derived per repository; an AEP policy is protocol law, identical
+everywhere. So a 1.x `policies/<concern>.md` converts to a **rule**, never to a
+policy — converting one the other way would hand the repository's own decisions
+to the protocol, and the next upgrade would overwrite them. 1.x detection stays
+scoped to the runtime's own directory, so `.aep/policies/` never reads as 1.x.
+
 ## 2.1.1
 
 A link that only resolved on the machine that wrote it, and one field that now

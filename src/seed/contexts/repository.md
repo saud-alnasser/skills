@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: context
 use-when: "orienting in this repository for the first time in a session, before reaching for a narrower context"
 ---
@@ -58,4 +58,4 @@ _Add a row when an area grows enough to deserve its own file._
 **This file describes; it never instructs.** A requirement belongs in
 `[[rules]]`; a procedure belongs in `[[references]]`. And the repository is
 authoritative over everything written here — where the source disagrees, the
-source is right and this file gets corrected (`[[rules/precedence]]`).
+source is right and this file gets corrected (`[[policies/authority]]`).

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "building, testing, or vetting this Go module"
@@ -36,7 +36,7 @@ go mod tidy                          # rewrites go.mod and go.sum
 
 **A `go test` run can report `(cached)` and execute nothing.** That is correct
 behaviour and useless as evidence. Use `-count=1` when the run is the proof
-(`[[rules/evidence]]`).
+(`[[policies/engineering]]`).
 
 `-race` catches what plain runs do not, and it is where concurrency bugs
 actually surface. A suite that passes without it and fails with it has a real

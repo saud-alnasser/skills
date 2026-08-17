@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "running a target across this monorepo's projects, or finding what a change affects"
@@ -35,7 +35,7 @@ npx nx reset                     # clears the local cache and daemon
 state**, not only on the working tree. On a stale branch it can select nothing.
 
 A target reported from cache did not execute. When the result is being used as
-evidence, say so — or re-run without the cache (`[[rules/evidence]]`).
+evidence, say so — or re-run without the cache (`[[policies/engineering]]`).
 
 ## Failure handling
 
