@@ -35,11 +35,14 @@ import {
   wikiLinks,
 } from './contract.mjs';
 import { renderClaudeAdapter } from './adapters.mjs';
+import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
   GITIGNORE_SOURCE,
   MOVES,
+  NOTICES,
   PAYLOAD_DIRS,
+  STAMPS_SOURCE,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
   REPOSITORY_DIRS,
@@ -125,23 +128,34 @@ const release = (value) => {
   return parsed ? parsed.slice(1, 4).map(Number) : null;
 };
 
+/** Whether `a` precedes `b` — the installer's notice and move gate, mirrored. */
+const precedesRelease = (a, b) => {
+  const left = release(a);
+  const right = release(b);
+  if (!left || !right) return false;
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] !== right[i]) return left[i] < right[i];
+  }
+  return false;
+};
+
 /**
- * Whether `value` is exactly the release being built.
+ * Whether `value` is a real release no later than the one being built.
  *
- * Everything a release ships stamps that release, so there is one legal value
- * and this is an equality test rather than a range. Both directions are real
- * errors: ahead names a release that does not exist yet, and behind makes a
- * shipped artifact look like one the installation never received — which is the
- * single comparison an upgrade makes.
+ * `aep:` is the release an artifact's content last changed in, so most shipped
+ * artifacts legitimately declare an *older* release than this one — that is the
+ * field carrying information rather than repeating `protocol.md`. What is never
+ * legitimate is a stamp ahead of the release being built, which names a release
+ * that does not exist yet.
  *
- * Parsed rather than string-compared, so a malformed stamp fails as a bad
- * release rather than passing as an unequal string.
+ * Whether the stamp is *correct* is not this check's job: `stamps` compares
+ * content against the manifest, which is what catches an edit that never got
+ * restamped.
  */
-const stampsRelease = (value) => {
+const atOrBeforeRelease = (value) => {
   const parsed = release(value);
-  const current = release(specVersion);
-  if (parsed === null || current === null) return false;
-  return parsed.every((part, index) => part === current[index]);
+  if (parsed === null || release(specVersion) === null) return false;
+  return !precedesRelease(specVersion, value);
 };
 
 // --- the install fixture ----------------------------------------------------
@@ -243,6 +257,57 @@ section('manifest', () => {
   });
 });
 
+// --- §8 the stamps are current ----------------------------------------------
+// The check the old sweep could not perform. When every artifact was restamped
+// every release regardless of whether it moved, an artifact edited without being
+// restamped was indistinguishable from one that had not been touched. Comparing
+// content against the committed baseline is what makes the field mean something.
+
+section('stamps', () => {
+  const stamps = readStamps();
+  const shipped = shippedArtifacts();
+
+  assert('the release baseline exists — run scripts/release.mjs to create it', () =>
+    Object.keys(stamps).length > 0);
+
+  for (const file of shipped) {
+    const rel = toPosix(SRC, file);
+    const hash = contentHash(fs.readFileSync(file, 'utf8'));
+    assert(`${rel} is stamped for its current content — run scripts/release.mjs <version>`, () => {
+      if (!(rel in stamps)) throw new Error('not in the baseline: it has never been released');
+      if (stamps[rel] !== hash) throw new Error('content changed since it was last stamped');
+      return true;
+    });
+  }
+
+  // An entry for a file that is gone means the baseline outlived what it
+  // described, and a later release would compare against nothing.
+  assert('the baseline names nothing the distribution no longer ships', () => {
+    const live = new Set(shipped.map((file) => toPosix(SRC, file)));
+    const orphans = Object.keys(stamps).filter((rel) => !live.has(rel));
+    if (orphans.length > 0) throw new Error(orphans.join(', '));
+    return true;
+  });
+
+  assert('the baseline is build-time only and never ships', () =>
+    !PAYLOAD_FILES.includes(STAMPS_SOURCE) &&
+    !fs.existsSync(path.join(installFixture().aep, STAMPS_SOURCE)));
+
+  // The two computed lines are excluded from the hash on purpose: stamping a
+  // file must not change what it hashes to, or a release would never converge
+  // and every run would restamp everything again.
+  assert('stamping an artifact does not change its own hash', () => {
+    const sample = fs.readFileSync(path.join(SRC, 'protocol.md'), 'utf8');
+    const restamped = sample
+      .replace(/^aep:.*$/m, 'aep: 9.9.9')
+      .replace(/^date:.*$/m, 'date: 1999-01-01');
+    if (contentHash(sample) !== contentHash(restamped)) {
+      throw new Error('the hash covers the stamp, so a release would never settle');
+    }
+    return true;
+  });
+});
+
 // --- §8 the frontmatter contract -------------------------------------------
 
 section('frontmatter', () => {
@@ -254,8 +319,8 @@ section('frontmatter', () => {
     if (!artifact.hasFrontmatter) continue;
 
     assert(`${rel} frontmatter parses`, artifact.errors.length === 0);
-    assert(`${rel} declares the release being built (${specVersion})`,
-      stampsRelease(artifact.fields.aep));
+    assert(`${rel} declares the release its content last changed in, not a later one`,
+      atOrBeforeRelease(artifact.fields.aep));
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
@@ -362,6 +427,11 @@ section('skills', () => {
   assert('skills/update branches to the 1.x migration rather than upgrading in place', () =>
     readSrc('skills', 'update.md').includes('skills/update/migration'));
 
+  assert('skills/implement reads an external frontier from the recorded query', () =>
+    /frontier comes from the recorded query/.test(readSrc('skills', 'implement.md')));
+  assert('skills/tasks routes to the tracker note before writing external tasks', () =>
+    readSrc('skills', 'tasks.md').includes('skills/tasks/labels'));
+
   // §31.1 — the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
   // success, so nothing downstream notices.
@@ -417,6 +487,40 @@ section('skill notes', () => {
     assert(`${rel} is linked from skills/${owner}.md — an unlinked note is unreachable`, () =>
       linkedBy.get(owner)?.has(target) === true);
   }
+
+  // The tracker note carries the whole external-task procedure, and each of these
+  // is a step that reads as optional the moment its sentence goes missing.
+  const labels = readSrc('skills', 'tasks', 'labels.md');
+
+  assert('the tracker note orders the ladder: native, then existing, then new', () => {
+    const native = labels.indexOf('a first-class feature of this tracker');
+    const existing = labels.indexOf('an existing label that already serves it');
+    const created = labels.indexOf('a new label');
+    if (native < 0 || existing < 0 || created < 0) throw new Error('a rung is missing');
+    if (!(native < existing && existing < created)) {
+      throw new Error('the rungs are present but out of order');
+    }
+    return true;
+  });
+  assert('the tracker note forbids a label for what the tracker models natively', () =>
+    /A label is never created for a fact the tracker models natively/.test(labels));
+  assert('the tracker note requires a native feature to be queryable, not merely adjacent', () =>
+    /A native feature counts only if it answers the same question/.test(labels));
+  assert('the tracker note shows one fact naming differently in two trackers', () =>
+    /effort\/<slug>/.test(labels) && /Effort: <slug>/.test(labels));
+  assert('the tracker note allows for creating no label at all', () =>
+    /\*\*no label is created\*\*/.test(labels));
+  assert('the tracker note requires the resolution to be recorded, then read', () =>
+    /Later sessions read it\. They do not rederive it\./.test(labels));
+  assert('the tracker note writes the section where the reference has none', () =>
+    /Where the reference has no such section, write it/.test(labels));
+  assert('the tracker note gates creating a label or a milestone', () =>
+    /Creating a label or a milestone publishes/.test(labels) &&
+    /exact strings, never a summary/i.test(labels));
+  assert('the tracker note stops on a refused permission rather than sliding down the ladder', () =>
+    /Approval is not permission/.test(labels));
+  assert('the tracker note separates resolving the mechanism from applying it per effort', () =>
+    /Resolve once per tracker; apply every effort/.test(labels));
 
   const wrapped = renderClaudeAdapter(SRC, 'plugin').map((f) => f.relativePath);
   assert('no adapter publishes a note as a command', () =>
@@ -503,6 +607,27 @@ section('policies', () => {
   assert('policies/execution requires independence to be read, not inferred', () =>
     /never infer independence/i.test(execution));
 
+  // §15.4 — the external half of the same rule. Without these, a repository whose
+  // work lives in a tracker is governed by the frontier rule and given no way to
+  // satisfy it, which reads exactly like being governed.
+  // Pinned with `\s+` between words rather than literal spaces: the payload is
+  // wrapped at 80 columns, so any phrase long enough to be worth pinning is long
+  // enough to have a newline land in the middle of it.
+  assert('policies/execution requires an external task to be findable in its tracker', () =>
+    /attributable to its effort by a query the\s+tracker\s+answers natively/.test(execution));
+  assert('policies/execution requires exactly one fact of an external task', () =>
+    /Exactly one fact is required/.test(execution));
+  assert('policies/execution keeps status out of it, and says why', () =>
+    /`status`\s+is not carried separately/.test(execution) &&
+    /closes\s+an issue from the tracker's own interface/.test(execution));
+  assert('policies/execution keeps a dependency edge out of it, and says why', () =>
+    /dependency edge is not carried as set membership/.test(execution) &&
+    /nothing in the tracker knows to\s+do it/.test(execution));
+  assert('policies/execution prefers what the tracker already models', () =>
+    /What the tracker already models, the tracker carries/.test(execution));
+  assert('policies/execution separates carrying the fact from mirroring', () =>
+    /None of this is mirroring/.test(execution));
+
   const authority = readSrc('policies', 'authority.md');
   assert('policies/authority places policies above rules', () =>
     /policies\s+→\s+rules/.test(authority));
@@ -534,13 +659,21 @@ section('seeds', () => {
     }
 
     assert(`${seed.source} declares owner: repository`, artifact.fields.owner === 'repository');
-    assert(`${seed.source} declares the release being built (${specVersion})`,
-      stampsRelease(artifact.fields.aep));
+    assert(`${seed.source} declares the release its content last changed in, not a later one`,
+      atOrBeforeRelease(artifact.fields.aep));
     assert(`${seed.source} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`${seed.source} says it is a starting point rather than a description`, () =>
       /This file is yours/.test(artifact.body));
     assert(`${seed.source} targets a repository-owned directory`, () =>
       /^(contexts|references|rules)\//.test(seed.target));
+  }
+
+  // The resolution has to land somewhere the next session reads, and for the two
+  // forges that ship a reference, that section is seeded rather than left to be
+  // invented per repository.
+  for (const forge of ['github', 'gitlab']) {
+    assert(`seed/references/${forge}.md carries the section a resolution is recorded in`, () =>
+      readSrc('seed', 'references', `${forge}.md`).includes('## AEP tasks in this tracker'));
   }
 
   // A seed file nothing declares ships in the distribution and installs
@@ -1174,6 +1307,54 @@ section('install fixture', () => {
       throw new Error('reported a collision against a name this release already vacated');
     }
     return fs.existsSync(mine);
+  });
+
+  // §31 — notices. The negative case is the one that matters: a filter matching
+  // every tree reads exactly like a filter that works, and every reader of a
+  // current tree would be told to go and check something already true.
+  assert('an upgrade reports the notices for the releases it crosses', () => {
+    if (!/\d+ things? to check/.test(upgraded.output)) throw new Error('no notices reported');
+    for (const notice of NOTICES) {
+      if (!precedesRelease(PRE_MOVE_RELEASE, notice.since)) continue;
+      const opening = notice.check.split(/\s+/).slice(0, 4).join(' ');
+      if (!upgraded.output.includes(opening)) throw new Error(`${notice.since} not reported`);
+    }
+    return true;
+  });
+
+  assert('a tree already at this release is shown no notices', () => {
+    const current = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-nonotice-'));
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', current],
+      { stdio: 'ignore' });
+    const output = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', current, '--update'],
+      { encoding: 'utf8' },
+    );
+    if (/to check/.test(output)) throw new Error('told a current tree to go and check something');
+    return true;
+  });
+
+  assert('every declared notice names a real release and says what to check', () =>
+    NOTICES.every((notice) => release(notice.since) !== null && isNonEmptyString(notice.check)));
+
+  // Pinned on the file it names and the reason it exists, not on the word
+  // "tracker" — which appears four times in this notice, so a looser test passes
+  // on a notice that has lost its actual subject.
+  assert('the release that changed the tracker references declares a notice for it', () =>
+    NOTICES.some((notice) => notice.since === specVersion &&
+      /references\/github\.md/.test(notice.check) && /re-seed/.test(notice.check)));
+
+  assert('skills/update acts on a notice rather than printing it', () => {
+    const update = readSrc('skills', 'update.md');
+    return /A notice is acted on, not read/.test(update) &&
+      /report it as outstanding/.test(update);
+  });
+
+  assert('a dry run previews the notices as well as the repairs', () => {
+    const preview = legacyTree({ dryRun: true });
+    if (!/to check/.test(preview.output)) throw new Error('a dry run hid the notices');
+    return true;
   });
 
   assert('a dry run previews the repairs a real run would make', () => {

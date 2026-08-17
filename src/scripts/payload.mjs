@@ -47,6 +47,35 @@ export const MOVES = [
   { from: 'rules/placement.md', to: 'policies/artifacts.md', since: '2.2.0' },
 ];
 
+/**
+ * What a release asks of the **reader**, where moving files is not enough.
+ *
+ * `MOVES` covers everything a release does to a tree. Some releases also require
+ * something a release cannot do for itself — most often because the thing to
+ * change is repository-owned, and an upgrade correctly refuses to touch it. That
+ * knowledge exists at release time and has nowhere to go: `CHANGELOG.md` is not
+ * payload, so a repository running an upgrade has never received it.
+ *
+ * A notice is that knowledge, declared, and filtered by exactly the predicate
+ * `MOVES` uses — so the two cannot disagree about which releases a tree is
+ * crossing. A tree already at or past `since` is shown nothing.
+ *
+ * `check` is an instruction, not a changelog entry. It says what to look at and
+ * why it matters. **A release with nothing to ask of the reader declares no
+ * notice**, and most releases will not.
+ */
+export const NOTICES = [
+  {
+    since: '2.3.0',
+    check:
+      'Tasks in an external tracker: your reference for that tracker — references/github.md, ' +
+      'references/gitlab.md, or your own — now records what carries an effort and the query ' +
+      'that finds its open work. An upgrade never re-seeds a reference you have corrected, so ' +
+      'this release cannot add that section for you. The next /tasks run in a tracker-backed ' +
+      'repository writes it; add it by hand if you would rather not wait.',
+  },
+];
+
 /** Scripts installed to `.aep/scripts/`, available to every configured repository. */
 export const PAYLOAD_SCRIPTS = [
   'contract.mjs',
@@ -63,8 +92,20 @@ export const BUILD_ONLY_SCRIPTS = [
   'payload.mjs',
   'adapters.mjs',
   'install.mjs',
+  'release.mjs',
   'verify.mjs',
 ];
+
+/**
+ * The release script's baseline, at the distribution root rather than beside the
+ * scripts because everything in `scripts/` is `.mjs` — a consuming
+ * `package.json` cannot then change how any of it parses.
+ *
+ * Build-time only. It records what each shipped artifact hashed to when it was
+ * last stamped, which is how a release knows what actually moved. An installed
+ * tree has no use for it and never receives it.
+ */
+export const STAMPS_SOURCE = 'stamps.json';
 
 /** Source of `.aep/.gitignore`. Kept undotted in the distribution so it governs nothing here. */
 export const GITIGNORE_SOURCE = 'gitignore';

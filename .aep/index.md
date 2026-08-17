@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: repository
 date: 2026-08-17
 ---
@@ -109,6 +109,9 @@ Start at [[protocol]].
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
+| tracker-labels | implemented | [[efforts/tracker-labels/spec]] | 0 | 0 | 7 |
+| upgrade-notices | implemented | [[efforts/upgrade-notices/spec]] | 0 | 0 | 0 |
+| version-stamping | implemented | [[efforts/version-stamping/spec]] | 0 | 0 | 0 |
 
 ## Tickets
 
@@ -128,3 +131,10 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/policy-rule-split/tickets/10-fenced-links]] fix(install): decide whether the link rewriter should see fenced blocks | policy-rule-split | resolved | — |
 | [[efforts/policy-rule-split/tickets/11-artifacts-name]] refactor(policies): confirm or replace the name `artifacts` | policy-rule-split | resolved | — |
 | [[efforts/policy-rule-split/tickets/12-moves-home]] docs(scripts): payload.mjs says what it installs, and now also what it moves | policy-rule-split | resolved | — |
+| [[efforts/tracker-labels/tickets/01-policy]] feat(policies): an external task is findable in its own tracker | tracker-labels | resolved | — |
+| [[efforts/tracker-labels/tickets/02-skill-note]] feat(skills): the label ladder becomes a skill note | tracker-labels | resolved | 01 |
+| [[efforts/tracker-labels/tickets/03-skill-hooks]] feat(skills): tasks and implement route to the ladder | tracker-labels | resolved | 02 |
+| [[efforts/tracker-labels/tickets/04-specification]] docs(specs): the specification requires an external task to be findable | tracker-labels | resolved | — |
+| [[efforts/tracker-labels/tickets/05-references]] docs(references): the forge references carry verified operations | tracker-labels | resolved | — |
+| [[efforts/tracker-labels/tickets/06-verify]] test(verify): the shipped surfaces are asserted against the new requirement | tracker-labels | resolved | 01, 02, 03, 04 |
+| [[efforts/tracker-labels/tickets/07-release]] chore(dist): release 2.3.0 and reinstall this repository's tree | tracker-labels | resolved | 01, 02, 03, 04, 06 |

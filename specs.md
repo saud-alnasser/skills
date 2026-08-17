@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -232,9 +232,9 @@ Field contract:
 
 | Field | Required | Contract |
 | --- | --- | --- |
-| `aep` | **yes** | The release the artifact ships in. Every release stamps **every** protocol-owned artifact, `protocol.md` included (§6), so a protocol-owned artifact declaring anything other than the release its tree declares is out of date and reinstalled (§7). |
+| `aep` | **yes** | The release in which this artifact's content **last changed** — one meaning, both owners. A release that does not change a file MUST NOT restamp it, so most artifacts in a current tree legitimately declare an older release; that is the field carrying information rather than repeating `protocol.md`. A stamp **ahead** of the release being built names a release that does not exist and is illegal. **`protocol.md` is the exception** and always declares the current release (§6). |
 | `owner` | **yes** | Exactly `protocol` or `repository`. No other value is legal. Under `policies/` it MUST be `protocol`; under `rules/` it MUST be `repository` (§7). |
-| `date` | **yes** | Last modified, as `YYYY-MM-DD`. No other format is legal. |
+| `date` | **yes** | The date that content last changed, as `YYYY-MM-DD`. No other format is legal. Same question as `aep`, and it MUST be maintained by the same mechanism — two fields answering one question by two mechanisms is one field that drifts. |
 | `kind` | situational | One of the listed values. Omitted only where the directory makes it redundant. |
 | `mode` | situational | A YAML **array** of mode names (§14). Applicability, never state. |
 | `paths` | optional | Glob patterns for which repository paths make the artifact applicable. |
@@ -243,7 +243,11 @@ Field contract:
 | `part-of` | optional | The effort a ticket belongs to. Tickets only. |
 | `use-when` | **required on policies, rules, references, and contexts**; optional elsewhere | One sentence describing **when to load this**. |
 
-Two contracts are stated separately because they are the ones that fail:
+**`aep` and `date` MUST be computed, never typed.** An implementation that distributes a payload MUST determine, per artifact, whether its content changed since the last release, and stamp only those that did. It MUST be able to detect **an artifact whose content changed without its stamp changing** — the defect a scheme that restamps everything every release cannot see, because under it a stale stamp and a current one are the same value.
+
+*Why this is normative rather than tooling advice: a stamp maintained by hand is a claim nobody verifies, and a field that says the same thing on every artifact distinguishes nothing. Making it computed is what turns it from ceremony into an answer.*
+
+Three contracts are stated separately because they are the ones that fail:
 
 **`use-when` describes a trigger, never a topic.** "Working with database schema or migrations" is a trigger. "Database documentation" is a topic, satisfies every mechanical check, and is the one failure this shape can still produce. A policy, rule, reference, or context without a real `use-when` cannot participate in progressive discovery and is therefore either loaded always or never — both defeat the mechanism.
 
@@ -442,6 +446,14 @@ AEP MUST NOT require a local ticket system. Tickets may live in GitHub Issues, J
 If local tickets are used they live at `.aep/efforts/<effort>/tickets/`, declare `status`, and MAY declare `blocked-by` and `part-of`.
 
 AEP MUST NOT duplicate an external ticket system for protocol completeness. A local mirror of an external ticket is exactly the hidden database §2 forbids.
+
+**Where tasks live in an external system, that task MUST be attributable to its effort by a query the system answers natively.** Listing every open issue and judging from prose does not satisfy this. *Why: the frontier is computed from declared edges (§20.2), and an implementation that cannot ask which issues belong to an effort has no graph to read — so the prohibition on inferring independence has nothing behind it.*
+
+Exactly one fact is required: **which effort the task belongs to.** `status` MUST NOT be carried separately, because the issue's own state already carries it and a second copy disagrees with the first as soon as the issue is closed outside the tool. A dependency edge MUST NOT be carried as set membership, because a marker that must be withdrawn when the gate clears is wrong precisely when it matters.
+
+**A conforming implementation MUST NOT create a label for a fact the tracker already models.** Where a first-class feature of the system answers the fact — a milestone, an epic, a parent, a dependency — that feature answers it. What is native differs per system, so it is established per system and never assumed; the resolution is recorded in the repository's reference for that tool (§11) rather than rederived per session.
+
+None of this is mirroring: the fact is held by the tracker in the tracker's own mechanism, and nothing about the task is written into `.aep/`.
 
 ## 16. Skills
 
@@ -756,6 +768,14 @@ An upgrade:
 
 A declared move MAY be dropped from a release once no supported tree predates it.
 
+**Some releases require something of the reader that no upgrade can do for them** — most often a change to a repository-owned artifact, which an upgrade correctly refuses to touch. A release therefore MAY **declare notices**, each carrying the release it applies from and one statement of what to check and why.
+
+An upgrade MUST report exactly the notices whose release the installed tree precedes, using the **same** comparison that gates declared moves, so a notice and a move declared by one release cannot disagree about whether that release is being crossed. A tree at or past the release MUST be shown nothing. A dry run MUST preview them as a real run reports them.
+
+A notice is an instruction, never a changelog entry, and **a release with nothing to ask of the reader declares none.** Relevance is decided by comparing two releases and MUST NOT be judged at runtime. A conforming runtime **acts** on each notice or reports it as outstanding; reporting it is not handling it.
+
+*Why this is a declaration rather than a document: a changelog is not payload, so a repository running an upgrade has never received one, and shipping the whole history into every installation to deliver two lines is a poor trade for a filter that already exists.*
+
 A repository declares its installed release through the `aep` field on `protocol.md`. A runtime MAY compare that against the running release and say so when they differ; a repository that declares nothing is *unknown*, never *stale*.
 
 ### 31.1 Migration from 1.x
@@ -947,6 +967,9 @@ A conforming implementation preserves all of the following:
 42. Shipped text cites only what resolves where it is read.
 43. An agent never pushes, never publishes, and never silently decides architecture.
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
+45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
+46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
+47. `aep` and `date` record when an artifact's content last changed, are computed rather than typed, and an artifact whose content changed without its stamp changing is detected.
 
 ---
 

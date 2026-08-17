@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 use-when: "auditing what the bootstrap must contain, or porting AEP to a runtime whose entrypoint differs"

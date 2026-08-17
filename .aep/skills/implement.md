@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 kind: skill
@@ -60,6 +60,12 @@ task that *looks* independent is not a member unless the edges say so.
 
 Where the tasks live is this repository's business — an external tracker, or
 `efforts/<effort>/tickets/`. Read `[[references]]` rather than assuming.
+
+**In an external tracker the frontier comes from the recorded query**, which that
+tracker's reference holds along with what carries the effort
+(`[[skills/tasks/labels]]`). Read the edges off what the query returns — never by
+opening every issue and judging from its prose, which is inference wearing a
+reading's clothes.
 
 If the frontier is empty, **say so rather than inventing work.** If everything
 left is blocked, name what blocks it. If the invocation carried a *request*

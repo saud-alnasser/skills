@@ -49,6 +49,24 @@ may name only what exists there.
 
 The suite asserts this over the shipped surfaces.
 
+## Cutting a release is one command
+
+```
+node src/scripts/release.mjs <version>
+```
+
+It sets the version of record, stamps `aep:` and `date:` on **only the artifacts
+whose content actually changed**, updates the baseline in `src/stamps.json`,
+syncs the plugin manifest, and regenerates the adapter.
+
+**Never restamp by hand.** `aep:` is the release an artifact's content last
+changed in, so a sweep that sets every file to the new release destroys the only
+information the field carries — and it hides the defect the field exists to
+expose, because under a sweep a stale stamp and a current one are the same value.
+
+`verify.mjs` compares every shipped artifact against the baseline, so an edit
+that never got released fails the suite by name.
+
 ## Regenerate the adapter whenever a skill or agent changes
 
 ```

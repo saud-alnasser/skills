@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 kind: skill
@@ -67,14 +67,25 @@ directory *outside* `.aep/` says 1.x.
    of one text. A repository file standing at the vacated path is preserved and
    reported instead — read every line of that report, because it is the one
    circumstance in which an upgrade writes into files you own.
-6. **Report declared deviations.** Every deviation recorded under `[[rules]]` is
+6. **Act on the notices the upgrade printed.** A release declares what it needs
+   of the reader where moving files is not enough, and the installer prints
+   exactly the ones for the releases being crossed — most often something
+   repository-owned that an upgrade correctly refuses to touch.
+
+   **A notice is acted on, not read.** Do what it says, in this run. Where it
+   cannot be done here — it needs a decision, a credential, or another skill —
+   **report it as outstanding, naming the release and what is left**. Printing a
+   notice and moving on is how it is missed: the output scrolls, the upgrade
+   reports success, and nothing ever asks again.
+
+7. **Report declared deviations.** Every deviation recorded under `[[rules]]` is
    surfaced with the release it was declared under and how long it has stood.
    *A deviation nobody is reminded of becomes a silent fork.*
-7. **Migrate what the release requires**, applying only migrations newer than the
+8. **Migrate what the release requires**, applying only migrations newer than the
    release the repository declared, and each only after confirming by content
    that the shape it repairs is actually present.
-8. **Regenerate derived state**: `node .aep/scripts/index.mjs`.
-9. **Validate**: `node .aep/scripts/validate.mjs`.
+9. **Regenerate derived state**: `node .aep/scripts/index.mjs`.
+10. **Validate**: `node .aep/scripts/validate.mjs`.
 
 ## Constraints
 
@@ -86,7 +97,8 @@ directory *outside* `.aep/` says 1.x.
 ## Done when
 
 The declared release matches the running one, `validate.mjs` passes, repository
-knowledge is intact, and every deviation and collision has been reported.
+knowledge is intact, every deviation and collision has been reported, and every
+notice the upgrade printed has been done or reported as outstanding.
 
 Coming from 1.x, add: every 1.x file has a recorded outcome, nothing was deleted,
 every proposed `use-when` is listed for confirmation, and the old layer is no

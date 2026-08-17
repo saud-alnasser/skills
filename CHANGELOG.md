@@ -1,5 +1,138 @@
 # Changelog
 
+## 2.3.0
+
+An effort's work is findable in the tracker that holds it, and AEP stops
+inventing vocabulary a tracker already has.
+
+### Added
+
+- **An external task is attributable to its effort by a query the tracker
+  answers natively.** Where tasks live in GitHub, GitLab, Jira, or anything
+  else, exactly one fact has to be carried — which effort the task belongs to —
+  and it has to be carried where the tracker can answer it, not in prose an agent
+  reads issue by issue.
+
+  *Why this was a hole: `policies/execution` computes the frontier from declared
+  edges and forbids inferring independence from a guess. A repository whose work
+  lives in a tracker had no way to ask which issues belong to an effort, so the
+  rule stood with nothing behind it — and the cheapest way to satisfy it was to
+  work serially and say nothing.*
+
+- **`skills/tasks/labels`** — the procedure, reached from `/tasks` when the
+  answer to *where do tasks live* is a tracker. It resolves one fact against one
+  tracker, once, and records the answer so later sessions read it instead of
+  working it out again.
+
+- **Declared notices — what a release asks of the reader.** A release can now
+  declare what must be *checked* when crossing it, and an upgrade reports exactly
+  the notices for the releases actually being crossed. A tree already at the
+  release is shown nothing; a dry run previews them; `/update` acts on each or
+  reports it as outstanding.
+
+  *Why: `MOVES` covers everything a release does to a tree, and nothing a release
+  requires of the reader. That gap is not hypothetical — this very release has
+  one. The reference section below is repository-owned, so an upgrade correctly
+  refuses to write it, and without a notice every existing installation would get
+  the new behaviour and never the section it writes into.*
+
+  Gated by the same predicate as declared moves, so a notice and a move from one
+  release cannot disagree about whether that release is being crossed. Relevance
+  is two release numbers compared — never judged at runtime.
+
+  **Not the changelog.** `CHANGELOG.md` is not payload, so a repository running
+  an upgrade has never received one; shipping the whole history into every
+  installation to deliver two lines is a poor trade for a filter that already
+  existed. A notice is the narrow, actionable subset, and a release with nothing
+  to ask of the reader declares none.
+
+### Changed
+
+- **`aep:` now means the release an artifact's content last changed in** — one
+  meaning for both owners, and computed rather than typed. `date:` answers the
+  same question by the same mechanism.
+
+  It previously meant two things at once. Protocol-owned artifacts were swept to
+  the new release every time, changed or not; repository-owned ones were left
+  alone and so already recorded when they last changed. The specification
+  described only the first, and nothing declared the split.
+
+  *Why it was worth changing rather than automating: under a sweep the field said
+  the same thing on every artifact, so it distinguished nothing — and an artifact
+  edited without being restamped was undetectable, because a stale stamp and a
+  current one were the same value. Only `protocol.md` is exempt, and it is exempt
+  for a reason: it is the tree's release marker, read by the installer to decide
+  which moves and notices apply.*
+
+- **`node src/scripts/release.mjs <version>` cuts a release.** Version of record,
+  stamps for what actually moved, the baseline in `src/stamps.json`, plugin
+  manifest, and adapter — one command, so the steps cannot be performed in part.
+  Running it twice changes nothing the second time.
+
+  The baseline is a committed hash per shipped artifact rather than git tags:
+  `verify.mjs` is the only thing that catches a broken build here, and making it
+  depend on tags being present in whatever checkout runs it puts the suite at the
+  mercy of how the repository was cloned.
+
+  `verify.mjs` now compares every shipped artifact against that baseline, so
+  **an edit that never got released fails by name** — the defect the old scheme
+  could not see at all.
+
+- **Native mechanism before label.** The resolution is a ladder: a first-class
+  feature of the tracker, then an existing label that already serves the fact,
+  then — only then — a new label, named in the style the tracker's own labels are
+  named in. **A label is never created for a fact the tracker already models.**
+
+  On a tracker that models milestones, dependencies and issue state itself, every
+  fact lands on the first rung and **no label is created at all.** That is the
+  intended outcome, not a degenerate one.
+
+- **`status` and dependency edges are excluded, deliberately.** An issue's own
+  state already carries open and resolved, and a second copy disagrees with the
+  first as soon as somebody closes an issue from the tracker's interface. An edge
+  is not set membership: a `blocked-by-42` marker has to be withdrawn when 42
+  closes, and nothing in the tracker knows to do it — so it is wrong exactly when
+  it matters.
+
+- **The GitHub and GitLab references, rewritten against primary sources.** Both
+  now say what the tracker models natively, which commands reach it, and where
+  the gaps are.
+
+  GitHub carries every fact itself — an effort is an issue and its tasks are that
+  issue's sub-issues, gates are issue dependencies, state carries a close reason,
+  and types are native — so the frontier is *computed*: one query returns the
+  effort's open issues with `blockedBy` attached.
+
+  Two gaps are stated rather than smoothed over. There is no `gh milestone`
+  command, which is what makes the hierarchy the default and the milestone the
+  alternative — creating a parent issue is `gh issue create`, creating a milestone
+  is a drop to the REST API. And there is no `--parent` filter on `gh issue
+  list`: `parent` comes back in `--json` and is narrowed client-side with `--jq`,
+  *after* `gh` has truncated the page. The reference says plainly what that costs
+  — a truncated page filters to a short list that reads as a complete answer.
+
+  GitLab has neither. `glab` has no subcommand for issue links at all, and
+  `blocks` / `is blocked by` are Premium and Ultimate, so the edge is carried in
+  the issue description — named in the reference as a **hand-maintained
+  convention rather than state**, because that is what it is. GitLab also has no
+  close reason, which makes `obsolete` the one fact on either tracker with no
+  native carrier, and the single place a derived label is genuinely the answer.
+
+- **What body text does, and does not do** is now written down on the GitHub
+  side. Only the closing keywords in a pull request body drive anything;
+  `Blocked by #123` in a body does **nothing at all**, and `- [ ] #123` is a
+  checklist item rather than a relationship.
+
+  *Why it earned a table: it fails silently. The sentence reads correctly to
+  every human who sees it, the tracker holds nothing, and the frontier query
+  returns that task as ready to start.*
+
+### Fixed
+
+- The GitLab reference had been shipping `--description-file`, which is not among
+  `glab issue create`'s flags. A seeded command the repository does not have is
+  worse than no reference at all, because it will be trusted.
+
 ## 2.2.0
 
 Governance splits into two named primitives, and the nine shipped rules become
