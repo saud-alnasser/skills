@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -442,6 +442,14 @@ AEP MUST NOT require a local ticket system. Tickets may live in GitHub Issues, J
 If local tickets are used they live at `.aep/efforts/<effort>/tickets/`, declare `status`, and MAY declare `blocked-by` and `part-of`.
 
 AEP MUST NOT duplicate an external ticket system for protocol completeness. A local mirror of an external ticket is exactly the hidden database §2 forbids.
+
+**Where tasks live in an external system, that task MUST be attributable to its effort by a query the system answers natively.** Listing every open issue and judging from prose does not satisfy this. *Why: the frontier is computed from declared edges (§20.2), and an implementation that cannot ask which issues belong to an effort has no graph to read — so the prohibition on inferring independence has nothing behind it.*
+
+Exactly one fact is required: **which effort the task belongs to.** `status` MUST NOT be carried separately, because the issue's own state already carries it and a second copy disagrees with the first as soon as the issue is closed outside the tool. A dependency edge MUST NOT be carried as set membership, because a marker that must be withdrawn when the gate clears is wrong precisely when it matters.
+
+**A conforming implementation MUST NOT create a label for a fact the tracker already models.** Where a first-class feature of the system answers the fact — a milestone, an epic, a parent, a dependency — that feature answers it. What is native differs per system, so it is established per system and never assumed; the resolution is recorded in the repository's reference for that tool (§11) rather than rederived per session.
+
+None of this is mirroring: the fact is held by the tracker in the tracker's own mechanism, and nothing about the task is written into `.aep/`.
 
 ## 16. Skills
 
@@ -947,6 +955,7 @@ A conforming implementation preserves all of the following:
 42. Shipped text cites only what resolves where it is read.
 43. An agent never pushes, never publishes, and never silently decides architecture.
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
+45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
 
 ---
 

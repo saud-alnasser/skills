@@ -362,6 +362,11 @@ section('skills', () => {
   assert('skills/update branches to the 1.x migration rather than upgrading in place', () =>
     readSrc('skills', 'update.md').includes('skills/update/migration'));
 
+  assert('skills/implement reads an external frontier from the recorded query', () =>
+    /frontier comes from the recorded query/.test(readSrc('skills', 'implement.md')));
+  assert('skills/tasks routes to the tracker note before writing external tasks', () =>
+    readSrc('skills', 'tasks.md').includes('skills/tasks/labels'));
+
   // §31.1 — the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
   // success, so nothing downstream notices.
@@ -417,6 +422,40 @@ section('skill notes', () => {
     assert(`${rel} is linked from skills/${owner}.md — an unlinked note is unreachable`, () =>
       linkedBy.get(owner)?.has(target) === true);
   }
+
+  // The tracker note carries the whole external-task procedure, and each of these
+  // is a step that reads as optional the moment its sentence goes missing.
+  const labels = readSrc('skills', 'tasks', 'labels.md');
+
+  assert('the tracker note orders the ladder: native, then existing, then new', () => {
+    const native = labels.indexOf('a first-class feature of this tracker');
+    const existing = labels.indexOf('an existing label that already serves it');
+    const created = labels.indexOf('a new label');
+    if (native < 0 || existing < 0 || created < 0) throw new Error('a rung is missing');
+    if (!(native < existing && existing < created)) {
+      throw new Error('the rungs are present but out of order');
+    }
+    return true;
+  });
+  assert('the tracker note forbids a label for what the tracker models natively', () =>
+    /A label is never created for a fact the tracker models natively/.test(labels));
+  assert('the tracker note requires a native feature to be queryable, not merely adjacent', () =>
+    /A native feature counts only if it answers the same question/.test(labels));
+  assert('the tracker note shows one fact naming differently in two trackers', () =>
+    /effort\/<slug>/.test(labels) && /Effort: <slug>/.test(labels));
+  assert('the tracker note allows for creating no label at all', () =>
+    /\*\*no label is created\*\*/.test(labels));
+  assert('the tracker note requires the resolution to be recorded, then read', () =>
+    /Later sessions read it\. They do not rederive it\./.test(labels));
+  assert('the tracker note writes the section where the reference has none', () =>
+    /Where the reference has no such section, write it/.test(labels));
+  assert('the tracker note gates creating a label or a milestone', () =>
+    /Creating a label or a milestone publishes/.test(labels) &&
+    /exact strings, never a summary/i.test(labels));
+  assert('the tracker note stops on a refused permission rather than sliding down the ladder', () =>
+    /Approval is not permission/.test(labels));
+  assert('the tracker note separates resolving the mechanism from applying it per effort', () =>
+    /Resolve once per tracker; apply every effort/.test(labels));
 
   const wrapped = renderClaudeAdapter(SRC, 'plugin').map((f) => f.relativePath);
   assert('no adapter publishes a note as a command', () =>
@@ -503,6 +542,27 @@ section('policies', () => {
   assert('policies/execution requires independence to be read, not inferred', () =>
     /never infer independence/i.test(execution));
 
+  // §15.4 — the external half of the same rule. Without these, a repository whose
+  // work lives in a tracker is governed by the frontier rule and given no way to
+  // satisfy it, which reads exactly like being governed.
+  // Pinned with `\s+` between words rather than literal spaces: the payload is
+  // wrapped at 80 columns, so any phrase long enough to be worth pinning is long
+  // enough to have a newline land in the middle of it.
+  assert('policies/execution requires an external task to be findable in its tracker', () =>
+    /attributable to its effort by a query the\s+tracker\s+answers natively/.test(execution));
+  assert('policies/execution requires exactly one fact of an external task', () =>
+    /Exactly one fact is required/.test(execution));
+  assert('policies/execution keeps status out of it, and says why', () =>
+    /`status`\s+is not carried separately/.test(execution) &&
+    /closes\s+an issue from the tracker's own interface/.test(execution));
+  assert('policies/execution keeps a dependency edge out of it, and says why', () =>
+    /dependency edge is not carried as set membership/.test(execution) &&
+    /nothing in the tracker knows to\s+do it/.test(execution));
+  assert('policies/execution prefers what the tracker already models', () =>
+    /What the tracker already models, the tracker carries/.test(execution));
+  assert('policies/execution separates carrying the fact from mirroring', () =>
+    /None of this is mirroring/.test(execution));
+
   const authority = readSrc('policies', 'authority.md');
   assert('policies/authority places policies above rules', () =>
     /policies\s+→\s+rules/.test(authority));
@@ -541,6 +601,14 @@ section('seeds', () => {
       /This file is yours/.test(artifact.body));
     assert(`${seed.source} targets a repository-owned directory`, () =>
       /^(contexts|references|rules)\//.test(seed.target));
+  }
+
+  // The resolution has to land somewhere the next session reads, and for the two
+  // forges that ship a reference, that section is seeded rather than left to be
+  // invented per repository.
+  for (const forge of ['github', 'gitlab']) {
+    assert(`seed/references/${forge}.md carries the section a resolution is recorded in`, () =>
+      readSrc('seed', 'references', `${forge}.md`).includes('## AEP tasks in this tracker'));
   }
 
   // A seed file nothing declares ships in the distribution and installs

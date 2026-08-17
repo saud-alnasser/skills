@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 kind: policy
@@ -107,6 +107,41 @@ declaration is not making one.
 
 Parallelism MUST NOT compromise governance, the specification, repository
 integrity, or acceptance criteria.
+
+## Where the tasks are not in this repository
+
+Tasks may live in an external tracker, and **AEP never mirrors one into `.aep/`**
+— a local copy of an external ticket is exactly the hidden database this protocol
+does without. So the facts the tree would otherwise have held are held **by the
+tracker**, in a form the tracker can answer.
+
+**An external task MUST be attributable to its effort by a query the tracker
+answers natively** — never by listing every open issue and judging from prose.
+
+*Why: the frontier above is computed from declared edges. An agent that cannot
+ask which issues belong to this effort has no graph to read, so the rule against
+inferring independence stands with nothing behind it — and the cheapest way to
+satisfy it becomes working serially and saying nothing.*
+
+**Exactly one fact is required: which effort the task belongs to.** Two others
+are deliberately excluded, and both exclusions are load-bearing:
+
+- **`status` is not carried separately.** The issue's own state already says open
+  or resolved. A second copy disagrees with the first the moment somebody closes
+  an issue from the tracker's own interface.
+- **A dependency edge is not carried as set membership.** Belonging to a group
+  and waiting on another task are different claims. A `blocked-by-42` marker has
+  to be removed by somebody when 42 closes, and nothing in the tracker knows to
+  do it — so it is wrong exactly when it matters.
+
+**What the tracker already models, the tracker carries.** Where a first-class
+feature answers the fact, that feature answers it, and nothing is created beside
+it. What is native differs per tracker, so it is established per tracker and
+never assumed.
+
+**None of this is mirroring.** The fact stays in the tracker, expressed in the
+tracker's own mechanism, read by the same people and tools that already read it.
+Nothing about the task is written into `.aep/`.
 
 ## Claiming, before dispatching
 

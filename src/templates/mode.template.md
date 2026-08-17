@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 use-when: "defining a way of working, where the eight shipped modes do not fit"

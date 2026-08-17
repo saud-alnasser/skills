@@ -1,5 +1,5 @@
 ---
-aep: 2.2.0
+aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 kind: skill
@@ -23,6 +23,10 @@ second definition of the change.
    forge or tracker in use; the human. **Never create a local ticket system in a
    repository that already has one** — `[[policies/execution]]` and the
    protocol both forbid mirroring an external tracker.
+
+   **Where the answer is an external tracker, go to `[[skills/tasks/labels]]`
+   before writing anything.** The effort has to be findable in that tracker, and
+   what carries it is the tracker's own to answer — settled once, then read.
 3. **Decompose by acceptance criterion**, not by file or by layer. A task that
    maps to no criterion is either scope nobody asked for or a criterion the spec
    is missing — resolve which before writing it.
