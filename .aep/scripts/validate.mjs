@@ -15,6 +15,7 @@ import {
   KINDS,
   MODES,
   OWNERS,
+  REPORT_FORMS,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
@@ -91,6 +92,24 @@ function checkArtifact(root, file) {
   }
   if (fields.paths !== undefined && !Array.isArray(fields.paths)) {
     fail(rel, 'paths must be a YAML array');
+  }
+
+  // `report` says which form a skill's turn report takes. It is forbidden on a
+  // note beside a skill: a note is reached from inside a run rather than
+  // invoked, so declaring a form would claim something untrue about it.
+  const isSkill = /^skills\/[^/]+\.md$/.test(rel);
+  if (isSkill) {
+    if (fields.report === undefined) {
+      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')} — ` +
+        'without it, what this skill tells the human has no defined shape');
+    } else if (!REPORT_FORMS.includes(fields.report)) {
+      fail(rel, `report is "${fields.report}" — must be one of: ${REPORT_FORMS.join(', ')}`);
+    }
+  } else if (fields.report !== undefined) {
+    const note = /^skills\/[^/]+\/.+\.md$/.test(rel);
+    fail(rel, note
+      ? 'report is legal only on a skill — a note is reached from one and opens no report of its own'
+      : 'report is legal only on a skill');
   }
 
   // `use-when` is required where discovery depends on it.

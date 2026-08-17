@@ -1,8 +1,9 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
+report: full
 use-when: "this session is ending or has run long, and the next session must pick the work up"
 ---
 
@@ -17,27 +18,27 @@ A long thread stops reasoning well before it stops working, and the tell is
 subtle: it keeps answering, just worse. Handing off is the deliberate exit —
 compaction keeps you here and loses the verbatim history; a handoff forks.
 
-## First, put durable knowledge where it belongs
+## Procedure
 
-**A handoff is not a place to store knowledge** (`[[protocol]]`: no hidden
-memory). Before writing it, move anything durable to its home:
+1. **Put durable knowledge where it belongs, first.** A handoff is not a place
+   to store knowledge (`[[protocol]]`: no hidden memory). Before writing it,
+   move anything durable to its home:
 
-| What you learned | Where it goes |
-| --- | --- |
-| a fact established from sources | `efforts/<e>/evidence/research/` |
-| an experiment's outcome | `efforts/<e>/evidence/prototypes/` |
-| a change to what is being built | the effort's `spec.md` |
-| how an area of the repository works | `contexts/` |
-| how a tool is operated here | `references/` |
-| a requirement on behaviour | `rules/` |
+   | What you learned | Where it goes |
+   | --- | --- |
+   | a fact established from sources | `efforts/<e>/evidence/research/` |
+   | an experiment's outcome | `efforts/<e>/evidence/prototypes/` |
+   | a change to what is being built | the effort's `spec.md` |
+   | how an area of the repository works | `contexts/` |
+   | how a tool is operated here | `references/` |
+   | a requirement on behaviour | `rules/` |
 
-**What is left over is what a handoff is for**: the state of *this session's*
-work, which belongs to no artifact.
+   **What is left over is what a handoff is for**: the state of *this session's*
+   work, which belongs to no artifact.
 
-## The handoff
-
-Write to a scratch location outside the repository — a handoff is session state,
-not repository knowledge, and committing one puts a conversation in the history.
+2. **Write the handoff** to a scratch location outside the repository — a
+   handoff is session state, not repository knowledge, and committing one puts a
+   conversation in the history.
 
 ```markdown
 # Handoff — <effort or task>

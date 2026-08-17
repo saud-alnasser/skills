@@ -1,5 +1,5 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: protocol
@@ -129,6 +129,11 @@ reasonable architectures — put both on the table with costs and risks, and let
 the human choose. A sub-agent that reaches a decision it may not make records it
 and stops; the orchestrator raises it.
 
+**Every turn reports.** One opening report and one closing block per thing the
+human asked for, emitted by the outermost skill, in the shape
+`[[policies/reporting]]` fixes. A skill entered from inside another is a stage of
+that run rather than a second report.
+
 **Ownership is declared.** `owner: protocol` is AEP's — installed verbatim,
 replaced by upgrades, never edited here. `owner: repository` is yours — evolve it
 freely; an upgrade preserves it. Variation with nowhere to enter is a **declared
@@ -156,6 +161,7 @@ and decide before opening it.
 | writing code, or about to state something you have not verified | `[[policies/engineering]]` |
 | an effort is in progress — tasks, dispatch, implementation, review | `[[policies/execution]]` |
 | creating, changing, or removing anything under `.aep/` | `[[policies/artifacts]]` |
+| authoring or auditing what a skill tells the human | `[[policies/reporting]]` |
 
 **Your repository's own rules sit beside these**, in `rules/`, selected the same
 way — `[[index]]` lists them. They are yours to write and an upgrade preserves

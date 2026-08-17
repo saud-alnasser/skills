@@ -3,7 +3,7 @@ aep: 2.3.0
 owner: repository
 date: 2026-08-17
 kind: spec
-status: accepted
+status: implemented
 ---
 
 # Problem
@@ -87,7 +87,9 @@ changes.
    **The standing slot is one label filled with what each skill already
    verifies** — never a new check. `/implement` fills it with the marker against
    `HEAD` and the tree, `/review` with the pinned merge-base and the subject's
-   size, `/commit` with what is staged, `/research` with *nothing to verify*.
+   size, `/commit` with the fact that the stages ran — position, tests, review
+   outcomes, which is what its own step 1 establishes — and `/research` with
+   *nothing to verify*.
    Thirteen skills read no position today and none of them starts. *Why the label
    is fixed but its content is not: a slot that can be omitted is the crack
    uniformity leaks out of — the human stops reading by position and starts

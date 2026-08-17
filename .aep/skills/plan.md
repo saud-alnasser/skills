@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [plan]
+report: full
 use-when: "a spec is settled and the technical approach is not yet decided"
 ---
 
@@ -17,11 +18,11 @@ deciding architecture by accident.
 
 ## Procedure
 
-1. Read the effort's `spec.md`. If `status:` is still `draft` and material
+1. **Read the spec.** The effort's `spec.md`. If `status:` is still `draft` and material
    questions are open, go back to `[[skills/refine]]` first.
 2. **Read the code you intend to change** — not the parts you remember, the parts
    you will touch. `[[policies/engineering]]`: names are not proof.
-3. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
+3. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]`, and any existing evidence for this effort.
 4. **Identify the technical uncertainty** and resolve what is material —
    `[[skills/research]]` for facts, `[[skills/prototype]]` for feel.
@@ -47,7 +48,7 @@ deciding architecture by accident.
    `[[skills/plan/design-it-twice]]` is how to generate ones that genuinely
    disagree. Where the approach turns on **where a module boundary goes**,
    `[[skills/plan/depth]]` has the vocabulary and the rules for moving one.
-7. Write the approach into `spec.md` — using `[[templates/spec.template]]` for the
+7. **Write the approach** into `spec.md` — using `[[templates/spec.template]]` for the
    headings — and set `status: accepted` once the human has agreed.
 
 ## Output

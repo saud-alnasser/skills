@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [refine]
+report: full
 use-when: "a spec exists but reads as ambiguous, under-constrained, or too agreeable"
 ---
 
@@ -17,8 +18,8 @@ spine.
 
 ## Procedure
 
-1. Read `efforts/<effort>/spec.md` in full.
-2. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]` and
+1. **Read the spec.** `efforts/<effort>/spec.md`, in full.
+2. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]` and
    `[[references]]`.
 3. **Find the weak points.** Work down this list — it is ordered by how expensive
    the defect is to discover later:
@@ -35,7 +36,7 @@ spine.
 
 4. **Ask one question at a time**, with real options and their consequences. A
    list of eight questions gets one answer to the easiest.
-5. Where discussion cannot settle it, use the right instrument instead:
+5. **Reach for the right instrument.** Where discussion cannot settle it:
    `[[skills/research]]` for a fact, `[[skills/prototype]]` for a feel,
    `[[skills/domain]]` when the disagreement is really about words.
 6. **Write every answer into the spec** as you get it. An answer that lives only

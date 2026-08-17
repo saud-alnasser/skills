@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [plan]
+report: full
 use-when: "a spec is accepted and needs to become executable work"
 ---
 
@@ -16,7 +17,7 @@ second definition of the change.
 
 ## Procedure
 
-1. Read the effort's `spec.md` — requirements, acceptance criteria, and the
+1. **Read the spec.** The effort's `spec.md` — requirements, acceptance criteria, and the
    technical sections if `[[skills/plan]]` ran.
 2. **Find where tasks live.** Ask the repository, in this order: an existing
    `efforts/<effort>/tickets/` directory; a `[[references]]` describing the
@@ -39,11 +40,11 @@ second definition of the change.
 4. **Declare dependencies explicitly.** The task graph is the only thing that
    licenses parallel work (`[[policies/execution]]`); an edge you leave implicit
    becomes a collision later.
-5. Write the tasks.
-6. Regenerate the index — `node .aep/scripts/index.mjs`. Local tickets earn a
+5. **Write the tasks.**
+6. **Regenerate the index** — `node .aep/scripts/index.mjs`. Local tickets earn a
    section there listing each one's effort, `status`, and `blocked-by`, which is
    how a later session finds the frontier without reading every ticket.
-7. Report the graph: what can start now, what is blocked, and on what.
+7. **Report the graph**: what can start now, what is blocked, and on what.
 
 ## What a task must expose
 

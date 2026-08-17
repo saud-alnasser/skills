@@ -1,5 +1,5 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: policy
@@ -135,6 +135,7 @@ Situational fields:
 | `blocked-by` | tickets only | ticket identifiers this one waits on |
 | `part-of` | tickets only | the effort this ticket belongs to |
 | `use-when` | **required** on every policy, rule, reference, and context | one sentence |
+| `report` | **required** on every skill; never on a note beside one | `full` or `short`, assigned by the test in `[[policies/reporting]]` |
 
 ### `use-when` states a trigger, never a topic
 
