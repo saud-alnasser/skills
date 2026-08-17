@@ -52,6 +52,15 @@ export const MODES = [
   'test',
 ];
 
+/**
+ * Values the `report` field may take — the form a skill's turn report is in.
+ *
+ * Declared per skill, once, when the skill is authored: `full` where it writes
+ * to the repository, dispatches, or decides on the human's behalf. Never
+ * selected during a run, so the human knows the shape before the run starts.
+ */
+export const REPORT_FORMS = ['full', 'short'];
+
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];

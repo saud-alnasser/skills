@@ -16,6 +16,7 @@ owner: repository
 date: <YYYY-MM-DD>
 kind: skill
 mode: [<the mode this skill enters>]
+report: <full where this writes, dispatches, or decides on the human's behalf; short otherwise>
 use-when: "<the situation that calls for this capability>"
 ---
 
@@ -63,7 +64,8 @@ What this covers, and the neighbouring branch it is not.
 ```
 
 A note declares no `mode` — the skill reaching it has already entered one — and
-never governs. **An unlinked note is unreachable**, so add the link in the same
+**no `report`**, because it is reached from inside a run rather than invoked and
+opens no report of its own (`[[policies/reporting]]`). It never governs. **An unlinked note is unreachable**, so add the link in the same
 change. A repository may add one beside a shipped skill: declare
 `owner: repository`, and link it from a rule or context the repository owns.
 

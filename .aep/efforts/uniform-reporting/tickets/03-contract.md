@@ -3,7 +3,7 @@ aep: 2.3.0
 owner: repository
 date: 2026-08-17
 kind: ticket
-status: open
+status: resolved
 part-of: uniform-reporting
 blocked-by: [01]
 ---
@@ -21,9 +21,10 @@ all know it — before any skill declares one.
 - [ ] `src/scripts/contract.mjs` exports `REPORT_FORMS = ['full', 'short']`, in
       the idiom of `MODES` and `OWNERS` beside it, with the one-line comment
       those carry.
-- [ ] `src/scripts/validate.mjs` requires `report:` on every **top-level**
-      `skills/*.md`, and rejects a value outside `REPORT_FORMS` naming the file
-      and the bad value.
+- [ ] `src/scripts/validate.mjs` rejects a value outside `REPORT_FORMS` on a
+      top-level `skills/*.md`, naming the file and the bad value.
+      **Requiring the field is ticket 04's**, landed in the same change that
+      gives all seventeen skills a value — see Notes.
 - [ ] `src/scripts/validate.mjs` **rejects `report:` on a skill note** —
       `skills/<skill>/<note>.md`. A note is not invoked, so declaring a form
       claims something untrue about it.
@@ -64,3 +65,12 @@ pattern), `src/policies/artifacts.md` (`### What it must contain`),
 The alternative — a constant in `contract.mjs` beside `MODELESS_SKILLS` — was
 considered and rejected in [[efforts/uniform-reporting/spec]]: it puts the fact
 in AEP's code, where a repository's own skill cannot declare one.
+
+**Task-boundary correction, made while building this.** This ticket originally
+required the field here. Doing so left the tree failing validation on all
+seventeen skills until ticket 04 landed — which contradicts the plan's own
+reason for this ordering: *the field becomes legal before any skill declares it,
+so the tree never validates against a rule it predates*. The requirement moved
+to ticket 04, where it lands in the same change that gives every skill a value,
+and both commits stay green. The architecture is unchanged; only the line
+between two tasks moved.

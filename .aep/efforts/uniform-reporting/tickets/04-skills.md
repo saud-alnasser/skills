@@ -22,6 +22,12 @@ No skill gains, loses, or reorders a step.
 - [ ] All seventeen declare `report:`, and the value matches the test: `full` for
       the fourteen that write to the repository, dispatch, or decide on the
       human's behalf; `short` for `help`, `survey`, and `domain`.
+- [ ] **`src/scripts/validate.mjs` turns the requirement on in this same
+      change** — a skill declaring no `report:` becomes a failure naming that
+      skill. Ticket 03 made the field legal and checked its value; requiring it
+      before every skill had one would have left the tree failing against a rule
+      it predates. Fire-check it: remove the field from one skill, watch the
+      failure name that skill, restore.
 - [ ] Every full-form skill matches exactly one of the two shapes:
       `^## (\d+) — (.+)$` — today `implement`, `review`, `commit` — or
       `^(\d+)\. \*\*(.+?)[.:]?\*\*` under `## Procedure`.

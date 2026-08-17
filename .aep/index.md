@@ -140,8 +140,8 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/tracker-labels/tickets/06-verify]] test(verify): the shipped surfaces are asserted against the new requirement | tracker-labels | resolved | 01, 02, 03, 04 |
 | [[efforts/tracker-labels/tickets/07-release]] chore(dist): release 2.3.0 and reinstall this repository's tree | tracker-labels | resolved | 01, 02, 03, 04, 06 |
 | [[efforts/uniform-reporting/tickets/01-policy]] feat(policies): what a turn tells the human becomes governance | uniform-reporting | resolved | — |
-| [[efforts/uniform-reporting/tickets/02-bootstrap]] feat(protocol): the bootstrap says that every turn reports | uniform-reporting | open | 01 |
-| [[efforts/uniform-reporting/tickets/03-contract]] feat(contract): a skill declares the form it reports in | uniform-reporting | open | 01 |
+| [[efforts/uniform-reporting/tickets/02-bootstrap]] feat(protocol): the bootstrap says that every turn reports | uniform-reporting | resolved | 01 |
+| [[efforts/uniform-reporting/tickets/03-contract]] feat(contract): a skill declares the form it reports in | uniform-reporting | resolved | 01 |
 | [[efforts/uniform-reporting/tickets/04-skills]] refactor(skills): every skill declares its form and names its stages | uniform-reporting | open | 03 |
 | [[efforts/uniform-reporting/tickets/05-absorption]] refactor(skills): the reporting each skill invented is absorbed into the contract | uniform-reporting | open | 04 |
 | [[efforts/uniform-reporting/tickets/06-specification]] docs(specs): the specification defines what a turn tells the human | uniform-reporting | open | 01, 03 |
