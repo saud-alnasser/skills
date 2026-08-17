@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.5.0
+**Version:** 2.5.1
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -166,7 +166,7 @@ A runtime's own entrypoint — `AGENTS.md`, `CLAUDE.md`, or the runtime's equiva
 
 Every artifact declares an owner, and the owner is read off the declaration — never inferred from a directory.
 
-**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is the release it ships in — **every release stamps every protocol-owned artifact it ships**, not only the ones it changed — and an upgrade compares it. *Why the whole tree moves together: the question an upgrade asks is whether an installed artifact came from the release the tree declares, and a field carrying per-artifact provenance answers a different question at the cost of the one being asked. Provenance is what the changelog and the history are for.*
+**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is **the release its content last changed in** — a release stamps only the artifacts it changed (§8), with `protocol.md` the single exception (§6), because the tree's version is read from that file alone. **An upgrade establishes provenance by comparing content**: a protocol-owned artifact that differs from the release it declares is the defect to report (§31). *Why not by stamp: a field that answered "did this come from this release" would have to be swept every release, and a swept field cannot also answer "when did this last change" — under a sweep a stale stamp and a current one are the same value, which is the one defect §8 requires an implementation to detect.*
 
 **`owner: repository`** — the artifact describes this repository. It evolves with the repository, and an upgrade MUST preserve it unless an explicit migration applies. A protocol upgrade MUST NEVER silently overwrite repository-owned governance.
 

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.5.1
+
+### Fixed
+
+- **`policies/artifacts` said the opposite of what a release does.** It claimed
+  every release stamps every protocol-owned artifact, and that an upgrade
+  compares that field to decide whether a file came from the release. Both were
+  wrong: `release.mjs` stamps only what changed, nothing anywhere reads an
+  individual artifact's `aep:` for provenance, and `/update` detects a locally
+  edited file by comparing content against the release it declares.
+
+  The policy now says what is true — `aep:` is the release an artifact's content
+  last changed in, `protocol.md` alone is stamped every release because the
+  tree's version is read from it, and provenance is established by comparing
+  content. §7 of the specification carried the same error and is corrected with
+  it; §6 and §8 already said this.
+
+  *Why it mattered: acting on the policy meant sweeping every artifact to the
+  current release, which destroys the only thing the field says per artifact and
+  makes the suite's stale-stamp guard true by construction.*
+
+- **A section of the verification suite was aborting silently.** A helper was
+  declared below a section that used it, so `policies` threw before its
+  assertions ran — and an aborted section skips everything after the throw. It
+  was hiding **14** checks. The helper moved up with the others, and the comment
+  there now says why that position is not a style preference.
+
 ## 2.5.0
 
 A monorepo can namespace its contexts by project.

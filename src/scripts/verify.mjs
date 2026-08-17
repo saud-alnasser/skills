@@ -108,6 +108,20 @@ function assert(because, condition, { silent = false } = {}) {
 }
 
 const readSrc = (...parts) => fs.readFileSync(path.join(SRC, ...parts), 'utf8');
+
+/**
+ * Prose with line wrapping and blockquote markers flattened.
+ *
+ * A guard should pin the meaning, not where a line happened to break: a phrase
+ * that a reflow would split makes the suite fail on a change that altered
+ * nothing, which teaches the next author to weaken the guard.
+ *
+ * Declared up here with the other helpers rather than beside its first caller.
+ * Section bodies run as they are declared, so a helper defined below a section
+ * that uses it is a temporal-dead-zone abort — and an aborted section skips
+ * every assertion after the throw, which reads as a smaller failure than it is.
+ */
+const flat = (text) => text.replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
 const inSrc = (...parts) => fs.existsSync(path.join(SRC, ...parts));
 const listMarkdown = (dir) =>
   inSrc(dir) ? walk(path.join(SRC, dir)).filter((f) => f.endsWith('.md')) : [];
@@ -599,6 +613,22 @@ section('policies', () => {
   assert('version-control is a repository-owned seed, not protocol governance', () =>
     inSrc('seed', 'rules', 'version-control.md'));
 
+  // What `aep:` answers. The policy said the opposite until 2.5.1 — that every
+  // release stamps every protocol-owned artifact — which contradicted §6, §8,
+  // release.mjs, and the stale-stamp guard above, and described an upgrade check
+  // nothing implements. Pinned so it cannot drift back, in both directions:
+  // saying the field records the last content change, and not saying the sweep.
+  const artifacts = flat(readSrc('policies', 'artifacts.md'));
+  assert('policies/artifacts says aep records when content last changed', () =>
+    /the release its content last changed in/.test(artifacts));
+  assert('policies/artifacts stamps only what changed, protocol.md excepted', () =>
+    /stamps only the artifacts that actually changed/.test(artifacts) &&
+    /`protocol\.md` is the one exception/.test(artifacts));
+  assert('policies/artifacts does not claim a release sweeps every artifact', () =>
+    !/every release stamps every/.test(artifacts));
+  assert('policies/artifacts establishes provenance by comparing content', () =>
+    /establishes provenance by comparing content/.test(artifacts));
+
   // Two statements from the absorbed rules that carry the most weight, pinned by
   // name so a rewrite of the surrounding prose cannot quietly drop them.
   const execution = readSrc('policies', 'execution.md');
@@ -673,15 +703,6 @@ function stageNames(text) {
   const stages = [...body.matchAll(/^(\d+)\. \*\*(.+?)[.:]?\*\*/gm)].map((m) => m[2].trim());
   return { stages, total, shape: 'procedure' };
 }
-
-/**
- * Prose with line wrapping and blockquote markers flattened.
- *
- * A guard should pin the meaning, not where a line happened to break: a phrase
- * that a reflow would split makes the suite fail on a change that altered
- * nothing, which teaches the next author to weaken the guard.
- */
-const flat = (text) => text.replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
 
 section('reporting', () => {
   const policy = readSrc('policies', 'reporting.md');
