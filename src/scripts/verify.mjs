@@ -39,6 +39,7 @@ import {
   BUILD_ONLY_SCRIPTS,
   GITIGNORE_SOURCE,
   MOVES,
+  NOTICES,
   PAYLOAD_DIRS,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
@@ -137,6 +138,17 @@ const release = (value) => {
  * Parsed rather than string-compared, so a malformed stamp fails as a bad
  * release rather than passing as an unequal string.
  */
+/** Whether `a` precedes `b` — the installer's notice and move gate, mirrored. */
+const precedesRelease = (a, b) => {
+  const left = release(a);
+  const right = release(b);
+  if (!left || !right) return false;
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] !== right[i]) return left[i] < right[i];
+  }
+  return false;
+};
+
 const stampsRelease = (value) => {
   const parsed = release(value);
   const current = release(specVersion);
@@ -1242,6 +1254,54 @@ section('install fixture', () => {
       throw new Error('reported a collision against a name this release already vacated');
     }
     return fs.existsSync(mine);
+  });
+
+  // §31 — notices. The negative case is the one that matters: a filter matching
+  // every tree reads exactly like a filter that works, and every reader of a
+  // current tree would be told to go and check something already true.
+  assert('an upgrade reports the notices for the releases it crosses', () => {
+    if (!/\d+ things? to check/.test(upgraded.output)) throw new Error('no notices reported');
+    for (const notice of NOTICES) {
+      if (!precedesRelease(PRE_MOVE_RELEASE, notice.since)) continue;
+      const opening = notice.check.split(/\s+/).slice(0, 4).join(' ');
+      if (!upgraded.output.includes(opening)) throw new Error(`${notice.since} not reported`);
+    }
+    return true;
+  });
+
+  assert('a tree already at this release is shown no notices', () => {
+    const current = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-nonotice-'));
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', current],
+      { stdio: 'ignore' });
+    const output = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', current, '--update'],
+      { encoding: 'utf8' },
+    );
+    if (/to check/.test(output)) throw new Error('told a current tree to go and check something');
+    return true;
+  });
+
+  assert('every declared notice names a real release and says what to check', () =>
+    NOTICES.every((notice) => release(notice.since) !== null && isNonEmptyString(notice.check)));
+
+  // Pinned on the file it names and the reason it exists, not on the word
+  // "tracker" — which appears four times in this notice, so a looser test passes
+  // on a notice that has lost its actual subject.
+  assert('the release that changed the tracker references declares a notice for it', () =>
+    NOTICES.some((notice) => notice.since === specVersion &&
+      /references\/github\.md/.test(notice.check) && /re-seed/.test(notice.check)));
+
+  assert('skills/update acts on a notice rather than printing it', () => {
+    const update = readSrc('skills', 'update.md');
+    return /A notice is acted on, not read/.test(update) &&
+      /report it as outstanding/.test(update);
+  });
+
+  assert('a dry run previews the notices as well as the repairs', () => {
+    const preview = legacyTree({ dryRun: true });
+    if (!/to check/.test(preview.output)) throw new Error('a dry run hid the notices');
+    return true;
   });
 
   assert('a dry run previews the repairs a real run would make', () => {

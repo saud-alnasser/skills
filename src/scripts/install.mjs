@@ -21,6 +21,7 @@ import { writeClaudeAdapter } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
   MOVES,
+  NOTICES,
   PAYLOAD_DIRS,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
@@ -31,7 +32,7 @@ import {
 
 const report = {
   written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [],
-  moved: [], collided: [], relinked: [],
+  moved: [], collided: [], relinked: [], notices: [],
 };
 
 /** The distribution root — `src/`, since this script lives in `src/scripts/`. */
@@ -122,6 +123,25 @@ function precedes(a, b) {
  * repair below acts on. Derived from what was decided rather than from what is
  * on disk, so a dry run previews the same repairs a real run would make.
  */
+/**
+ * Collects the notices for the releases this upgrade actually crosses.
+ *
+ * Gated by the same predicate as `applyMoves`, deliberately: a notice and a move
+ * declared by one release must not disagree about whether that release is being
+ * crossed. A tree declaring nothing predates everything, for the same reason it
+ * does there — unknown is not the same as current.
+ *
+ * Nothing is decided here about whether a notice is *relevant*. Relevance is two
+ * release numbers, and judgement at this point is what would make the output
+ * untrustworthy.
+ */
+function collectNotices(declared) {
+  for (const notice of NOTICES) {
+    if (declared && !precedes(declared, notice.since)) continue;
+    report.notices.push(notice);
+  }
+}
+
 function applyMoves(aep, declared, dryRun) {
   const vacated = [];
   for (const move of MOVES) {
@@ -341,6 +361,7 @@ function main() {
   if (args.includes('--update')) {
     const today = new Date().toISOString().slice(0, 10);
     rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
+    collectNotices(declared);
   }
 
   installSeeds(repo, from, aep, dryRun);
@@ -373,6 +394,30 @@ function main() {
   list('name collisions — a repository file stands where a moved one did', report.collided,
     (entry) => entry);
   list('protocol files no longer shipped — review, then /prune', report.retired);
+
+  // Last, and not as a counted list. Everything above is what the upgrade did;
+  // this is the part it could not do for you, so it is the thing still open when
+  // the run ends — which is where a reader is actually looking.
+  if (report.notices.length > 0) {
+    process.stdout.write(
+      `\n${report.notices.length} thing${report.notices.length === 1 ? '' : 's'} to check, ` +
+      'crossing these releases:\n',
+    );
+    for (const notice of report.notices) {
+      process.stdout.write(`\n  ${notice.since}\n`);
+      // Wrapped here rather than in the declaration, so the text stays one
+      // string to write and one string to assert against.
+      let line = '   ';
+      for (const word of notice.check.split(/\s+/)) {
+        if (line.length + word.length + 1 > 76) {
+          process.stdout.write(`${line}\n`);
+          line = '   ';
+        }
+        line += ` ${word}`;
+      }
+      if (line.trim()) process.stdout.write(`${line}\n`);
+    }
+  }
 
   if (!dryRun) {
     process.stdout.write('\nnext: node .aep/scripts/index.mjs && node .aep/scripts/validate.mjs\n');

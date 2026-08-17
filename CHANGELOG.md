@@ -24,6 +24,28 @@ inventing vocabulary a tracker already has.
   tracker, once, and records the answer so later sessions read it instead of
   working it out again.
 
+- **Declared notices — what a release asks of the reader.** A release can now
+  declare what must be *checked* when crossing it, and an upgrade reports exactly
+  the notices for the releases actually being crossed. A tree already at the
+  release is shown nothing; a dry run previews them; `/update` acts on each or
+  reports it as outstanding.
+
+  *Why: `MOVES` covers everything a release does to a tree, and nothing a release
+  requires of the reader. That gap is not hypothetical — this very release has
+  one. The reference section below is repository-owned, so an upgrade correctly
+  refuses to write it, and without a notice every existing installation would get
+  the new behaviour and never the section it writes into.*
+
+  Gated by the same predicate as declared moves, so a notice and a move from one
+  release cannot disagree about whether that release is being crossed. Relevance
+  is two release numbers compared — never judged at runtime.
+
+  **Not the changelog.** `CHANGELOG.md` is not payload, so a repository running
+  an upgrade has never received one; shipping the whole history into every
+  installation to deliver two lines is a poor trade for a filter that already
+  existed. A notice is the narrow, actionable subset, and a release with nothing
+  to ask of the reader declares none.
+
 ### Changed
 
 - **Native mechanism before label.** The resolution is a ladder: a first-class

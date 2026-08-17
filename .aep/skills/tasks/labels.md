@@ -13,8 +13,11 @@ attributable to its effort by a query the tracker answers natively, one fact
 only, and nothing written into `.aep/`. This is how to find out what carries that
 fact *here*, and what to do when nothing does.
 
-Run it **once per tracker**, not once per effort. The answer is recorded and
-afterwards it is read.
+**Resolve once per tracker; apply every effort.** What carries the fact is a
+property of the tracker rather than of the effort, so the ladder below is walked
+once and the answer is read from the reference thereafter. Each new effort still
+gets its own value — its own milestone, epic, or label — created under the gate
+at the end.
 
 ## The ladder
 

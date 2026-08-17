@@ -764,6 +764,14 @@ An upgrade:
 
 A declared move MAY be dropped from a release once no supported tree predates it.
 
+**Some releases require something of the reader that no upgrade can do for them** — most often a change to a repository-owned artifact, which an upgrade correctly refuses to touch. A release therefore MAY **declare notices**, each carrying the release it applies from and one statement of what to check and why.
+
+An upgrade MUST report exactly the notices whose release the installed tree precedes, using the **same** comparison that gates declared moves, so a notice and a move declared by one release cannot disagree about whether that release is being crossed. A tree at or past the release MUST be shown nothing. A dry run MUST preview them as a real run reports them.
+
+A notice is an instruction, never a changelog entry, and **a release with nothing to ask of the reader declares none.** Relevance is decided by comparing two releases and MUST NOT be judged at runtime. A conforming runtime **acts** on each notice or reports it as outstanding; reporting it is not handling it.
+
+*Why this is a declaration rather than a document: a changelog is not payload, so a repository running an upgrade has never received one, and shipping the whole history into every installation to deliver two lines is a poor trade for a filter that already exists.*
+
 A repository declares its installed release through the `aep` field on `protocol.md`. A runtime MAY compare that against the running release and say so when they differ; a repository that declares nothing is *unknown*, never *stale*.
 
 ### 31.1 Migration from 1.x
@@ -956,6 +964,7 @@ A conforming implementation preserves all of the following:
 43. An agent never pushes, never publishes, and never silently decides architecture.
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
 45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
+46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
 
 ---
 
