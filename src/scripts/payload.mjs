@@ -66,6 +66,17 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '2.5.0',
+    check:
+      'A context now sits at contexts/<area>.md or contexts/<project>/<area>.md — one project ' +
+      'directory deep, and no more. The nested form is for a monorepo, where two projects would ' +
+      'otherwise fight over the same area name; the directory holds the name, while paths: still ' +
+      'decides when the context loads. If you have a context nested deeper than that, ' +
+      'validate.mjs now fails it: move it up to contexts/<project>/<area>.md, or flatten it. ' +
+      'The upgrade will not move it for you — contexts/ is yours, and an upgrade never edits a ' +
+      'file you own. A flat tree needs no change at all.',
+  },
+  {
     since: '2.4.0',
     check:
       'Skills you wrote yourself now need one more frontmatter field: report: full — or ' +

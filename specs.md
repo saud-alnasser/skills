@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.4.0
+**Version:** 2.5.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -116,6 +116,8 @@ A conforming repository:
 ├── index.md                 derived discovery index (§27)
 ├── agents/                  agent role definitions
 ├── contexts/                navigational knowledge, repository-owned
+│   ├── <area>.md            spans the repository
+│   └── <project>/<area>.md  one project of a monorepo (§12)
 ├── efforts/
 │   └── <effort>/
 │       ├── spec.md          the durable definition of one change
@@ -342,6 +344,32 @@ Contexts contain **facts and never instructions**. They answer *what is true and
 Contexts are NOT authoritative over the repository (§4). A context contradicted by source is corrected in the same breath as the contradiction is discovered.
 
 Every context MUST declare `use-when`, and contexts are loaded progressively. A conforming instruction NEVER requires an agent to read all contexts before beginning work.
+
+### 12.1 Where a context lives
+
+A context sits at one of exactly two places:
+
+```
+contexts/<area>.md              an area that spans the repository
+contexts/<project>/<area>.md    an area belonging to one project of a monorepo
+```
+
+**One project directory deep, and no more.** `contexts/<project>/<x>/<area>.md` is illegal and an implementation MUST reject it, naming the file and the legal forms. *Why bounded rather than free: a monorepo of monorepos is a shape AEP declines to model, and saying so costs one rule where not saying it costs every reader a guess about how deep the convention goes.*
+
+The nested form exists because a monorepo has the same area in more than one project — auth in the web app and auth in the API — and a flat directory gives them one namespace to share. Without it the project has to be encoded in the filename and nothing governs how, so the convention is invented per repository and per author.
+
+**The directory names; `paths:` scopes.** These answer different questions and neither is derived from the other:
+
+| Mechanism | Answers |
+| --- | --- |
+| the `<project>/` directory | what this context is **called**, so `web/auth` and `api/auth` can both be `auth` |
+| `paths:` (§8) | when this context **applies**, so it loads for work under those paths |
+
+A nested context normally still declares `paths:`, and an implementation MUST NOT derive applicability — or anything else — from a directory name. *Why: a directory that silently scoped would make `paths:` optional in one position and required in another, and the author who assumed the first would write a context that loads everywhere.*
+
+**`<project>` is the repository's word, not AEP's.** AEP does not define what a project is, does not require the directory to correspond to a path in the repository, and MUST NOT check that it does — monorepo layouts disagree (`apps/web`, `packages/web`, `services/web`), and a rule that guessed would be wrong in most of them.
+
+Both shapes are legal in any repository. A flat tree is not a deficiency to migrate, and **nothing may move a context on the repository's behalf**: `contexts/` is repository-owned (§7). This bound applies to contexts alone — `rules/` and `references/` are repository-wide, so neither has a namespace two projects can collide in.
 
 ## 13. Evidence
 
@@ -866,6 +894,10 @@ The suite MUST assert at least:
 - the skill set is exactly the seventeen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
 - every skill note (§16.1) sits under a directory named for a real skill, declares `kind: skill` and a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
 - the mode set is exactly the eight of §14;
+- a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (§12.1);
+- the index lists a nested context by its full wiki-link and the Contexts section is **not** flat-listed, so the nested form cannot be dropped from discovery by a later change (§27);
+- nothing in the distribution derives applicability from a context's directory name (§12.1);
+- the context template gives both shapes and the rule for choosing between them;
 - the report contract (§16.2) is stated in exactly one shipped artifact — its slots, their order, the turn as the unit, the nested-entry rule, the no-empty-slot rule, the early-stop requirement, and the two forms distinguished by their stage markers — and no skill carries a second copy of it;
 - every skill declares a legal `report:`, no skill note declares one, and the full-form skills are exactly those the §16.2 test selects;
 - **stage names extract mechanically from every full-form skill**, non-empty, with every numbered step of its procedure named — a skill matching no known shape fails rather than being skipped;
@@ -992,6 +1024,7 @@ A conforming implementation preserves all of the following:
 46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
 47. `aep` and `date` record when an artifact's content last changed, are computed rather than typed, and an artifact whose content changed without its stamp changing is detected.
 48. Every turn opens with one report and closes with one block, in one shape defined in exactly one place; a nested skill entry is a stage rather than a second report; no slot is omitted; and a skill's stage names are read from its own procedure rather than declared a second time.
+49. A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md` and no deeper; the directory names it while `paths:` scopes it; and nothing derives applicability from a directory name.
 
 ---
 

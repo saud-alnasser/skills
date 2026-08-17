@@ -816,6 +816,99 @@ section('reporting', () => {
     /`Next` names/.test(specify));
 });
 
+// --- §12.1 where a context lives --------------------------------------------
+
+section('contexts', () => {
+  const template = readSrc('templates', 'context.template.md');
+  const prose = flat(template);
+
+  assert('the template gives the flat shape', () => prose.includes('contexts/<area>.md'));
+  assert('the template gives the namespaced shape', () =>
+    prose.includes('contexts/<project>/<area>.md'));
+  assert('the template bounds the depth', () =>
+    /one project directory deep, no more/i.test(prose));
+  assert('the template says when to nest rather than only that you may', () =>
+    /fight over the same area name/.test(prose));
+  assert('the template keeps naming and scoping apart', () =>
+    /The directory names; `paths:` scopes/.test(prose));
+  assert('the template says a nested context still declares paths', () =>
+    /still\s*declares `paths:`/.test(prose));
+
+  // The nested form works today only because nobody passed `flat: true` to the
+  // Contexts section. Pinned on that row rather than on the file, so adding the
+  // flag fails here instead of silently dropping every nested context from
+  // discovery. The skills row is checked too: a guard that cannot tell the two
+  // apart is not reading the flag at all.
+  const index = readSrc('scripts', 'index.mjs');
+  const row = (dir) => new RegExp(`\\{[^}]*dir: '${dir}'[^}]*\\}`).exec(index)?.[0] ?? '';
+  assert('index.mjs walks contexts/ rather than flat-listing it', () =>
+    row('contexts') !== '' && !/flat/.test(row('contexts')));
+  assert('index.mjs does flat-list skills/, so the check reads the flag', () =>
+    /flat/.test(row('skills')));
+
+  const { dir, aep } = installFixture();
+  const contextsDir = path.join(aep, 'contexts');
+  const probe = (rel, extra = '') => {
+    const file = path.join(contextsDir, ...rel.split('/'));
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, '---\naep: 0.0.0\nowner: repository\n' +
+      'date: 2026-01-01\nkind: context\nuse-when: "a fixture probe"\n---\n\n# Probe\n' + extra);
+    return file;
+  };
+  /** Runs the fixture's own validate.mjs. Returns null on success, stderr on failure. */
+  const validateFixture = () => {
+    try {
+      execFileSync(process.execPath, [path.join(aep, 'scripts', 'validate.mjs'), '--root', aep],
+        { stdio: 'pipe' });
+      return null;
+    } catch (error) {
+      return String(error.stderr ?? '');
+    }
+  };
+
+  // All three depths, not just the rejection: a guard proven only on the failing
+  // case can still be rejecting what it should accept.
+  for (const [depth, rel] of [['flat', 'probe.md'], ['namespaced', 'web/auth.md']]) {
+    const file = probe(rel);
+    const output = validateFixture();
+    fs.rmSync(file);
+    assert(`validate accepts a ${depth} context`, () => output === null, { });
+    if (output !== null) process.stdout.write(`        ${output.trim().split('\n').pop()}\n`);
+  }
+  const tooDeep = probe('web/admin/auth.md');
+  const rejection = validateFixture();
+  fs.rmSync(tooDeep);
+  fs.rmSync(path.join(contextsDir, 'web', 'admin'), { recursive: true, force: true });
+  assert('validate rejects a context nested deeper than one project directory', () =>
+    rejection !== null);
+  assert('the rejection names the file and both legal forms', () =>
+    rejection !== null &&
+    /contexts\/web\/admin\/auth\.md/.test(rejection) &&
+    /contexts\/<area>\.md/.test(rejection) &&
+    /contexts\/<project>\/<area>\.md/.test(rejection));
+
+  // Behavioural, not textual: if anything derived applicability from the
+  // directory, a nested context declaring no `paths:` would acquire one, and the
+  // index would print it. This is the only shape of this check that can fail.
+  const bare = probe('web/auth.md');
+  execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep],
+    { stdio: 'ignore' });
+  const indexed = fs.readFileSync(path.join(aep, 'index.md'), 'utf8');
+  fs.rmSync(bare);
+  fs.rmSync(path.join(contextsDir, 'web'), { recursive: true, force: true });
+  const listed = indexed.split('\n').find((line) => line.includes('[[contexts/web/auth]]')) ?? '';
+  assert('the index lists a nested context by its full wiki-link', () => listed !== '');
+  assert('a nested context declaring no paths acquires none from its directory', () =>
+    listed !== '' && /\|\s*—\s*\|\s*repository\s*\|/.test(listed));
+
+  // Leave the fixture as it was found: a file left behind changes what every
+  // later section sees in this tree.
+  execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep],
+    { stdio: 'ignore' });
+  assert('the fixture is left as it was found', () =>
+    !fs.existsSync(path.join(contextsDir, 'web')) && fs.existsSync(path.join(dir, '.aep')));
+});
+
 // --- §7, §30 the seeds ------------------------------------------------------
 
 section('seeds', () => {

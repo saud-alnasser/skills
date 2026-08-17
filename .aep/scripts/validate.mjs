@@ -112,6 +112,19 @@ function checkArtifact(root, file) {
       : 'report is legal only on a skill');
   }
 
+  // A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md`,
+  // where the project directory exists so that two projects of a monorepo can
+  // both call an area `auth`. One level, because a monorepo of monorepos is a
+  // shape AEP declines to model.
+  //
+  // Contexts alone: `rules/` and `references/` are repository-wide, so neither
+  // has a namespace two projects can collide in. A limit keyed by directory
+  // would advertise a nesting nothing wants.
+  if (topDir === 'contexts' && segments.length > 3) {
+    fail(rel, 'a context sits at contexts/<area>.md or contexts/<project>/<area>.md — ' +
+      'one project directory deep, no more');
+  }
+
   // `use-when` is required where discovery depends on it.
   if (USE_WHEN_REQUIRED_DIRS.includes(topDir) && !isNonEmptyString(fields['use-when'])) {
     fail(rel, `${topDir}/ requires use-when — without it this artifact can never be selected`);

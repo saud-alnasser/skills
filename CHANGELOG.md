@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.5.0
+
+A monorepo can namespace its contexts by project.
+
+### Added
+
+- **`contexts/<project>/<area>.md`, beside `contexts/<area>.md`.** A monorepo has
+  the same area in more than one project — auth in the web app, auth in the API —
+  and a flat directory gave them one namespace to share. The project directory is
+  where that name goes.
+
+  *Why it needed saying rather than building: nesting already validated, already
+  indexed, and already resolved as a wiki link. Nothing said so, so the capability
+  was accidental — the template told authors to write `contexts/<area>.md`, the
+  specification never mentioned placement, and contexts were walked rather than
+  flat-listed only because nobody had passed a flag.*
+
+- **The directory names; `paths:` scopes.** `web/auth` and `api/auth` can both be
+  called `auth`, and a nested context still declares `paths:` — nothing derives
+  applicability from a directory name. A guard now proves it behaviourally: a
+  nested context with no `paths:` must acquire none.
+
+- **One project directory deep, and no more.** `validate.mjs` rejects anything
+  deeper, naming the file and both legal forms. It ships in the validator rather
+  than the build suite because contexts are authored in the consuming repository,
+  where the build suite never runs.
+
+### Changed
+
+- **The bound applies to contexts alone**, deliberately. `rules/` and
+  `references/` are repository-wide — a reference is picked up by whoever needs
+  the tool, and a rule scopes with `paths:` — so neither has a namespace two
+  projects can collide in. A limit keyed by directory would advertise a nesting
+  nothing wants.
+
+### Upgrading
+
+Nothing to do unless you have a context nested two or more levels deep, which
+nothing ever told you was legal. If you do, move it up to
+`contexts/<project>/<area>.md` or flatten it — the upgrade will not touch it,
+because `contexts/` is yours.
+
 ## 2.4.0
 
 What a turn tells the human stops being invented once per skill.

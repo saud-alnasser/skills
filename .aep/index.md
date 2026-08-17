@@ -1,5 +1,5 @@
 ---
-aep: 2.4.0
+aep: 2.5.0
 owner: repository
 date: 2026-08-17
 ---
@@ -109,6 +109,7 @@ Start at [[protocol]].
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
+| context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | tracker-labels | implemented | [[efforts/tracker-labels/spec]] | 0 | 0 | 7 |
 | uniform-reporting | implemented | [[efforts/uniform-reporting/spec]] | 1 | 0 | 8 |
@@ -121,6 +122,10 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 
 | Ticket | Effort | Status | Blocked by |
 | --- | --- | --- | --- |
+| [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
+| [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
+| [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
+| [[efforts/context-namespacing/tickets/04-release]] chore(dist): release 2.5.0, with the notice the depth rule requires | context-namespacing | resolved | 03 |
 | [[efforts/policy-rule-split/tickets/01-policies]] feat(policies): nine rules consolidate into four protocol-owned policies | policy-rule-split | resolved | — |
 | [[efforts/policy-rule-split/tickets/02-links]] refactor(links): every shipped link into rules/ points at its policy | policy-rule-split | resolved | 01 |
 | [[efforts/policy-rule-split/tickets/03-tree-scripts]] feat(scripts): the tree scripts know the policy primitive | policy-rule-split | resolved | — |
