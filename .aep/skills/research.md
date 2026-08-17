@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [research]
+report: full
 use-when: "a decision turns on a fact that is not in this repository"
 ---
 
@@ -29,13 +30,14 @@ here (`[[skills/prototype]]`).
 
 1. **Write the question down first**, as one sentence that an answer could be
    wrong about. A vague question returns a summary of the topic.
-2. Check `efforts/<effort>/evidence/research/` — it may already be answered.
+2. **Check what is already recorded.** `efforts/<effort>/evidence/research/` — it may already be answered.
 3. **Go to primary sources.** The specification, the reference documentation, the
    library's own source, the changelog, the issue tracker.
-4. Follow every claim back to the source that owns it.
-5. Where the runtime supports sub-agents, dispatch `[[agents/researcher]]` so the
-   pages nobody needs again are read in its context rather than yours.
-6. Write the findings.
+4. **Trace every claim** back to the source that owns it.
+5. **Dispatch the reading where it pays.** Where the runtime supports sub-agents,
+   dispatch `[[agents/researcher]]` so the pages nobody needs again are read in
+   its context rather than yours.
+6. **Write the findings.**
 
 ## Output
 

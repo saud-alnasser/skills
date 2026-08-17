@@ -108,6 +108,20 @@ function assert(because, condition, { silent = false } = {}) {
 }
 
 const readSrc = (...parts) => fs.readFileSync(path.join(SRC, ...parts), 'utf8');
+
+/**
+ * Prose with line wrapping and blockquote markers flattened.
+ *
+ * A guard should pin the meaning, not where a line happened to break: a phrase
+ * that a reflow would split makes the suite fail on a change that altered
+ * nothing, which teaches the next author to weaken the guard.
+ *
+ * Declared up here with the other helpers rather than beside its first caller.
+ * Section bodies run as they are declared, so a helper defined below a section
+ * that uses it is a temporal-dead-zone abort — and an aborted section skips
+ * every assertion after the throw, which reads as a smaller failure than it is.
+ */
+const flat = (text) => text.replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
 const inSrc = (...parts) => fs.existsSync(path.join(SRC, ...parts));
 const listMarkdown = (dir) =>
   inSrc(dir) ? walk(path.join(SRC, dir)).filter((f) => f.endsWith('.md')) : [];
@@ -599,6 +613,22 @@ section('policies', () => {
   assert('version-control is a repository-owned seed, not protocol governance', () =>
     inSrc('seed', 'rules', 'version-control.md'));
 
+  // What `aep:` answers. The policy said the opposite until 2.5.1 — that every
+  // release stamps every protocol-owned artifact — which contradicted §6, §8,
+  // release.mjs, and the stale-stamp guard above, and described an upgrade check
+  // nothing implements. Pinned so it cannot drift back, in both directions:
+  // saying the field records the last content change, and not saying the sweep.
+  const artifacts = flat(readSrc('policies', 'artifacts.md'));
+  assert('policies/artifacts says aep records when content last changed', () =>
+    /the release its content last changed in/.test(artifacts));
+  assert('policies/artifacts stamps only what changed, protocol.md excepted', () =>
+    /stamps only the artifacts that actually changed/.test(artifacts) &&
+    /`protocol\.md` is the one exception/.test(artifacts));
+  assert('policies/artifacts does not claim a release sweeps every artifact', () =>
+    !/every release stamps every/.test(artifacts));
+  assert('policies/artifacts establishes provenance by comparing content', () =>
+    /establishes provenance by comparing content/.test(artifacts));
+
   // Two statements from the absorbed rules that carry the most weight, pinned by
   // name so a rewrite of the surrounding prose cannot quietly drop them.
   const execution = readSrc('policies', 'execution.md');
@@ -633,6 +663,271 @@ section('policies', () => {
     /policies\s+→\s+rules/.test(authority));
   assert('policies/authority forbids a rule softening a policy', () =>
     /never soften it/i.test(authority));
+});
+
+// --- §16.2 what a turn tells the human --------------------------------------
+
+/** The opening slots, in the order the contract fixes, then the closing ones. */
+const OPENING_SLOTS = ['Standing', 'Request', 'Assuming', 'Stages'];
+const CLOSING_SLOTS = ['State', 'Next', 'Unsettled'];
+
+/**
+ * Skills whose report is the short form.
+ *
+ * Pinned here rather than derived, because the test that assigns a form — does
+ * this skill write to the repository, dispatch, or decide on the human's behalf
+ * — is applied by an author and not by a script. Pinning it is what turns the
+ * declaration in each skill from a value nobody checks into one that has to
+ * agree with a second, independent statement.
+ */
+const SHORT_FORM_SKILLS = ['help', 'survey', 'domain'];
+
+/**
+ * The stage names a skill declares, read from its own procedure.
+ *
+ * Two shapes, because both are in the corpus for good reasons: the long skills
+ * carry prose under numbered headings, the compact ones a numbered list under
+ * `## Procedure`. Returns `total` alongside so a caller can tell "no stages" —
+ * a shape this does not know — from "a step with no name", which is the defect
+ * that would otherwise pass as a shorter list.
+ */
+function stageNames(text) {
+  const headings = [...text.matchAll(/^## (\d+) — (.+)$/gm)].map((m) => m[2].trim());
+  if (headings.length > 0) return { stages: headings, total: headings.length, shape: 'headings' };
+
+  const procedure = /^## Procedure\s*$([\s\S]*?)(?=^## |\Z)/m.exec(text);
+  if (!procedure) return { stages: [], total: 0, shape: 'none' };
+
+  const body = procedure[1];
+  const total = [...body.matchAll(/^(\d+)\. /gm)].length;
+  const stages = [...body.matchAll(/^(\d+)\. \*\*(.+?)[.:]?\*\*/gm)].map((m) => m[2].trim());
+  return { stages, total, shape: 'procedure' };
+}
+
+section('reporting', () => {
+  const policy = readSrc('policies', 'reporting.md');
+  const prose = flat(policy);
+
+  for (const slot of OPENING_SLOTS) {
+    assert(`the contract names the opening slot ${slot}`, () => policy.includes(`**${slot}**`));
+  }
+  for (const slot of CLOSING_SLOTS) {
+    assert(`the contract names the closing slot ${slot}`, () => policy.includes(`**${slot}**`));
+  }
+  assert('the contract fixes the opening slots in order', () => {
+    const at = OPENING_SLOTS.map((slot) => policy.indexOf(`**${slot}**`));
+    return at.every((position, i) => position > -1 && (i === 0 || position > at[i - 1]));
+  });
+  assert('the contract fixes the closing slots in order', () => {
+    const at = CLOSING_SLOTS.map((slot) => policy.indexOf(`**${slot}**`));
+    return at.every((position, i) => position > -1 && (i === 0 || position > at[i - 1]));
+  });
+
+  assert('the contract forbids omitting a slot that has nothing in it', () =>
+    /A slot with nothing to put in it says so/.test(prose) && /never dropped/i.test(prose));
+  assert('the contract makes the turn the unit, not the skill entry', () =>
+    /The unit is the turn/i.test(prose));
+  assert('the contract makes a nested skill a stage rather than a second report', () =>
+    /opens no report of its own/.test(prose));
+  assert('the contract requires a turn that stops early to close', () =>
+    /stops early closes with the same three slots/.test(prose));
+  assert('the contract fills Standing with what a skill already verifies', () =>
+    /Never with a new check/i.test(prose));
+  assert('the contract separates the two forms by their stage markers', () =>
+    /the difference is the markers/.test(prose));
+  assert('the contract states the test that assigns a form', () =>
+    /write to the repository, dispatch a sub-agent, or decide on the human's behalf/.test(prose));
+  assert('the contract forbids selecting a form during a run', () =>
+    /never selected during a run/i.test(prose));
+  assert('the contract reads stage names off the skill rather than a second list', () =>
+    /never declared a second time/.test(prose));
+
+  // One home. A second copy of the slot set is the drift this whole effort is
+  // against, so the check is over every shipped artifact rather than the ones
+  // that seemed likely.
+  const wholeSet = [...OPENING_SLOTS, ...CLOSING_SLOTS];
+  const carriers = payloadArtifacts().filter((file) => {
+    const text = fs.readFileSync(file, 'utf8');
+    return wholeSet.every((slot) => text.includes(`**${slot}**`));
+  }).map((file) => toPosix(SRC, file));
+  assert('exactly one shipped artifact states the whole slot set', () => carriers.length === 1);
+  if (carriers.length !== 1) {
+    process.stdout.write(`        carriers: ${carriers.join(', ') || '(none)'}\n`);
+  }
+  assert('the one that does is the policy', () => carriers[0] === 'policies/reporting.md');
+
+  // The bootstrap links rather than lists: it is loaded on every session, and a
+  // copy of the slots there would be the second home the check above forbids.
+  const bootstrap = readSrc('protocol.md');
+  // The invariant itself, not the file: protocol.md also lists the policy in
+  // its governance table, and a check satisfied by that link would pass with
+  // the invariant's own pointer deleted — a guard matching something
+  // travelling with the thing it checks.
+  const invariant = /\*\*Every turn reports\.\*\*[\s\S]*?(?=\n\n)/.exec(bootstrap);
+  assert('protocol.md carries the invariant', () => invariant !== null);
+  assert('the invariant points at the contract rather than restating it', () =>
+    invariant !== null && flat(invariant[0]).includes('[[policies/reporting]]'));
+  assert('the bootstrap does not become a second home for the slots', () =>
+    !wholeSet.every((slot) => bootstrap.includes(slot)));
+
+  // Rendering is the runtime's business. A contract that implies one puts every
+  // non-terminal consumer out of conformance for reasons unrelated to what it
+  // says, so the surfaces stating it may not name one.
+  const rendering = /\b(terminal|colou?r|ANSI|pixels?|columns wide|Claude|Cursor|Codex|Gemini)\b/i;
+  for (const [name, text] of [['policies/reporting.md', policy], ['protocol.md', bootstrap]]) {
+    assert(`${name} states the contract without naming a rendering`, () => !rendering.test(text));
+  }
+
+  // Every skill declares a form, and the declaration agrees with the pin above.
+  for (const name of SKILLS) {
+    const artifact = readArtifact(path.join(SRC, 'skills', `${name}.md`));
+    const expected = SHORT_FORM_SKILLS.includes(name) ? 'short' : 'full';
+    assert(`skills/${name} declares report: ${expected}`, artifact.fields.report === expected);
+  }
+
+  // A note is reached from inside a run rather than invoked, so it opens no
+  // report and declaring a form would claim otherwise.
+  for (const file of walk(path.join(SRC, 'skills')).filter((f) => f.endsWith('.md'))) {
+    const rel = toPosix(SRC, file);
+    if (!/^skills\/[^/]+\/.+\.md$/.test(rel)) continue;
+    assert(`${rel} declares no report — a note opens none`,
+      readArtifact(file).fields.report === undefined);
+  }
+
+  // Stage names, mechanically, for every full-form skill. `total` is what makes
+  // this a real check: a skill whose steps are half-named would otherwise pass
+  // with a shorter list, and the run would cross a stage the report never named.
+  for (const name of SKILLS) {
+    if (SHORT_FORM_SKILLS.includes(name)) continue;
+    const { stages, total, shape } = stageNames(readSrc('skills', `${name}.md`));
+    assert(`skills/${name} declares its stages in a shape this can read`, shape !== 'none');
+    assert(`skills/${name} yields at least one stage name`, stages.length > 0);
+    assert(`skills/${name} names every one of its ${total} steps`, stages.length === total);
+  }
+
+  // Nothing acquired a position read. The set is pinned by name so a fourth is
+  // a failure; `specify` reads position/marker.json directly and runs no
+  // script, which is why it is not here.
+  const readsPosition = SKILLS
+    .filter((name) => /position\.mjs/.test(readSrc('skills', `${name}.md`)))
+    .sort();
+  assert('exactly commit, implement, and install invoke position.mjs', () =>
+    JSON.stringify(readsPosition) === JSON.stringify(['commit', 'implement', 'install']));
+  if (JSON.stringify(readsPosition) !== JSON.stringify(['commit', 'implement', 'install'])) {
+    process.stdout.write(`        on disk: ${readsPosition.join(', ')}\n`);
+  }
+
+  // The absorbed surfaces: each conforms, and the reasoning that justified the
+  // shape it had before survives the absorption.
+  const implement = readSrc('skills', 'implement.md');
+  assert('skills/implement fills Standing from the position script', () =>
+    /fills `Standing`/.test(implement) && /position\.mjs check/.test(implement));
+  assert('skills/implement keeps the reason its position report existed', () =>
+    /Nothing to report is still reported/.test(implement));
+  assert('skills/implement makes review and commit stages of its own turn', () =>
+    /as stages of this turn/.test(implement));
+  for (const name of ['tdd', 'domain']) {
+    assert(`skills/${name} says a nested entry opens no report`, () =>
+      /opening no report of its own/.test(readSrc('skills', `${name}.md`)));
+  }
+  const specify = readSrc('skills', 'specify.md');
+  assert('skills/specify routes its unverified half to Assuming', () =>
+    /fills `Assuming`/.test(specify));
+  assert('skills/specify routes its sizing floor to Next', () =>
+    /`Next` names/.test(specify));
+});
+
+// --- §12.1 where a context lives --------------------------------------------
+
+section('contexts', () => {
+  const template = readSrc('templates', 'context.template.md');
+  const prose = flat(template);
+
+  assert('the template gives the flat shape', () => prose.includes('contexts/<area>.md'));
+  assert('the template gives the namespaced shape', () =>
+    prose.includes('contexts/<project>/<area>.md'));
+  assert('the template bounds the depth', () =>
+    /one project directory deep, no more/i.test(prose));
+  assert('the template says when to nest rather than only that you may', () =>
+    /fight over the same area name/.test(prose));
+  assert('the template keeps naming and scoping apart', () =>
+    /The directory names; `paths:` scopes/.test(prose));
+  assert('the template says a nested context still declares paths', () =>
+    /still\s*declares `paths:`/.test(prose));
+
+  // The nested form works today only because nobody passed `flat: true` to the
+  // Contexts section. Pinned on that row rather than on the file, so adding the
+  // flag fails here instead of silently dropping every nested context from
+  // discovery. The skills row is checked too: a guard that cannot tell the two
+  // apart is not reading the flag at all.
+  const index = readSrc('scripts', 'index.mjs');
+  const row = (dir) => new RegExp(`\\{[^}]*dir: '${dir}'[^}]*\\}`).exec(index)?.[0] ?? '';
+  assert('index.mjs walks contexts/ rather than flat-listing it', () =>
+    row('contexts') !== '' && !/flat/.test(row('contexts')));
+  assert('index.mjs does flat-list skills/, so the check reads the flag', () =>
+    /flat/.test(row('skills')));
+
+  const { dir, aep } = installFixture();
+  const contextsDir = path.join(aep, 'contexts');
+  const probe = (rel, extra = '') => {
+    const file = path.join(contextsDir, ...rel.split('/'));
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, '---\naep: 0.0.0\nowner: repository\n' +
+      'date: 2026-01-01\nkind: context\nuse-when: "a fixture probe"\n---\n\n# Probe\n' + extra);
+    return file;
+  };
+  /** Runs the fixture's own validate.mjs. Returns null on success, stderr on failure. */
+  const validateFixture = () => {
+    try {
+      execFileSync(process.execPath, [path.join(aep, 'scripts', 'validate.mjs'), '--root', aep],
+        { stdio: 'pipe' });
+      return null;
+    } catch (error) {
+      return String(error.stderr ?? '');
+    }
+  };
+
+  // All three depths, not just the rejection: a guard proven only on the failing
+  // case can still be rejecting what it should accept.
+  for (const [depth, rel] of [['flat', 'probe.md'], ['namespaced', 'web/auth.md']]) {
+    const file = probe(rel);
+    const output = validateFixture();
+    fs.rmSync(file);
+    assert(`validate accepts a ${depth} context`, () => output === null, { });
+    if (output !== null) process.stdout.write(`        ${output.trim().split('\n').pop()}\n`);
+  }
+  const tooDeep = probe('web/admin/auth.md');
+  const rejection = validateFixture();
+  fs.rmSync(tooDeep);
+  fs.rmSync(path.join(contextsDir, 'web', 'admin'), { recursive: true, force: true });
+  assert('validate rejects a context nested deeper than one project directory', () =>
+    rejection !== null);
+  assert('the rejection names the file and both legal forms', () =>
+    rejection !== null &&
+    /contexts\/web\/admin\/auth\.md/.test(rejection) &&
+    /contexts\/<area>\.md/.test(rejection) &&
+    /contexts\/<project>\/<area>\.md/.test(rejection));
+
+  // Behavioural, not textual: if anything derived applicability from the
+  // directory, a nested context declaring no `paths:` would acquire one, and the
+  // index would print it. This is the only shape of this check that can fail.
+  const bare = probe('web/auth.md');
+  execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep],
+    { stdio: 'ignore' });
+  const indexed = fs.readFileSync(path.join(aep, 'index.md'), 'utf8');
+  fs.rmSync(bare);
+  fs.rmSync(path.join(contextsDir, 'web'), { recursive: true, force: true });
+  const listed = indexed.split('\n').find((line) => line.includes('[[contexts/web/auth]]')) ?? '';
+  assert('the index lists a nested context by its full wiki-link', () => listed !== '');
+  assert('a nested context declaring no paths acquires none from its directory', () =>
+    listed !== '' && /\|\s*—\s*\|\s*repository\s*\|/.test(listed));
+
+  // Leave the fixture as it was found: a file left behind changes what every
+  // later section sees in this tree.
+  execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep],
+    { stdio: 'ignore' });
+  assert('the fixture is left as it was found', () =>
+    !fs.existsSync(path.join(contextsDir, 'web')) && fs.existsSync(path.join(dir, '.aep')));
 });
 
 // --- §7, §30 the seeds ------------------------------------------------------
@@ -1341,8 +1636,11 @@ section('install fixture', () => {
   // Pinned on the file it names and the reason it exists, not on the word
   // "tracker" — which appears four times in this notice, so a looser test passes
   // on a notice that has lost its actual subject.
+  // Pinned to 2.3.0, the release that actually changed those references — not to
+  // whichever release is being built. Tied to specVersion it demanded that every
+  // future release re-declare a notice about a change it did not make.
   assert('the release that changed the tracker references declares a notice for it', () =>
-    NOTICES.some((notice) => notice.since === specVersion &&
+    NOTICES.some((notice) => notice.since === '2.3.0' &&
       /references\/github\.md/.test(notice.check) && /re-seed/.test(notice.check)));
 
   assert('skills/update acts on a notice rather than printing it', () => {

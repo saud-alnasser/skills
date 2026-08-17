@@ -66,6 +66,27 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '2.5.0',
+    check:
+      'A context now sits at contexts/<area>.md or contexts/<project>/<area>.md — one project ' +
+      'directory deep, and no more. The nested form is for a monorepo, where two projects would ' +
+      'otherwise fight over the same area name; the directory holds the name, while paths: still ' +
+      'decides when the context loads. If you have a context nested deeper than that, ' +
+      'validate.mjs now fails it: move it up to contexts/<project>/<area>.md, or flatten it. ' +
+      'The upgrade will not move it for you — contexts/ is yours, and an upgrade never edits a ' +
+      'file you own. A flat tree needs no change at all.',
+  },
+  {
+    since: '2.4.0',
+    check:
+      'Skills you wrote yourself now need one more frontmatter field: report: full — or ' +
+      'report: short, if the skill neither writes to the repository, dispatches a sub-agent, ' +
+      'nor decides anything on your behalf. It says which form that skill\'s turn report takes, ' +
+      'and validate.mjs fails a skill without one, because a skill with no declared form has no ' +
+      'defined shape to report in. Shipped skills already carry it; an upgrade never edits a ' +
+      'file you own, so yours are yours to add.',
+  },
+  {
     since: '2.3.0',
     check:
       'Tasks in an external tracker: your reference for that tracker — references/github.md, ' +

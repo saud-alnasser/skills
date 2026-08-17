@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [review]
+report: full
 use-when: "the .aep/ tree has accumulated stale, contradicted, or orphaned artifacts"
 ---
 
@@ -17,7 +18,7 @@ this skill proposes and the human disposes.
 
 ## Procedure
 
-1. `node .aep/scripts/validate.mjs` — start from what is mechanically broken.
+1. **Start from what is mechanically broken.** `node .aep/scripts/validate.mjs`.
 2. **Sweep for the five staleness classes:**
 
    | Class | Test | Default disposition |
@@ -35,8 +36,8 @@ this skill proposes and the human disposes.
    with it. Read the code.
 4. **Propose, grouped by class**, each with what it says, why it is a candidate,
    and the evidence.
-5. Apply only what the human approves.
-6. Regenerate the index.
+5. **Apply only what the human approves.**
+6. **Regenerate the index.**
 
 ## Constraints
 

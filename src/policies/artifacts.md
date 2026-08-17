@@ -1,5 +1,5 @@
 ---
-aep: 2.3.0
+aep: 2.5.1
 owner: protocol
 date: 2026-08-17
 kind: policy
@@ -27,10 +27,16 @@ The artifact defines AEP itself.
 - **MUST NOT be edited in a repository.** Not improved, not healed, not
   corrected in passing.
 - Installed verbatim from the release; replaced or migrated by an upgrade.
-- Its `aep:` field is the release it ships in, and **every release stamps every
-  protocol-owned artifact** — not only the ones it changed. An upgrade compares
-  that field against the release the tree declares; a stamp that disagrees means
-  the file did not come from this release.
+- Its `aep:` field is **the release its content last changed in**, and a release
+  stamps only the artifacts that actually changed. `protocol.md` is the one
+  exception, stamped every release whether or not its prose moved, because the
+  tree's version is read from it.
+- **An upgrade establishes provenance by comparing content**, not stamps: a
+  protocol-owned file that differs from the release it declares is the defect to
+  report (`[[skills/update]]`). *Why not the stamp: a field that answered "did
+  this come from this release" would have to be swept every release, and a swept
+  field cannot also answer "when did this last change" — under a sweep a stale
+  stamp and a current one are the same value.*
 - A protocol-owned file that differs from its release is a **defect to
   reinstall**, never drift to heal. *Why: healing it locally makes the next
   upgrade a merge conflict against a file nobody agreed to fork.*
@@ -135,6 +141,7 @@ Situational fields:
 | `blocked-by` | tickets only | ticket identifiers this one waits on |
 | `part-of` | tickets only | the effort this ticket belongs to |
 | `use-when` | **required** on every policy, rule, reference, and context | one sentence |
+| `report` | **required** on every skill; never on a note beside one | `full` or `short`, assigned by the test in `[[policies/reporting]]` |
 
 ### `use-when` states a trigger, never a topic
 

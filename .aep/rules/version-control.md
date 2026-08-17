@@ -1,7 +1,7 @@
 ---
 aep: 2.1.1
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: rule
 mode: [implement, review]
 use-when: "committing, branching, or preparing work to land"
@@ -52,6 +52,15 @@ plain-git sense.
 ## Branches
 
 One branch per effort or task, named for the work.
+
+**A chain of efforts that build on unmerged work shares one branch**, named for
+the first of them. Each effort still lands as its own commits, and the branch
+opens one pull request.
+
+*Why: the second effort cannot branch from the default branch without losing what
+the first one added, and it cannot get its own branch off the first without
+stacking — which this repository has no tooling for. Sharing the branch is the
+option that keeps every commit reviewable against something that exists.*
 
 **The 2.0 rewrite is the standing exception**, and it is deliberate: it lives on
 branch `2.0` as a **single commit**, and every further change **amends** that

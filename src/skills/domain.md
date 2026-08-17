@@ -1,16 +1,19 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [specify, refine]
+report: short
 use-when: "the words the problem is described in are doing the damage — a fuzzy term, or one word meaning three things"
 ---
 
 # /domain — sharpen the domain model
 
 A sub-skill. Reached from inside `[[skills/specify]]` and `[[skills/refine]]`
-rather than started on its own.
+rather than started on its own — and reached that way it is **a stage of that
+turn**, opening no report of its own (`[[policies/reporting]]`). Invoked
+directly, it is the turn's outermost skill and reports like any other.
 
 ## When the words are the problem
 

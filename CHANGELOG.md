@@ -1,5 +1,133 @@
 # Changelog
 
+## 2.5.1
+
+### Fixed
+
+- **`policies/artifacts` said the opposite of what a release does.** It claimed
+  every release stamps every protocol-owned artifact, and that an upgrade
+  compares that field to decide whether a file came from the release. Both were
+  wrong: `release.mjs` stamps only what changed, nothing anywhere reads an
+  individual artifact's `aep:` for provenance, and `/update` detects a locally
+  edited file by comparing content against the release it declares.
+
+  The policy now says what is true — `aep:` is the release an artifact's content
+  last changed in, `protocol.md` alone is stamped every release because the
+  tree's version is read from it, and provenance is established by comparing
+  content. §7 of the specification carried the same error and is corrected with
+  it; §6 and §8 already said this.
+
+  *Why it mattered: acting on the policy meant sweeping every artifact to the
+  current release, which destroys the only thing the field says per artifact and
+  makes the suite's stale-stamp guard true by construction.*
+
+- **A section of the verification suite was aborting silently.** A helper was
+  declared below a section that used it, so `policies` threw before its
+  assertions ran — and an aborted section skips everything after the throw. It
+  was hiding **14** checks. The helper moved up with the others, and the comment
+  there now says why that position is not a style preference.
+
+## 2.5.0
+
+A monorepo can namespace its contexts by project.
+
+### Added
+
+- **`contexts/<project>/<area>.md`, beside `contexts/<area>.md`.** A monorepo has
+  the same area in more than one project — auth in the web app, auth in the API —
+  and a flat directory gave them one namespace to share. The project directory is
+  where that name goes.
+
+  *Why it needed saying rather than building: nesting already validated, already
+  indexed, and already resolved as a wiki link. Nothing said so, so the capability
+  was accidental — the template told authors to write `contexts/<area>.md`, the
+  specification never mentioned placement, and contexts were walked rather than
+  flat-listed only because nobody had passed a flag.*
+
+- **The directory names; `paths:` scopes.** `web/auth` and `api/auth` can both be
+  called `auth`, and a nested context still declares `paths:` — nothing derives
+  applicability from a directory name. A guard now proves it behaviourally: a
+  nested context with no `paths:` must acquire none.
+
+- **One project directory deep, and no more.** `validate.mjs` rejects anything
+  deeper, naming the file and both legal forms. It ships in the validator rather
+  than the build suite because contexts are authored in the consuming repository,
+  where the build suite never runs.
+
+### Changed
+
+- **The bound applies to contexts alone**, deliberately. `rules/` and
+  `references/` are repository-wide — a reference is picked up by whoever needs
+  the tool, and a rule scopes with `paths:` — so neither has a namespace two
+  projects can collide in. A limit keyed by directory would advertise a nesting
+  nothing wants.
+
+### Upgrading
+
+Nothing to do unless you have a context nested two or more levels deep, which
+nothing ever told you was legal. If you do, move it up to
+`contexts/<project>/<area>.md` or flatten it — the upgrade will not touch it,
+because `contexts/` is yours.
+
+## 2.4.0
+
+What a turn tells the human stops being invented once per skill.
+
+### Added
+
+- **`policies/reporting` — one shape for every turn.** Four opening slots in a
+  fixed order (standing, request, assumptions, stages) and three closing ones
+  (state, next, unsettled-with-how-to-settle-it). The unit is **the turn**, not
+  the skill entry: one thing the human asked for produces one opening report and
+  one closing block, emitted by the outermost skill, so a skill reached from
+  inside another is a stage of that run rather than a second preamble.
+
+  *Why this was worth governing: `/implement` mandated a position report,
+  `/specify` a stated understanding, `/review` two fixed headings, and eleven
+  skills said nothing. Every shape was invented locally, so nothing could be
+  found by position, and a routing decision taken on the human's behalf was
+  usually invisible.*
+
+- **A slot with nothing in it says so**, rather than being dropped. Silence is
+  indistinguishable from a check that never ran, and an omissible slot destroys
+  reading by position — which was the whole benefit.
+
+- **The closing block is a lantern, not a map.** The near next step and what is
+  unsettled, with how to settle it. A turn that **stops early** carries it too:
+  an empty frontier or a surfaced conflict is where it is worth the most.
+
+- **`report: full | short` on every skill**, assigned once when the skill is
+  authored by one test — does it write to the repository, dispatch a sub-agent,
+  or decide on the human's behalf? Never selected during a run, so the shape is
+  known before the turn starts. The two forms differ in the **stage markers**:
+  the preamble is paid once per turn and a marker is paid per stage, so that is
+  where the only saving worth a second form lives.
+
+### Changed
+
+- **Stage names are read out of each skill's own procedure**, never declared a
+  second time. Seventeen numbered steps that carried no bolded lead gained one;
+  `handoff`, which had no numbered steps, now carries the two it always had in
+  prose, and `tdd`'s stage list is its loop rather than its loop plus its bug
+  path. Exempting the two that fitted no shape was rejected — a guard that skips
+  what it cannot handle passes by not looking.
+
+- **`/implement`'s position report, `/specify`'s stated understanding and sizing
+  floor** now fill slots instead of rendering shapes of their own. Nothing they
+  did changed: the position script still runs on every invocation, and *nothing
+  to report is still reported* survives verbatim. `/review`'s two headings and
+  `/tasks`' graph are untouched — they are output, not a preamble.
+
+- **The standing slot is filled with whatever a skill already verifies**, never
+  with a new check. Thirteen skills read no position and none of them started.
+
+### Upgrading
+
+A skill you wrote yourself needs one new field: `report: full`, or
+`report: short` if it neither writes, dispatches, nor decides. `validate.mjs`
+fails a skill without one, and an upgrade never edits a file you own — so the
+release declares a notice rather than changing it for you.
+
 ## 2.3.0
 
 An effort's work is findable in the tracker that holds it, and AEP stops

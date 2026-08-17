@@ -15,6 +15,7 @@ import {
   KINDS,
   MODES,
   OWNERS,
+  REPORT_FORMS,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
@@ -91,6 +92,37 @@ function checkArtifact(root, file) {
   }
   if (fields.paths !== undefined && !Array.isArray(fields.paths)) {
     fail(rel, 'paths must be a YAML array');
+  }
+
+  // `report` says which form a skill's turn report takes. It is forbidden on a
+  // note beside a skill: a note is reached from inside a run rather than
+  // invoked, so declaring a form would claim something untrue about it.
+  const isSkill = /^skills\/[^/]+\.md$/.test(rel);
+  if (isSkill) {
+    if (fields.report === undefined) {
+      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')} — ` +
+        'without it, what this skill tells the human has no defined shape');
+    } else if (!REPORT_FORMS.includes(fields.report)) {
+      fail(rel, `report is "${fields.report}" — must be one of: ${REPORT_FORMS.join(', ')}`);
+    }
+  } else if (fields.report !== undefined) {
+    const note = /^skills\/[^/]+\/.+\.md$/.test(rel);
+    fail(rel, note
+      ? 'report is legal only on a skill — a note is reached from one and opens no report of its own'
+      : 'report is legal only on a skill');
+  }
+
+  // A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md`,
+  // where the project directory exists so that two projects of a monorepo can
+  // both call an area `auth`. One level, because a monorepo of monorepos is a
+  // shape AEP declines to model.
+  //
+  // Contexts alone: `rules/` and `references/` are repository-wide, so neither
+  // has a namespace two projects can collide in. A limit keyed by directory
+  // would advertise a nesting nothing wants.
+  if (topDir === 'contexts' && segments.length > 3) {
+    fail(rel, 'a context sits at contexts/<area>.md or contexts/<project>/<area>.md — ' +
+      'one project directory deep, no more');
   }
 
   // `use-when` is required where discovery depends on it.

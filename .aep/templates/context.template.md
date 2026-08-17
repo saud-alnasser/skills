@@ -1,5 +1,5 @@
 ---
-aep: 2.3.0
+aep: 2.5.0
 owner: protocol
 date: 2026-08-17
 use-when: "adding orientation for an area of this repository"
@@ -7,7 +7,14 @@ use-when: "adding orientation for an area of this repository"
 
 # Template — context
 
-Copy to `contexts/<area>.md`. Contexts are always `owner: repository`.
+Copy to `contexts/<area>.md` — or to `contexts/<project>/<area>.md` in a
+monorepo, when two projects would otherwise fight over the same area name. **One
+project directory deep, no more.** Contexts are always `owner: repository`.
+
+**The directory names; `paths:` scopes.** `web/auth` and `api/auth` can both be
+called `auth` because the directory holds the name — but a nested context still
+declares `paths:`, because nothing derives applicability from a directory. Where
+one project has a single context and no name to fight over, flat is right.
 
 ```markdown
 ---

@@ -1,9 +1,10 @@
 ---
-aep: 2.3.0
+aep: 2.4.0
 owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [specify]
+report: full
 use-when: "a change is wanted and no effort describes it yet"
 ---
 
@@ -35,6 +36,9 @@ already describes it.
    agreement. **Never skip it**: obvious work is where wrong models survive
    longest, and a wrong model is free to fix here and expensive after a plan is
    built on it.
+
+   The unverified half of it is what fills `Assuming` in this turn's opening
+   report (`[[policies/reporting]]`); the rest is prose and stays prose.
 6. **Identify uncertainty, and classify it** — factual, technical, or
    product. `[[policies/engineering]]` routes each to its instrument.
 7. **Resolve what is material.** Material means: the spec would be different
@@ -54,7 +58,8 @@ already describes it.
    data at rest; it is too large for one context; it is too foggy to scope.
 
    **Report the floor, what fired, and the result.** The human overrides in
-   either direction, and their override stands.
+   either direction, and their override stands. The floor is what this turn's
+   `Next` names (`[[policies/reporting]]`).
 9. **Write the spec**, using `[[templates/spec.template]]`.
 
 ## Output

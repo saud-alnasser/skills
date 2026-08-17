@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.3.0
+**Version:** 2.5.1
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -116,6 +116,8 @@ A conforming repository:
 ├── index.md                 derived discovery index (§27)
 ├── agents/                  agent role definitions
 ├── contexts/                navigational knowledge, repository-owned
+│   ├── <area>.md            spans the repository
+│   └── <project>/<area>.md  one project of a monorepo (§12)
 ├── efforts/
 │   └── <effort>/
 │       ├── spec.md          the durable definition of one change
@@ -164,7 +166,7 @@ A runtime's own entrypoint — `AGENTS.md`, `CLAUDE.md`, or the runtime's equiva
 
 Every artifact declares an owner, and the owner is read off the declaration — never inferred from a directory.
 
-**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is the release it ships in — **every release stamps every protocol-owned artifact it ships**, not only the ones it changed — and an upgrade compares it. *Why the whole tree moves together: the question an upgrade asks is whether an installed artifact came from the release the tree declares, and a field carrying per-artifact provenance answers a different question at the cost of the one being asked. Provenance is what the changelog and the history are for.*
+**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is **the release its content last changed in** — a release stamps only the artifacts it changed (§8), with `protocol.md` the single exception (§6), because the tree's version is read from that file alone. **An upgrade establishes provenance by comparing content**: a protocol-owned artifact that differs from the release it declares is the defect to report (§31). *Why not by stamp: a field that answered "did this come from this release" would have to be swept every release, and a swept field cannot also answer "when did this last change" — under a sweep a stale stamp and a current one are the same value, which is the one defect §8 requires an implementation to detect.*
 
 **`owner: repository`** — the artifact describes this repository. It evolves with the repository, and an upgrade MUST preserve it unless an explicit migration applies. A protocol upgrade MUST NEVER silently overwrite repository-owned governance.
 
@@ -242,6 +244,7 @@ Field contract:
 | `blocked-by` | optional | Ticket identifiers this ticket waits on. Tickets only. |
 | `part-of` | optional | The effort a ticket belongs to. Tickets only. |
 | `use-when` | **required on policies, rules, references, and contexts**; optional elsewhere | One sentence describing **when to load this**. |
+| `report` | **required on every skill**; illegal elsewhere, including on a skill note | Exactly `full` or `short` — the form of the report that skill's turn takes (§16.2). A note carries none: it is reached from inside a run rather than invoked, so it opens no report. |
 
 **`aep` and `date` MUST be computed, never typed.** An implementation that distributes a payload MUST determine, per artifact, whether its content changed since the last release, and stamp only those that did. It MUST be able to detect **an artifact whose content changed without its stamp changing** — the defect a scheme that restamps everything every release cannot see, because under it a stale stamp and a current one are the same value.
 
@@ -341,6 +344,32 @@ Contexts contain **facts and never instructions**. They answer *what is true and
 Contexts are NOT authoritative over the repository (§4). A context contradicted by source is corrected in the same breath as the contradiction is discovered.
 
 Every context MUST declare `use-when`, and contexts are loaded progressively. A conforming instruction NEVER requires an agent to read all contexts before beginning work.
+
+### 12.1 Where a context lives
+
+A context sits at one of exactly two places:
+
+```
+contexts/<area>.md              an area that spans the repository
+contexts/<project>/<area>.md    an area belonging to one project of a monorepo
+```
+
+**One project directory deep, and no more.** `contexts/<project>/<x>/<area>.md` is illegal and an implementation MUST reject it, naming the file and the legal forms. *Why bounded rather than free: a monorepo of monorepos is a shape AEP declines to model, and saying so costs one rule where not saying it costs every reader a guess about how deep the convention goes.*
+
+The nested form exists because a monorepo has the same area in more than one project — auth in the web app and auth in the API — and a flat directory gives them one namespace to share. Without it the project has to be encoded in the filename and nothing governs how, so the convention is invented per repository and per author.
+
+**The directory names; `paths:` scopes.** These answer different questions and neither is derived from the other:
+
+| Mechanism | Answers |
+| --- | --- |
+| the `<project>/` directory | what this context is **called**, so `web/auth` and `api/auth` can both be `auth` |
+| `paths:` (§8) | when this context **applies**, so it loads for work under those paths |
+
+A nested context normally still declares `paths:`, and an implementation MUST NOT derive applicability — or anything else — from a directory name. *Why: a directory that silently scoped would make `paths:` optional in one position and required in another, and the author who assumed the first would write a context that loads everywhere.*
+
+**`<project>` is the repository's word, not AEP's.** AEP does not define what a project is, does not require the directory to correspond to a path in the repository, and MUST NOT check that it does — monorepo layouts disagree (`apps/web`, `packages/web`, `services/web`), and a rule that guessed would be wrong in most of them.
+
+Both shapes are legal in any repository. A flat tree is not a deficiency to migrate, and **nothing may move a context on the repository's behalf**: `contexts/` is repository-owned (§7). This bound applies to contexts alone — `rules/` and `references/` are repository-wide, so neither has a namespace two projects can collide in.
 
 ## 13. Evidence
 
@@ -510,6 +539,22 @@ A note:
 A note is **not** a skill. It is not one of the seventeen, it is not invoked, and no runtime adapter (§29) exposes it — the only way in is through the skill that owns it.
 
 **A repository MAY add its own note beside a shipped skill**, declaring `owner: repository`. Ownership is read off the field rather than the path (§7), so an upgrade preserves it exactly as it preserves any other repository-owned file. This is the extension point that keeps *this is how we prototype here* out of a protocol-owned file, and a repository-owned note is reached from a repository-owned rule or context — because the shipped skill cannot link to a file that does not exist in every installation.
+
+### 16.2 What a turn tells the human
+
+Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` and `commit` from `implement`'s close-out, or either sub-skill — is a stage of that run and opens no report of its own.
+
+The opening report carries four slots in order — **standing**, the state the skill establishes on entry, verified; **classification and routing**, what the request was judged to be and which skill is therefore running; **assumptions in force**, held apart from what was checked; and **the stages ahead**. The closing block carries three — **state**, **next**, and **what is unsettled together with how to settle it** — and a turn that stops early carries them too, because that is where the third is worth the most.
+
+**A slot with nothing in it says so.** It is never omitted: silence is indistinguishable from a check that never ran, and an omissible slot destroys reading by position, which is the whole benefit.
+
+**The standing slot is filled with what the skill already verifies, never with a new check.** Most skills read no position, and requiring one of them would buy uniformity with a behavioural change nobody asked for. A skill with nothing to verify states that it has nothing to verify.
+
+Every skill declares `report:` (§8), assigned once at authoring time by one test — *does this skill write to the repository, dispatch a sub-agent, or decide on the human's behalf?* The form is **never** selected during a run, so the shape is known before the turn starts. The two forms differ in the **stage markers**: a full-form skill lists every stage and marks each as it is crossed; a short-form skill names one stage and emits none. Both carry all seven slots.
+
+**Stage names are read from the skill's own procedure and MUST NOT be declared separately** — a second list of stages is a second statement of what the procedure already says, and the two diverge on the first edit to either. An implementation MUST be able to extract them mechanically from every full-form skill, and a skill whose procedure yields none is a failure rather than an exemption: a rule that skips what it cannot handle passes by not looking.
+
+The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§20), which is not human-facing and is unaffected.
 
 ## 17. Grill
 
@@ -849,6 +894,14 @@ The suite MUST assert at least:
 - the skill set is exactly the seventeen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
 - every skill note (§16.1) sits under a directory named for a real skill, declares `kind: skill` and a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
 - the mode set is exactly the eight of §14;
+- a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (§12.1);
+- the index lists a nested context by its full wiki-link and the Contexts section is **not** flat-listed, so the nested form cannot be dropped from discovery by a later change (§27);
+- nothing in the distribution derives applicability from a context's directory name (§12.1);
+- the context template gives both shapes and the rule for choosing between them;
+- the report contract (§16.2) is stated in exactly one shipped artifact — its slots, their order, the turn as the unit, the nested-entry rule, the no-empty-slot rule, the early-stop requirement, and the two forms distinguished by their stage markers — and no skill carries a second copy of it;
+- every skill declares a legal `report:`, no skill note declares one, and the full-form skills are exactly those the §16.2 test selects;
+- **stage names extract mechanically from every full-form skill**, non-empty, with every numbered step of its procedure named — a skill matching no known shape fails rather than being skipped;
+- no shipped surface stating the report contract names a terminal, a colour, a display size, or a runtime;
 - `protocol.md` exists and is within its size budget (§6);
 - the forbidden structures are absent — no `decisions/`, `tools/`, `grill/`, or `plan.md` (§5, §15.2, §17);
 - every seed declares `owner: repository`, targets a repository-owned directory, and states that it is a starting point — except the entrypoint seed, which targets the root and carries no frontmatter (§7.1);
@@ -970,6 +1023,8 @@ A conforming implementation preserves all of the following:
 45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
 46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
 47. `aep` and `date` record when an artifact's content last changed, are computed rather than typed, and an artifact whose content changed without its stamp changing is detected.
+48. Every turn opens with one report and closes with one block, in one shape defined in exactly one place; a nested skill entry is a stage rather than a second report; no slot is omitted; and a skill's stage names are read from its own procedure rather than declared a second time.
+49. A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md` and no deeper; the directory names it while `paths:` scopes it; and nothing derives applicability from a directory name.
 
 ---
 
