@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "a tool version here does not match what this repository pins, or its tasks need running"
@@ -43,6 +43,6 @@ depends on a hook that may not have loaded.
 - A tool resolving to the system version means mise is installed but not
   activated for that shell. `mise doctor` says so.
 - Changing a pin changes what everyone builds with. That is a decision, not a
-  step (`[[rules/engineering]]`).
+  step (`[[policies/engineering]]`).
 - Some backends run install scripts from upstream. Adding a new tool to the pins
   is worth raising rather than doing quietly.

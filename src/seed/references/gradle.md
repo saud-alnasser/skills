@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "building or testing this project through Gradle"
@@ -37,7 +37,7 @@ build expects; a different one fails in ways that read as build-script errors.
 
 Gradle reports tasks as `UP-TO-DATE` or `FROM-CACHE` and skips them. **A green
 `./gradlew test` may have run no tests at all.** When the run is the evidence,
-check the output or force it (`[[rules/evidence]]`).
+check the output or force it (`[[policies/engineering]]`).
 
 ## Failure handling
 

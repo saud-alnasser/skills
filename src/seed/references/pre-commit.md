@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, review]
 use-when: "a commit is blocked by a hook here, or the hook checks should be run before committing"

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, prototype, test]
 use-when: "building or serving this repository with Vite"
@@ -29,7 +29,7 @@ npx vite preview                 # serves the built output, not the source
 
 **Dev and build do not resolve identically.** The dev server serves modules
 unbundled; the build runs Rollup with tree-shaking and a different environment.
-A change that works in dev has not been shown to build (`[[rules/evidence]]`).
+A change that works in dev has not been shown to build (`[[policies/engineering]]`).
 
 ## Environment variables
 

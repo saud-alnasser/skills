@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 use-when: "the repository carries a 1.x layout — a protocol file, policies, decisions, designs, or a map.md in every directory, under the runtime's own directory rather than .aep/"
 ---
@@ -19,9 +19,13 @@ representation for is rewritten into that shape.
 ## Recognise it by content
 
 Any of these means 1.x, whatever the directory is called: a `protocol.md` outside
-`.aep/`; a `policies/`, `decisions/`, or `designs/` directory; a `map.md` sitting
-in several directories; frontmatter declaring `owner: framework` or a bare
-`version:`.
+`.aep/`; a `policies/`, `decisions/`, or `designs/` directory **outside `.aep/`**;
+a `map.md` sitting in several directories; frontmatter declaring `owner:
+framework` or a bare `version:`.
+
+**`.aep/policies/` means the opposite.** AEP ships policies of its own, and they
+are protocol law — a current tree, not a 1.x one. The two uses of the word are
+inverted, which the conversion below depends on.
 
 **Confirm with the human before starting.** This rewrites where their knowledge
 lives.
@@ -79,9 +83,9 @@ the repository actually documented.
 | the entrypoint file itself | a pointer at `.aep/protocol.md` | **converted, and not optional** — the runtime auto-loads it, so a 1.x entrypoint left in place keeps describing 1.x on every turn. Install writes `AGENTS.md`; a runtime's own entrypoint is rewritten to point, never deleted |
 | `tools/<tool>.md` | `references/<tool>.md` | converted — wins over any seed for the same tool |
 | `policies/version-control.md`, `policies/tracker.md` | `rules/version-control.md`, a rule or `references/` | converted — these two were derived per repository |
-| other `policies/<concern>.md` | a rule, or nothing | see below |
+| other `policies/<concern>.md` | a **rule**, or nothing | see below — never a policy |
 | `rules/<name>.md`, repository-authored | `rules/<name>.md` | converted |
-| `rules/<name>.md`, framework | — | superseded by 2.0's rules and the bootstrap's invariants |
+| `rules/<name>.md`, framework | — | superseded by the shipped `policies/` and the bootstrap's invariants |
 | `protocol.md` § Deviations entries | a repository rule per deviation | **converted** — each keeps its reason and the release it was declared under |
 | `protocol.md`, the rest | `.aep/protocol.md`, installed | superseded |
 | `decisions/NNNN-*.md` | a rule, or left in place | see below |
@@ -102,12 +106,27 @@ the repository actually documented.
 
 ### Policies
 
-2.0 has one governance layer, so each policy resolves three ways:
+**A 1.x policy becomes a rule, never a policy.** The word survived into AEP and
+means the opposite of what it meant here:
+
+| | 1.x policy | the policy AEP ships |
+| --- | --- | --- |
+| whose | this repository's, derived per repository | AEP's, identical everywhere |
+| may the repository edit it | yes — that was the point | **never** |
+
+So everything in `policies/` is the repository's knowledge, and the destination
+for repository knowledge is `rules/`. **Converting one into `policies/` would
+hand the repository's own decisions to the protocol, and the next upgrade would
+overwrite them.** That is the single worst outcome available in this operation,
+and the matching name is what makes it reachable.
+
+Each policy resolves three ways:
 
 - **conditional** — it applies on a trigger → a `rules/` file, `use-when` naming
   that trigger.
-- **already stated** — 2.0's `protocol.md` says it on every turn → superseded.
-  Keeping it is the second home the single-layer design exists to remove.
+- **already stated** — a shipped `[[policies]]` or `protocol.md` already says it
+  → superseded. Keeping it is a second home for one norm, and the shipped copy is
+  the one that stays current.
 - **repository-specific** — version control, review conventions, release process
   → a rule this repository owns.
 
@@ -207,7 +226,7 @@ The conversion is only trustworthy if what it assumed is visible:
 - **every proposed `use-when`**, as one list the human confirms in a single pass;
 - every deviation converted out of the old protocol file, with its reason;
 - every collision that stopped: two specs for one effort, evidence with no
-  effort, a policy that could be a rule or could be already-covered;
+  effort, a 1.x policy that could be a rule or could be already-covered;
 - every decision record left in place, with which of the three kinds it was
   judged to be;
 - every repository script moved out of the old AEP directory.

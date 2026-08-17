@@ -1,18 +1,70 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
-kind: rule
-mode: [implement, review, research]
-use-when: "dispatching sub-agents, or running as one"
+date: 2026-08-17
+kind: policy
+use-when: "an effort is in progress — deriving tasks, dispatching, implementing, or reviewing"
 ---
 
-# Rule — sub-agents
+# Policy — executing an effort
 
-Applies only where the runtime supports sub-agents. Where it does not, the work
-is serial and nothing here binds.
+What governs the work between an accepted spec and a landed change, including
+how it is divided across sub-agents.
 
-## The unit is a whole task. Always.
+## The hierarchy
+
+```
+spec.md  →  tasks  →  implementation
+```
+
+`spec.md` is the effort's source of truth. **A task that conflicts with the spec
+is a defect in the task.** Stop, surface the conflict, and do not silently modify
+the architecture to make the task work.
+
+*Why: a task that quietly wins over the spec means the delivered system is
+defined by whichever artifact was edited last, and nobody agreed to that one.*
+
+## One spec file
+
+The effort has exactly one durable definition, and it is `spec.md`.
+
+- **NEVER create `plan.md`.** Planning extends the same file with Architecture,
+  Components, Interfaces, Data Model, Technical Approach, Integration, Migration,
+  Testing Strategy, Operational Considerations, Technical Risks.
+- Tasks reference the spec; they MUST NOT copy large portions of it.
+
+## Return to plan
+
+If evidence discovered during implementation or review invalidates the technical
+plan:
+
+```
+stop → record evidence → [[skills/plan]] → update spec.md → update tasks → continue
+```
+
+**Never** patch the architecture in place and carry on. *Why: this is the moment
+implementation becomes an uncontrolled design process, and it always arrives when
+the work is nearly done and stopping is most expensive.*
+
+## Scope stays where it was put
+
+- `[[skills/plan]]` and `[[skills/refine]]` MUST NOT silently expand product
+  scope. Technical discovery that exposes a product-level change **stops and
+  surfaces it**.
+- `[[skills/implement]]` stays bounded by the effort. An improvement you notice
+  that is not in the task is raised, not taken.
+- Requirements nobody asked for are a review finding, exactly like requirements
+  missed.
+
+## Done means checked
+
+A task is done when its acceptance criteria have been **verified explicitly**,
+one at a time, against the running system. Not when the code looks right.
+
+## Sub-agents: the unit is a whole task. Always.
+
+Everything below applies only where the runtime supports sub-agents. Where it
+does not, the work is serial and none of it binds.
 
 **A task is never split across sub-agents.** One child builds one whole task
 against that task's own acceptance criteria, or no child is dispatched at all.
@@ -53,7 +105,7 @@ The set of tasks to dispatch is **computed from the declared edges, not chosen**
 the frontier tasks that gate none of each other. Computing a set from a
 declaration is not making one.
 
-Parallelism MUST NOT compromise the rules, the specification, repository
+Parallelism MUST NOT compromise governance, the specification, repository
 integrity, or acceptance criteria.
 
 ## Claiming, before dispatching

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [plan]
 use-when: "turning a settled specification into a technical approach"
@@ -20,7 +20,7 @@ plan that would work in a clean repository and not in this one is not a plan.
 approach and writing down why the alternatives lost — which is uncomfortable
 precisely when it matters most.
 
-**Inputs.** The effort's `spec.md`. The relevant source. Applicable `[[rules]]`,
+**Inputs.** The effort's `spec.md`. The relevant source. Applicable `[[policies]]` and `[[rules]]`,
 relevant `[[contexts]]`, required `[[references]]`, existing evidence.
 
 **Outputs.** The **same** `spec.md`, extended with Architecture, Components,

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "running this repository's Vitest suite, or one test from it"
@@ -36,7 +36,7 @@ context that is a hang, not a slow suite.
 
 A run that reports **no test files found** exits zero. Read the count, not the
 exit status — a filter that matches nothing looks exactly like a suite that
-passed (`[[rules/evidence]]`).
+passed (`[[policies/engineering]]`).
 
 ## Failure handling
 
@@ -45,4 +45,4 @@ passed (`[[rules/evidence]]`).
 - Workspace or project configs mean the root run and a package run cover
   different files. Check which one CI uses.
 - Never delete or skip a failing test to reach green. A skipped test is a
-  finding to raise (`[[rules/engineering]]`).
+  finding to raise (`[[policies/engineering]]`).

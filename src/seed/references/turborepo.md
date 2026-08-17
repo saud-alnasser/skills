@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "running a task across this monorepo's packages, or explaining why one was skipped"
@@ -34,7 +34,7 @@ A task reported as **cached** did not run. That is the point, and it is also the
 trap: a passing `turbo run test` may have executed nothing at all.
 
 **When a result matters as evidence, say whether it was cached** — and re-run
-with `--force` if it was (`[[rules/evidence]]`). A task whose `inputs` are
+with `--force` if it was (`[[policies/engineering]]`). A task whose `inputs` are
 declared too narrowly caches across a change that should have invalidated it,
 which is a finding about `turbo.json`, not about the run.
 

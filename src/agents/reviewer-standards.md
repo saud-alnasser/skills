@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: agent
 mode: [review]
 use-when: "a diff needs judging against what this repository documents about how code is written here"
@@ -17,12 +17,13 @@ not see the other pass's findings.
 
 ## You are bound by
 
-`[[rules/sub-agents]]`. Your posture is `[[modes/review]]`.
+`[[policies/execution]]`. Your posture is `[[modes/review]]`.
 
 ## What you check
 
-1. **Applicable rules** — load `[[rules]]` by `use-when` and `paths` for the
-   files in the diff, and check the diff against each. Cite the rule and the line.
+1. **Applicable governance** — load `[[policies]]` and `[[rules]]` by `use-when`
+   and `paths` for the files in the diff, and check the diff against each. Cite
+   what it violated and the line.
 2. **Repository conventions** — naming, structure, error handling, logging,
    imports, comment density. **Detect them from the surrounding code, not from
    ecosystem defaults.** A convention you assert without finding it here is your
@@ -36,7 +37,7 @@ not see the other pass's findings.
 5. **Documentation requirements** — whatever the rules actually require. Not
    whatever you would have written.
 6. **AEP artifact conformance**, where the diff touches `.aep/`:
-   `[[rules/artifacts]]` and `[[rules/ownership]]` — frontmatter, resolving
+   `[[policies/artifacts]]` and `[[policies/artifacts]]` — frontmatter, resolving
    links, and above all whether a `owner: protocol` file was edited.
 
 ## What you do not check

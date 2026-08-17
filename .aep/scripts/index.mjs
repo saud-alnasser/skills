@@ -27,6 +27,7 @@ const GENERATED_NOTICE =
 
 /** Top-level sections, in the order an agent discovers them. */
 const SECTIONS = [
+  { dir: 'policies', title: 'Policies', columns: ['Load when', 'Modes', 'Paths'] },
   { dir: 'rules', title: 'Rules', columns: ['Load when', 'Modes', 'Paths'] },
   { dir: 'contexts', title: 'Contexts', columns: ['Load when', 'Paths'] },
   { dir: 'references', title: 'References', columns: ['Load when', 'Modes'] },

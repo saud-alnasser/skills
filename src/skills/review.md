@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [review]
 use-when: "work is finished and about to land, or a diff needs judging against what was asked"
@@ -60,7 +60,8 @@ review.
 
 ## 3 — Find what this repository requires
 
-`[[rules]]` selected by `use-when` and `paths` for the files in the diff, then
+`[[policies]]` and `[[rules]]` selected by `use-when` and `paths` for the files
+in the diff, then
 `[[contexts]]` for the areas touched, then `CONTRIBUTING.md` and whatever else
 this repository documents.
 
@@ -80,7 +81,7 @@ Parallel is for latency; **separate contexts are for correctness** — an axis t
 can see the other's findings starts agreeing with them, and that pollution is
 invisible in the output. Each gets the subject — the fixed point, both diff
 invocations, and where the spec is — and reads everything else itself
-(`[[rules/sub-agents]]`).
+(`[[policies/execution]]`).
 
 Where the runtime has no sub-agents, run both passes yourself, separately, and
 **do not carry conclusions between them.**

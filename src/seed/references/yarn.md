@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "installing dependencies or running this repository's yarn scripts"
@@ -29,7 +29,7 @@ yarn workspaces foreach run <script>   # Berry only
 | lint | `yarn lint` |
 | types | `yarn typecheck` |
 
-**Do not invent a script.** Read `package.json` (`[[rules/engineering]]`).
+**Do not invent a script.** Read `package.json` (`[[policies/engineering]]`).
 
 ## Failure handling
 

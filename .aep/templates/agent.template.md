@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "defining a new agent role that a skill will dispatch"
 ---
 
@@ -31,7 +31,7 @@ description from, so it must stand alone.
 
 ## You are bound by
 
-`[[rules/sub-agents]]` — read it first; repeat none of it here. Your posture is
+`[[policies/execution]]` — read it first; repeat none of it here. Your posture is
 `[[modes/<mode>]]`; hold its tradeoffs as yours.
 
 ## Inputs
@@ -56,5 +56,5 @@ Never a pasted diff.
 
 **A role receives whole work, never a fraction of it** — a whole task, a whole
 question, a whole review axis. Splitting one unit across several children is what
-`[[rules/sub-agents]]` forbids, and a role written to accept a portion is an
+`[[policies/execution]]` forbids, and a role written to accept a portion is an
 invitation to do it.

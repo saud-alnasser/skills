@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "installing dependencies or running commands in this Poetry project's environment"
@@ -42,5 +42,5 @@ packages.
 - Resolution that hangs is usually an unbounded version constraint, not a
   network problem.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[rules/engineering]]`).
+  its alternatives (`[[policies/engineering]]`).
 - **Never `poetry publish`.**

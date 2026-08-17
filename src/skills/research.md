@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [research]
 use-when: "a decision turns on a fact that is not in this repository"
@@ -18,7 +18,7 @@ evidence. A **capability, never a stage** — most changes never need it.
 
 The uncertainty is **factual** and external: an API's actual behaviour, a
 library's guarantees, a specification's wording, a platform's limits, whether a
-known issue is fixed. `[[rules/evidence]]` routes the other kinds elsewhere —
+known issue is fixed. `[[policies/engineering]]` routes the other kinds elsewhere —
 argument cannot settle a fact, and neither can a prototype settle what a
 specification says.
 

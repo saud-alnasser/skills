@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "adding orientation for an area of this repository"
 ---
 
@@ -51,7 +51,7 @@ exist there. *Why: the claim goes stale silently while the pointer stays useful,
 and a stale claim is trusted exactly as a fresh one is.*
 
 **The repository wins.** A context contradicted by source is wrong, and is
-corrected the moment the contradiction is found (`[[rules/precedence]]`).
+corrected the moment the contradiction is found (`[[policies/authority]]`).
 
 ## Keep it small
 

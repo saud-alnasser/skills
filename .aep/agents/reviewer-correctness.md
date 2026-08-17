@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: agent
 mode: [review]
 use-when: "a diff needs judging on whether it does what was asked and actually works"
@@ -18,7 +18,7 @@ opinion that has read the other one is not independent.
 
 ## You are bound by
 
-`[[rules/sub-agents]]`. Your posture is `[[modes/review]]`; assume defects exist
+`[[policies/execution]]`. Your posture is `[[modes/review]]`; assume defects exist
 and that you have not found them yet.
 
 ## What you check

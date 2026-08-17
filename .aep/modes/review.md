@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [review]
 use-when: "evaluating finished work against what was asked and against this repository's rules"
@@ -21,7 +21,7 @@ much as about the diff.
 agrees quickly has usually only read quickly.
 
 **Inputs.** The diff. The task and the effort's `spec.md`. Applicable
-`[[rules]]`, relevant `[[contexts]]`.
+`[[policies]]` and `[[rules]]`, relevant `[[contexts]]`.
 
 **Outputs.** Findings, each naming the file, the line, what is wrong, and the
 concrete case in which it fails.

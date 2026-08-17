@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [plan]
 use-when: "a spec is accepted and needs to become executable work"
@@ -21,19 +21,19 @@ second definition of the change.
 2. **Find where tasks live.** Ask the repository, in this order: an existing
    `efforts/<effort>/tickets/` directory; a `[[references]]` describing the
    forge or tracker in use; the human. **Never create a local ticket system in a
-   repository that already has one** — `[[rules/change-control]]` and the
+   repository that already has one** — `[[policies/execution]]` and the
    protocol both forbid mirroring an external tracker.
 3. **Decompose by acceptance criterion**, not by file or by layer. A task that
    maps to no criterion is either scope nobody asked for or a criterion the spec
    is missing — resolve which before writing it.
 
    **A task is the unit a sub-agent may be given, whole** — one child, one task,
-   never a fraction of one (`[[rules/sub-agents]]`). So a task that is too large
+   never a fraction of one (`[[policies/execution]]`). So a task that is too large
    for one context is not "dispatched in pieces"; it is **split here**, into
    tasks that each have their own acceptance criteria. Getting this wrong at this
    step is what forces the split to happen later, at dispatch time, by guesswork.
 4. **Declare dependencies explicitly.** The task graph is the only thing that
-   licenses parallel work (`[[rules/sub-agents]]`); an edge you leave implicit
+   licenses parallel work (`[[policies/execution]]`); an edge you leave implicit
    becomes a collision later.
 5. Write the tasks.
 6. Regenerate the index — `node .aep/scripts/index.mjs`. Local tickets earn a

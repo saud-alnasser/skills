@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [specify, plan, implement, review]
 use-when: "reading or writing GitHub issues, pull requests, or checks for this repository"
@@ -22,7 +22,7 @@ gh pr checks <number>
 gh repo view --json nameWithOwner,defaultBranchRef
 ```
 
-Reading is always allowed. `[[rules/boundary]]` still applies: read another
+Reading is always allowed. `[[policies/authority]]` still applies: read another
 repository freely, write to none.
 
 ## Tasks as issues

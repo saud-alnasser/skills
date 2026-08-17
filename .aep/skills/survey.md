@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [research, review]
 use-when: "the question is where the codebase is costing you, rather than a specific change"

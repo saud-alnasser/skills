@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "installing dependencies or running commands in this Python project's environment"
@@ -42,5 +42,5 @@ Python — which is the failure that produces "it works locally" most often here
 - A package that imports in one shell and not another is almost always the wrong
   interpreter. `uv run python -c "import sys; print(sys.executable)"` settles it.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[rules/engineering]]`).
+  its alternatives (`[[policies/engineering]]`).
 - **Never publish.** `uv publish` reaches an index.

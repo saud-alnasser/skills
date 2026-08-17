@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  DIRECTORY_OWNERS,
   FORBIDDEN_DIRS,
   KINDS,
   MODES,
@@ -61,6 +62,14 @@ function checkArtifact(root, file) {
   if (!isNonEmptyString(fields.owner)) fail(rel, 'missing required field: owner');
   else if (!OWNERS.includes(fields.owner)) {
     fail(rel, `owner is "${fields.owner}" — must be one of: ${OWNERS.join(', ')}`);
+  } else if (DIRECTORY_OWNERS[topDir] && fields.owner !== DIRECTORY_OWNERS[topDir]) {
+    // The two governance directories admit one owner each. A policy is AEP's law
+    // and a rule is the repository's, so the misplacement is the defect — an
+    // upgrade preserves such a file rather than overwriting it, and this is what
+    // says so afterwards.
+    const belongs = fields.owner === 'protocol' ? 'policies/' : 'rules/';
+    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]} — this declares ` +
+      `owner: ${fields.owner}, which belongs under ${belongs}`);
   }
   if (!isNonEmptyString(fields.date)) fail(rel, 'missing required field: date');
   else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}" — must be a real YYYY-MM-DD`);

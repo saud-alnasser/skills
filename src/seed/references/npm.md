@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "installing dependencies or running this repository's npm scripts"
@@ -27,7 +27,7 @@ npm run <script> --workspace <pkg>
 | types | `npm run typecheck` |
 
 **Do not invent a script.** A command named here that `package.json` does not
-define will be trusted and will fail (`[[rules/engineering]]`).
+define will be trusted and will fail (`[[policies/engineering]]`).
 
 Adding a dependency (`npm i <pkg>`, `-D` for development) is an architectural
 decision put to the human, not a mechanical one.

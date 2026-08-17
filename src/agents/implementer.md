@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: agent
 mode: [implement]
 use-when: "a whole task is ready to build and the declared edges leave it gating none of the others"
@@ -18,7 +18,7 @@ member gates.
 
 ## You are bound by
 
-`[[rules/sub-agents]]` — read it first; nothing here repeats it. Your posture is
+`[[policies/execution]]` — read it first; nothing here repeats it. Your posture is
 `[[modes/implement]]`; hold its tradeoffs as yours.
 
 ## Inputs
@@ -31,7 +31,7 @@ yourself** — rules, contexts, references, and the source.
 
 1. Read the task and the spec. **Where they conflict, stop and report** — do not
    build the reconciliation you would have chosen.
-2. Load applicable `[[rules]]`, relevant `[[contexts]]`, required
+2. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]`.
 3. Read the code you are about to change.
 4. Build, matching the surrounding code. Use `[[skills/tdd]]` where the rules

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: mode
 mode: [specify]
 use-when: "establishing what a change is and why, before any decision about how"
@@ -21,7 +21,7 @@ requirement.
 You will end this mode with nothing runnable. That is the trade: a wrong problem
 statement costs the whole effort, and it is cheapest to fix here.
 
-**Inputs.** The request. Repository state. `[[index]]`, applicable `[[rules]]`,
+**Inputs.** The request. Repository state. `[[index]]`, applicable `[[policies]]` and `[[rules]]`,
 relevant `[[contexts]]`, existing efforts.
 
 **Outputs.** `efforts/<effort>/spec.md` with Problem, Goal, Scope, Requirements,

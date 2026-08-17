@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, prototype, review]
 use-when: "working on a component that has stories, or checking one in isolation"
@@ -33,7 +33,7 @@ app — loading, empty, error — is already set up.
 
 **A story is not a test.** Rendering without throwing proves very little; unless
 this repository runs the test-runner, a green Storybook says nothing about
-behaviour (`[[rules/evidence]]`).
+behaviour (`[[policies/engineering]]`).
 
 ## Failure handling
 
@@ -41,4 +41,4 @@ behaviour (`[[rules/evidence]]`).
 - A story that renders in the app's dev server but not in Storybook is usually a
   missing decorator — provider, router, or theme — not a broken component.
 - Adding a story for a component you changed is usually right. Adding stories
-  nobody asked for across the repository is scope (`[[rules/change-control]]`).
+  nobody asked for across the repository is scope (`[[policies/execution]]`).

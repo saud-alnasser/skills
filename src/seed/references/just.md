@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "running this repository's commands through its justfile"
@@ -30,7 +30,7 @@ just --dry-run <recipe>          # print what would run
 
 **Do not invent a recipe.** `just` fails loudly on an unknown name, but a recipe
 that exists and does something other than what this table claims fails quietly
-(`[[rules/engineering]]`).
+(`[[policies/engineering]]`).
 
 ## Failure handling
 

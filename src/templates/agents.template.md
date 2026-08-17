@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 use-when: "writing or extending a runtime's entrypoint, so it reaches AEP without restating it"
 ---
 
@@ -63,5 +63,5 @@ not a paragraph in the entrypoint.
 Add the **Start here** section and change nothing else. A repository's existing
 entrypoint predates AEP and its instructions still hold — where one genuinely
 contradicts a protocol rule, that is a declared deviation
-(`[[rules/ownership]]`), raised with the human rather than resolved by editing
+(`[[policies/artifacts]]`), raised with the human rather than resolved by editing
 either file.

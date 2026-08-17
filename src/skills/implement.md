@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [implement]
 use-when: "a task exists and is ready to build"
@@ -41,7 +41,7 @@ silent check is indistinguishable from one that never ran.
 
 A marker match licenses skipping the drift read and **nothing else**. Any
 statement you are about to rely on is still checked against the source
-(`[[rules/precedence]]`), and anything found stale is fixed where it is found.
+(`[[policies/authority]]`), and anything found stale is fixed where it is found.
 
 ## 1 — Take the work
 
@@ -94,8 +94,8 @@ role, which branches — before creating anything. Stated, not gated.
 ## 3 — Build
 
 1. **Read the task and the effort's `spec.md`.** Where they conflict: **stop,
-   surface it, build nothing** (`[[rules/change-control]]`).
-2. Load applicable `[[rules]]`, relevant `[[contexts]]`, required
+   surface it, build nothing** (`[[policies/execution]]`).
+2. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]` — by `use-when` and `paths`, never everything.
 3. **Read the code you are about to change.** All of it.
 4. Choose the shape:
@@ -109,7 +109,7 @@ role, which branches — before creating anything. Stated, not gated.
    | the task is a bug and the cause is not known | `[[skills/implement/diagnosing]]` — build the signal before the theory |
    | technical uncertainty survives | `[[skills/prototype]]`, in a worktree |
 
-   **A task is never split across sub-agents** (`[[rules/sub-agents]]`). A task
+   **A task is never split across sub-agents** (`[[policies/execution]]`). A task
    too large for one child is too large — it goes back to `[[skills/tasks]]`.
 
 5. **Build**, matching the surrounding code — idiom, naming, comment density.

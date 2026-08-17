@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [plan]
 use-when: "a spec is settled and the technical approach is not yet decided"
@@ -20,8 +20,8 @@ deciding architecture by accident.
 1. Read the effort's `spec.md`. If `status:` is still `draft` and material
    questions are open, go back to `[[skills/refine]]` first.
 2. **Read the code you intend to change** — not the parts you remember, the parts
-   you will touch. `[[rules/evidence]]`: names are not proof.
-3. Load applicable `[[rules]]`, relevant `[[contexts]]`, required
+   you will touch. `[[policies/engineering]]`: names are not proof.
+3. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]`, and any existing evidence for this effort.
 4. **Identify the technical uncertainty** and resolve what is material —
    `[[skills/research]]` for facts, `[[skills/prototype]]` for feel.
@@ -41,7 +41,7 @@ deciding architecture by accident.
 
    **Recommend one, with reasoning. The human chooses.** This is the whole
    mechanism behind *never silently decide architecture* — an alternative left
-   unmentioned is a decision already taken (`[[rules/engineering]]`).
+   unmentioned is a decision already taken (`[[policies/engineering]]`).
 
    Where the alternatives are not obvious, or where only one has been produced,
    `[[skills/plan/design-it-twice]]` is how to generate ones that genuinely
@@ -69,7 +69,7 @@ The same `spec.md`, gaining whichever of these apply:
 
 ## Constraints
 
-- **NEVER create `plan.md`.** `[[rules/change-control]]` has the reason.
+- **NEVER create `plan.md`.** `[[policies/execution]]` has the reason.
 - **Planning MUST NOT silently expand product scope.** Technical discovery that
   exposes a product-level change **stops and surfaces it** — then `spec.md`'s
   WHAT is updated deliberately, not absorbed into the HOW.

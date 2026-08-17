@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "running this repository's Python tests, or narrowing to one of them"
@@ -35,7 +35,7 @@ pytest -q                        # quiet; -vv for the opposite
 Read the collected count. `pytest -k` matching nothing prints
 **no tests ran** and exits **5**, not 1 — a result that is easy to read as
 success in a script that only checks for a non-zero exit
-(`[[rules/evidence]]`).
+(`[[policies/engineering]]`).
 
 ## Failure handling
 

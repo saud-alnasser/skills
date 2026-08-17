@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "building, testing, or checking this Rust crate or workspace"
@@ -40,13 +40,13 @@ cargo test --workspace --all-features
 **A bare `cargo test` in a workspace tests the current package only**, and it
 tests the default feature set. A change that compiles under the defaults can
 fail under `--all-features`, and CI usually runs the wider one. Check which
-before reporting a suite as passing (`[[rules/evidence]]`).
+before reporting a suite as passing (`[[policies/engineering]]`).
 
 ## Failure handling
 
 - A borrow-checker error is a design statement, not an obstacle. Reaching for
   `unsafe`, `clone()` everywhere, or `Rc<RefCell<_>>` to silence it changes the
-  design — raise it (`[[rules/engineering]]`).
+  design — raise it (`[[policies/engineering]]`).
 - `cargo update` moves the lockfile for dependencies nobody asked to move. Adding
   or bumping a dependency is a decision, not a mechanical step.
 - A test that passes alone and fails in the suite is shared state; tests run in

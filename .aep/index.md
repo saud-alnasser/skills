@@ -1,5 +1,5 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
 date: 2026-08-17
 ---
@@ -13,20 +13,20 @@ is there and when it applies, so you can decide what to read.
 
 Start at [[protocol]].
 
+## Policies
+
+| Artifact | Load when | Modes | Paths | Owner |
+| --- | --- | --- | --- | --- |
+| [[policies/artifacts]] | about to create, change, move, or remove anything under .aep/ — whose it is, where it belongs, and what shape it takes | — | .aep/**/*.md | protocol |
+| [[policies/authority]] | two sources disagree, or the work reaches a repository other than this one | — | — | protocol |
+| [[policies/engineering]] | writing code, or about to state anything about this repository you have not verified | — | — | protocol |
+| [[policies/execution]] | an effort is in progress — deriving tasks, dispatching, implementing, or reviewing | — | — | protocol |
+
 ## Rules
 
 | Artifact | Load when | Modes | Paths | Owner |
 | --- | --- | --- | --- | --- |
-| [[rules/artifacts]] | creating or editing any Markdown artifact under .aep/ | — | .aep/**/*.md | protocol |
 | [[rules/authoring]] | changing anything under src/ — the protocol's own shipped surfaces | implement, review | src/** | repository |
-| [[rules/boundary]] | the work touches a repository other than the one this session is in | — | — | protocol |
-| [[rules/change-control]] | an effort is in progress — planning it, deriving tasks, implementing, or reviewing | specify, plan, refine, implement, review | — | protocol |
-| [[rules/engineering]] | writing code, or making any claim about how this repository works | plan, implement, prototype, review | — | protocol |
-| [[rules/evidence]] | material uncertainty has surfaced and you are about to guess, research, or prototype | specify, plan, refine, implement, research, prototype | — | protocol |
-| [[rules/ownership]] | about to change, upgrade, prune, or install anything under .aep/ | — | — | protocol |
-| [[rules/placement]] | creating a file and deciding whether it belongs to AEP or to the repository | — | — | protocol |
-| [[rules/precedence]] | two sources disagree and you are about to pick one | — | — | protocol |
-| [[rules/sub-agents]] | dispatching sub-agents, or running as one | implement, review, research | — | protocol |
 | [[rules/version-control]] | committing, branching, or preparing work to land | implement, review | — | repository |
 
 ## Contexts
@@ -106,4 +106,25 @@ Start at [[protocol]].
 
 ## Efforts
 
-_None._
+| Effort | Status | Spec | Research | Prototypes | Tickets |
+| --- | --- | --- | --- | --- | --- |
+| policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
+
+## Tickets
+
+Local tickets only. Where an external tracker holds the work, it is not mirrored here.
+
+| Ticket | Effort | Status | Blocked by |
+| --- | --- | --- | --- |
+| [[efforts/policy-rule-split/tickets/01-policies]] feat(policies): nine rules consolidate into four protocol-owned policies | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/02-links]] refactor(links): every shipped link into rules/ points at its policy | policy-rule-split | resolved | 01 |
+| [[efforts/policy-rule-split/tickets/03-tree-scripts]] feat(scripts): the tree scripts know the policy primitive | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/04-installer]] feat(install): declared moves retire the old rule files and repair their links | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/05-bootstrap]] feat(protocol): the bootstrap and the templates name both governance layers | policy-rule-split | resolved | 02 |
+| [[efforts/policy-rule-split/tickets/06-update-skill]] docs(update): a 1.x policy converts to a repository rule, never to a policy | policy-rule-split | resolved | 02 |
+| [[efforts/policy-rule-split/tickets/07-specification]] docs(specs): the specification defines two governance primitives | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/08-verify]] test(verify): the install fixture upgrades a 2.1 tree end to end | policy-rule-split | resolved | 01, 03, 04 |
+| [[efforts/policy-rule-split/tickets/09-release]] chore(dist): release 2.2.0 and reinstall this repository's own tree | policy-rule-split | resolved | 02, 05, 06, 08 |
+| [[efforts/policy-rule-split/tickets/10-fenced-links]] fix(install): decide whether the link rewriter should see fenced blocks | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/11-artifacts-name]] refactor(policies): confirm or replace the name `artifacts` | policy-rule-split | resolved | — |
+| [[efforts/policy-rule-split/tickets/12-moves-home]] docs(scripts): payload.mjs says what it installs, and now also what it moves | policy-rule-split | resolved | — |

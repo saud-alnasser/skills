@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, prototype, test]
 use-when: "building or running this Next.js application"
@@ -30,7 +30,7 @@ npx next lint
 
 **`next dev` passing is weak evidence.** Static generation, route-level type
 checking, and server/client boundary violations are enforced at build time, not
-in dev. Build before claiming a change works (`[[rules/evidence]]`).
+in dev. Build before claiming a change works (`[[policies/engineering]]`).
 
 ## Server and client
 

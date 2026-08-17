@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test, prototype]
 use-when: "reproducing this repository's development environment, or explaining a difference between it and the host"
@@ -31,7 +31,7 @@ devcontainer build --workspace-folder .
 **A command run on the host is not the same command run in the container**, and
 the difference — tool versions, available services, filesystem case sensitivity
 — is exactly what the container exists to remove. When reporting that something
-works, say which side it was run on (`[[rules/evidence]]`).
+works, say which side it was run on (`[[policies/engineering]]`).
 
 `postCreateCommand` and `postStartCommand` run automatically. A dependency that
 is present after a rebuild and absent otherwise usually comes from one of them.

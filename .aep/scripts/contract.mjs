@@ -4,7 +4,7 @@
 // A deliberately small YAML subset rather than a dependency: AEP artifacts use
 // scalars, inline arrays, and block arrays, and nothing else. A parser that
 // accepts more than the contract allows would silently pass frontmatter that
-// `[[rules/artifacts]]` forbids, which is the opposite of what these scripts are
+// `[[policies/artifacts]]` forbids, which is the opposite of what these scripts are
 // for. Anything outside the subset is reported as a parse error, not guessed at.
 
 import fs from 'node:fs';
@@ -12,6 +12,17 @@ import path from 'node:path';
 
 /** Values the `owner` field may take. */
 export const OWNERS = ['protocol', 'repository'];
+
+/**
+ * Directories that admit exactly one owner.
+ *
+ * The two governance directories, and only those. Ownership is otherwise read
+ * off the declared field and never inferred from a path — but a policy is AEP's
+ * law and a rule is the repository's, so a file in the wrong one is a defect to
+ * report rather than a case to decide. An installer still reads the field before
+ * overwriting anything; this is what makes the misplacement visible afterwards.
+ */
+export const DIRECTORY_OWNERS = { policies: 'protocol', rules: 'repository' };
 
 /** Values the `kind` field may take. */
 export const KINDS = [
@@ -21,6 +32,7 @@ export const KINDS = [
   'prototype',
   'research',
   'reference',
+  'policy',
   'rule',
   'skill',
   'ticket',
@@ -45,7 +57,7 @@ export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
 
 /** Directories that must never exist under `.aep/`. */
-export const FORBIDDEN_DIRS = ['decisions', 'policies', 'tools', 'grill'];
+export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill'];
 
 /** The seventeen conforming skills. */
 export const SKILLS = [
@@ -72,7 +84,7 @@ export const SKILLS = [
 export const MODELESS_SKILLS = ['help', 'handoff'];
 
 /** Files whose `kind` requires a `use-when`, by the directory they live in. */
-export const USE_WHEN_REQUIRED_DIRS = ['rules', 'references', 'contexts'];
+export const USE_WHEN_REQUIRED_DIRS = ['policies', 'rules', 'references', 'contexts'];
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
 

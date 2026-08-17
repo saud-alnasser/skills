@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [implement]
 use-when: "a repository has no .aep/ directory and should start running AEP"
@@ -19,7 +19,7 @@ runtime adapter.
 
 - `.aep/protocol.md` exists → this is `[[skills/update]]`'s job. Running install
   over a live installation risks exactly the repository-owned artifacts
-  `[[rules/ownership]]` requires be preserved.
+  `[[policies/artifacts]]` requires be preserved.
 - A **1.x layout** — a protocol file, `policies/`, `decisions/`, or `designs/`
   under a runtime's own directory — → also `[[skills/update]]`, which converts
   it. 1.x has no `.aep/`, so the first check answers *not installed* and is
@@ -70,7 +70,7 @@ runtime adapter.
    actually reaches the default branch.
 
    **A seeded command that this repository does not have is worse than no
-   reference**, because it will be trusted (`[[rules/engineering]]`). Delete what
+   reference**, because it will be trusted (`[[policies/engineering]]`). Delete what
    you cannot confirm.
 
    **Delete a reference outright where the tool is configured but not used.** A
@@ -97,7 +97,7 @@ runtime adapter.
      `CLAUDE.md` or its equivalent — which is one line pointing at `AGENTS.md`.
 
    **Never restate protocol.md's content there.** A summary in the entrypoint is
-   a second home, and it is the copy that drifts (`[[rules/placement]]`).
+   a second home, and it is the copy that drifts (`[[policies/artifacts]]`).
 
 7. **Offer a runtime adapter.** Ask first — files outside `.aep/` belong to the
    repository. Adding `--adapters claude` writes `.claude/skills/<name>/SKILL.md`

@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "installing dependencies or running this PHP project's scripts"
@@ -39,4 +39,4 @@ vendor/bin/phpunit
 - The installed PHP version constrains resolution. A dependency that "cannot be
   installed" is often a platform requirement, and `--ignore-platform-reqs` hides
   a real incompatibility rather than resolving it.
-- Adding a dependency is an architectural decision (`[[rules/engineering]]`).
+- Adding a dependency is an architectural decision (`[[policies/engineering]]`).

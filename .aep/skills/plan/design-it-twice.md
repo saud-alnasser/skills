@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 use-when: "the plan must put alternative approaches on the table and the first idea is the only one anyone has produced"
 ---
@@ -53,7 +53,7 @@ translated.
 
 Where the runtime has sub-agents, each design may be a child: **one child, one
 whole design**, which is a whole question and therefore a legal dispatch under
-`[[rules/sub-agents]]`. Splitting *one* design across children is not.
+`[[policies/execution]]`. Splitting *one* design across children is not.
 
 ## 3 — Present, compare, recommend
 
@@ -72,7 +72,7 @@ the human while looking like thorough work — and it is the failure this note i
 most likely to produce, because three designs feel like enough output on their
 own.
 
-The choice remains the human's (`[[rules/engineering]]`). Recommending is not
+The choice remains the human's (`[[policies/engineering]]`). Recommending is not
 deciding.
 
 ## 4 — Write the outcome down

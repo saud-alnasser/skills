@@ -1,7 +1,7 @@
 ---
 aep: 2.1.1
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [specify, plan, implement, review]
 use-when: "reading or writing GitHub issues, pull requests, or checks for this repository"
@@ -29,7 +29,7 @@ gh pr checks <number>
 gh issue view <number> --json number,title,body,state,labels
 ```
 
-Reading is always allowed. `[[rules/boundary]]` still applies: read another
+Reading is always allowed. `[[policies/authority]]` still applies: read another
 repository freely, write to none.
 
 ## Pull requests
@@ -60,4 +60,4 @@ approved, then create.
   do not attempt to authenticate.
 - A rate limit is a wait, not a reason to scrape the web UI.
 - An operation not listed here is a gap — say so rather than guessing a flag
-  (`[[rules/engineering]]`).
+  (`[[policies/engineering]]`).

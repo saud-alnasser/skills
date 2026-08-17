@@ -1,13 +1,15 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
-kind: rule
-mode: [plan, implement, prototype, review]
-use-when: "writing code, or making any claim about how this repository works"
+date: 2026-08-17
+kind: policy
+use-when: "writing code, or about to state anything about this repository you have not verified"
 ---
 
-# Rule — engineering standards
+# Policy — engineering
+
+How a claim is made, how a change is made, and what to do on finding that you do
+not know.
 
 ## Claims
 
@@ -37,10 +39,10 @@ use-when: "writing code, or making any claim about how this repository works"
   record **why it exists, what else was considered, and the condition under which
   it is removed** — without a removal condition, "temporary" is an intention
   rather than a state anything can leave.
-- **Obeying a rule means letting its check fire.** Keeping a rule's letter while
-  arranging that its check cannot run violates it more completely than defiance,
-  which at least leaves a trace. Before satisfying a rule, ask what it would have
-  caught and whether that is still reachable.
+- **Obeying a rule means letting its check fire.** Keeping the letter of a
+  requirement while arranging that its check cannot run violates it more
+  completely than defiance, which at least leaves a trace. Before satisfying one,
+  ask what it would have caught and whether that is still reachable.
 
 ## What gets written
 
@@ -66,3 +68,52 @@ the human choose. **An alternative left unmentioned is a decision made silently.
 Never push, never publish, never open a pull request unasked
 (`[[rules/version-control]]` names exactly what that covers, and why the line
 sits where it does).
+
+## When you find that you do not know
+
+Everything above governs how a claim is made at all. This is what to do once you
+have found that you cannot make one.
+
+**Climb only as far as the uncertainty warrants.**
+
+```
+known fact → repository inspection → existing context/evidence
+→ research → prototype → grill
+```
+
+Use the **cheapest reliable** mechanism. Expensive investigation for trivial
+uncertainty is its own defect — a config rename does not get a research phase.
+
+Route by the *kind* of uncertainty, because the wrong instrument produces a
+confident wrong answer:
+
+| Uncertainty | Instrument |
+| --- | --- |
+| factual — what does this API actually do | `[[skills/research]]` |
+| technical — will this approach work | `[[skills/prototype]]` |
+| product, requirement, tradeoff, disagreement | grill, via `[[skills/refine]]` |
+
+Argument cannot settle a factual question, and reading cannot settle whether an
+interaction feels right.
+
+## What gets recorded
+
+Evidence lives at `efforts/<effort>/evidence/`, in `research/` or `prototypes/`.
+Those are the only two kinds.
+
+- **Research records findings, never decisions.** If a finding changes the
+  design, change `spec.md` deliberately. *Why: research that quietly becomes a
+  decision is an architecture chosen by whoever ran the search.*
+- **Prototype code is disposable.** It MUST NOT automatically become production
+  code; promotion is an explicit decision recorded in `spec.md`, and what is
+  promoted is rewritten under `[[modes/implement]]`.
+- **Grill is not evidence.** It is a mechanism; its conclusions land in the spec,
+  a policy, a rule, a context, or an evidence file. There is no `grill/`
+  directory.
+- What you looked for and did **not** find is a finding. Record it.
+
+## Graduation
+
+Knowledge that outlives its effort moves into a `[[contexts]]`, a `[[rules]]`, or
+a `[[references]]`. The evidence file stays where it is, as the record of how it
+was learned.

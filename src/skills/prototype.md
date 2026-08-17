@@ -1,5 +1,5 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
 date: 2026-08-17
 kind: skill
@@ -18,7 +18,7 @@ and throws the code away. A **capability, never a stage**.
 
 The uncertainty is **technical or experiential**: will this approach hold up,
 does this state model survive real interaction, is this fast enough, does this
-API behave as documented under our load. `[[rules/evidence]]` routes facts to
+API behave as documented under our load. `[[policies/engineering]]` routes facts to
 `[[skills/research]]` and product ambiguity to `[[skills/refine]]`.
 
 ## Procedure

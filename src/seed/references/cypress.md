@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "running this repository's Cypress tests"
@@ -38,5 +38,5 @@ a failed visit, which reads like a routing bug.
 - A test that passes in `open` and fails in `run` is usually viewport size or
   animation timing, both of which the GUI hides.
 - Retries configured in `cypress.config` turn a flaky test green. Check whether
-  a passing run used them before trusting it (`[[rules/evidence]]`).
+  a passing run used them before trusting it (`[[policies/engineering]]`).
 - Never run against anything but a local or designated test environment.

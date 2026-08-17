@@ -20,6 +20,7 @@ import { readArtifact, walk } from './contract.mjs';
 import { writeClaudeAdapter } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
+  MOVES,
   PAYLOAD_DIRS,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
@@ -28,7 +29,10 @@ import {
   SEEDS,
 } from './payload.mjs';
 
-const report = { written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [] };
+const report = {
+  written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [],
+  moved: [], collided: [], relinked: [],
+};
 
 /** The distribution root — `src/`, since this script lives in `src/scripts/`. */
 function distributionRoot() {
@@ -78,6 +82,120 @@ function copyDir(sourceDir, targetDir, dryRun) {
         report.retired.push(existing);
       }
     }
+  }
+}
+
+/** A release as three numbers, or null when the string is not one. */
+function release(value) {
+  const parsed = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(value ?? ''));
+  return parsed ? parsed.slice(1, 4).map(Number) : null;
+}
+
+/** Whether `a` precedes `b`. Either being unparseable answers false. */
+function precedes(a, b) {
+  const left = release(a);
+  const right = release(b);
+  if (!left || !right) return false;
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] !== right[i]) return left[i] < right[i];
+  }
+  return false;
+}
+
+/**
+ * Applies the release's declared moves. Only under `--update`.
+ *
+ * A protocol-owned source is removed, because its content now ships at the
+ * target and two copies of one text is worse than none. A **repository-owned**
+ * file standing at the same path is not the protocol's to remove — the
+ * repository wrote its own rule under a name the protocol has since vacated,
+ * which is legal — so it stays, and the collision is reported for a human.
+ *
+ * A move applies only to a tree that predates it. Without that bound, a
+ * repository which later writes its own `rules/precedence.md` — which it is
+ * entitled to do, the name having been vacated — would be reported as colliding
+ * on every upgrade it ever runs, forever. A tree declaring nothing is treated as
+ * predating everything: unknown is not the same as current, and the move only
+ * ever removes a protocol-owned file whose content still exists at the target.
+ *
+ * Returns the moves whose source path is now vacant, which is what the link
+ * repair below acts on. Derived from what was decided rather than from what is
+ * on disk, so a dry run previews the same repairs a real run would make.
+ */
+function applyMoves(aep, declared, dryRun) {
+  const vacated = [];
+  for (const move of MOVES) {
+    if (declared && !precedes(declared, move.since)) continue;
+    const source = path.join(aep, ...move.from.split('/'));
+    if (!fs.existsSync(source)) continue;
+    if (readArtifact(source).fields.owner === 'repository') {
+      report.collided.push(`${move.from} is the repository's; ${move.to} now ships the protocol's`);
+      continue;
+    }
+    if (!dryRun) fs.rmSync(source);
+    report.moved.push(`${move.from} → ${move.to}`);
+    vacated.push(move);
+  }
+  return vacated;
+}
+
+/**
+ * Repairs links into files the moves vacated.
+ *
+ * The only thing in this program that writes into a file the repository owns,
+ * so every condition here is a narrowing:
+ *
+ * - repository-owned Markdown only — protocol-owned files are replaced wholesale
+ *   by the copy above, and the generated index is regenerated straight after;
+ * - only the nine declared targets, never a pattern;
+ * - **outside fenced blocks only.** A link inside a fence is the syntax being
+ *   shown rather than a reference being made, which is why the link checker
+ *   strips fences before looking. Rewriting one edits somebody's example;
+ *   leaving it costs nothing, because nothing was ever going to resolve it;
+ * - **only where the source path is now vacant.** A repository that kept its own
+ *   `rules/<name>.md` has a link that correctly points at *its* file, and
+ *   redirecting that to a policy it never referenced would break a live link to
+ *   fix an imaginary one;
+ * - the target is replaced and nothing else — an alias or anchor the link
+ *   carried survives verbatim, and no anchor is ever constructed.
+ *
+ * The file's `date` moves with it. `date` is the last-modified date and nothing
+ * checks it, so a repair that leaves it alone leaves a false freshness claim in
+ * a file the repository owns. It is one more field in a write that is happening
+ * anyway, not a wider reach.
+ */
+function rewriteMovedLinks(aep, vacated, today, dryRun) {
+  const moved = new Map(
+    vacated.map((move) => [move.from.replace(/\.md$/, ''), move.to.replace(/\.md$/, '')]),
+  );
+  if (moved.size === 0) return;
+
+  const derivedIndex = path.join(aep, 'index.md');
+  for (const file of walk(aep, { skip: ['position', 'worktrees'] })) {
+    // The index is derived and regenerated straight after, so repairing it is
+    // work that is about to be thrown away. Matched by path rather than by
+    // basename: a repository may legitimately own some other `index.md`.
+    if (!file.endsWith('.md') || file === derivedIndex) continue;
+    if (readArtifact(file).fields.owner !== 'repository') continue;
+
+    const before = fs.readFileSync(file, 'utf8');
+    let replaced = 0;
+    // One pass over fences and links together, so a fence is consumed whole and
+    // the links inside it are never offered up for rewriting.
+    const after = before.replace(
+      /(^```[\s\S]*?^```)|\[\[([^\]|#]+?)((?:#[^\]|]*)?(?:\|[^\]]*)?)\]\]/gm,
+      (whole, fence, target, suffix) => {
+        if (fence !== undefined) return fence;
+        const destination = moved.get(target.trim());
+        if (!destination) return whole;
+        replaced += 1;
+        return `[[${destination}${suffix}]]`;
+      },
+    );
+    if (replaced === 0) continue;
+    const stamped = after.replace(/^date:\s*\d{4}-\d{2}-\d{2}$/m, `date: ${today}`);
+    if (!dryRun) fs.writeFileSync(file, stamped, 'utf8');
+    report.relinked.push(`${file} (${replaced})`);
   }
 }
 
@@ -174,6 +292,14 @@ function main() {
   }
 
   const existing = fs.existsSync(path.join(aep, 'protocol.md'));
+
+  // Read before the payload overwrites it: what the tree declared on arrival is
+  // what decides which moves still apply, and one line later it declares this
+  // release instead.
+  const declared = existing
+    ? readArtifact(path.join(aep, 'protocol.md')).fields.aep
+    : null;
+
   if (existing && !args.includes('--update')) {
     process.stderr.write(
       'this repository already has .aep/ — use --update, so repository-owned files are preserved deliberately\n',
@@ -209,6 +335,14 @@ function main() {
     ensureDir(path.join(aep, dir), dryRun);
   }
 
+  // Moves apply to a tree that already exists, so they belong to an upgrade and
+  // to nothing else. A fresh install has nothing at the source paths anyway;
+  // the guard is here so that is a stated fact rather than a coincidence.
+  if (args.includes('--update')) {
+    const today = new Date().toISOString().slice(0, 10);
+    rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
+  }
+
   installSeeds(repo, from, aep, dryRun);
 
   const ignoreTarget = path.join(aep, '.gitignore');
@@ -234,6 +368,10 @@ function main() {
   list('repository-owned starting points seeded — review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);
+  list('protocol files moved by this release', report.moved, (entry) => entry);
+  list('links repaired in repository-owned files', report.relinked);
+  list('name collisions — a repository file stands where a moved one did', report.collided,
+    (entry) => entry);
   list('protocol files no longer shipped — review, then /prune', report.retired);
 
   if (!dryRun) {

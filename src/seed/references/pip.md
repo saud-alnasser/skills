@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: repository
-date: 2026-08-16
+date: 2026-08-17
 kind: reference
 mode: [implement, test]
 use-when: "installing this Python project's dependencies from its requirements files"
@@ -42,5 +42,5 @@ environment.
 - `pip freeze > requirements.txt` captures the whole environment, including
   transitive packages and local tooling. It is not a way to add one dependency.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[rules/engineering]]`).
+  its alternatives (`[[policies/engineering]]`).
 - Never install into the system interpreter, and never publish.

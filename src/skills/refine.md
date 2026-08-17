@@ -1,7 +1,7 @@
 ---
-aep: 2.1.1
+aep: 2.2.0
 owner: protocol
-date: 2026-08-16
+date: 2026-08-17
 kind: skill
 mode: [refine]
 use-when: "a spec exists but reads as ambiguous, under-constrained, or too agreeable"
@@ -18,7 +18,8 @@ spine.
 ## Procedure
 
 1. Read `efforts/<effort>/spec.md` in full.
-2. Load applicable `[[rules]]`, relevant `[[contexts]]` and `[[references]]`.
+2. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]` and
+   `[[references]]`.
 3. **Find the weak points.** Work down this list — it is ordered by how expensive
    the defect is to discover later:
 
