@@ -20,25 +20,19 @@ context can be cleared between any two.
 ## 0 — Position. Every invocation. No exceptions.
 
 This is the command that turns knowledge into code, so a stale belief here
-becomes a wrong edit. Open with the report, quoted from the script:
+becomes a wrong edit. Run it, and quote it:
 
 ```
 node .aep/scripts/position.mjs check
 ```
 
-```
-Position
-  marker  a3f91c2  HEAD 8b2d417   14 commits ahead
-  tree    9f1d2af  live 3a1c802   tree differs
+**This is what fills `Standing` in the turn's opening report**
+(`[[policies/reporting]]`): the script's output, then what no script can produce
+— the contexts this task touches, and every claim the source contradicted, with
+what was corrected.
 
-  contexts touched by this task: database
-  1 claim contradicted by source:
-      "migrations are transactional" — they are not. corrected.
-```
-
-**Everything above the blank line is the script's output.** Everything below is
-yours, and no script can produce it. **Nothing to report is still reported** — a
-silent check is indistinguishable from one that never ran.
+**Nothing to report is still reported** — a silent check is indistinguishable
+from one that never ran.
 
 A marker match licenses skipping the drift read and **nothing else**. Any
 statement you are about to rely on is still checked against the source
@@ -128,6 +122,10 @@ role, which branches — before creating anything. Stated, not gated.
 `[[skills/review]]`, apply the fixes, then `[[skills/commit]]` — **without
 prompting.** Committing reviewed work is part of finishing. Then mark the task
 resolved. Further changes amend that commit; nothing is pushed.
+
+Both run **as stages of this turn** and open no report of their own
+(`[[policies/reporting]]`). Everything they produce still reaches the human;
+only the preamble is not repeated.
 
 ## Constraints
 

@@ -11,7 +11,9 @@ use-when: "building a behaviour test-first, or pinning a bug down before fixing 
 # /tdd — test-driven development
 
 A sub-skill. Reached from inside `[[skills/implement]]` and `[[skills/prototype]]`
-rather than started on its own.
+rather than started on its own — and reached that way it is **a stage of that
+turn**, opening no report of its own (`[[policies/reporting]]`). Invoked
+directly, it is the turn's outermost skill and reports like any other.
 
 **Enters `[[modes/test]]`,** returning to the calling skill's mode to write the
 production code.

@@ -3,7 +3,7 @@ aep: 2.3.0
 owner: repository
 date: 2026-08-17
 kind: ticket
-status: open
+status: resolved
 part-of: uniform-reporting
 blocked-by: [04]
 ---
@@ -34,9 +34,10 @@ untouched, and no skill acquires a check it did not perform.
       `[[skills/tasks]]`'s graph report, are unchanged.** They are output, not a
       preamble, and folding them into the skeleton is the failure mode of this
       ticket.
-- [ ] **The set of skills invoking `position.mjs` is exactly `implement`,
-      `specify`, `commit`, `install` — before and after.** List both, show them
-      identical.
+- [ ] **The set of skills invoking `position.mjs` is identical before and
+      after.** Measured at ticket 04's commit: `commit`, `implement`, `install`.
+      `specify` reads `position/marker.json` directly and invokes no script — a
+      correction to what this ticket originally claimed.
 - [ ] No skill restates the skeleton; each points at `policies/reporting.md` —
       the file ticket 01 creates — where it needs to name it.
 

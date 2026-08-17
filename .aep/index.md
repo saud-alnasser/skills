@@ -143,7 +143,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/uniform-reporting/tickets/02-bootstrap]] feat(protocol): the bootstrap says that every turn reports | uniform-reporting | resolved | 01 |
 | [[efforts/uniform-reporting/tickets/03-contract]] feat(contract): a skill declares the form it reports in | uniform-reporting | resolved | 01 |
 | [[efforts/uniform-reporting/tickets/04-skills]] refactor(skills): every skill declares its form and names its stages | uniform-reporting | resolved | 03 |
-| [[efforts/uniform-reporting/tickets/05-absorption]] refactor(skills): the reporting each skill invented is absorbed into the contract | uniform-reporting | open | 04 |
-| [[efforts/uniform-reporting/tickets/06-specification]] docs(specs): the specification defines what a turn tells the human | uniform-reporting | open | 01, 03 |
+| [[efforts/uniform-reporting/tickets/05-absorption]] refactor(skills): the reporting each skill invented is absorbed into the contract | uniform-reporting | resolved | 04 |
+| [[efforts/uniform-reporting/tickets/06-specification]] docs(specs): the specification defines what a turn tells the human | uniform-reporting | resolved | 01, 03 |
 | [[efforts/uniform-reporting/tickets/07-verify]] test(verify): the shipped surfaces are asserted against the report contract | uniform-reporting | open | 01, 02, 03, 04, 05, 06 |
 | [[efforts/uniform-reporting/tickets/08-release]] chore(dist): release 2.4.0, with the notice its frontmatter change requires | uniform-reporting | open | 07 |

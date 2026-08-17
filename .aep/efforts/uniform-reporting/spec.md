@@ -460,7 +460,7 @@ is trusted.
 | 1 | exactly one payload artifact contains the whole label set; no `skills/*.md` contains it |
 | 1a | the policy states the turn unit; `implement` says `review` and `commit` run as stages of its turn; `tdd` and `domain` say they open no report |
 | 2 | the policy names the four opening slots in order, and states that a slot with nothing in it says so rather than being dropped |
-| 2a | the set of skills invoking `position.mjs` is exactly `implement`, `specify`, `commit`, `install` — pinned by name, so a fifth is a failure |
+| 2a | the set of skills invoking `position.mjs` is exactly `commit`, `implement`, `install` — pinned by name, so a fourth is a failure. `specify` reads `position/marker.json` directly and invokes no script, which is why it is not in the set |
 | 3 | all seventeen declare `report:`; every value is legal; the fourteen that write, dispatch, or decide declare `full`; the policy defines the difference as the stage markers |
 | 4 | for **every** `full` skill — fourteen, no exemptions — stage names extract cleanly from one of the two shapes, and the count is non-zero |
 | 5 | the policy names all three closing slots and requires them of a turn that stops early |

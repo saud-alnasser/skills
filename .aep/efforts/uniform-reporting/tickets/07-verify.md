@@ -30,8 +30,10 @@ each one has been **observed failing** before it is trusted.
 - [ ] For every full-form skill, stage names extract from one of the two shapes
       and the count is non-zero. **A skill matching neither shape fails**; it is
       never skipped.
-- [ ] The set of skills invoking `position.mjs` is pinned by name to
-      `implement`, `specify`, `commit`, `install`, so a fifth is a failure.
+- [ ] The set of skills invoking `position.mjs` is pinned by name to `commit`,
+      `implement`, `install`, so a fourth is a failure. `specify` reads
+      `position/marker.json` directly rather than running the script, so it is
+      not in the set — pinning it there would assert something false.
 - [ ] No shipped surface naming the contract contains `terminal`, `colour`,
       `color`, `ANSI`, a pixel or column width, or a runtime name.
 - [ ] **Each new assertion is perturbed**: break the thing it checks, run the
