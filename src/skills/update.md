@@ -4,6 +4,7 @@ owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [implement]
+report: full
 use-when: "the running AEP release differs from the one this repository declares, protocol files look wrong, or the repository still carries a 1.x layout"
 ---
 

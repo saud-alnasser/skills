@@ -405,6 +405,21 @@ three long skills carry prose under each stage and need headings; the eleven
 compact ones would triple in length as headings for no gain. Both already exist
 in the corpus, and the parser is smaller than the diff that would remove one.*
 
+**Two skills are normalised into the second shape**, because they fit neither
+and the alternative was a guard that stops looking at them
+(`[[efforts/uniform-reporting/evidence/research/skill-shapes]]`):
+
+| Skill | Was | Becomes |
+| --- | --- | --- |
+| `handoff` | no numbered steps at all — sections only | a `## Procedure` whose steps are the sections it already has, in the order it already has them |
+| `tdd` | two numbered lists, `## The loop` and `## For a bug`, neither under `## Procedure` | `## The loop` is the stage list; `## For a bug` stays the alternate path it is, and is not read as extra stages |
+
+*Why not exempt them: a rule that skips exactly the cases it could not handle
+passes by not looking, which is the failure `[[rules/authoring]]` names. Why not
+a frontmatter hint naming each skill's procedure heading: it is a second
+statement of where the steps already are, and a skill pointing at the wrong
+heading would still pass.*
+
 # Technical Approach
 
 Ordered so nothing cites a file that does not yet exist:
@@ -447,7 +462,7 @@ is trusted.
 | 2 | the policy names the four opening slots in order, and states that a slot with nothing in it says so rather than being dropped |
 | 2a | the set of skills invoking `position.mjs` is exactly `implement`, `specify`, `commit`, `install` — pinned by name, so a fifth is a failure |
 | 3 | all seventeen declare `report:`; every value is legal; the fourteen that write, dispatch, or decide declare `full`; the policy defines the difference as the stage markers |
-| 4 | for every `full` skill, stage names extract cleanly from one of the two shapes, and the count is non-zero |
+| 4 | for **every** `full` skill — fourteen, no exemptions — stage names extract cleanly from one of the two shapes, and the count is non-zero |
 | 5 | the policy names all three closing slots and requires them of a turn that stops early |
 | 6 | no shipped surface naming the contract contains `terminal`, `colour`/`color`, `ANSI`, a width, or a runtime name |
 | 7 | the step lists of all seventeen skills, before and after, are identical — recorded in the ticket that makes the change |

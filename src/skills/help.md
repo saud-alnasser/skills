@@ -3,6 +3,7 @@ aep: 2.3.0
 owner: protocol
 date: 2026-08-17
 kind: skill
+report: short
 use-when: "the question is about AEP itself — what to reach for, and when"
 ---
 

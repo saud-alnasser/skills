@@ -4,6 +4,7 @@ owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [test, implement]
+report: full
 use-when: "building a behaviour test-first, or pinning a bug down before fixing it"
 ---
 
@@ -15,7 +16,9 @@ rather than started on its own.
 **Enters `[[modes/test]]`,** returning to the calling skill's mode to write the
 production code.
 
-## The loop
+## Procedure
+
+The loop:
 
 ```
 RED → GREEN → REFACTOR

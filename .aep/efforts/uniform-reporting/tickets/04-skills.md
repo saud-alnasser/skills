@@ -3,7 +3,7 @@ aep: 2.3.0
 owner: repository
 date: 2026-08-17
 kind: ticket
-status: open
+status: resolved
 part-of: uniform-reporting
 blocked-by: [03]
 ---
@@ -34,6 +34,13 @@ No skill gains, loses, or reorders a step.
 - [ ] The eleven `## Procedure` skills have a bolded lead on **every** numbered
       item. Several already do; the change is completing them, never renumbering
       or resequencing.
+- [ ] **`handoff` gains a `## Procedure`** whose numbered steps are the sections
+      it already has, in the order it already has them. No step is invented and
+      none is dropped.
+- [ ] **`tdd`'s stage list is `## The loop`.** `## For a bug` stays an alternate
+      path and is not read as extra stages; the extraction must not concatenate
+      the two. Its unbolded items — *Fix.*, *Watch it pass.* — are outside the
+      stage list and are left alone unless the extraction reads them.
 - [ ] Each extracted stage name is a name a human would recognise as the step —
       not the first clause of a sentence that happens to be bold.
 - [ ] **The step lists are identical before and after.** Record both lists in the

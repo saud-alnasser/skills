@@ -97,14 +97,12 @@ function checkArtifact(root, file) {
   // `report` says which form a skill's turn report takes. It is forbidden on a
   // note beside a skill: a note is reached from inside a run rather than
   // invoked, so declaring a form would claim something untrue about it.
-  //
-  // A skill that declares none is not yet a failure. The field is required of
-  // every skill, and that check arrives in the same change that gives all
-  // seventeen a value — a tree cannot be asked to validate against a rule it
-  // predates.
   const isSkill = /^skills\/[^/]+\.md$/.test(rel);
   if (isSkill) {
-    if (fields.report !== undefined && !REPORT_FORMS.includes(fields.report)) {
+    if (fields.report === undefined) {
+      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')} — ` +
+        'without it, what this skill tells the human has no defined shape');
+    } else if (!REPORT_FORMS.includes(fields.report)) {
       fail(rel, `report is "${fields.report}" — must be one of: ${REPORT_FORMS.join(', ')}`);
     }
   } else if (fields.report !== undefined) {

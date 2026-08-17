@@ -4,6 +4,7 @@ owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [prototype]
+report: full
 use-when: "a technical or design question will not settle on paper and needs building to answer"
 ---
 

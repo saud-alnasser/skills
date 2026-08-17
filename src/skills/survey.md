@@ -4,6 +4,7 @@ owner: protocol
 date: 2026-08-17
 kind: skill
 mode: [research, review]
+report: short
 use-when: "the question is where the codebase is costing you, rather than a specific change"
 ---
 
@@ -28,7 +29,7 @@ Not for a specific bug, and not for a change already described — that is
 
 1. **Bound the survey.** A directory, a package, a subsystem. An unbounded survey
    returns a list nobody acts on.
-2. Read `[[contexts]]` for the area, then read the code.
+2. **Read what is there.** `[[contexts]]` for the area, then the code.
 3. **Look for the four costs**, in this order:
 
    | Cost | Tell |
