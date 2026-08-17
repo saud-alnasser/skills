@@ -92,8 +92,20 @@ export const BUILD_ONLY_SCRIPTS = [
   'payload.mjs',
   'adapters.mjs',
   'install.mjs',
+  'release.mjs',
   'verify.mjs',
 ];
+
+/**
+ * The release script's baseline, at the distribution root rather than beside the
+ * scripts because everything in `scripts/` is `.mjs` — a consuming
+ * `package.json` cannot then change how any of it parses.
+ *
+ * Build-time only. It records what each shipped artifact hashed to when it was
+ * last stamped, which is how a release knows what actually moved. An installed
+ * tree has no use for it and never receives it.
+ */
+export const STAMPS_SOURCE = 'stamps.json';
 
 /** Source of `.aep/.gitignore`. Kept undotted in the distribution so it governs nothing here. */
 export const GITIGNORE_SOURCE = 'gitignore';

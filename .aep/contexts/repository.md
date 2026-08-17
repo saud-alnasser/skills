@@ -52,6 +52,7 @@ survive an upgrade like anyone else's.
 | how an installed tree is judged | `src/scripts/validate.mjs` |
 | how the shipped surfaces are judged | `src/scripts/verify.mjs` |
 | how a runtime reaches AEP | `src/scripts/adapters.mjs` |
+| how a release is cut, and what `aep:` means | `src/scripts/release.mjs` |
 
 There is **no package manifest and no dependency**. Every script is
 dependency-free ESM run by a bare Node runtime, named `.mjs` so that a consuming

@@ -232,9 +232,9 @@ Field contract:
 
 | Field | Required | Contract |
 | --- | --- | --- |
-| `aep` | **yes** | The release the artifact ships in. Every release stamps **every** protocol-owned artifact, `protocol.md` included (§6), so a protocol-owned artifact declaring anything other than the release its tree declares is out of date and reinstalled (§7). |
+| `aep` | **yes** | The release in which this artifact's content **last changed** — one meaning, both owners. A release that does not change a file MUST NOT restamp it, so most artifacts in a current tree legitimately declare an older release; that is the field carrying information rather than repeating `protocol.md`. A stamp **ahead** of the release being built names a release that does not exist and is illegal. **`protocol.md` is the exception** and always declares the current release (§6). |
 | `owner` | **yes** | Exactly `protocol` or `repository`. No other value is legal. Under `policies/` it MUST be `protocol`; under `rules/` it MUST be `repository` (§7). |
-| `date` | **yes** | Last modified, as `YYYY-MM-DD`. No other format is legal. |
+| `date` | **yes** | The date that content last changed, as `YYYY-MM-DD`. No other format is legal. Same question as `aep`, and it MUST be maintained by the same mechanism — two fields answering one question by two mechanisms is one field that drifts. |
 | `kind` | situational | One of the listed values. Omitted only where the directory makes it redundant. |
 | `mode` | situational | A YAML **array** of mode names (§14). Applicability, never state. |
 | `paths` | optional | Glob patterns for which repository paths make the artifact applicable. |
@@ -243,7 +243,11 @@ Field contract:
 | `part-of` | optional | The effort a ticket belongs to. Tickets only. |
 | `use-when` | **required on policies, rules, references, and contexts**; optional elsewhere | One sentence describing **when to load this**. |
 
-Two contracts are stated separately because they are the ones that fail:
+**`aep` and `date` MUST be computed, never typed.** An implementation that distributes a payload MUST determine, per artifact, whether its content changed since the last release, and stamp only those that did. It MUST be able to detect **an artifact whose content changed without its stamp changing** — the defect a scheme that restamps everything every release cannot see, because under it a stale stamp and a current one are the same value.
+
+*Why this is normative rather than tooling advice: a stamp maintained by hand is a claim nobody verifies, and a field that says the same thing on every artifact distinguishes nothing. Making it computed is what turns it from ceremony into an answer.*
+
+Three contracts are stated separately because they are the ones that fail:
 
 **`use-when` describes a trigger, never a topic.** "Working with database schema or migrations" is a trigger. "Database documentation" is a topic, satisfies every mechanical check, and is the one failure this shape can still produce. A policy, rule, reference, or context without a real `use-when` cannot participate in progressive discovery and is therefore either loaded always or never — both defeat the mechanism.
 
@@ -965,6 +969,7 @@ A conforming implementation preserves all of the following:
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
 45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
 46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
+47. `aep` and `date` record when an artifact's content last changed, are computed rather than typed, and an artifact whose content changed without its stamp changing is detected.
 
 ---
 

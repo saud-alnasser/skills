@@ -44,3 +44,12 @@ Regenerate the Claude adapter whenever a skill or agent changes:
 ```
 node src/scripts/adapters.mjs
 ```
+
+Cutting a release is one command, and it stamps only what changed:
+
+```
+node src/scripts/release.mjs <version>
+```
+
+**`aep:` is the release an artifact's content last changed in.** Never restamp by
+hand — a sweep destroys the only information the field carries.

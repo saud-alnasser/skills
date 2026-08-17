@@ -35,12 +35,14 @@ import {
   wikiLinks,
 } from './contract.mjs';
 import { renderClaudeAdapter } from './adapters.mjs';
+import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
   GITIGNORE_SOURCE,
   MOVES,
   NOTICES,
   PAYLOAD_DIRS,
+  STAMPS_SOURCE,
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
   REPOSITORY_DIRS,
@@ -126,18 +128,6 @@ const release = (value) => {
   return parsed ? parsed.slice(1, 4).map(Number) : null;
 };
 
-/**
- * Whether `value` is exactly the release being built.
- *
- * Everything a release ships stamps that release, so there is one legal value
- * and this is an equality test rather than a range. Both directions are real
- * errors: ahead names a release that does not exist yet, and behind makes a
- * shipped artifact look like one the installation never received — which is the
- * single comparison an upgrade makes.
- *
- * Parsed rather than string-compared, so a malformed stamp fails as a bad
- * release rather than passing as an unequal string.
- */
 /** Whether `a` precedes `b` — the installer's notice and move gate, mirrored. */
 const precedesRelease = (a, b) => {
   const left = release(a);
@@ -149,11 +139,23 @@ const precedesRelease = (a, b) => {
   return false;
 };
 
-const stampsRelease = (value) => {
+/**
+ * Whether `value` is a real release no later than the one being built.
+ *
+ * `aep:` is the release an artifact's content last changed in, so most shipped
+ * artifacts legitimately declare an *older* release than this one — that is the
+ * field carrying information rather than repeating `protocol.md`. What is never
+ * legitimate is a stamp ahead of the release being built, which names a release
+ * that does not exist yet.
+ *
+ * Whether the stamp is *correct* is not this check's job: `stamps` compares
+ * content against the manifest, which is what catches an edit that never got
+ * restamped.
+ */
+const atOrBeforeRelease = (value) => {
   const parsed = release(value);
-  const current = release(specVersion);
-  if (parsed === null || current === null) return false;
-  return parsed.every((part, index) => part === current[index]);
+  if (parsed === null || release(specVersion) === null) return false;
+  return !precedesRelease(specVersion, value);
 };
 
 // --- the install fixture ----------------------------------------------------
@@ -255,6 +257,57 @@ section('manifest', () => {
   });
 });
 
+// --- §8 the stamps are current ----------------------------------------------
+// The check the old sweep could not perform. When every artifact was restamped
+// every release regardless of whether it moved, an artifact edited without being
+// restamped was indistinguishable from one that had not been touched. Comparing
+// content against the committed baseline is what makes the field mean something.
+
+section('stamps', () => {
+  const stamps = readStamps();
+  const shipped = shippedArtifacts();
+
+  assert('the release baseline exists — run scripts/release.mjs to create it', () =>
+    Object.keys(stamps).length > 0);
+
+  for (const file of shipped) {
+    const rel = toPosix(SRC, file);
+    const hash = contentHash(fs.readFileSync(file, 'utf8'));
+    assert(`${rel} is stamped for its current content — run scripts/release.mjs <version>`, () => {
+      if (!(rel in stamps)) throw new Error('not in the baseline: it has never been released');
+      if (stamps[rel] !== hash) throw new Error('content changed since it was last stamped');
+      return true;
+    });
+  }
+
+  // An entry for a file that is gone means the baseline outlived what it
+  // described, and a later release would compare against nothing.
+  assert('the baseline names nothing the distribution no longer ships', () => {
+    const live = new Set(shipped.map((file) => toPosix(SRC, file)));
+    const orphans = Object.keys(stamps).filter((rel) => !live.has(rel));
+    if (orphans.length > 0) throw new Error(orphans.join(', '));
+    return true;
+  });
+
+  assert('the baseline is build-time only and never ships', () =>
+    !PAYLOAD_FILES.includes(STAMPS_SOURCE) &&
+    !fs.existsSync(path.join(installFixture().aep, STAMPS_SOURCE)));
+
+  // The two computed lines are excluded from the hash on purpose: stamping a
+  // file must not change what it hashes to, or a release would never converge
+  // and every run would restamp everything again.
+  assert('stamping an artifact does not change its own hash', () => {
+    const sample = fs.readFileSync(path.join(SRC, 'protocol.md'), 'utf8');
+    const restamped = sample
+      .replace(/^aep:.*$/m, 'aep: 9.9.9')
+      .replace(/^date:.*$/m, 'date: 1999-01-01');
+    if (contentHash(sample) !== contentHash(restamped)) {
+      throw new Error('the hash covers the stamp, so a release would never settle');
+    }
+    return true;
+  });
+});
+
 // --- §8 the frontmatter contract -------------------------------------------
 
 section('frontmatter', () => {
@@ -266,8 +319,8 @@ section('frontmatter', () => {
     if (!artifact.hasFrontmatter) continue;
 
     assert(`${rel} frontmatter parses`, artifact.errors.length === 0);
-    assert(`${rel} declares the release being built (${specVersion})`,
-      stampsRelease(artifact.fields.aep));
+    assert(`${rel} declares the release its content last changed in, not a later one`,
+      atOrBeforeRelease(artifact.fields.aep));
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
@@ -606,8 +659,8 @@ section('seeds', () => {
     }
 
     assert(`${seed.source} declares owner: repository`, artifact.fields.owner === 'repository');
-    assert(`${seed.source} declares the release being built (${specVersion})`,
-      stampsRelease(artifact.fields.aep));
+    assert(`${seed.source} declares the release its content last changed in, not a later one`,
+      atOrBeforeRelease(artifact.fields.aep));
     assert(`${seed.source} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`${seed.source} says it is a starting point rather than a description`, () =>
       /This file is yours/.test(artifact.body));

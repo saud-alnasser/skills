@@ -48,6 +48,36 @@ inventing vocabulary a tracker already has.
 
 ### Changed
 
+- **`aep:` now means the release an artifact's content last changed in** — one
+  meaning for both owners, and computed rather than typed. `date:` answers the
+  same question by the same mechanism.
+
+  It previously meant two things at once. Protocol-owned artifacts were swept to
+  the new release every time, changed or not; repository-owned ones were left
+  alone and so already recorded when they last changed. The specification
+  described only the first, and nothing declared the split.
+
+  *Why it was worth changing rather than automating: under a sweep the field said
+  the same thing on every artifact, so it distinguished nothing — and an artifact
+  edited without being restamped was undetectable, because a stale stamp and a
+  current one were the same value. Only `protocol.md` is exempt, and it is exempt
+  for a reason: it is the tree's release marker, read by the installer to decide
+  which moves and notices apply.*
+
+- **`node src/scripts/release.mjs <version>` cuts a release.** Version of record,
+  stamps for what actually moved, the baseline in `src/stamps.json`, plugin
+  manifest, and adapter — one command, so the steps cannot be performed in part.
+  Running it twice changes nothing the second time.
+
+  The baseline is a committed hash per shipped artifact rather than git tags:
+  `verify.mjs` is the only thing that catches a broken build here, and making it
+  depend on tags being present in whatever checkout runs it puts the suite at the
+  mercy of how the repository was cloned.
+
+  `verify.mjs` now compares every shipped artifact against that baseline, so
+  **an edit that never got released fails by name** — the defect the old scheme
+  could not see at all.
+
 - **Native mechanism before label.** The resolution is a ladder: a first-class
   feature of the tracker, then an existing label that already serves the fact,
   then — only then — a new label, named in the style the tracker's own labels are

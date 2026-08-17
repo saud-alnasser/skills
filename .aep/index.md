@@ -111,6 +111,7 @@ Start at [[protocol]].
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | tracker-labels | implemented | [[efforts/tracker-labels/spec]] | 0 | 0 | 7 |
 | upgrade-notices | implemented | [[efforts/upgrade-notices/spec]] | 0 | 0 | 0 |
+| version-stamping | implemented | [[efforts/version-stamping/spec]] | 0 | 0 | 0 |
 
 ## Tickets
 
