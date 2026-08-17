@@ -110,6 +110,7 @@ Start at [[protocol]].
 | --- | --- | --- | --- | --- | --- |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | tracker-labels | implemented | [[efforts/tracker-labels/spec]] | 0 | 0 | 7 |
+| uniform-reporting | accepted | [[efforts/uniform-reporting/spec]] | 0 | 0 | 8 |
 | upgrade-notices | implemented | [[efforts/upgrade-notices/spec]] | 0 | 0 | 0 |
 | version-stamping | implemented | [[efforts/version-stamping/spec]] | 0 | 0 | 0 |
 
@@ -138,3 +139,11 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/tracker-labels/tickets/05-references]] docs(references): the forge references carry verified operations | tracker-labels | resolved | — |
 | [[efforts/tracker-labels/tickets/06-verify]] test(verify): the shipped surfaces are asserted against the new requirement | tracker-labels | resolved | 01, 02, 03, 04 |
 | [[efforts/tracker-labels/tickets/07-release]] chore(dist): release 2.3.0 and reinstall this repository's tree | tracker-labels | resolved | 01, 02, 03, 04, 06 |
+| [[efforts/uniform-reporting/tickets/01-policy]] feat(policies): what a turn tells the human becomes governance | uniform-reporting | resolved | — |
+| [[efforts/uniform-reporting/tickets/02-bootstrap]] feat(protocol): the bootstrap says that every turn reports | uniform-reporting | open | 01 |
+| [[efforts/uniform-reporting/tickets/03-contract]] feat(contract): a skill declares the form it reports in | uniform-reporting | open | 01 |
+| [[efforts/uniform-reporting/tickets/04-skills]] refactor(skills): every skill declares its form and names its stages | uniform-reporting | open | 03 |
+| [[efforts/uniform-reporting/tickets/05-absorption]] refactor(skills): the reporting each skill invented is absorbed into the contract | uniform-reporting | open | 04 |
+| [[efforts/uniform-reporting/tickets/06-specification]] docs(specs): the specification defines what a turn tells the human | uniform-reporting | open | 01, 03 |
+| [[efforts/uniform-reporting/tickets/07-verify]] test(verify): the shipped surfaces are asserted against the report contract | uniform-reporting | open | 01, 02, 03, 04, 05, 06 |
+| [[efforts/uniform-reporting/tickets/08-release]] chore(dist): release 2.4.0, with the notice its frontmatter change requires | uniform-reporting | open | 07 |
