@@ -143,7 +143,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/runtime-adapters/tickets/02-opencode-target]] feat(adapters): the OpenCode target, in both shapes | runtime-adapters | resolved | 01 |
 | [[efforts/runtime-adapters/tickets/03-agents-target]] feat(adapters): the runtime-neutral `.agents` target | runtime-adapters | resolved | 02 |
 | [[efforts/runtime-adapters/tickets/04-install-adapters]] feat(install): `--adapters` takes a list, and says what it wrote | runtime-adapters | resolved | 02, 03 |
-| [[efforts/runtime-adapters/tickets/05-install-skill]] docs(install): step 7 offers the adapter a runtime actually reads | runtime-adapters | open | 04 |
+| [[efforts/runtime-adapters/tickets/05-install-skill]] docs(install): step 7 offers the adapter a runtime actually reads | runtime-adapters | resolved | 04 |
 | [[efforts/runtime-adapters/tickets/06-seed-references]] feat(seed): references for OpenCode and T3 Code | runtime-adapters | resolved | — |
 | [[efforts/runtime-adapters/tickets/07-specification]] docs(specs): the specification describes more than one adapter | runtime-adapters | resolved | 03 |
 | [[efforts/runtime-adapters/tickets/08-verify]] test(verify): the suite judges every adapter, not the Claude one | runtime-adapters | open | 04, 06, 07 |

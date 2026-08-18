@@ -11,8 +11,8 @@ use-when: "a repository has no .aep/ directory and should start running AEP"
 # /install — join a repository to AEP
 
 Creates `.aep/`, installs the protocol-owned payload, seeds the repository-owned
-starting points that this repository's setup calls for, and optionally writes a
-runtime adapter.
+starting points that this repository's setup calls for, and optionally writes
+whichever runtime adapters the repository asks for.
 
 ## Before anything
 
@@ -101,16 +101,29 @@ runtime adapter.
    a second home, and it is the copy that drifts (`[[policies/artifacts]]`).
 
 7. **Offer a runtime adapter.** Ask first — files outside `.aep/` belong to the
-   repository. Adding `--adapters claude` writes `.claude/skills/<name>/SKILL.md`
-   wrappers that point at `.aep/skills/<name>.md`, so the skills are reachable
-   without the plugin installed.
+   repository. `--adapters <names>` takes a comma-separated list and writes
+   wrappers that point at `.aep/`, so the skills are reachable with nothing else
+   installed:
 
-   **Offer it only where the plugin is not.** Both routes register the same
-   seventeen skills, so installing both leaves every skill listed twice under two
-   different names — and the runtime will pick between them without saying which.
-   The plugin travels with the user across repositories; the committed adapter
-   travels with the repository across users. Pick by which of those the
-   repository needs, and say which was picked.
+   | Name | Writes | Read by |
+   | --- | --- | --- |
+   | `claude` | `.claude/skills/` and `.claude/agents/` | Claude Code |
+   | `opencode` | `.opencode/skills/` and `.opencode/agents/` | OpenCode |
+   | `agents` | `.agents/skills/` | OpenCode, and harnesses that drive some other runtime |
+
+   **`opencode` and `agents` are alternatives rather than a pair.** OpenCode
+   reads both locations, so asking for both registers every skill twice under one
+   name and the runtime picks between them without saying which. Offer `agents`
+   where the repository is driven through a harness whose provider is not
+   OpenCode, and `opencode` otherwise. The installer warns rather than refusing,
+   because a repository can genuinely need both — but it is not the default and
+   it is never offered as one.
+
+   **Offer nothing for a runtime whose plugin already publishes the skills.**
+   Both routes register the same seventeen, with the same doubling. The plugin
+   travels with the user across repositories; the committed adapter travels with
+   the repository across users. Pick by which of those the repository needs, and
+   say which was picked.
 
 8. **Validate**, and report the output:
 
