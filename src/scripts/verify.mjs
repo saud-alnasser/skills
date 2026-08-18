@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   KINDS,
@@ -34,7 +34,7 @@ import {
   walk,
   wikiLinks,
 } from './contract.mjs';
-import { renderClaudeAdapter } from './adapters.mjs';
+import { renderAdapter, TARGETS } from './adapters.mjs';
 import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
@@ -206,6 +206,40 @@ section('manifest', () => {
   // than assumed to have been written there.
   assert('specs.md lists Policies among the primitives', () =>
     /\|\s*\*\*Policies\*\*\s*\|/.test(specText));
+
+  // The specification and the generator cannot disagree about how many
+  // runtimes there are. Each claim below is one the implementation now relies
+  // on, so a specification that loses it leaves a shipped surface conforming to
+  // nothing written down.
+  assert('specs.md defines a target as a declaration, not a renderer per runtime', () =>
+    /###\s*29\.1\s+Targets and shapes/.test(specText) &&
+    /a \*\*target\*\* is a declaration rather than a program/.test(specText));
+
+  assert('specs.md requires a prefix where a runtime would shadow a skill', () =>
+    /MUST where the runtime's own built-in commands would otherwise shadow a skill/.test(specText));
+
+  assert('specs.md says a rendered tree is committed only where it has a reader', () =>
+    /committed to the protocol repository exactly when that directory is itself what a user registers/
+      .test(specText));
+
+  assert('specs.md requires a distribution reach to be derived from where the wrapper sits', () =>
+    /MUST be \*\*derived from where the wrapper sits\*\*, never written out/.test(specText));
+
+  assert('specs.md requires every path a wrapper names to exist in an installed tree', () =>
+    /Every path a wrapper names MUST exist in an installed tree/.test(specText));
+
+  assert('specs.md omits AEP fields where a runtime reserves no map for them', () =>
+    /omitted rather than smuggled in/.test(specText));
+
+  assert('specs.md asserts the adapters over every target and shape', () =>
+    /\*\*for every target and every shape it renders\*\*, and not for one runtime/.test(specText));
+
+  assert('specs.md requires the install to refuse an unknown runtime before writing', () =>
+    /refuses an unknown runtime \*\*before writing anything\*\*/.test(specText) &&
+    /warns where two requested targets are read by one runtime/.test(specText));
+
+  assert('the distribution layout shows one directory per committed target', () =>
+    /adapters\/<runtime>\/\s+runtime adapters, one directory per committed target/.test(specText));
 
   const scriptFiles = fs
     .readdirSync(path.join(SRC, 'scripts'))
@@ -536,12 +570,25 @@ section('skill notes', () => {
   assert('the tracker note separates resolving the mechanism from applying it per effort', () =>
     /Resolve once per tracker; apply every effort/.test(labels));
 
-  const wrapped = renderClaudeAdapter(SRC, 'plugin').map((f) => f.relativePath);
-  assert('no adapter publishes a note as a command', () =>
-    notes.every((file) => {
-      const name = path.basename(file, '.md');
-      return !wrapped.includes(`skills/${name}/SKILL.md`) || SKILLS.includes(name);
-    }));
+  // Asked of each target rather than spelled here: a target is free to prefix
+  // the names it publishes, and a hand-built `skills/<name>/SKILL.md` would
+  // then match nothing and pass while a note was published under `aep-<name>`.
+  assert('no adapter publishes a note as a command', () => {
+    const published = [];
+    for (const [runtime, target] of Object.entries(TARGETS)) {
+      for (const shape of target.shapes) {
+        const rendered = new Set(renderAdapter(SRC, target, shape).map((f) => f.relativePath));
+        for (const file of notes) {
+          const name = path.basename(file, '.md');
+          if (SKILLS.includes(name)) continue;
+          const where = target.path('skill', `${target.prefix}${name}`, shape);
+          if (where && rendered.has(where)) published.push(`${runtime}/${shape}: ${where}`);
+        }
+      }
+    }
+    if (published.length > 0) throw new Error(published.join(', '));
+    return true;
+  });
 });
 
 // --- §14 the mode set -------------------------------------------------------
@@ -1076,55 +1123,222 @@ section('forbidden', () => {
 // --- §29 the adapter is a pointer, and it is current ------------------------
 
 section('adapter', () => {
-  const rendered = renderClaudeAdapter(SRC, 'plugin');
-  assert('the adapter renders a file per skill and per agent, and nothing per note', () =>
-    rendered.length ===
-      topLevel(path.join(SRC, 'skills')).length + topLevel(path.join(SRC, 'agents')).length);
+  const shippedSkills = topLevel(path.join(SRC, 'skills')).length;
+  const shippedAgents = topLevel(path.join(SRC, 'agents')).length;
 
-  // The adapter's own directory is the plugin root, so every wrapper — skill
-  // and agent alike — is committed under it and nowhere else.
-  const adapterDir = path.join(SRC, 'adapters', 'claude');
+  // Stated here rather than read off the target, because a target asserted
+  // against its own declaration asserts nothing. A new runtime has to be
+  // written down twice — once as a target, once as what it is expected to
+  // publish — and the two disagreeing is the whole point.
+  const EXPECTED = {
+    claude: {
+      prefix: '',
+      keys: { skill: ['name', 'description', 'metadata'], agent: ['name', 'description'] },
+      // Resolved from the adapter's own root, because that is what
+      // `CLAUDE_PLUGIN_ROOT` expands to once the marketplace publishes it.
+      reaches: { plugin: 'adapter' },
+      committed: 'plugin',
+    },
+    opencode: {
+      prefix: 'aep-',
+      keys: { skill: ['name', 'description', 'metadata'], agent: ['description', 'mode'] },
+      // Resolved from the wrapper's own directory, which is the base OpenCode
+      // announces to the agent when it loads a skill.
+      reaches: { distribution: 'wrapper' },
+      committed: 'distribution',
+    },
+    agents: {
+      prefix: 'aep-',
+      keys: { skill: ['name', 'description', 'metadata'] },
+      reaches: {},
+      committed: null,
+    },
+  };
 
-  for (const { relativePath, contents } of rendered) {
-    const committed = path.join(adapterDir, ...relativePath.split('/'));
-    assert(`adapters/claude/${relativePath} is committed`, fs.existsSync(committed));
-    if (!fs.existsSync(committed)) continue;
-    assert(`adapters/claude/${relativePath} is current — regenerate with scripts/adapters.mjs`,
-      fs.readFileSync(committed, 'utf8') === contents);
-  }
+  assert('every target is declared in the suite as well as in the generator', () => {
+    const undeclared = Object.keys(TARGETS).filter((runtime) => !(runtime in EXPECTED));
+    if (undeclared.length > 0) throw new Error(undeclared.join(', '));
+    return true;
+  });
 
-  // Only the generated subdirectories are swept. The adapter also carries
-  // hand-written runtime glue — a hook, its configuration, and the plugin
-  // manifest — which the generator does not produce and must not be reported
-  // as stale.
-  const committedFiles = ['skills', 'agents']
-    .map((sub) => path.join(adapterDir, sub))
-    .filter((dir) => fs.existsSync(dir))
-    .flatMap((dir) => walk(dir).map((f) => toPosix(adapterDir, f)));
-  assert('the committed adapter has no generated file the generator does not produce', () =>
-    committedFiles.every((file) => rendered.some((r) => r.relativePath === file)));
+  for (const [runtime, target] of Object.entries(TARGETS)) {
+    const expected = EXPECTED[runtime];
+    if (!expected) continue;
 
-  for (const { relativePath, contents } of rendered) {
-    if (!relativePath.startsWith('skills/')) continue;
-    assert(`${relativePath} points at the canonical skill rather than restating it`, () =>
-      /\.aep\/skills\/[a-z-]+\.md/.test(contents) && contents.length < 1200);
-  }
+    assert(`${runtime} commits the shape the suite expects`, () =>
+      target.committed === expected.committed);
 
-  // The fallback is the only path that has to work before AEP exists anywhere:
-  // `/aep:install` in a repository with no `.aep/` yet. It is resolved against
-  // the adapter's directory, because that is what `CLAUDE_PLUGIN_ROOT` is once
-  // the marketplace publishes the adapter — so a path that is merely plausible
-  // fails silently, at the one moment nobody can fall back any further.
-  for (const { relativePath, contents } of rendered) {
-    if (!relativePath.startsWith('skills/')) continue;
-    const fallback = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^`\s]+\.md)/.exec(contents);
-    assert(`${relativePath} declares a plugin fallback`, Boolean(fallback));
-    if (!fallback) continue;
-    assert(`${relativePath} falls back to a file that exists in the distribution`, () => {
-      const target = path.join(adapterDir, ...fallback[1].split('/'));
-      if (!fs.existsSync(target)) throw new Error(`${fallback[1]} does not exist`);
+    // Read from the suite rather than from the target: a guard that takes the
+    // prefix off the row it is checking passes whatever that row says, so a
+    // target that quietly dropped its prefix would publish `review` and be
+    // told it published exactly what it declared.
+    assert(`${runtime} publishes under the prefix the suite expects`, () => {
+      if (target.prefix !== expected.prefix) {
+        throw new Error(`declares "${target.prefix}", expected "${expected.prefix}"`);
+      }
       return true;
     });
+
+    for (const shape of target.shapes) {
+      const rendered = renderAdapter(SRC, target, shape);
+      const skills = rendered.filter((file) => file.kind === 'skill');
+      const agents = rendered.filter((file) => file.kind === 'agent');
+      const wrapsAgents = Boolean(target.path('agent', `${target.prefix}anything`, shape));
+
+      // A target that renders nothing passes every per-file assertion below by
+      // having no files to fail them. This is the one check that cannot.
+      assert(`${runtime}/${shape} renders one wrapper per shipped skill`, () => {
+        if (skills.length !== shippedSkills) {
+          throw new Error(`${skills.length} skill wrappers for ${shippedSkills} skills`);
+        }
+        return true;
+      });
+
+      assert(`${runtime}/${shape} wraps every shipped agent, or none at all`, () => {
+        const want = wrapsAgents ? shippedAgents : 0;
+        if (agents.length !== want) throw new Error(`${agents.length} agent wrappers, expected ${want}`);
+        return true;
+      });
+
+      assert(`${runtime}/${shape} publishes the names its prefix declares`, () => {
+        const shape_ = target.prefix ? /^aep-[a-z0-9]+(-[a-z0-9]+)*$/ : /^[a-z0-9]+(-[a-z0-9]+)*$/;
+        const wrong = rendered.filter((file) => !shape_.test(file.wrapped));
+        if (wrong.length > 0) throw new Error(wrong.map((file) => file.wrapped).join(', '));
+        return true;
+      });
+
+      assert(`${runtime}/${shape} names each skill wrapper for the directory holding it`, () => {
+        const wrong = [];
+        for (const file of skills) {
+          const dir = file.relativePath.split('/').at(-2);
+          const declared = /^name: (.+)$/m.exec(file.contents);
+          if (!declared || declared[1] !== dir) wrong.push(file.relativePath);
+        }
+        if (wrong.length > 0) throw new Error(wrong.join(', '));
+        return true;
+      });
+
+      for (const kind of ['skill', 'agent']) {
+        const group = kind === 'skill' ? skills : agents;
+        if (group.length === 0) continue;
+        assert(`${runtime}/${shape} gives a ${kind} wrapper exactly the keys that runtime admits`, () => {
+          const want = expected.keys[kind];
+          if (!want) throw new Error(`the suite declares no ${kind} keys for ${runtime}`);
+          const wrong = [];
+          for (const file of group) {
+            const block = /^---\n([\s\S]*?)\n---/.exec(file.contents);
+            const keys = block
+              ? block[1].split('\n').filter((line) => /^\S/.test(line)).map((line) => line.split(':')[0])
+              : [];
+            if (keys.join(',') !== want.join(',')) wrong.push(`${file.relativePath} [${keys.join(', ')}]`);
+          }
+          if (wrong.length > 0) throw new Error(wrong.join('; '));
+          return true;
+        });
+      }
+
+      assert(`${runtime}/${shape} points at the canonical artifact rather than restating it`, () => {
+        const wrong = rendered.filter((file) => {
+          const canonical = `.aep/${file.kind === 'skill' ? 'skills' : 'agents'}/${file.name}.md`;
+          return !file.contents.includes(canonical) || file.contents.length >= 1200;
+        });
+        if (wrong.length > 0) throw new Error(wrong.map((file) => file.relativePath).join(', '));
+        return true;
+      });
+
+      // A shape that ships outside a repository has to reach the payload it
+      // travelled with — that is the only path that works before `.aep/` exists
+      // anywhere. A shape that ships inside one must carry no reach at all: it
+      // would resolve to a place nothing put a payload.
+      const reach = /(?:\$\{CLAUDE_PLUGIN_ROOT\}\/|`)((?:\.\.\/)+[^`\s]+\.md)/;
+      if (expected.reaches[shape]) {
+        assert(`${runtime}/${shape} reaches the payload it ships beside`, () => {
+          const wrong = [];
+          for (const file of skills) {
+            const found = reach.exec(file.contents);
+            if (!found) {
+              wrong.push(`${file.relativePath} declares none`);
+              continue;
+            }
+            const adapterRoot = path.join(SRC, 'adapters', runtime);
+            const root = expected.reaches[shape] === 'adapter'
+              ? adapterRoot
+              : path.join(adapterRoot, path.dirname(file.relativePath));
+            if (!fs.existsSync(path.resolve(root, found[1]))) {
+              wrong.push(`${file.relativePath} reaches ${found[1]}, which does not exist`);
+            }
+          }
+          if (wrong.length > 0) throw new Error(wrong.join('; '));
+          return true;
+        });
+      } else {
+        assert(`${runtime}/${shape} carries no reach, having nowhere to reach`, () => {
+          const wrong = rendered.filter((file) => reach.test(file.contents));
+          if (wrong.length > 0) throw new Error(wrong.map((file) => file.relativePath).join(', '));
+          return true;
+        });
+      }
+    }
+
+    const adapterDir = path.join(SRC, 'adapters', runtime);
+
+    if (!expected.committed) {
+      assert(`${runtime} commits no tree, because nothing would read one`, () =>
+        !fs.existsSync(adapterDir));
+      continue;
+    }
+
+    const committedRender = renderAdapter(SRC, target, expected.committed);
+    for (const { relativePath, contents } of committedRender) {
+      const committed = path.join(adapterDir, ...relativePath.split('/'));
+      assert(`adapters/${runtime}/${relativePath} is committed`, fs.existsSync(committed));
+      if (!fs.existsSync(committed)) continue;
+      assert(`adapters/${runtime}/${relativePath} is current — regenerate with scripts/adapters.mjs`,
+        fs.readFileSync(committed, 'utf8') === contents);
+    }
+
+    // Only the generated subdirectories are swept. An adapter may also carry
+    // hand-written runtime glue — a hook, its configuration, a manifest — which
+    // the generator does not produce and must not be reported as stale.
+    const generatedDirs = [...new Set(committedRender.map((file) => file.relativePath.split('/')[0]))];
+    const committedFiles = generatedDirs
+      .map((sub) => path.join(adapterDir, sub))
+      .filter((dir) => fs.existsSync(dir))
+      .flatMap((dir) => walk(dir).map((f) => toPosix(adapterDir, f)));
+    assert(`the committed ${runtime} adapter has no generated file the generator does not produce`, () =>
+      committedFiles.every((file) => committedRender.some((r) => r.relativePath === file)));
+  }
+
+  // Everything below is Claude's alone: how a plugin is packaged is one
+  // runtime's business, and generalizing it into the loop above would assert a
+  // manifest against runtimes that have none.
+  const adapterDir = path.join(SRC, 'adapters', 'claude');
+
+  // Every `.aep/…` path a wrapper names has to exist in an installed tree.
+  // Nothing compared the two until now, and the cost was silent: the artifact
+  // binding a sub-agent moved to `policies/execution` in 2.2.0 (`MOVES`), and
+  // every agent wrapper went on naming `rules/sub-agents.md` for four releases,
+  // sending each dispatched agent to read a file no release ships.
+  const installedTree = installFixture().dir;
+  for (const [runtime, target] of Object.entries(TARGETS)) {
+    for (const shape of target.shapes) {
+      assert(`every path a ${runtime}/${shape} wrapper names exists in an installed tree`, () => {
+        const missing = new Set();
+        for (const { relativePath, contents } of renderAdapter(SRC, target, shape)) {
+          // Anchored on the extension rather than on backticks: a wrapper
+          // names a path in its prose *and* in `metadata.canonical`, where
+          // there are none, and a guard that saw only the quoted half would
+          // pass while the field a runtime reads pointed nowhere.
+          for (const [named] of contents.matchAll(/\.aep\/[\w./-]+\.md/g)) {
+            if (!fs.existsSync(path.join(installedTree, ...named.split('/')))) {
+              missing.add(`${relativePath} names ${named}`);
+            }
+          }
+        }
+        if (missing.size > 0) throw new Error([...missing].join('; '));
+        return true;
+      });
+    }
   }
 
   // The manifest sits inside the adapter, not at the repository root, and that
@@ -1223,6 +1437,115 @@ section('release', () => {
   assert("the building repository's own tree carries no stale 1.x layout", () =>
     !fs.existsSync(path.join(REPO, '.claude', 'protocol.md')) &&
     !fs.existsSync(path.join(REPO, 'scripts')));
+});
+
+// --- §30 the install writes the adapters it was asked for ------------------
+
+section('install adapters', () => {
+  /** Runs a real install into a throwaway repository. Never throws on exit. */
+  const install = (args) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-adapters-'));
+    execFileSync('git', ['init', '--quiet'], { cwd: dir, stdio: 'ignore' });
+    const run = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir, ...args],
+      { encoding: 'utf8' },
+    );
+    return { dir, status: run.status, out: `${run.stdout ?? ''}${run.stderr ?? ''}` };
+  };
+
+  const all = install(['--adapters', 'claude,opencode,agents']);
+  assert('an install writes every adapter it was asked for', () => {
+    const missing = Object.values(TARGETS)
+      .map((target) => target.dir)
+      .filter((dir) => !fs.existsSync(path.join(all.dir, dir)));
+    if (missing.length > 0) throw new Error(`never written: ${missing.join(', ')}`);
+    return true;
+  });
+
+  assert('the install report names each adapter rather than folding it into a total', () => {
+    const unnamed = Object.values(TARGETS)
+      .map((target) => `${target.dir}/`)
+      .filter((dir) => !all.out.includes(dir));
+    if (unnamed.length > 0) throw new Error(`not in the report: ${unnamed.join(', ')}`);
+    return true;
+  });
+
+  // Each adapter lands in the shape written into a repository, which is the one
+  // with nowhere further to fall back to.
+  assert('an installed adapter is the repository shape, wrapper for wrapper', () => {
+    const wrong = [];
+    for (const [runtime, target] of Object.entries(TARGETS)) {
+      for (const { relativePath, contents } of renderAdapter(SRC, target, 'repository')) {
+        const written = path.join(all.dir, target.dir, ...relativePath.split('/'));
+        if (!fs.existsSync(written)) wrong.push(`${runtime}: ${relativePath} missing`);
+        else if (fs.readFileSync(written, 'utf8') !== contents) wrong.push(`${runtime}: ${relativePath} differs`);
+      }
+    }
+    if (wrong.length > 0) throw new Error(wrong.join('; '));
+    return true;
+  });
+
+  // A run that installs one adapter and then dies on a typo in the third has
+  // left a repository in a state nobody asked for, so the name is resolved
+  // before the first write rather than at it.
+  const unknown = install(['--adapters', 'claude,nope']);
+  assert('an unknown runtime stops the install', () => unknown.status !== 0);
+  assert('the unknown runtime is named, along with the ones that exist', () =>
+    unknown.out.includes('nope') && Object.keys(TARGETS).every((name) => unknown.out.includes(name)));
+  assert('an unknown runtime is refused before anything is written', () =>
+    !fs.existsSync(path.join(unknown.dir, '.aep')));
+
+  // OpenCode reads both locations, so asking for both loads every skill twice
+  // under one name. It is warned rather than refused, because a repository
+  // driven through a harness with another provider can genuinely want both.
+  const pair = install(['--adapters', 'opencode,agents']);
+  assert('asking for both locations OpenCode reads warns, and says why', () =>
+    /^warning:/m.test(pair.out) && /twice under one name/.test(pair.out));
+  assert('the warning is not a refusal', () =>
+    pair.status === 0 &&
+    fs.existsSync(path.join(pair.dir, '.opencode')) &&
+    fs.existsSync(path.join(pair.dir, '.agents')));
+
+  const alone = install(['--adapters', 'opencode']);
+  assert('one adapter alone warns about nothing', () => !/^warning:/m.test(alone.out));
+
+  const none = install([]);
+  assert('an install asked for no adapter writes none', () =>
+    Object.values(TARGETS).every((target) => !fs.existsSync(path.join(none.dir, target.dir))));
+
+  // A seed installs on the evidence a human wrote, never on a directory an
+  // adapter creates: `.opencode/` is AEP's own output, and detecting on it would
+  // make this installation the evidence that the repository uses OpenCode.
+  const seeded = (files) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-detect-'));
+    execFileSync('git', ['init', '--quiet'], { cwd: dir, stdio: 'ignore' });
+    for (const [name, body] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true });
+      if (name.endsWith('/')) fs.mkdirSync(path.join(dir, name), { recursive: true });
+      else fs.writeFileSync(path.join(dir, name), body, 'utf8');
+    }
+    execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir], {
+      stdio: 'ignore',
+    });
+    return (reference) => fs.existsSync(path.join(dir, '.aep', 'references', reference));
+  };
+
+  const withOpencode = seeded({ 'opencode.json': '{}' });
+  assert('opencode.json seeds the OpenCode reference', () => withOpencode('opencode.md'));
+  assert('opencode.json does not seed the T3 Code reference', () => !withOpencode('t3code.md'));
+
+  const withT3 = seeded({ 't3.json': '{}' });
+  assert('t3.json seeds the T3 Code reference', () => withT3('t3code.md'));
+  assert('t3.json does not seed the OpenCode reference', () => !withT3('opencode.md'));
+
+  const withDirOnly = seeded({ '.opencode/opencode-is-not-config.txt': '' });
+  assert('a .opencode directory is not evidence — an adapter writes one', () =>
+    !withDirOnly('opencode.md'));
+
+  const bare = seeded({});
+  assert('a repository running neither gets neither reference', () =>
+    !bare('opencode.md') && !bare('t3code.md'));
 });
 
 // --- §32 the install fixture ------------------------------------------------

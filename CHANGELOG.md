@@ -1,5 +1,86 @@
 # Changelog
 
+## 2.6.0
+
+AEP reaches OpenCode, and a repository driven through T3 Code knows why it
+behaves the way it does.
+
+### Added
+
+- **An OpenCode adapter.** `--adapters opencode` writes `.opencode/skills/` and
+  `.opencode/agents/`. OpenCode already found AEP's skills through its
+  Claude-compatibility scan, but only while that flag was left on, and **skills
+  only** — its agents load from a config directory or from nowhere, so the four
+  AEP agents reached it by no path that existed.
+
+  Names carry an `aep-` prefix. OpenCode registers `init` and `review` as
+  built-in commands before skills, and a skill whose name is already taken never
+  becomes a command — so an unprefixed `review` would have been silently
+  unreachable, which reads exactly like a skill nobody invoked.
+
+- **A runtime-neutral `.agents` adapter.** `--adapters agents` writes
+  `.agents/skills/`, the one location read by more than one runtime: OpenCode
+  scans it, and T3 Code's picker scans it for whichever provider it is driving.
+
+  **It is an alternative to `opencode`, not a companion.** OpenCode reads both
+  locations, so asking for both loads every skill twice under one name and the
+  loader keeps whichever finished first. The installer warns and writes both,
+  because a repository driven through a harness with another provider can
+  genuinely want it; the install skill offers one.
+
+- **Seeds for OpenCode and T3 Code**, detected by `opencode.json` /
+  `opencode.jsonc` and by `t3.json` — never by `.opencode/`, which AEP's own
+  adapter creates and which would make an installation the evidence that the
+  repository uses OpenCode.
+
+  The T3 Code reference records what T3 Code is: a control surface over provider
+  CLIs, defining no format of its own, so what a session gets is whatever the
+  provider loads.
+
+### Changed
+
+- **`--adapters` takes a list.** It compared its whole value against the string
+  `claude`, so every other name was silently a no-op — a user asking for a
+  runtime saw a successful install and got nothing. Names now resolve before the
+  first write, so a typo in the third cannot leave a half-installed tree, and
+  each adapter is named in the report with its wrapper count instead of
+  disappearing into a total.
+
+- **A runtime is a row in a table rather than a function of its own.** One
+  renderer walks the payload for every target. The alternative — a render
+  function per runtime — would have stated the pointer contract once per
+  runtime, and a stale adapter is mechanically detectable while three wordings
+  of one rule drifting apart is not.
+
+  §29.1 of the specification defines targets and shapes, including that a
+  rendered tree is committed exactly where that directory is itself what a user
+  registers, and that a distribution shape's reach is derived from where the
+  wrapper sits rather than written out.
+
+### Fixed
+
+- **Every agent wrapper sent its sub-agent to a file that does not exist.** They
+  said *"Then read `.aep/rules/sub-agents.md`, which binds you"*. That artifact
+  moved into `policies/execution` in 2.2.0 — the installer has declared the move
+  ever since — and the wrappers went on naming the old path for four releases,
+  so every dispatched agent was told to read nothing.
+
+  A role definition already states what binds it, so the wrapper now names the
+  role definition and nothing else.
+
+  *Why it survived four releases: nothing compared wrapper text against an
+  installed tree. The guard that now does is the point of the fix — every
+  `.aep/` path a wrapper names, in prose and in frontmatter alike, must exist in
+  an install.*
+
+### Upgrading
+
+Nothing to do. No artifact moves, no installed tree changes shape, and a
+repository that never asks for a new adapter is untouched.
+
+To pick one up: `/aep:update`, and ask for the adapter your runtime reads.
+Regenerate a Claude adapter you already have — the agent wrappers changed.
+
 ## 2.5.1
 
 ### Fixed

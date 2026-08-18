@@ -4,9 +4,7 @@ description: Decide whether the diff implements the defined change and behaves c
 ---
 
 Read `.aep/agents/reviewer-correctness.md` and adopt it as your role definition. It states your
-purpose, responsibilities, constraints, and the shape of what you return.
+purpose, responsibilities, constraints, the governance that binds you, and
+the shape of what you return.
 
-Then read `.aep/rules/sub-agents.md`, which binds you, and the mode named in
-your role definition.
-
-If those files do not exist, AEP is not installed here — report that and stop.
+If that file does not exist, AEP is not installed here — report that and stop.

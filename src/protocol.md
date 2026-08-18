@@ -1,5 +1,5 @@
 ---
-aep: 2.5.1
+aep: 2.6.0
 owner: protocol
 date: 2026-08-17
 kind: protocol

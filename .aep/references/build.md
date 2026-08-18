@@ -22,7 +22,8 @@ Node with ESM support, and `git` on the path. Nothing else.
 node src/scripts/verify.mjs                    # the whole suite — run before every commit
 node src/scripts/verify.mjs --verbose          # every passing assertion, not just failures
 node src/scripts/verify.mjs --section links    # one section
-node src/scripts/adapters.mjs                  # regenerate src/adapters/claude/
+node src/scripts/adapters.mjs                  # regenerate every committed adapter
+node src/scripts/adapters.mjs --target opencode # one of them
 node src/scripts/install.mjs --into <dir>      # install a distribution into a repository
 node .aep/scripts/index.mjs                    # regenerate .aep/index.md
 node .aep/scripts/validate.mjs                 # check an installed tree

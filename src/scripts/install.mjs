@@ -17,7 +17,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readArtifact, walk } from './contract.mjs';
-import { writeClaudeAdapter } from './adapters.mjs';
+import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
   MOVES,
@@ -32,7 +32,7 @@ import {
 
 const report = {
   written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [],
-  moved: [], collided: [], relinked: [], notices: [],
+  moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
 };
 
 /** The distribution root — `src/`, since this script lives in `src/scripts/`. */
@@ -300,6 +300,7 @@ function main() {
   const from = path.resolve(value('--from', distributionRoot()));
   const dryRun = args.includes('--dry-run');
   const adapters = value('--adapters', null);
+  const requested = adapters ? adapters.split(',').map((name) => name.trim()).filter(Boolean) : [];
   const aep = path.join(repo, '.aep');
 
   if (!fs.existsSync(path.join(from, 'protocol.md'))) {
@@ -309,6 +310,30 @@ function main() {
   if (!fs.existsSync(repo)) {
     process.stderr.write(`no such directory: ${repo}\n`);
     process.exit(2);
+  }
+
+  const unknown = requested.filter((name) => !(name in TARGETS));
+  if (unknown.length > 0) {
+    process.stderr.write(
+      `unknown runtime${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')} — ` +
+      `known: ${Object.keys(TARGETS).join(', ')}
+`,
+    );
+    process.exit(2);
+  }
+
+  // Both locations are read by OpenCode, so asking for both installs the same
+  // seventeen skills twice under one name, and which file the loader keeps is
+  // decided by whichever load finishes first. It is a warning rather than a
+  // refusal: a repository driven through a harness that reads the neutral
+  // location, with a provider that is not OpenCode, has a real use for both.
+  if (requested.includes('opencode') && requested.includes('agents')) {
+    report.warnings.push(
+      'opencode and agents are alternatives inside OpenCode. It reads .opencode/skills ' +
+      'and .agents/skills both, so every skill loads twice under one name and which ' +
+      'file wins is decided by a race in the loader. Both were written; remove one ' +
+      'unless this repository is driven through a harness with a non-OpenCode provider.',
+    );
   }
 
   const existing = fs.existsSync(path.join(aep, 'protocol.md'));
@@ -370,10 +395,19 @@ function main() {
   if (!dryRun) fs.copyFileSync(path.join(from, GITIGNORE_SOURCE), ignoreTarget);
   report.written.push(ignoreTarget);
 
-  if (adapters === 'claude' && !dryRun) {
-    for (const relative of writeClaudeAdapter(from, path.join(repo, '.claude'), 'repository')) {
-      report.written.push(path.join(repo, '.claude', relative));
-    }
+  // Every adapter installs in the repository shape: it is written into a tree
+  // that has `.aep/`, so there is nowhere further to fall back to.
+  for (const name of requested) {
+    const target = TARGETS[name];
+    const into = path.join(repo, target.dir);
+    const files = dryRun
+      ? renderAdapter(from, target, 'repository').map((file) => file.relativePath)
+      : writeAdapter(from, target, into, 'repository');
+    for (const relative of files) report.written.push(path.join(into, relative));
+    // Named rather than folded into the written count: an adapter is a
+    // directory outside `.aep/` that the repository now owns, and a reader
+    // deciding whether that was what they asked for cannot see it in a total.
+    report.adapters.push(`${target.dir}/ — ${files.length} wrappers`);
   }
 
   const relative = (file) => path.relative(repo, file).split(path.sep).join('/');
@@ -386,6 +420,8 @@ function main() {
   process.stdout.write(`${dryRun ? 'would install' : 'installed'} into ${repo}\n`);
   process.stdout.write(`  ${report.written.length} protocol files written\n`);
   process.stdout.write(`  ${report.created.length} directories created\n`);
+  list(`runtime adapter${report.adapters.length === 1 ? '' : 's'} installed`,
+    report.adapters, (entry) => entry);
   list('repository-owned starting points seeded — review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);
@@ -417,6 +453,15 @@ function main() {
       }
       if (line.trim()) process.stdout.write(`${line}\n`);
     }
+  }
+
+  // Loudest thing in the run, and last: a warning is about what the caller
+  // asked for rather than about what the install did, so it sits where a
+  // reader is looking when the run ends.
+  for (const warning of report.warnings) {
+    process.stdout.write(`
+warning: ${warning}
+`);
   }
 
   if (!dryRun) {

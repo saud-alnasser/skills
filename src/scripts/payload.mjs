@@ -308,4 +308,11 @@ export const SEEDS = [
   reference('lefthook', [
     'lefthook.yml', 'lefthook.yaml', 'lefthook.toml', 'lefthook.json', '.lefthook.yml',
   ]),
+
+  // Agent runtimes and the harnesses that drive them. Detected by the config a
+  // human writes, never by a directory an adapter creates: `.opencode/` is
+  // written by AEP's own OpenCode adapter, so detecting on it would make this
+  // installation the evidence that the repository uses OpenCode.
+  reference('opencode', ['opencode.json', 'opencode.jsonc']),
+  reference('t3code', ['t3.json']),
 ];
