@@ -769,9 +769,28 @@ An adapter MUST NOT:
 
 Concretely, a runtime skill wrapper carries only what the runtime needs to route — its own frontmatter and a pointer — and the body it executes is the canonical `.aep/skills/<name>.md`. A wrapper that restates the skill is a second home (§6).
 
-**An adapter wraps the seventeen skills and nothing else.** Skill notes (§16.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have.
+**An adapter wraps the seventeen skills and nothing else.** Skill notes (§16.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§18); where it has no such location, the agents do not reach it and the adapter says nothing about them.
 
-Where a runtime's frontmatter schema and AEP's contract (§8) collide, the runtime's schema wins **in the adapter file only**, and AEP's fields move under whatever free-form map that runtime reserves. The canonical artifact keeps AEP's contract unchanged.
+Where a runtime's frontmatter schema and AEP's contract (§8) collide, the runtime's schema wins **in the adapter file only**, and AEP's fields move under whatever free-form map that runtime reserves. The canonical artifact keeps AEP's contract unchanged. Where a runtime reserves no such map for a kind of artifact, AEP's fields are **omitted rather than smuggled in** — a runtime that silently absorbs an unknown key turns a typo into behaviour nobody can see.
+
+### 29.1 Targets and shapes
+
+AEP renders for more than one runtime, so a **target** is a declaration rather than a program: where each wrapper lands, what name the runtime knows it by, which frontmatter that runtime's schema admits, and how a wrapper behaves when the canonical file is absent. One renderer walks the payload for every target. *Why declarations rather than a renderer per runtime: the pointer contract would otherwise be stated once per runtime, and a stale adapter is mechanically detectable while three wordings of one rule drifting apart is not.*
+
+A target MAY prefix the names it publishes, and MUST where the runtime's own built-in commands would otherwise shadow a skill. **A name a runtime shadows is not an error anywhere** — the skill simply never runs, which is indistinguishable from nobody invoking it.
+
+A target renders one or more **shapes**, distinguished only by what a wrapper does when `.aep/` is absent:
+
+| Shape | Ships | On absence |
+| --- | --- | --- |
+| `repository` | written into a repository by an install (§30) | says AEP is not installed here, and stops |
+| distribution shapes | travel outside a repository — a plugin, or a directory a runtime is pointed at | reach the payload they shipped beside, so `/install` works before `.aep/` exists |
+
+A distribution shape's reach MUST be **derived from where the wrapper sits**, never written out, so moving a wrapper moves its reach with it.
+
+**A target's rendered tree is committed to the protocol repository exactly when that directory is itself what a user registers** — a published plugin, or a directory named in a runtime's configuration. A shape that only ever renders into a repository at install time is not committed: a checked-in copy would have no reader, and the currency check that justifies committing a generated tree would be guarding an artifact nobody loads.
+
+Every path a wrapper names MUST exist in an installed tree. *This is the requirement that a moved artifact breaks silently: the wrapper still reads well, and the agent it sends is simply reading nothing.*
 
 ## 30. Installation
 
@@ -866,7 +885,7 @@ src/
 ├── seed/                 repository-owned starting points (§7.1)
 ├── scripts/              the payload's scripts, plus install and verify
 ├── gitignore             installed as .aep/.gitignore
-└── adapters/<runtime>/   runtime adapters (§29)
+└── adapters/<runtime>/   runtime adapters, one directory per committed target (§29.1)
 .aep/                     the building repository's own installation
 ```
 
@@ -906,7 +925,10 @@ The suite MUST assert at least:
 - the forbidden structures are absent — no `decisions/`, `tools/`, `grill/`, or `plan.md` (§5, §15.2, §17);
 - every seed declares `owner: repository`, targets a repository-owned directory, and states that it is a starting point — except the entrypoint seed, which targets the root and carries no frontmatter (§7.1);
 - the index gains a tickets section exactly when local tickets exist, and lacks one when they do not (§27);
-- every runtime adapter is **current** — regenerating it from the payload reproduces the committed files byte-for-byte — and every wrapper is a pointer rather than a copy (§29);
+- every committed runtime adapter is **current** — regenerating it from the payload reproduces the committed files byte-for-byte — and every wrapper is a pointer rather than a copy (§29);
+- **for every target and every shape it renders**, and not for one runtime: the wrapper set covers each shipped skill, and each shipped agent where that target wraps agents; a target that renders nothing fails rather than passing vacuously; every published name matches the target's declared prefix and, for a skill, equals the directory holding it; the frontmatter keys are exactly what that runtime's schema admits, compared as a set; and **every path any wrapper names resolves in an installed tree**, checked in prose and in frontmatter alike (§29.1);
+- a distribution shape's reach resolves onto a payload file that exists, and a shape declaring none carries none (§29.1);
+- an install writes each adapter it was asked for into the directory that runtime reads, names each in its report, refuses an unknown runtime **before writing anything**, and warns where two requested targets are read by one runtime (§30);
 - an **install fixture**: installing into a temporary repository produces a tree that passes every check above, regenerating the index over it is byte-identical (§27), an upgrade preserves a repository-owned file standing where a shipped one would land, an upgrade replaces a protocol-owned file that was edited locally, and an upgrade does not re-seed a corrected starting point (§31).
 
 Scripts MUST be JavaScript, executable by a bare Node runtime with **no dependencies and no package manifest required**, and named so that a consuming repository's `package.json` cannot change how they are parsed.

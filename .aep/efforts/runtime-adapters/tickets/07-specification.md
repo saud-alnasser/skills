@@ -3,7 +3,7 @@ aep: 2.5.1
 owner: repository
 date: 2026-08-18
 kind: ticket
-status: open
+status: resolved
 part-of: runtime-adapters
 blocked-by: [03]
 ---
