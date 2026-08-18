@@ -1,5 +1,5 @@
 ---
-aep: 2.5.1
+aep: 2.6.0
 owner: repository
 date: 2026-08-18
 kind: reference

@@ -1,7 +1,7 @@
 ---
-aep: 2.4.0
+aep: 2.6.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-18
 kind: skill
 mode: [implement]
 report: full
