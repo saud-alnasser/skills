@@ -63,6 +63,23 @@ function absent(canonical) {
   ];
 }
 
+/**
+ * A skill wrapper's frontmatter, which no runtime so far spells differently.
+ *
+ * Every reader takes the same three: a `name` that has to equal the directory,
+ * the `description` it matches on, and a free-form `metadata` map — the only
+ * place AEP's own fields may ride without colliding with a runtime's schema.
+ */
+function skillFrontmatter(wrapped, description, canonical) {
+  return [
+    `name: ${wrapped}`,
+    `description: ${description}`,
+    'metadata:',
+    '  aep: adapter',
+    `  canonical: ${canonical}`,
+  ];
+}
+
 /** How many directories a wrapper sits below its adapter's root. */
 function depth(relativePath) {
   return relativePath.split('/').length - 1;
@@ -128,13 +145,7 @@ export const TARGETS = {
     path: (kind, wrapped) =>
       (kind === 'skill' ? `skills/${wrapped}/SKILL.md` : `agents/${wrapped}.md`),
     frontmatter: (kind, wrapped, description, canonical) => (kind === 'skill'
-      ? [
-        `name: ${wrapped}`,
-        `description: ${description}`,
-        'metadata:',
-        '  aep: adapter',
-        `  canonical: ${canonical}`,
-      ]
+      ? skillFrontmatter(wrapped, description, canonical)
       : [
         `name: ${wrapped}`,
         `description: ${description}`,
@@ -184,13 +195,7 @@ export const TARGETS = {
     // keys the schema names and nothing else, and AEP's own fields ride in
     // `metadata`, which exists on a skill and has no counterpart on an agent.
     frontmatter: (kind, wrapped, description, canonical) => (kind === 'skill'
-      ? [
-        `name: ${wrapped}`,
-        `description: ${description}`,
-        'metadata:',
-        '  aep: adapter',
-        `  canonical: ${canonical}`,
-      ]
+      ? skillFrontmatter(wrapped, description, canonical)
       : [
         `description: ${description}`,
         'mode: subagent',
@@ -211,6 +216,30 @@ export const TARGETS = {
         'do not improvise the skill.',
       ];
     },
+  },
+
+  // `.agents/skills/` is the one location read by more than one runtime:
+  // OpenCode scans it, and T3 Code's picker scans it for whichever provider it
+  // is driving. It carries skills because that is all anything reads it for.
+  //
+  // Nothing commits it. A wrapper here is only ever written into a repository by
+  // an install, so a checked-in copy would have no reader — and no fallback is
+  // expressible either, because nothing that reads this location takes a
+  // configured path, so a wrapper can only arrive by being copied and a copy
+  // severs any reach relative to itself.
+  agents: {
+    dir: '.agents',
+    prefix: 'aep-',
+    committed: null,
+    shapes: ['repository'],
+    path: (kind, wrapped) => (kind === 'skill' ? `skills/${wrapped}/SKILL.md` : null),
+    // Gated on the kind even though `path` already declines an agent: a hook
+    // that ignores its discriminant would emit skill frontmatter for an agent
+    // the day this row grows an agent path, and that is a silent wrong file
+    // rather than a loud one.
+    frontmatter: (kind, wrapped, description, canonical) =>
+      (kind === 'skill' ? skillFrontmatter(wrapped, description, canonical) : null),
+    fallback: (kind, name, shape, canonical) => (kind === 'skill' ? absent(canonical) : null),
   },
 };
 
