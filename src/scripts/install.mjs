@@ -17,7 +17,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readArtifact, walk } from './contract.mjs';
-import { writeClaudeAdapter } from './adapters.mjs';
+import { writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
   MOVES,
@@ -371,8 +371,10 @@ function main() {
   report.written.push(ignoreTarget);
 
   if (adapters === 'claude' && !dryRun) {
-    for (const relative of writeClaudeAdapter(from, path.join(repo, '.claude'), 'repository')) {
-      report.written.push(path.join(repo, '.claude', relative));
+    const target = TARGETS.claude;
+    const into = path.join(repo, target.dir);
+    for (const relative of writeAdapter(from, target, into, 'repository')) {
+      report.written.push(path.join(into, relative));
     }
   }
 

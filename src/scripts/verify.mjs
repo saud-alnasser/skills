@@ -34,7 +34,7 @@ import {
   walk,
   wikiLinks,
 } from './contract.mjs';
-import { renderClaudeAdapter } from './adapters.mjs';
+import { renderAdapter, TARGETS } from './adapters.mjs';
 import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
@@ -536,7 +536,7 @@ section('skill notes', () => {
   assert('the tracker note separates resolving the mechanism from applying it per effort', () =>
     /Resolve once per tracker; apply every effort/.test(labels));
 
-  const wrapped = renderClaudeAdapter(SRC, 'plugin').map((f) => f.relativePath);
+  const wrapped = renderAdapter(SRC, TARGETS.claude, 'plugin').map((f) => f.relativePath);
   assert('no adapter publishes a note as a command', () =>
     notes.every((file) => {
       const name = path.basename(file, '.md');
@@ -1076,7 +1076,7 @@ section('forbidden', () => {
 // --- §29 the adapter is a pointer, and it is current ------------------------
 
 section('adapter', () => {
-  const rendered = renderClaudeAdapter(SRC, 'plugin');
+  const rendered = renderAdapter(SRC, TARGETS.claude, 'plugin');
   assert('the adapter renders a file per skill and per agent, and nothing per note', () =>
     rendered.length ===
       topLevel(path.join(SRC, 'skills')).length + topLevel(path.join(SRC, 'agents')).length);

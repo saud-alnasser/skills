@@ -10,12 +10,22 @@
 // the protocol declares. Hand-written wrapper descriptions were the obvious
 // alternative and would have been exactly that second home.
 //
-// Two shapes, because the fallback differs:
+// A runtime is a row in `TARGETS`, never a function of its own. One renderer
+// walks the payload and asks the target where each wrapper lands, what
+// frontmatter that runtime's schema admits, and how absence is handled. The
+// alternative — a render function per runtime — reads better per runtime and
+// loses on the thing that matters: the pointer contract would be stated three
+// times, and a stale adapter is caught by the suite while three wordings of one
+// rule drifting apart is not.
 //
-//   plugin      distributed with the protocol; falls back to the plugin's own
-//               copy, so /install works in a repository that has no .aep/ yet
-//   repository  written into a repository by /install; no fallback, because a
-//               missing .aep/skills file there means AEP was removed
+// Shapes exist because the fallback differs:
+//
+//   plugin        distributed with the protocol; falls back to the plugin's own
+//                 copy, so /install works in a repository that has no .aep/ yet
+//   distribution  registered from a clone of the distribution; falls back by a
+//                 path relative to the wrapper itself, for the same reason
+//   repository    written into a repository by /install; no fallback, because a
+//                 missing .aep/skills file there means AEP was removed
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,19 +33,21 @@ import { fileURLToPath } from 'node:url';
 import { readArtifact, topLevel, walk } from './contract.mjs';
 
 /**
- * From the plugin's root back to the payload it wraps.
+ * From an adapter's own root back to the payload it wraps.
  *
- * The plugin root is this adapter's own directory — `<distribution>/adapters/
- * claude` — because that is what the marketplace entry publishes, and it has to
- * be: Claude Code scans `<plugin root>/agents/` for a plugin's agents and a
- * manifest `agents` path does not redirect that scan. Naming a directory there
- * fails manifest validation outright, and naming the files loads none of them.
+ * For Claude that root is the plugin root — `<distribution>/adapters/claude` —
+ * because that is what the marketplace entry publishes, and it has to be: Claude
+ * Code scans `<plugin root>/agents/` for a plugin's agents and a manifest
+ * `agents` path does not redirect that scan. Naming a directory there fails
+ * manifest validation outright, and naming the files loads none of them.
  * Publishing the adapter itself is what puts every wrapper — skills and agents
  * alike — where the runtime already looks, with no manifest paths at all.
  *
- * The payload is two levels up from there, which is what this prefix spells.
+ * The payload is two levels up from any adapter root, which is what this prefix
+ * spells. Every relative fallback is derived from it rather than written out, so
+ * moving a wrapper moves its fallback with it.
  */
-const PAYLOAD_FROM_PLUGIN_ROOT = '../..';
+const PAYLOAD_FROM_ADAPTER_ROOT = '../..';
 
 /** The sentence a runtime matches on, derived from the canonical artifact. */
 function describe(artifact, { isAgent }) {
@@ -70,51 +82,94 @@ function describe(artifact, { isAgent }) {
   return [what, when].filter(Boolean).join(' ');
 }
 
-function skillWrapper(name, description, shape) {
+/**
+ * The runtimes AEP renders for.
+ *
+ * Each row answers only what differs. `path` returning `null` is how a target
+ * declines a kind — it is the single place the skills-only rules live, for the
+ * distribution shape and for the neutral location alike.
+ *
+ * `committed` names the shape kept under `src/adapters/<name>/`, or `null` where
+ * nothing is committed: a tree is committed exactly when that directory is
+ * itself what a user registers. Claude's is the published plugin. Anything that
+ * only ever renders into a repository at install time has no such consumer, and
+ * committing it would add wrappers with no reader that churn on every
+ * `use-when` edit.
+ *
+ * `name` is the canonical artifact's name; `wrapped` is what the runtime knows
+ * it by. They differ wherever a target prefixes, and the pointer always names
+ * the canonical one.
+ */
+export const TARGETS = {
+  claude: {
+    dir: '.claude',
+    prefix: '',
+    committed: 'plugin',
+    shapes: ['plugin', 'repository'],
+    path: (kind, wrapped) =>
+      (kind === 'skill' ? `skills/${wrapped}/SKILL.md` : `agents/${wrapped}.md`),
+    frontmatter: (kind, wrapped, description, canonical) => (kind === 'skill'
+      ? [
+        `name: ${wrapped}`,
+        `description: ${description}`,
+        'metadata:',
+        '  aep: adapter',
+        `  canonical: ${canonical}`,
+      ]
+      : [
+        `name: ${wrapped}`,
+        `description: ${description}`,
+      ]),
+    fallback: (kind, name, shape, canonical) => {
+      if (kind !== 'skill') return null;
+      if (shape !== 'plugin') {
+        return [
+          `If \`${canonical}\` does not exist, AEP is not installed in this repository.`,
+          'Say so and stop; do not improvise the skill.',
+        ];
+      }
+      // `CLAUDE_PLUGIN_ROOT` is the adapter's own directory, so the payload is
+      // reached by climbing out of it. A wrong fallback here breaks the single
+      // path that has to work before AEP exists anywhere: `/aep:install` in a
+      // repository that has no `.aep/` yet.
+      return [
+        `If \`${canonical}\` does not exist, this repository has not installed AEP.`,
+        'For `/aep:install` and `/aep:help`, fall back to',
+        '`${CLAUDE_PLUGIN_ROOT}/' + PAYLOAD_FROM_ADAPTER_ROOT + '/skills/' + name + '.md` and continue.',
+        'For anything else, say AEP is not installed here and offer `/aep:install` —',
+        'do not improvise the skill.',
+      ];
+    },
+  },
+};
+
+/** The body every skill wrapper shares: the pointer, and nothing of the skill. */
+function pointer(canonical) {
+  return `Read \`${canonical}\` and follow it exactly. That file is the skill; this one only routes to it.`;
+}
+
+function skillWrapper(target, { name, wrapped, description, shape }) {
   const canonical = `.aep/skills/${name}.md`;
   const lines = [
     '---',
-    `name: ${name}`,
-    `description: ${description}`,
-    'metadata:',
-    '  aep: adapter',
-    `  canonical: ${canonical}`,
+    ...target.frontmatter('skill', wrapped, description, canonical),
     '---',
     '',
-    `Read \`${canonical}\` and follow it exactly. That file is the skill; this one only routes to it.`,
+    pointer(canonical),
     '',
   ];
 
-  if (shape === 'plugin') {
-    // `CLAUDE_PLUGIN_ROOT` is the adapter's own directory, so the payload is
-    // reached by climbing out of it — see `PAYLOAD_FROM_PLUGIN_ROOT`. A wrong
-    // fallback here breaks the single path that has to work before AEP exists
-    // anywhere: `/aep:install` in a repository that has no `.aep/` yet.
-    lines.push(
-      `If \`${canonical}\` does not exist, this repository has not installed AEP.`,
-      'For `/aep:install` and `/aep:help`, fall back to',
-      '`${CLAUDE_PLUGIN_ROOT}/' + PAYLOAD_FROM_PLUGIN_ROOT + '/skills/' + name + '.md` and continue.',
-      'For anything else, say AEP is not installed here and offer `/aep:install` —',
-      'do not improvise the skill.',
-      '',
-    );
-  } else {
-    lines.push(
-      `If \`${canonical}\` does not exist, AEP is not installed in this repository.`,
-      'Say so and stop; do not improvise the skill.',
-      '',
-    );
-  }
+  const fallback = target.fallback('skill', name, shape, canonical);
+  if (fallback) lines.push(...fallback, '');
 
   return lines.join('\n');
 }
 
-function agentWrapper(name, description) {
+function agentWrapper(target, { name, wrapped, description, shape }) {
   const canonical = `.aep/agents/${name}.md`;
-  return [
+  const lines = [
     '---',
-    `name: ${name}`,
-    `description: ${description}`,
+    ...target.frontmatter('agent', wrapped, description, canonical),
     '---',
     '',
     `Read \`${canonical}\` and adopt it as your role definition. It states your`,
@@ -125,7 +180,12 @@ function agentWrapper(name, description) {
     '',
     'If those files do not exist, AEP is not installed here — report that and stop.',
     '',
-  ].join('\n');
+  ];
+
+  const fallback = target.fallback('agent', name, shape, canonical);
+  if (fallback) lines.push(...fallback, '');
+
+  return lines.join('\n');
 }
 
 /**
@@ -133,43 +193,41 @@ function agentWrapper(name, description) {
  * Pure: callers decide whether to write or compare, which is what lets the
  * verification suite assert the committed adapter is current.
  */
-export function renderClaudeAdapter(distributionRoot, shape) {
+export function renderAdapter(distributionRoot, target, shape) {
   const files = [];
+
+  const wrap = (kind, sources) => {
+    const isAgent = kind === 'agent';
+    for (const file of sources) {
+      const name = path.basename(file, '.md');
+      const wrapped = `${target.prefix}${name}`;
+      const relativePath = target.path(kind, wrapped, shape);
+      if (!relativePath) continue;
+      const description = describe(readArtifact(file), { isAgent });
+      const contents = (isAgent ? agentWrapper : skillWrapper)(
+        target, { name, wrapped, description, shape },
+      );
+      files.push({ relativePath, contents });
+    }
+  };
 
   // Top-level files only. `skills/<skill>/<note>.md` is depth reached by link
   // from its own skill, not an entry point — wrapping one would publish a
   // command the protocol does not have, under a name (`ui`, `tests`) that reads
   // like a skill in a runtime's listing.
-  const skillsDir = path.join(distributionRoot, 'skills');
-  for (const file of topLevel(skillsDir)) {
-    const name = path.basename(file, '.md');
-    const artifact = readArtifact(file);
-    files.push({
-      relativePath: `skills/${name}/SKILL.md`,
-      contents: skillWrapper(name, describe(artifact, { isAgent: false }), shape),
-    });
-  }
-
-  const agentsDir = path.join(distributionRoot, 'agents');
-  for (const file of walk(agentsDir).filter((f) => f.endsWith('.md'))) {
-    const name = path.basename(file, '.md');
-    const artifact = readArtifact(file);
-    files.push({
-      relativePath: `agents/${name}.md`,
-      contents: agentWrapper(name, describe(artifact, { isAgent: true })),
-    });
-  }
+  wrap('skill', topLevel(path.join(distributionRoot, 'skills')));
+  wrap('agent', walk(path.join(distributionRoot, 'agents')).filter((f) => f.endsWith('.md')));
 
   return files.sort((a, b) => (a.relativePath < b.relativePath ? -1 : 1));
 }
 
 /** Writes the adapter under `targetDir`, returning the paths written. */
-export function writeClaudeAdapter(distributionRoot, targetDir, shape) {
+export function writeAdapter(distributionRoot, target, targetDir, shape) {
   const written = [];
-  for (const { relativePath, contents } of renderClaudeAdapter(distributionRoot, shape)) {
-    const target = path.join(targetDir, ...relativePath.split('/'));
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, contents, 'utf8');
+  for (const { relativePath, contents } of renderAdapter(distributionRoot, target, shape)) {
+    const file = path.join(targetDir, ...relativePath.split('/'));
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, contents, 'utf8');
     written.push(relativePath);
   }
   return written;
@@ -180,14 +238,26 @@ export function distributionRoot() {
   return path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 }
 
-// Regenerating the distribution's own committed adapter.
-//   node src/scripts/adapters.mjs [--to <dir>] [--shape plugin|repository]
+// Regenerating the distribution's own committed adapters.
+//   node src/scripts/adapters.mjs [--target <name>] [--shape <shape>] [--to <dir>]
 if (process.argv[1] && path.basename(process.argv[1]) === 'adapters.mjs') {
   const args = process.argv.slice(2);
   const value = (flag, fallback) =>
     args.includes(flag) ? args[args.indexOf(flag) + 1] : fallback;
   const root = distributionRoot();
-  const to = path.resolve(value('--to', path.join(root, 'adapters', 'claude')));
-  const written = writeClaudeAdapter(root, to, value('--shape', 'plugin'));
-  process.stdout.write(`wrote ${written.length} adapter files to ${to}\n`);
+
+  const only = value('--target', null);
+  if (only && !(only in TARGETS)) {
+    process.stderr.write(`unknown runtime: ${only} — known: ${Object.keys(TARGETS).join(', ')}\n`);
+    process.exit(2);
+  }
+
+  const names = only ? [only] : Object.keys(TARGETS).filter((name) => TARGETS[name].committed);
+  for (const name of names) {
+    const target = TARGETS[name];
+    const shape = value('--shape', target.committed ?? target.shapes[0]);
+    const to = path.resolve(value('--to', path.join(root, 'adapters', name)));
+    const written = writeAdapter(root, target, to, shape);
+    process.stdout.write(`wrote ${written.length} ${name} adapter files to ${to}\n`);
+  }
 }
