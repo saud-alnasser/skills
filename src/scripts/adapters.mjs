@@ -314,7 +314,10 @@ export function renderAdapter(distributionRoot, target, shape) {
       const contents = (isAgent ? agentWrapper : skillWrapper)(
         target, { name, wrapped, description, shape, relativePath },
       );
-      files.push({ relativePath, contents });
+      // `kind` and `name` ride along so a caller can judge the render without
+      // inferring either from the path — the suite has to count skills against
+      // agents, and a path is the one thing a target is free to change.
+      files.push({ kind, name, wrapped, relativePath, contents });
     }
   };
 

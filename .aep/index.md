@@ -146,7 +146,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/runtime-adapters/tickets/05-install-skill]] docs(install): step 7 offers the adapter a runtime actually reads | runtime-adapters | resolved | 04 |
 | [[efforts/runtime-adapters/tickets/06-seed-references]] feat(seed): references for OpenCode and T3 Code | runtime-adapters | resolved | — |
 | [[efforts/runtime-adapters/tickets/07-specification]] docs(specs): the specification describes more than one adapter | runtime-adapters | resolved | 03 |
-| [[efforts/runtime-adapters/tickets/08-verify]] test(verify): the suite judges every adapter, not the Claude one | runtime-adapters | open | 04, 06, 07 |
+| [[efforts/runtime-adapters/tickets/08-verify]] test(verify): the suite judges every adapter, not the Claude one | runtime-adapters | resolved | 04, 06, 07 |
 | [[efforts/runtime-adapters/tickets/09-release]] chore(release): cut 2.6.0 | runtime-adapters | open | 05, 08, 10 |
 | [[efforts/runtime-adapters/tickets/10-agent-wrapper-binding]] fix(adapters): an agent wrapper sends sub-agents to a file that does not exist | runtime-adapters | resolved | 01 |
 | [[efforts/tracker-labels/tickets/01-policy]] feat(policies): an external task is findable in its own tracker | tracker-labels | resolved | — |
