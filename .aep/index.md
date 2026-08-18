@@ -140,7 +140,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/policy-rule-split/tickets/11-artifacts-name]] refactor(policies): confirm or replace the name `artifacts` | policy-rule-split | resolved | — |
 | [[efforts/policy-rule-split/tickets/12-moves-home]] docs(scripts): payload.mjs says what it installs, and now also what it moves | policy-rule-split | resolved | — |
 | [[efforts/runtime-adapters/tickets/01-target-table]] refactor(adapters): route the Claude adapter through a target table | runtime-adapters | resolved | — |
-| [[efforts/runtime-adapters/tickets/02-opencode-target]] feat(adapters): the OpenCode target, in both shapes | runtime-adapters | open | 01 |
+| [[efforts/runtime-adapters/tickets/02-opencode-target]] feat(adapters): the OpenCode target, in both shapes | runtime-adapters | resolved | 01 |
 | [[efforts/runtime-adapters/tickets/03-agents-target]] feat(adapters): the runtime-neutral `.agents` target | runtime-adapters | open | 02 |
 | [[efforts/runtime-adapters/tickets/04-install-adapters]] feat(install): `--adapters` takes a list, and says what it wrote | runtime-adapters | open | 02, 03 |
 | [[efforts/runtime-adapters/tickets/05-install-skill]] docs(install): step 7 offers the adapter a runtime actually reads | runtime-adapters | open | 04 |
@@ -148,7 +148,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/runtime-adapters/tickets/07-specification]] docs(specs): the specification describes more than one adapter | runtime-adapters | open | 03 |
 | [[efforts/runtime-adapters/tickets/08-verify]] test(verify): the suite judges every adapter, not the Claude one | runtime-adapters | open | 04, 06, 07 |
 | [[efforts/runtime-adapters/tickets/09-release]] chore(release): cut 2.6.0 | runtime-adapters | open | 05, 08, 10 |
-| [[efforts/runtime-adapters/tickets/10-agent-wrapper-binding]] fix(adapters): an agent wrapper sends sub-agents to a file that does not exist | runtime-adapters | open | 01 |
+| [[efforts/runtime-adapters/tickets/10-agent-wrapper-binding]] fix(adapters): an agent wrapper sends sub-agents to a file that does not exist | runtime-adapters | resolved | 01 |
 | [[efforts/tracker-labels/tickets/01-policy]] feat(policies): an external task is findable in its own tracker | tracker-labels | resolved | — |
 | [[efforts/tracker-labels/tickets/02-skill-note]] feat(skills): the label ladder becomes a skill note | tracker-labels | resolved | 01 |
 | [[efforts/tracker-labels/tickets/03-skill-hooks]] feat(skills): tasks and implement route to the ladder | tracker-labels | resolved | 02 |

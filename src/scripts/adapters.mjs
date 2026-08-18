@@ -49,6 +49,25 @@ import { readArtifact, topLevel, walk } from './contract.mjs';
  */
 const PAYLOAD_FROM_ADAPTER_ROOT = '../..';
 
+/**
+ * What a wrapper says when the canonical file is not there.
+ *
+ * Identical for every runtime, because the situation is: AEP was installed and
+ * then removed. Only the shapes that ship *outside* a repository have anywhere
+ * further to fall back to, and each of those spells its own reach.
+ */
+function absent(canonical) {
+  return [
+    `If \`${canonical}\` does not exist, AEP is not installed in this repository.`,
+    'Say so and stop; do not improvise the skill.',
+  ];
+}
+
+/** How many directories a wrapper sits below its adapter's root. */
+function depth(relativePath) {
+  return relativePath.split('/').length - 1;
+}
+
 /** The sentence a runtime matches on, derived from the canonical artifact. */
 function describe(artifact, { isAgent }) {
   const useWhen = typeof artifact.fields['use-when'] === 'string'
@@ -122,12 +141,7 @@ export const TARGETS = {
       ]),
     fallback: (kind, name, shape, canonical) => {
       if (kind !== 'skill') return null;
-      if (shape !== 'plugin') {
-        return [
-          `If \`${canonical}\` does not exist, AEP is not installed in this repository.`,
-          'Say so and stop; do not improvise the skill.',
-        ];
-      }
+      if (shape !== 'plugin') return absent(canonical);
       // `CLAUDE_PLUGIN_ROOT` is the adapter's own directory, so the payload is
       // reached by climbing out of it. A wrong fallback here breaks the single
       // path that has to work before AEP exists anywhere: `/aep:install` in a
@@ -141,6 +155,63 @@ export const TARGETS = {
       ];
     },
   },
+
+  // OpenCode reads skills from `.opencode/skill(s)/` and agents from
+  // `.opencode/agent(s)/`, and nothing else reaches its agents at all — the
+  // `.claude` compatibility that finds a Claude adapter's skills covers skills
+  // only. Both spellings load; the plural is what OpenCode's own repository and
+  // its documentation use.
+  //
+  // Names are prefixed because OpenCode registers `init` and `review` as
+  // built-in commands before skills, and a skill whose name is already taken
+  // never becomes a command. Unprefixed, `/review` would silently not be AEP's.
+  opencode: {
+    dir: '.opencode',
+    prefix: 'aep-',
+    committed: 'distribution',
+    shapes: ['distribution', 'repository'],
+    // The distribution shape is what a user points `skills.paths` at, and
+    // OpenCode reads those where they sit rather than copying them. An agent
+    // cannot be reached that way — agents load from a config directory only —
+    // and a wrapper copied there is a generated file going stale in a home
+    // directory no suite can see. So agents ship in the repository shape alone.
+    path: (kind, wrapped, shape) => {
+      if (kind === 'skill') return `skills/${wrapped}/SKILL.md`;
+      return shape === 'repository' ? `agents/${wrapped}.md` : null;
+    },
+    // An unknown key in an agent's frontmatter is not rejected: OpenCode routes
+    // it silently into that agent's options. So an agent wrapper carries the two
+    // keys the schema names and nothing else, and AEP's own fields ride in
+    // `metadata`, which exists on a skill and has no counterpart on an agent.
+    frontmatter: (kind, wrapped, description, canonical) => (kind === 'skill'
+      ? [
+        `name: ${wrapped}`,
+        `description: ${description}`,
+        'metadata:',
+        '  aep: adapter',
+        `  canonical: ${canonical}`,
+      ]
+      : [
+        `description: ${description}`,
+        'mode: subagent',
+      ]),
+    fallback: (kind, name, shape, canonical, relativePath) => {
+      if (kind !== 'skill') return null;
+      if (shape !== 'distribution') return absent(canonical);
+      // Derived rather than written out, so moving a wrapper moves its reach
+      // with it. OpenCode announces the skill's own directory to the agent as
+      // the base for relative paths, which is what makes this resolvable at all.
+      const reach = `${'../'.repeat(depth(relativePath))}${PAYLOAD_FROM_ADAPTER_ROOT}`;
+      return [
+        `If \`${canonical}\` does not exist, this repository has not installed AEP.`,
+        'For `/aep-install` and `/aep-help`, fall back to',
+        `\`${reach}/skills/${name}.md\`, resolved from this skill's own directory,`,
+        'and continue.',
+        'For anything else, say AEP is not installed here and offer `/aep-install` —',
+        'do not improvise the skill.',
+      ];
+    },
+  },
 };
 
 /** The body every skill wrapper shares: the pointer, and nothing of the skill. */
@@ -148,7 +219,7 @@ function pointer(canonical) {
   return `Read \`${canonical}\` and follow it exactly. That file is the skill; this one only routes to it.`;
 }
 
-function skillWrapper(target, { name, wrapped, description, shape }) {
+function skillWrapper(target, { name, wrapped, description, shape, relativePath }) {
   const canonical = `.aep/skills/${name}.md`;
   const lines = [
     '---',
@@ -159,12 +230,21 @@ function skillWrapper(target, { name, wrapped, description, shape }) {
     '',
   ];
 
-  const fallback = target.fallback('skill', name, shape, canonical);
+  const fallback = target.fallback('skill', name, shape, canonical, relativePath);
   if (fallback) lines.push(...fallback, '');
 
   return lines.join('\n');
 }
 
+/**
+ * An agent wrapper names the role definition and nothing else.
+ *
+ * It used to name the artifact that binds a sub-agent as well. That artifact
+ * moved when governance split, and the wrappers went on pointing at a file the
+ * distribution no longer ships — every dispatched agent was sent to read
+ * nothing. A role definition already states what binds it, so naming that here
+ * was a second home for the answer, and the copy is the one that went stale.
+ */
 function agentWrapper(target, { name, wrapped, description, shape }) {
   const canonical = `.aep/agents/${name}.md`;
   const lines = [
@@ -173,12 +253,10 @@ function agentWrapper(target, { name, wrapped, description, shape }) {
     '---',
     '',
     `Read \`${canonical}\` and adopt it as your role definition. It states your`,
-    'purpose, responsibilities, constraints, and the shape of what you return.',
+    'purpose, responsibilities, constraints, the governance that binds you, and',
+    'the shape of what you return.',
     '',
-    'Then read `.aep/rules/sub-agents.md`, which binds you, and the mode named in',
-    'your role definition.',
-    '',
-    'If those files do not exist, AEP is not installed here — report that and stop.',
+    'If that file does not exist, AEP is not installed here — report that and stop.',
     '',
   ];
 
@@ -205,7 +283,7 @@ export function renderAdapter(distributionRoot, target, shape) {
       if (!relativePath) continue;
       const description = describe(readArtifact(file), { isAgent });
       const contents = (isAgent ? agentWrapper : skillWrapper)(
-        target, { name, wrapped, description, shape },
+        target, { name, wrapped, description, shape, relativePath },
       );
       files.push({ relativePath, contents });
     }

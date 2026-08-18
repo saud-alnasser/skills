@@ -1127,6 +1127,33 @@ section('adapter', () => {
     });
   }
 
+  // Every `.aep/…` path a wrapper names has to exist in an installed tree.
+  // Nothing compared the two until now, and the cost was silent: the artifact
+  // binding a sub-agent moved to `policies/execution` in 2.2.0 (`MOVES`), and
+  // every agent wrapper went on naming `rules/sub-agents.md` for four releases,
+  // sending each dispatched agent to read a file no release ships.
+  const installedTree = installFixture().dir;
+  for (const [runtime, target] of Object.entries(TARGETS)) {
+    for (const shape of target.shapes) {
+      assert(`every path a ${runtime}/${shape} wrapper names exists in an installed tree`, () => {
+        const missing = new Set();
+        for (const { relativePath, contents } of renderAdapter(SRC, target, shape)) {
+          // Anchored on the extension rather than on backticks: a wrapper
+          // names a path in its prose *and* in `metadata.canonical`, where
+          // there are none, and a guard that saw only the quoted half would
+          // pass while the field a runtime reads pointed nowhere.
+          for (const [named] of contents.matchAll(/\.aep\/[\w./-]+\.md/g)) {
+            if (!fs.existsSync(path.join(installedTree, ...named.split('/')))) {
+              missing.add(`${relativePath} names ${named}`);
+            }
+          }
+        }
+        if (missing.size > 0) throw new Error([...missing].join('; '));
+        return true;
+      });
+    }
+  }
+
   // The manifest sits inside the adapter, not at the repository root, and that
   // placement is the whole mechanism: Claude Code reads a plugin's agents from
   // `<plugin root>/agents/` and a manifest `agents` path does not redirect that
