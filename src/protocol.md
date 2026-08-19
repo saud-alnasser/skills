@@ -94,10 +94,10 @@ not obvious. Everything else — `research`, `prototype`, `survey`, grill — is
 **capability, not a stage**: reach for one when uncertainty warrants it.
 
 `index.md` lists every skill against the trigger that calls for it, and
-`[[skills/help]]` answers *what do I reach for*. `[[skills/tdd]]` and
-`[[skills/domain]]` are sub-skills, reached from inside another skill. A skill
-may keep depth beside it in `skills/<skill>/` — read one only when that skill
-sends you there.
+`[[skills/help]]` answers *what do I reach for*. `[[skills/tdd]]`,
+`[[skills/domain]]`, and `[[skills/prose]]` are sub-skills, reached from inside
+another skill. A skill may keep depth beside it in `skills/<skill>/` — read one
+only when that skill sends you there.
 
 **Pick the smallest process that produces a reliable result.** Not every change
 needs research, a prototype, a grill, sub-agents, or worktrees. A one-line fix

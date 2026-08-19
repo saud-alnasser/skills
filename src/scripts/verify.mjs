@@ -435,7 +435,7 @@ section('protocol.md', () => {
 section('skills', () => {
   // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§16.1).
   const onDisk = topLevel(path.join(SRC, 'skills')).map((f) => path.basename(f, '.md')).sort();
-  assert('the skill set is exactly the seventeen specs.md names', () =>
+  assert('the skill set is exactly the eighteen specs.md names', () =>
     JSON.stringify(onDisk) === JSON.stringify([...SKILLS].sort()));
   if (JSON.stringify(onDisk) !== JSON.stringify([...SKILLS].sort())) {
     process.stdout.write(`        on disk: ${onDisk.join(', ')}\n`);

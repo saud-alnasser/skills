@@ -323,7 +323,7 @@ function main() {
   }
 
   // Both locations are read by OpenCode, so asking for both installs the same
-  // seventeen skills twice under one name, and which file the loader keeps is
+  // eighteen skills twice under one name, and which file the loader keeps is
   // decided by whichever load finishes first. It is a warning rather than a
   // refusal: a repository driven through a harness that reads the neutral
   // location, with a provider that is not OpenCode, has a real use for both.

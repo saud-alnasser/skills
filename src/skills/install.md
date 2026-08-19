@@ -120,7 +120,7 @@ whichever runtime adapters the repository asks for.
    it is never offered as one.
 
    **Offer nothing for a runtime whose plugin already publishes the skills.**
-   Both routes register the same seventeen, with the same doubling. The plugin
+   Both routes register the same eighteen, with the same doubling. The plugin
    travels with the user across repositories; the committed adapter travels with
    the repository across users. Pick by which of those the repository needs, and
    say which was picked.
