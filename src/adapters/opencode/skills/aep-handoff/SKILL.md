@@ -12,5 +12,5 @@ If `.aep/skills/handoff.md` does not exist, this repository has not installed AE
 For `/aep-install` and `/aep-help`, fall back to
 `../../../../skills/handoff.md`, resolved from this skill's own directory,
 and continue.
-For anything else, say AEP is not installed here and offer `/aep-install` —
-do not improvise the skill.
+For anything else, say AEP is not installed here and offer `/aep-install`.
+Do not improvise the skill.

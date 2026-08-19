@@ -2,12 +2,12 @@
 //
 // `aep:` is the release in which an artifact's content last changed. Under the
 // sweep this replaces, every protocol-owned artifact was restamped every release
-// whether or not it had moved — so the field distinguished nothing, and an
+// whether or not it had moved, so the field distinguished nothing, and an
 // artifact edited without being restamped was undetectable, because everything
 // was restamped regardless.
 //
 // The baseline is `stamps.json`: one hash per shipped artifact, committed. Not
-// git tags — `verify.mjs` is the only thing that catches a broken build here, and
+// git tags. `verify.mjs` is the only thing that catches a broken build here, and
 // making it depend on tags being present in whatever checkout runs it puts the
 // suite at the mercy of how the repository was cloned.
 //
@@ -50,8 +50,8 @@ export function shippedArtifacts() {
 /**
  * The artifact's content with the two computed lines removed.
  *
- * Anything else — a word of prose, a frontmatter field, a line of a table — moves
- * the hash and earns the file a new stamp.
+ * Anything else moves the hash and earns the file a new stamp: a word of prose,
+ * a frontmatter field, a line of a table.
  */
 export function contentHash(text) {
   const stable = text
@@ -142,7 +142,7 @@ function main() {
   for (const rel of changed) process.stdout.write(`      ${rel}\n`);
   process.stdout.write(`  ${unchanged.length} unchanged, keeping their stamps\n`);
   if (orphans.length > 0) {
-    process.stdout.write(`  ${orphans.length} dropped from the manifest — no longer shipped:\n`);
+    process.stdout.write(`  ${orphans.length} dropped from the manifest, no longer shipped:\n`);
     for (const rel of orphans) process.stdout.write(`      ${rel}\n`);
   }
   if (!dryRun) {

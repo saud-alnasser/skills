@@ -119,6 +119,11 @@ role, which branches — before creating anything. Stated, not gated.
 
 ## 4 — Close out
 
+**A run that dispatched children reconciles before it reviews.**
+`[[policies/execution]]` holds what the orchestrator owes once the last child
+returns, under `## What the orchestrator owns once the last child returns`, and
+that is where to read it.
+
 `[[skills/review]]`, apply the fixes, then `[[skills/commit]]` — **without
 prompting.** Committing reviewed work is part of finishing. Then mark the task
 resolved. Further changes amend that commit; nothing is pushed.

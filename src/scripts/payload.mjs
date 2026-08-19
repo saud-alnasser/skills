@@ -1,8 +1,8 @@
-// What a release installs — and what it moved to get there — declared once.
+// What a release installs, and what it moved to get there, declared once.
 //
 // Both the installer and the verification suite read this, so "what ships" has a
 // single home. A file that is neither payload, nor seed, nor listed as
-// build-only is a verification failure rather than a silent omission — the
+// build-only is a verification failure rather than a silent omission. The
 // failure this manifest exists to remove is a new protocol artifact that nobody
 // installs because nobody remembered to add it to a copy list.
 //
@@ -23,7 +23,7 @@ export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates
  *
  * A move is not a retirement. `copyDir` reports a protocol-owned file the
  * release no longer ships and never deletes it, because deciding a file is
- * obsolete is a human's call — right for a concept that was dropped, and wrong
+ * obsolete is a human's call: right for a concept that was dropped, and wrong
  * for one that only changed address. Left in place, the old file keeps
  * resolving, and the tree is governed by two copies of one text.
  *
@@ -33,7 +33,7 @@ export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates
  * rewrite, and the verification, so the three cannot disagree.
  *
  * `since` is the release that made the move. An entry may be dropped once no
- * supported tree predates it — a manifest that only grows is one nobody prunes.
+ * supported tree predates it. A manifest that only grows is one nobody prunes.
  */
 export const MOVES = [
   { from: 'rules/precedence.md', to: 'policies/authority.md', since: '2.2.0' },
@@ -51,13 +51,13 @@ export const MOVES = [
  * What a release asks of the **reader**, where moving files is not enough.
  *
  * `MOVES` covers everything a release does to a tree. Some releases also require
- * something a release cannot do for itself — most often because the thing to
+ * something a release cannot do for itself, most often because the thing to
  * change is repository-owned, and an upgrade correctly refuses to touch it. That
  * knowledge exists at release time and has nowhere to go: `CHANGELOG.md` is not
  * payload, so a repository running an upgrade has never received it.
  *
  * A notice is that knowledge, declared, and filtered by exactly the predicate
- * `MOVES` uses — so the two cannot disagree about which releases a tree is
+ * `MOVES` uses, so the two cannot disagree about which releases a tree is
  * crossing. A tree already at or past `since` is shown nothing.
  *
  * `check` is an instruction, not a changelog entry. It says what to look at and
@@ -68,18 +68,18 @@ export const NOTICES = [
   {
     since: '2.5.0',
     check:
-      'A context now sits at contexts/<area>.md or contexts/<project>/<area>.md — one project ' +
+      'A context now sits at contexts/<area>.md or contexts/<project>/<area>.md, one project ' +
       'directory deep, and no more. The nested form is for a monorepo, where two projects would ' +
       'otherwise fight over the same area name; the directory holds the name, while paths: still ' +
       'decides when the context loads. If you have a context nested deeper than that, ' +
       'validate.mjs now fails it: move it up to contexts/<project>/<area>.md, or flatten it. ' +
-      'The upgrade will not move it for you — contexts/ is yours, and an upgrade never edits a ' +
+      'The upgrade will not move it for you, since contexts/ is yours, and an upgrade never edits a ' +
       'file you own. A flat tree needs no change at all.',
   },
   {
     since: '2.4.0',
     check:
-      'Skills you wrote yourself now need one more frontmatter field: report: full — or ' +
+      'Skills you wrote yourself now need one more frontmatter field: report: full, or ' +
       'report: short, if the skill neither writes to the repository, dispatches a sub-agent, ' +
       'nor decides anything on your behalf. It says which form that skill\'s turn report takes, ' +
       'and validate.mjs fails a skill without one, because a skill with no declared form has no ' +
@@ -89,8 +89,8 @@ export const NOTICES = [
   {
     since: '2.3.0',
     check:
-      'Tasks in an external tracker: your reference for that tracker — references/github.md, ' +
-      'references/gitlab.md, or your own — now records what carries an effort and the query ' +
+      'Tasks in an external tracker: your reference for that tracker, references/github.md, ' +
+      'references/gitlab.md, or your own, now records what carries an effort and the query ' +
       'that finds its open work. An upgrade never re-seeds a reference you have corrected, so ' +
       'this release cannot add that section for you. The next /tasks run in a tracker-backed ' +
       'repository writes it; add it by hand if you would rather not wait.',
@@ -119,7 +119,7 @@ export const BUILD_ONLY_SCRIPTS = [
 
 /**
  * The release script's baseline, at the distribution root rather than beside the
- * scripts because everything in `scripts/` is `.mjs` — a consuming
+ * scripts because everything in `scripts/` is `.mjs`, so a consuming
  * `package.json` cannot then change how any of it parses.
  *
  * Build-time only. It records what each shipped artifact hashed to when it was
@@ -145,8 +145,8 @@ export const PER_CLONE_DIRS = ['position', 'worktrees'];
 
 /**
  * A detected reference seed. Every reference is named for its tool, lands at
- * `references/<tool>.md`, and installs only where `paths` — or, for a forge, a
- * git remote — shows the repository actually uses it.
+ * `references/<tool>.md`, and installs only where `paths`, or for a forge a git
+ * remote, shows the repository actually uses it.
  *
  * `paths` are matched by existence, not by glob, so each variant a tool is
  * commonly configured under is listed explicitly. A detector that guesses wider
@@ -163,7 +163,7 @@ const reference = (tool, paths, remote) => ({
  * Repository-owned starting points.
  *
  * Every one installs as `owner: repository`, is written **once**, and is never
- * touched again by any upgrade — which is what makes shipping a starting point
+ * touched again by any upgrade, which is what makes shipping a starting point
  * safe. Each is a draft to be corrected, not a description that is already true;
  * they say so in their own first paragraph, because a seeded file that reads as
  * authoritative is worse than no file at all.
@@ -173,7 +173,7 @@ const reference = (tool, paths, remote) => ({
  * matches if any git remote URL contains the string.
  *
  * `root: true` targets the repository root rather than `.aep/`. Exactly one seed
- * needs it — the entrypoint, which the harness loads by name and therefore
+ * needs it: the entrypoint, which the harness loads by name and therefore
  * cannot live inside `.aep/`. Being outside the tree, it carries no AEP
  * frontmatter: it is the repository's own file from the moment it is written.
  *

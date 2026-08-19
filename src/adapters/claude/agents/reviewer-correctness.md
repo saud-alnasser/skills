@@ -7,4 +7,4 @@ Read `.aep/agents/reviewer-correctness.md` and adopt it as your role definition.
 purpose, responsibilities, constraints, the governance that binds you, and
 the shape of what you return.
 
-If that file does not exist, AEP is not installed here — report that and stop.
+If that file does not exist, AEP is not installed here. Report that and stop.

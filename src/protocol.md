@@ -132,7 +132,9 @@ and stops; the orchestrator raises it.
 **Every turn reports.** One opening report and one closing block per thing the
 human asked for, emitted by the outermost skill, in the shape
 `[[policies/reporting]]` fixes. A skill entered from inside another is a stage of
-that run rather than a second report.
+that run rather than a second report. Everything else a human reads is written
+for that reader by the same policy — a commit message, a pull request, a comment
+left in the code.
 
 **Ownership is declared.** `owner: protocol` is AEP's — installed verbatim,
 replaced by upgrades, never edited here. `owner: repository` is yours — evolve it
@@ -161,7 +163,7 @@ and decide before opening it.
 | writing code, or about to state something you have not verified | `[[policies/engineering]]` |
 | an effort is in progress — tasks, dispatch, implementation, review | `[[policies/execution]]` |
 | creating, changing, or removing anything under `.aep/` | `[[policies/artifacts]]` |
-| authoring or auditing what a skill tells the human | `[[policies/reporting]]` |
+| about to write anything a human will read, or auditing a turn's report | `[[policies/reporting]]` |
 
 **Your repository's own rules sit beside these**, in `rules/`, selected the same
 way — `[[index]]` lists them. They are yours to write and an upgrade preserves

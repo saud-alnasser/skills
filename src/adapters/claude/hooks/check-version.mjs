@@ -2,16 +2,16 @@
 // than the one now running, and nothing when they match.
 //
 // This is a hook rather than a step in a skill because of where the two facts
-// live. The running release is only reachable from something the plugin ships —
+// live. The running release is only reachable from something the plugin ships:
 // `CLAUDE_PLUGIN_ROOT` is exported to a spawned hook process and is absent from
-// the agent's own shell — and `.aep/protocol.md` may not point into a plugin,
+// the agent's own shell. And `.aep/protocol.md` may not point into a plugin,
 // since the protocol is agent-agnostic and the plugin may not be installed at
 // all. A skill-level check would need the same sentence in every skill that
 // should warn, which is the second home the protocol exists to prevent.
 //
 // Silence is the normal outcome: nothing is said when the versions match, when
-// the repository does not run AEP, and when `protocol.md` declares no release —
-// an undeclared release is unknown, never stale.
+// the repository does not run AEP, and when `protocol.md` declares no release.
+// An undeclared release is unknown, never stale.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,7 +28,7 @@ function readJson(file) {
 /**
  * The value of a scalar field in a Markdown file's leading `---` block.
  * Returns null when the file is unreadable, carries no frontmatter, or does not
- * declare the field — three different facts that all mean "do not warn".
+ * declare the field, three different facts that all mean "do not warn".
  */
 function frontmatterField(file, field) {
   let text;
@@ -61,7 +61,7 @@ if (pluginRoot && projectDir) {
           additionalContext:
             `AEP ${running} is running; this repository's .aep/ was installed by ${installed}. ` +
             'Its protocol-owned rules, modes, skills and templates may predate the current release. ' +
-            'Tell the user once, in one line, that `/aep:update` migrates them — ' +
+            'Tell the user once, in one line, that `/aep:update` migrates them, ' +
             'then carry on with whatever they asked for. Do not run it unprompted.',
         },
       }),

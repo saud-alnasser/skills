@@ -143,9 +143,9 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/readable-output/tickets/01-policy]] feat(policies): what the human reads becomes governance | readable-output | resolved | — |
 | [[efforts/readable-output/tickets/02-execution]] feat(policies): the orchestrator owns the seams, the questions, and the account | readable-output | resolved | — |
 | [[efforts/readable-output/tickets/03-skill]] feat(skills): the catalogue ships as `prose`, the eighteenth skill | readable-output | resolved | — |
-| [[efforts/readable-output/tickets/04-bootstrap]] feat(protocol): the bootstrap says every text is written for its reader | readable-output | open | 01 |
-| [[efforts/readable-output/tickets/05-implement-link]] docs(implement): close-out routes to the reconciliation the orchestrator owes | readable-output | open | 02 |
-| [[efforts/readable-output/tickets/06-script-sweep]] refactor(scripts): the shipped scripts lose their em dashes | readable-output | open | 03 |
+| [[efforts/readable-output/tickets/04-bootstrap]] feat(protocol): the bootstrap says every text is written for its reader | readable-output | resolved | 01 |
+| [[efforts/readable-output/tickets/05-implement-link]] docs(implement): close-out routes to the reconciliation the orchestrator owes | readable-output | resolved | 02 |
+| [[efforts/readable-output/tickets/06-script-sweep]] refactor(scripts): the shipped scripts lose their em dashes | readable-output | resolved | 03 |
 | [[efforts/readable-output/tickets/07-docs-sweep]] refactor(docs): the README and the changelog read as governed text | readable-output | resolved | — |
 | [[efforts/readable-output/tickets/08-specification]] docs(specs): the specification admits an eighteenth skill and a widened contract | readable-output | open | 01, 02, 03, 06 |
 | [[efforts/readable-output/tickets/09-verify]] test(verify): every claim this effort adds has an assertion that has been seen to fail | readable-output | open | 01, 02, 04, 05, 06, 07, 08 |

@@ -3,7 +3,7 @@ aep: 2.6.0
 owner: repository
 date: 2026-08-19
 kind: ticket
-status: open
+status: resolved
 part-of: readable-output
 blocked-by: [03]
 ---
@@ -59,3 +59,11 @@ Blocked by 03 because that ticket is the only other one editing `contract.mjs`,
 and two agents editing one file is the collision the task graph exists to
 prevent. Everything landing after this ticket is written without em dashes from
 the start.
+
+**Raised at review, awaiting an outcome.** `assert()`'s detail separator was a
+dash and is now a colon, so every failure line the suite prints changed shape,
+not only the ones this ticket named. One composed line reads worse for it:
+`X is stamped for its current content. Run scripts/release.mjs <version>: content
+changed since it was last stamped` joins an imperative to its reason with a
+colon. Reshaping `assert()` so a label and its detail join cleanly is a change to
+the harness rather than a prose sweep, which is why it was not taken here.
