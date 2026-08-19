@@ -68,7 +68,7 @@ export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
 /** Directories that must never exist under `.aep/`. */
 export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill'];
 
-/** The seventeen conforming skills. */
+/** The eighteen conforming skills. */
 export const SKILLS = [
   'specify',
   'refine',
@@ -87,6 +87,7 @@ export const SKILLS = [
   'help',
   'tdd',
   'domain',
+  'prose',
 ];
 
 /** The two skills that enter no mode and therefore declare none (specs.md §16). */
