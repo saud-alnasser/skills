@@ -1,7 +1,7 @@
 ---
-aep: 2.4.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: skill
 report: short
 use-when: "the question is about AEP itself — what to reach for, and when"

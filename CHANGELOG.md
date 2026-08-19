@@ -1,5 +1,113 @@
 # Changelog
 
+## 2.7.0
+
+What an agent writes for a human becomes governance, and an orchestrator owes one
+account of the work its children did in parallel.
+
+### Added
+
+- **`policies/reporting` governs everything a human reads**, not only the turn
+  report. Which texts it covers is decided by a test rather than a list: a human
+  reads it, it is governed; a protocol agent reads it, it is exempt, and exempt
+  means written for that reader instead, never written carelessly.
+
+  Governed: session output, commit messages, pull request titles and bodies,
+  comments and docstrings in source, what a script prints to a person, and a
+  repository's own documentation. Exempt: prose inside `.aep/` artifacts, a brief
+  written for a sub-agent, data a script writes for another agent to read, and
+  normative protocol text wherever it lives, including a repository root.
+
+  Four prohibitions sit in the policy rather than the catalogue, because a script
+  can check them: no em dashes, no curly quotes, no decorative emoji, no
+  title-case headings. The first of them rules out its own substitutes, since
+  parentheses and an en dash trade one tell for another.
+
+  *Why a test and not only a list: a list settles the cases somebody thought of,
+  and every case it missed gets decided by whoever hits it first, differently each
+  time.*
+
+- **`skills/prose`, the eighteenth skill**, carries the craft the policy does not:
+  the patterns that mark writing as machine-made, how to spot each one, and what
+  to do about it. It is a sub-skill, reached from whichever skill is about to emit
+  text a human will read.
+
+  The split is deliberate. A skill carrying the prohibitions would be governance
+  under another name, which the protocol forbids, and a policy carrying the whole
+  catalogue would be thirty rules where four are checkable.
+
+- **`policies/execution` states what the orchestrator owns once its last child
+  returns.** Reconciling a claim against a diff is an honesty check and not the
+  same as making the result coherent. Three things a child structurally could not
+  do are the orchestrator's: the seams where children's diffs meet, every decision
+  a child recorded and stopped on, and one account of the work written as though
+  one agent had done it in sequence rather than each child's summary concatenated.
+
+  **The seam pass is bounded at the surfaces the diffs share.** Anything else the
+  orchestrator notices inside one child's work is raised, not taken, and returns
+  to the frontier as a task. A bound read off `spec.md` cannot tell reconciling a
+  seam from rebuilding a task a child already delivered, and the orchestrator is
+  the one agent with no reviewer above it.
+
+  The account describes the work rather than the workers, and sub-agent structure
+  surfaces where it changed the outcome: a child that failed, a child that stopped
+  on a decision the human must make, a task that returned to the frontier. That is
+  not permission to suppress a failure. A fan-out that lost a task changed the
+  outcome by definition.
+
+  **A child writes its question plainly and the orchestrator presents it.** Wording
+  may be reshaped and substance never is: what is being asked, and which options
+  are offered, survive unchanged, and attribution names the source rather than the
+  author of the words. This runs the opposite way to the answer, which still
+  travels verbatim, because an answer carries the human's authority and a question
+  does not.
+
+- **Guards for all of it.** Thirty-four assertions, each broken once and watched
+  to fail by name: every clause of the widened policy, each of the three
+  obligations separately, both halves of the account clause, the substance clause
+  without which the presentation clause licenses a rewritten question, and a scan
+  for the prohibited character over every shipped script and this repository's own
+  documentation.
+
+### Changed
+
+- **This repository's own governed text lost its em dashes.** All 177 across the
+  ten shipped scripts, 16 in `README.md`, and 67 in `CHANGELOG.md`. Comments and
+  the strings a person reads were rewritten rather than deleted: where a dash was
+  carrying a clause, the sentence ends or takes a comma.
+
+  `specs.md` and `AGENTS.md` keep theirs, and the suite asserts they are not in
+  the swept list and that they still carry the character. Their reader is the
+  agent building the protocol, which is exactly what the test exempts, and it is
+  where the vocabulary is defined that a catalogue of tells would otherwise flag.
+
+  The places that still have to produce or match the character write it as a
+  Unicode escape, so the guard is a flat scan with no whitelist. `index.mjs`'s
+  empty-cell placeholder became one named constant, and the index it renders is
+  byte-identical.
+
+- **`specs.md` 16.2 is now *What the human reads*.** It opens with the reader
+  test, the worked lists, and the exemption, then keeps everything it already
+  fixed about slots, forms, and stage names. The skill set is eighteen and the
+  sub-skills are three, in 16, 16.1, 29, and the conformance list.
+
+- **The bootstrap says who a text is written for.** The `Every turn reports`
+  invariant carries one clause pointing at the policy, and the governance table's
+  trigger widens to agree with it. `skills/implement`'s close-out routes to the
+  reconciliation section, so the obligation is reachable from the skill that
+  dispatches rather than only from the policy that states it.
+
+### Fixed
+
+- **`skills/help` did not know about the eighteenth skill.** A skill could ship,
+  be wrapped by every adapter, be named in the specification, and still be missing
+  from the one artifact whose job is answering what to reach for.
+
+  Nothing in the suite asserted anything about `help.md` at all. Something does
+  now, derived from the shipped skill set rather than from a second hand-written
+  list, which would be the same failure one level up with nothing catching it
+  either.
+
 ## 2.6.0
 
 AEP reaches OpenCode, and a repository driven through T3 Code knows why it

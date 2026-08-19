@@ -81,8 +81,9 @@ first version of *surfaces sub-agent structure* was written with `\s+` and faile
 on exactly that, against text that was correct. Flattening strips the `> ` and
 the wrap together.
 
-**Thirty-four guards, thirty-four perturbations, tree restored exactly each
-time.** The em dash guard was confirmed both ways, which is the check
+**Thirty-three guards, thirty-three perturbations, tree restored exactly each
+time.** Counted off the suite, which moved from 2096 assertions to 2129, rather
+than off the list in this file. The em dash guard was confirmed both ways, which is the check
 `[[rules/authoring]]` actually asks for: the word *dash* in a comment leaves the
 suite as green as the baseline, and the character turns it red naming the file,
 `holding one: scripts/contract.mjs`.

@@ -66,6 +66,18 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '2.7.0',
+    check:
+      'Text an agent writes for you is now governed. policies/reporting covered the turn ' +
+      'report and now covers everything a human reads: session output, commit messages, pull ' +
+      'request titles and bodies, comments in source, and your own documentation. It fixes ' +
+      'four things a script can check, no em dashes among them, and the new skills/prose ' +
+      'carries the rest as craft rather than law. If your own rules say anything about how ' +
+      'prose reads here, reconcile them now: a rule may tighten a policy and never soften ' +
+      'one, so a rule permitting what the policy prohibits is the thing to look for. No file ' +
+      'you own changes, and nothing starts failing validation.',
+  },
+  {
     since: '2.5.0',
     check:
       'A context now sits at contexts/<area>.md or contexts/<project>/<area>.md, one project ' +

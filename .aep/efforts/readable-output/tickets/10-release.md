@@ -3,7 +3,7 @@ aep: 2.6.0
 owner: repository
 date: 2026-08-19
 kind: ticket
-status: open
+status: resolved
 part-of: readable-output
 blocked-by: [09, 11]
 ---

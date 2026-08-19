@@ -1,7 +1,7 @@
 ---
-aep: 2.3.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: policy
 use-when: "an effort is in progress — deriving tasks, dispatching, implementing, or reviewing"
 ---

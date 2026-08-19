@@ -1,7 +1,7 @@
 ---
-aep: 2.6.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: protocol
 use-when: "at the start of every session, before doing anything else in a repository that has a .aep/ directory"
 ---

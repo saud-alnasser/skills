@@ -1,12 +1,68 @@
 ---
-aep: 2.4.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: policy
-use-when: "authoring or auditing a skill's report, or a turn's opening or closing block does not take the shape it should"
+use-when: "about to write anything a human will read — session output, a commit message, a pull request, a code comment, a README — or a turn's opening or closing block does not take the shape it should"
 ---
 
-# Policy — what a turn tells the human
+# Policy — what the human reads
+
+Everything an agent writes for a human is governed here. **How it reads** is
+fixed for all of it. **What shape it takes** is fixed for the turn report, which
+the second half of this policy defines.
+
+## Who reads it decides whether it is governed
+
+**A human reads it, it is governed. A protocol agent reads it, it is exempt** —
+and exempt means written for that reader instead, never written carelessly.
+
+The two lists are worked examples of that test rather than the definition of it.
+A case on neither list is settled by asking who reads it.
+
+| Governed | Exempt |
+| --- | --- |
+| session output, at every point in a turn | prose inside `.aep/` artifacts |
+| a commit message, a pull request title or body | normative protocol text, wherever it lives |
+| a comment or docstring in source | a brief written for a sub-agent |
+| what a script prints to a person | data a script writes into an artifact an agent reads |
+| repository documentation — a README, a changelog, a docs page | |
+
+**A normative protocol document is exempt even at a repository root.** It is
+`.aep/` prose that happens to sit elsewhere, its reader is the agent building
+against it, and it is where the vocabulary is defined that a catalogue of tells
+would otherwise flag.
+
+*Why a test and not only a list: a list settles the cases somebody thought of,
+and every case it missed gets decided by whoever hits it first, differently each
+time. The test decides the ones nobody enumerated — which is most of them.*
+
+## How it reads
+
+Governed text is written for the person reading it. Say what happened, name the
+mechanism rather than the feeling, and cut what would read the same in any other
+repository.
+
+**Four prohibitions, and they are here rather than in the catalogue because a
+script can check them:**
+
+- **No em dashes.** Where a thought needs separation, the sentence ends or takes
+  a comma. Parentheses, an en dash, and a hyphen standing in for one do not
+  satisfy this: they trade one tell for another.
+- **No curly quotes.** Straight quotes, both kinds.
+- **No decorative emoji**, in a heading or beside a list item.
+- **No title-case headings.** Sentence case.
+
+Everything else about how text reads is craft rather than law, and craft lives in
+`[[skills/prose]]` — the patterns that mark writing as machine-made, how to spot
+each one, and what to do about it. Reach for it whenever you are about to emit
+governed text, and whenever text you are editing reads as though nobody wrote it.
+
+*Why the split: a skill that carried the prohibitions would be governance under
+another name, which the protocol forbids, and a policy that carried the whole
+catalogue would be thirty rules where four are checkable.*
+
+## Every turn reports, in one shape
 
 Every turn reports, in one shape, whichever skill is running. The shape does not
 vary by skill, by runtime, or by how large the work turned out to be.
@@ -21,8 +77,8 @@ would have told them the run went somewhere they did not intend.*
 block**, emitted by the outermost skill.
 
 A skill entered from inside another — `[[skills/review]]` and `[[skills/commit]]`
-from `[[skills/implement]]`'s close-out, `[[skills/tdd]]` and
-`[[skills/domain]]` as sub-skills — is a **stage of the run it is inside**. It
+from `[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
+and `[[skills/prose]]` as sub-skills — is a **stage of the run it is inside**. It
 opens no report of its own. Everything it produces is unaffected; only the
 preamble is not repeated.
 
@@ -115,11 +171,15 @@ already says, and the two diverge on the first edit to either.*
 
 ## What this policy is not
 
-- **Not a rendering.** It governs what is stated and in what order. How a runtime
-  paints it is the runtime's business, and this policy names no runtime.
+- **Not a rendering.** It governs what is stated, in what order, and how it
+  reads. How a runtime paints it is the runtime's business, and this policy names
+  no runtime.
 - **Not the sub-agent contract.** What a child returns to its orchestrator —
   done, failed, stopped, waiting — is `[[policies/execution]]`'s, is not
-  human-facing, and is untouched here.
+  human-facing, and is untouched here. The question a child records for a human
+  is the exception, and that policy says how it reaches one.
+- **Not a register.** Whether the agent is terse or warm is its own business.
+  This governs the tells, not the manner.
 - **Not a cap on output.** Findings, graphs, diffs, and reports a skill produces
   are its output. They sit between the opening report and the closing block, and
   nothing here shortens them.
