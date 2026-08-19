@@ -77,8 +77,8 @@ would have told them the run went somewhere they did not intend.*
 block**, emitted by the outermost skill.
 
 A skill entered from inside another — `[[skills/review]]` and `[[skills/commit]]`
-from `[[skills/implement]]`'s close-out, `[[skills/tdd]]` and
-`[[skills/domain]]` as sub-skills — is a **stage of the run it is inside**. It
+from `[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
+and `[[skills/prose]]` as sub-skills — is a **stage of the run it is inside**. It
 opens no report of its own. Everything it produces is unaffected; only the
 preamble is not repeated.
 

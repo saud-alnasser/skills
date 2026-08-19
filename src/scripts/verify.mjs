@@ -480,6 +480,21 @@ section('skills', () => {
     }
   }
 
+  // The discovery surface. `protocol.md` gives `help` one job, answering *what do
+  // I reach for*, so a skill it does not name is unreachable through the only
+  // artifact whose purpose is reaching them. Derived from `SKILLS`, never from a
+  // second hand-written list: that list is the same failure one level up, and
+  // nothing would catch it drifting either. `help` is excluded from its own
+  // table because a reader already holding it does not need telling where it is.
+  const helpSkill = readSrc('skills', 'help.md');
+  const unrouted = SKILLS
+    .filter((name) => name !== 'help')
+    .filter((name) => !helpSkill.includes(`[[skills/${name}]]`));
+  assert('skills/help routes to every shipped skill but itself', () => unrouted.length === 0);
+  if (unrouted.length > 0) {
+    process.stdout.write(`        not reachable from help: ${unrouted.join(', ')}\n`);
+  }
+
   assert('skills/plan forbids plan.md', /NEVER create `plan\.md`/.test(readSrc('skills', 'plan.md')));
 
   const reviewSkill = readSrc('skills', 'review.md');

@@ -84,3 +84,6 @@ The second wants a ticket of its own.
 the conformance list's §16.2 entry enumerates only the slot set. The guards land
 in ticket 09, whose areas are `verify.mjs` alone, so the conformance entry
 describing them has no home yet.
+
+**Outcome recorded.** Both under-stated surfaces became ticket 11, which fixes
+them and adds the guard whose absence let them survive two reviews.

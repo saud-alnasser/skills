@@ -918,6 +918,7 @@ The suite MUST assert at least:
 - a dry run previews the same repairs a real run would perform — a preview that understates the change is worse than none;
 - every `[[...]]` link resolves (§9);
 - the skill set is exactly the eighteen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
+- `help` links every shipped skill but itself — the one artifact whose job is answering *what do I reach for* is the one place a new skill must not go missing, and it is reachable from no other;
 - every skill note (§16.1) sits under a directory named for a real skill, declares `kind: skill` and a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
 - the mode set is exactly the eight of §14;
 - a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (§12.1);

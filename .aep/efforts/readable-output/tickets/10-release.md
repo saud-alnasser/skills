@@ -5,7 +5,7 @@ date: 2026-08-19
 kind: ticket
 status: open
 part-of: readable-output
-blocked-by: [09]
+blocked-by: [09, 11]
 ---
 
 # chore(dist): release 2.7.0, with the notice a widened policy owes its readers
