@@ -61,6 +61,25 @@ const REPO = path.dirname(SRC);
 const PROTOCOL_BUDGET_BYTES = 8192;
 
 /**
+ * The em dash, as an escape.
+ *
+ * The scan in the `governed text` section looks for this character across the
+ * shipped scripts, so a literal here would be the first thing it found.
+ */
+const EM_DASH = '\u2014';
+
+/**
+ * The documentation this repository writes for a human, and the documentation
+ * it writes for the agent building the protocol.
+ *
+ * Pinned rather than derived from a glob over the root. A glob would sweep the
+ * second list into the first the moment either grew, and the exemption is the
+ * half that cannot defend itself: an over-broad sweep reads as thoroughness.
+ */
+const GOVERNED_DOCS = ['README.md', 'CHANGELOG.md'];
+const EXEMPT_DOCS = ['specs.md', 'AGENTS.md'];
+
+/**
  * The release the upgrade fixture pretends to be coming from.
  *
  * It is a literal on purpose and must stay behind the release being built: it
@@ -709,6 +728,66 @@ section('policies', () => {
   assert('policies/execution separates carrying the fact from mirroring', () =>
     /None of this is mirroring/.test(execution));
 
+  const reconciliation = flat(execution);
+
+  // §20 the three things a child structurally could not do. Each is asserted on
+  // its own, because a reconciliation section that states two of them reads as
+  // complete: the missing one is invisible from inside the file.
+  for (const [name, pattern] of [
+    ['the seams between children\'s diffs', /\*\*The seams\*\*/],
+    ['the decisions a child stopped on', /\*\*Every decision a child recorded and stopped on\.\*\*/],
+    ['one account of the work', /\*\*One account of the work\*\*/],
+  ]) {
+    assert(`policies/execution makes the orchestrator own ${name}`, () =>
+      pattern.test(reconciliation));
+  }
+
+  // The bound, and its reason. An unbounded seam pass and a bounded one read
+  // identically until a parent uses the difference, so the words that draw the
+  // line are the whole assertion.
+  assert('policies/execution bounds the seam pass at the shared surfaces', () =>
+    /The seam is the bound\./.test(reconciliation) &&
+    /raised, not taken/.test(reconciliation));
+  assert('policies/execution says why the bound is the diffs and not the effort', () =>
+    /cannot distinguish reconciling a seam from rebuilding a task/.test(reconciliation));
+
+  // Both halves of the account clause. The first half alone reads as permission
+  // to hide a lost task, which is the version this pins against.
+  assert('policies/execution says the account describes the work, not the workers', () =>
+    /describes the work rather than the workers/.test(reconciliation));
+  assert('policies/execution surfaces sub-agent structure where it changed the outcome', () =>
+    /Sub-agent structure surfaces where it changed the outcome/.test(reconciliation) &&
+    /not permission to suppress a failure/.test(reconciliation));
+
+  // The presentation clause needs its substance half for the same reason: on its
+  // own it licenses a rewritten question wearing the child's name.
+  assert('policies/execution has the orchestrator present the child\'s question', () =>
+    /The child writes the question plainly and the orchestrator presents it\./.test(reconciliation));
+  assert('policies/execution keeps substance out of what may be reshaped', () =>
+    /Wording may be reshaped\. Substance never is\./.test(reconciliation) &&
+    /which options are offered, survive unchanged/.test(reconciliation));
+  assert('policies/execution attributes the question to its source, not its author', () =>
+    /Attribution names the source, not the author of the words/.test(reconciliation));
+
+  // Reachable from the skill that dispatches, not only from the policy that
+  // states it.
+  const implementSkill = readSrc('skills', 'implement.md');
+  assert('skills/implement routes its close-out to the reconciliation section', () =>
+    /What the orchestrator owns once the last child returns/.test(implementSkill) &&
+    /\[\[policies\/execution\]\]/.test(implementSkill));
+
+  // The obligation is the orchestrator's. A child brief that named the catalogue
+  // would be the version where it drifted downward, which is the shape the human
+  // rejected rather than one nobody thought of.
+  const agentBriefs = topLevel(path.join(SRC, 'agents'))
+    .filter((f) => /skills\/prose|catalogue of tells/.test(fs.readFileSync(f, 'utf8')))
+    .map((f) => toPosix(SRC, f));
+  assert('no agent brief carries the catalogue down to a child', () =>
+    agentBriefs.length === 0);
+  if (agentBriefs.length > 0) {
+    process.stdout.write(`        carried by: ${agentBriefs.join(', ')}\n`);
+  }
+
   const authority = readSrc('policies', 'authority.md');
   assert('policies/authority places policies above rules', () =>
     /policies\s+→\s+rules/.test(authority));
@@ -758,6 +837,48 @@ function stageNames(text) {
 section('reporting', () => {
   const policy = readSrc('policies', 'reporting.md');
   const prose = flat(policy);
+
+  // The policy governs every text a human reads, and the turn report is one of
+  // them rather than all of them. Each half below fails on its own, because the
+  // version that keeps the shape and loses the scope reads identically to a
+  // reader who only ever opens the second half.
+  const trigger = readArtifact(path.join(SRC, 'policies', 'reporting.md')).fields['use-when'];
+  assert('the policy triggers on more than the turn report', () =>
+    /commit message/i.test(trigger) && /code comment/i.test(trigger));
+
+  assert('the policy states the reader test in one sentence', () =>
+    /A human reads it, it is governed\.\s+A protocol agent reads it, it is\s+exempt/.test(prose));
+  assert('the reader test says exempt means written for that reader', () =>
+    /exempt means written for that reader instead, never written\s+carelessly/.test(prose));
+  assert('the policy carries both worked lists', () =>
+    /\|\s*Governed\s*\|\s*Exempt\s*\|/.test(policy) &&
+    /a commit message, a pull request title or body/.test(prose) &&
+    /prose inside `\.aep\/` artifacts/.test(prose));
+  assert('the policy says the lists are examples rather than the definition', () =>
+    /worked examples of that test rather than the definition/.test(prose));
+  assert('the policy exempts normative protocol text wherever it lives', () =>
+    /normative protocol text, wherever it lives/.test(prose) &&
+    /exempt even at a repository root/.test(prose));
+
+  // The four the policy owns, each named separately: a single assertion over all
+  // four passes while three of them are missing.
+  for (const [name, pattern] of [
+    ['em dashes', /No em dashes/],
+    ['curly quotes', /No curly quotes/],
+    ['decorative emoji', /No decorative emoji/],
+    ['title-case headings', /No title-case headings/],
+  ]) {
+    assert(`the policy prohibits ${name} by name`, () => pattern.test(prose));
+  }
+  assert('the em dash prohibition rules out the three substitutes for one', () =>
+    /Parentheses, an en dash, and a hyphen standing in for one do\s+not\s+satisfy this/.test(prose));
+
+  // The split between law and craft. Without the link the catalogue is
+  // unreachable from the only artifact that requires it.
+  assert('the policy sends the craft to skills/prose', () =>
+    /\[\[skills\/prose\]\]/.test(policy));
+  assert('the policy says the prohibitions are its own rather than the catalogue\'s', () =>
+    /they are here rather than in the catalogue/.test(prose));
 
   for (const slot of OPENING_SLOTS) {
     assert(`the contract names the opening slot ${slot}`, () => policy.includes(`**${slot}**`));
@@ -1122,6 +1243,44 @@ section('forbidden', () => {
     !/canonical[^.\n]{0,40}\.(claude|cursor|codex)\//i.test(all));
   assert('shipped text cites no record that exists only in this repository', () =>
     !/\bADR \d{4}\b/.test(all) && !/\bspecs\.md\b/.test(all));
+});
+
+// --- §16.2 the prohibitions a script can check ------------------------------
+// The policy's four are one scan away from being checked, and the first of them
+// is the one this repository had most of. Scoped to what the reader test calls
+// governed: the shipped scripts, whose comments and messages a person reads, and
+// this repository's own documentation. Everything the test calls exempt is
+// asserted to be absent from the list, because an over-broad sweep is the
+// failure that reads as thoroughness.
+
+section('governed text', () => {
+  const scripts = walk(SRC).filter((f) => f.endsWith('.mjs'));
+  assert('there are shipped scripts to scan', () => scripts.length > 0);
+
+  const holding = scripts
+    .filter((f) => fs.readFileSync(f, 'utf8').includes(EM_DASH))
+    .map((f) => toPosix(SRC, f));
+  assert('no shipped script carries an em dash', () => holding.length === 0);
+  if (holding.length > 0) process.stdout.write(`        holding one: ${holding.join(', ')}\n`);
+
+  // Read inside the callback, so a file that has gone missing fails this
+  // assertion rather than throwing and aborting the section, which would take
+  // the scan above down with it and read as a smaller failure than it is.
+  for (const name of GOVERNED_DOCS) {
+    assert(`${name} carries no em dash`, () =>
+      !fs.readFileSync(path.join(REPO, name), 'utf8').includes(EM_DASH));
+  }
+
+  // The exemption, proven two ways. That the exempt files are not in the swept
+  // list is the claim; that each of them actually holds em dashes is what makes
+  // the claim load-bearing. Without the second, a day when specs.md happens to
+  // have none would leave this passing on nothing.
+  for (const name of EXEMPT_DOCS) {
+    assert(`${name} is exempt: it is not in the swept list`, () =>
+      !GOVERNED_DOCS.includes(name));
+    assert(`${name} exercises its exemption`, () =>
+      fs.readFileSync(path.join(REPO, name), 'utf8').includes(EM_DASH));
+  }
 });
 
 // --- §29 the adapter is a pointer, and it is current ------------------------

@@ -148,7 +148,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/readable-output/tickets/06-script-sweep]] refactor(scripts): the shipped scripts lose their em dashes | readable-output | resolved | 03 |
 | [[efforts/readable-output/tickets/07-docs-sweep]] refactor(docs): the README and the changelog read as governed text | readable-output | resolved | — |
 | [[efforts/readable-output/tickets/08-specification]] docs(specs): the specification admits an eighteenth skill and a widened contract | readable-output | resolved | 01, 02, 03, 06 |
-| [[efforts/readable-output/tickets/09-verify]] test(verify): every claim this effort adds has an assertion that has been seen to fail | readable-output | open | 01, 02, 04, 05, 06, 07, 08 |
+| [[efforts/readable-output/tickets/09-verify]] test(verify): every claim this effort adds has an assertion that has been seen to fail | readable-output | resolved | 01, 02, 04, 05, 06, 07, 08 |
 | [[efforts/readable-output/tickets/10-release]] chore(dist): release 2.7.0, with the notice a widened policy owes its readers | readable-output | open | 09 |
 | [[efforts/runtime-adapters/tickets/01-target-table]] refactor(adapters): route the Claude adapter through a target table | runtime-adapters | resolved | — |
 | [[efforts/runtime-adapters/tickets/02-opencode-target]] feat(adapters): the OpenCode target, in both shapes | runtime-adapters | resolved | 01 |

@@ -3,7 +3,7 @@ aep: 2.6.0
 owner: repository
 date: 2026-08-19
 kind: ticket
-status: open
+status: resolved
 part-of: readable-output
 blocked-by: [01, 02, 04, 05, 06, 07, 08]
 ---
@@ -71,3 +71,29 @@ already exist, the `SKILLS` comparison and the adapter staleness guard.
 The `specs.md` exemption guard is the one worth the most care. It is the only
 assertion here that proves a **negative**, and the only way to trust it is to add
 the file to the list and watch the suite go red.
+
+**A deliberate deviation from this ticket's own constraint.** It asks for `\s+`
+between pinned words because the payload rewraps at 80 columns. The new
+`policies/execution` pins run against `flat(execution)` instead, the way the
+`reporting` section already flattens its policy. `\s+` survives a rewrap but not
+a blockquote reflow, and half of the reconciliation section is blockquoted: the
+first version of *surfaces sub-agent structure* was written with `\s+` and failed
+on exactly that, against text that was correct. Flattening strips the `> ` and
+the wrap together.
+
+**Thirty-four guards, thirty-four perturbations, tree restored exactly each
+time.** The em dash guard was confirmed both ways, which is the check
+`[[rules/authoring]]` actually asks for: the word *dash* in a comment leaves the
+suite as green as the baseline, and the character turns it red naming the file,
+`holding one: scripts/contract.mjs`.
+
+**Found and fixed at review.** The `GOVERNED_DOCS` read sat outside its assertion
+callback, so a missing `README.md` would have thrown and aborted the whole
+section, taking the em dash scan with it and reading as a smaller failure than it
+was. Moved inside, then confirmed by renaming the file away: the section no
+longer aborts and the named assertion fails.
+
+**Raised, not taken.** `verify.mjs` now spells the em dash two ways: the
+`EM_DASH` constant, and `\u2014` inline in the two regex literals that cannot use
+a string constant without `new RegExp`. The header comment states the convention;
+unifying them is a change to those regexes rather than to this ticket.
