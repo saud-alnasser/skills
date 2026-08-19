@@ -1,7 +1,7 @@
 ---
-aep: 2.3.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: policy
 use-when: "an effort is in progress — deriving tasks, dispatching, implementing, or reviewing"
 ---
@@ -185,6 +185,23 @@ another agent's consent.**
   paraphrase is the orchestrator's answer wearing the human's authority, and the
   child cannot tell the difference.*
 
+**The child writes the question plainly and the orchestrator presents it.** A
+child records what it is asking and what the options are, under no obligation
+beyond being clear; the orchestrator puts it to the human in the form
+`[[policies/reporting]]` governs. The child does the work it can do, and what it
+cannot do is the parent's.
+
+- **Wording may be reshaped. Substance never is.** What is being asked, and which
+  options are offered, survive unchanged. A presentation that drops an option,
+  merges two, or narrows the question is a different question wearing the child's
+  name.
+- **Attribution names the source, not the author of the words.** The question is
+  the child's and the task's; the phrasing the human reads is the orchestrator's.
+
+*Why this runs the opposite way to the answer above: an answer carries the
+human's authority and a question does not, so an answer may not be touched and a
+question may not be left unreadable.*
+
 ## Returning, and integrating
 
 A child returns one of four outcomes — **done, failed, stopped, waiting** — plus
@@ -196,3 +213,40 @@ a check that happened.
 
 Because the unit is a whole task, one child failing costs exactly that task: its
 siblings land, and it returns to the frontier.
+
+## What the orchestrator owns once the last child returns
+
+Reconciling a claim against a diff is an honesty check, and it is not the same as
+making the result coherent. **Three things a child structurally could not do are
+the orchestrator's**, and none of them is delegated downward.
+
+**The seams**, where children's diffs meet: naming that drifted between them, a
+helper two of them wrote, a pattern one followed and another did not.
+
+> **The seam is the bound.** A surface two or more children touched, or a name one
+> introduced and another consumed, is the orchestrator's to reconcile. Anything
+> else it notices inside one child's work is **raised, not taken**, and returns to
+> the frontier as a task.
+>
+> *Why the bound is drawn at the diffs rather than at the effort: a bound read off
+> `spec.md` cannot distinguish reconciling a seam from rebuilding a task a child
+> already delivered, and the orchestrator is the one agent with no reviewer above
+> it.*
+
+**Every decision a child recorded and stopped on.** A child has no surface on
+which to ask, so the orchestrator raises it, in the form the section above fixes.
+
+**One account of the work**, written as though one agent had done it in sequence
+rather than each child's summary concatenated.
+
+> It **describes the work rather than the workers.** Sub-agent structure surfaces
+> where it changed the outcome: a child that failed, a child that stopped on a
+> decision the human must make, a task that returned to the frontier. Those land
+> in the slots the closing block already has.
+>
+> **This is not permission to suppress a failure.** A fan-out that lost a task
+> changed the outcome by definition, and the reading under which the machinery is
+> hidden unconditionally is the one this rejects.
+
+That account is text a human reads, so `[[policies/reporting]]` governs how it is
+written.

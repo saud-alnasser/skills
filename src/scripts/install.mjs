@@ -2,7 +2,7 @@
 //
 // The one rule that shapes every branch here: an upgrade may replace what the
 // protocol owns and must never touch what the repository owns. So nothing is
-// overwritten on the strength of its path — each existing target is read and its
+// overwritten on the strength of its path. Each existing target is read and its
 // declared `owner` decides, because a repository is entitled to add a rule whose
 // filename happens to match a shipped one, and losing it would be exactly the
 // silent overwrite the ownership rule forbids.
@@ -35,15 +35,15 @@ const report = {
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
 };
 
-/** The distribution root — `src/`, since this script lives in `src/scripts/`. */
+/** The distribution root, `src/`, since this script lives in `src/scripts/`. */
 function distributionRoot() {
   return path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 }
 
 /**
  * True when an existing target must not be overwritten.
- * A file the repository declared as its own is protected; anything else —
- * including a file with no frontmatter at all — is the protocol's to replace.
+ * A file the repository declared as its own is protected. Anything else,
+ * including a file with no frontmatter at all, is the protocol's to replace.
  */
 function repositoryOwned(target) {
   if (!fs.existsSync(target)) return false;
@@ -108,13 +108,13 @@ function precedes(a, b) {
  *
  * A protocol-owned source is removed, because its content now ships at the
  * target and two copies of one text is worse than none. A **repository-owned**
- * file standing at the same path is not the protocol's to remove — the
+ * file standing at the same path is not the protocol's to remove. The
  * repository wrote its own rule under a name the protocol has since vacated,
- * which is legal — so it stays, and the collision is reported for a human.
+ * which is legal, so it stays, and the collision is reported for a human.
  *
  * A move applies only to a tree that predates it. Without that bound, a
- * repository which later writes its own `rules/precedence.md` — which it is
- * entitled to do, the name having been vacated — would be reported as colliding
+ * repository which later writes its own `rules/precedence.md`, which it is
+ * entitled to do once the name is vacated, would be reported as colliding
  * on every upgrade it ever runs, forever. A tree declaring nothing is treated as
  * predating everything: unknown is not the same as current, and the move only
  * ever removes a protocol-owned file whose content still exists at the target.
@@ -129,7 +129,7 @@ function precedes(a, b) {
  * Gated by the same predicate as `applyMoves`, deliberately: a notice and a move
  * declared by one release must not disagree about whether that release is being
  * crossed. A tree declaring nothing predates everything, for the same reason it
- * does there — unknown is not the same as current.
+ * does there: unknown is not the same as current.
  *
  * Nothing is decided here about whether a notice is *relevant*. Relevance is two
  * release numbers, and judgement at this point is what would make the output
@@ -165,7 +165,7 @@ function applyMoves(aep, declared, dryRun) {
  * The only thing in this program that writes into a file the repository owns,
  * so every condition here is a narrowing:
  *
- * - repository-owned Markdown only — protocol-owned files are replaced wholesale
+ * - repository-owned Markdown only. Protocol-owned files are replaced wholesale
  *   by the copy above, and the generated index is regenerated straight after;
  * - only the nine declared targets, never a pattern;
  * - **outside fenced blocks only.** A link inside a fence is the syntax being
@@ -176,7 +176,7 @@ function applyMoves(aep, declared, dryRun) {
  *   `rules/<name>.md` has a link that correctly points at *its* file, and
  *   redirecting that to a policy it never referenced would break a live link to
  *   fix an imaginary one;
- * - the target is replaced and nothing else — an alias or anchor the link
+ * - the target is replaced and nothing else. An alias or anchor the link
  *   carried survives verbatim, and no anchor is ever constructed.
  *
  * The file's `date` moves with it. `date` is the last-modified date and nothing
@@ -226,7 +226,7 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
  * every "is AEP installed here?" check that looks only for `.aep/protocol.md`
  * answers *no*. Installing on that answer produces a fresh 2.0 tree beside a
  * live 1.x one, orphaning every context, spec, ticket, and decision the
- * repository had — reported as a successful install.
+ * repository had, reported as a successful install.
  *
  * Detection is by layout rather than by any version string, because the field
  * that would carry a version is itself one of the things that changed.
@@ -304,7 +304,7 @@ function main() {
   const aep = path.join(repo, '.aep');
 
   if (!fs.existsSync(path.join(from, 'protocol.md'))) {
-    process.stderr.write(`no AEP distribution at ${from} — expected protocol.md there\n`);
+    process.stderr.write(`no AEP distribution at ${from}, expected protocol.md there\n`);
     process.exit(2);
   }
   if (!fs.existsSync(repo)) {
@@ -315,15 +315,15 @@ function main() {
   const unknown = requested.filter((name) => !(name in TARGETS));
   if (unknown.length > 0) {
     process.stderr.write(
-      `unknown runtime${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')} — ` +
-      `known: ${Object.keys(TARGETS).join(', ')}
+      `unknown runtime${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}. ` +
+      `Known: ${Object.keys(TARGETS).join(', ')}
 `,
     );
     process.exit(2);
   }
 
   // Both locations are read by OpenCode, so asking for both installs the same
-  // seventeen skills twice under one name, and which file the loader keeps is
+  // eighteen skills twice under one name, and which file the loader keeps is
   // decided by whichever load finishes first. It is a warning rather than a
   // refusal: a repository driven through a harness that reads the neutral
   // location, with a provider that is not OpenCode, has a real use for both.
@@ -347,7 +347,7 @@ function main() {
 
   if (existing && !args.includes('--update')) {
     process.stderr.write(
-      'this repository already has .aep/ — use --update, so repository-owned files are preserved deliberately\n',
+      'this repository already has .aep/. Use --update, so repository-owned files are preserved deliberately\n',
     );
     process.exit(2);
   }
@@ -407,7 +407,7 @@ function main() {
     // Named rather than folded into the written count: an adapter is a
     // directory outside `.aep/` that the repository now owns, and a reader
     // deciding whether that was what they asked for cannot see it in a total.
-    report.adapters.push(`${target.dir}/ — ${files.length} wrappers`);
+    report.adapters.push(`${target.dir}/, ${files.length} wrappers`);
   }
 
   const relative = (file) => path.relative(repo, file).split(path.sep).join('/');
@@ -422,18 +422,18 @@ function main() {
   process.stdout.write(`  ${report.created.length} directories created\n`);
   list(`runtime adapter${report.adapters.length === 1 ? '' : 's'} installed`,
     report.adapters, (entry) => entry);
-  list('repository-owned starting points seeded — review each', report.seeded, (entry) => entry);
+  list('repository-owned starting points seeded, review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);
   list('protocol files moved by this release', report.moved, (entry) => entry);
   list('links repaired in repository-owned files', report.relinked);
-  list('name collisions — a repository file stands where a moved one did', report.collided,
+  list('name collisions, a repository file stands where a moved one did', report.collided,
     (entry) => entry);
-  list('protocol files no longer shipped — review, then /prune', report.retired);
+  list('protocol files no longer shipped, review then /prune', report.retired);
 
   // Last, and not as a counted list. Everything above is what the upgrade did;
   // this is the part it could not do for you, so it is the thing still open when
-  // the run ends — which is where a reader is actually looking.
+  // the run ends, which is where a reader is actually looking.
   if (report.notices.length > 0) {
     process.stdout.write(
       `\n${report.notices.length} thing${report.notices.length === 1 ? '' : 's'} to check, ` +

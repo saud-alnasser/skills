@@ -5,15 +5,15 @@
 // writes skill content: a wrapper carries the runtime's own frontmatter and a
 // line telling the agent which canonical file to read.
 //
-// Descriptions are derived from the canonical artifact — its heading and its
-// `use-when` — so the text a runtime matches on cannot disagree with the text
+// Descriptions are derived from the canonical artifact, its heading and its
+// `use-when`, so the text a runtime matches on cannot disagree with the text
 // the protocol declares. Hand-written wrapper descriptions were the obvious
 // alternative and would have been exactly that second home.
 //
 // A runtime is a row in `TARGETS`, never a function of its own. One renderer
 // walks the payload and asks the target where each wrapper lands, what
 // frontmatter that runtime's schema admits, and how absence is handled. The
-// alternative — a render function per runtime — reads better per runtime and
+// alternative, a render function per runtime, reads better per runtime and
 // loses on the thing that matters: the pointer contract would be stated three
 // times, and a stale adapter is caught by the suite while three wordings of one
 // rule drifting apart is not.
@@ -35,13 +35,13 @@ import { readArtifact, topLevel, walk } from './contract.mjs';
 /**
  * From an adapter's own root back to the payload it wraps.
  *
- * For Claude that root is the plugin root — `<distribution>/adapters/claude` —
+ * For Claude that root is the plugin root, `<distribution>/adapters/claude`,
  * because that is what the marketplace entry publishes, and it has to be: Claude
  * Code scans `<plugin root>/agents/` for a plugin's agents and a manifest
  * `agents` path does not redirect that scan. Naming a directory there fails
  * manifest validation outright, and naming the files loads none of them.
- * Publishing the adapter itself is what puts every wrapper — skills and agents
- * alike — where the runtime already looks, with no manifest paths at all.
+ * Publishing the adapter itself is what puts every wrapper, skills and agents
+ * alike, where the runtime already looks, with no manifest paths at all.
  *
  * The payload is two levels up from any adapter root, which is what this prefix
  * spells. Every relative fallback is derived from it rather than written out, so
@@ -67,7 +67,7 @@ function absent(canonical) {
  * A skill wrapper's frontmatter, which no runtime so far spells differently.
  *
  * Every reader takes the same three: a `name` that has to equal the directory,
- * the `description` it matches on, and a free-form `metadata` map — the only
+ * the `description` it matches on, and a free-form `metadata` map, the only
  * place AEP's own fields may ride without colliding with a runtime's schema.
  */
 function skillFrontmatter(wrapped, description, canonical) {
@@ -100,9 +100,12 @@ function describe(artifact, { isAgent }) {
     if (purpose) what = purpose[1].trim();
   } else {
     const heading = /^#\s+(.+)$/m.exec(artifact.body);
-    // `# /specify — define WHAT is changing and WHY` → the half after the dash.
+    // A skill heading is `# /<name>`, an em dash, then what the skill does, and
+    // the half after the dash is what a runtime matches on. The dash is written
+    // as an escape because the shipped scripts are scanned for the character;
+    // the headings themselves keep it.
     if (heading) {
-      const parts = heading[1].split(/\s+—\s+/);
+      const parts = heading[1].split(/\s+\u2014\s+/);
       what = (parts[1] ?? parts[0]).trim();
     }
   }
@@ -122,7 +125,7 @@ function describe(artifact, { isAgent }) {
  * The runtimes AEP renders for.
  *
  * Each row answers only what differs. `path` returning `null` is how a target
- * declines a kind — it is the single place the skills-only rules live, for the
+ * declines a kind. It is the single place the skills-only rules live, for the
  * distribution shape and for the neutral location alike.
  *
  * `committed` names the shape kept under `src/adapters/<name>/`, or `null` where
@@ -161,14 +164,14 @@ export const TARGETS = {
         `If \`${canonical}\` does not exist, this repository has not installed AEP.`,
         'For `/aep:install` and `/aep:help`, fall back to',
         '`${CLAUDE_PLUGIN_ROOT}/' + PAYLOAD_FROM_ADAPTER_ROOT + '/skills/' + name + '.md` and continue.',
-        'For anything else, say AEP is not installed here and offer `/aep:install` —',
-        'do not improvise the skill.',
+        'For anything else, say AEP is not installed here and offer `/aep:install`.',
+        'Do not improvise the skill.',
       ];
     },
   },
 
   // OpenCode reads skills from `.opencode/skill(s)/` and agents from
-  // `.opencode/agent(s)/`, and nothing else reaches its agents at all — the
+  // `.opencode/agent(s)/`, and nothing else reaches its agents at all. The
   // `.claude` compatibility that finds a Claude adapter's skills covers skills
   // only. Both spellings load; the plural is what OpenCode's own repository and
   // its documentation use.
@@ -183,7 +186,7 @@ export const TARGETS = {
     shapes: ['distribution', 'repository'],
     // The distribution shape is what a user points `skills.paths` at, and
     // OpenCode reads those where they sit rather than copying them. An agent
-    // cannot be reached that way — agents load from a config directory only —
+    // cannot be reached that way, since agents load from a config directory only,
     // and a wrapper copied there is a generated file going stale in a home
     // directory no suite can see. So agents ship in the repository shape alone.
     path: (kind, wrapped, shape) => {
@@ -212,8 +215,8 @@ export const TARGETS = {
         'For `/aep-install` and `/aep-help`, fall back to',
         `\`${reach}/skills/${name}.md\`, resolved from this skill's own directory,`,
         'and continue.',
-        'For anything else, say AEP is not installed here and offer `/aep-install` —',
-        'do not improvise the skill.',
+        'For anything else, say AEP is not installed here and offer `/aep-install`.',
+        'Do not improvise the skill.',
       ];
     },
   },
@@ -223,7 +226,7 @@ export const TARGETS = {
   // is driving. It carries skills because that is all anything reads it for.
   //
   // Nothing commits it. A wrapper here is only ever written into a repository by
-  // an install, so a checked-in copy would have no reader — and no fallback is
+  // an install, so a checked-in copy would have no reader, and no fallback is
   // expressible either, because nothing that reads this location takes a
   // configured path, so a wrapper can only arrive by being copied and a copy
   // severs any reach relative to itself.
@@ -270,7 +273,7 @@ function skillWrapper(target, { name, wrapped, description, shape, relativePath 
  *
  * It used to name the artifact that binds a sub-agent as well. That artifact
  * moved when governance split, and the wrappers went on pointing at a file the
- * distribution no longer ships — every dispatched agent was sent to read
+ * distribution no longer ships, and every dispatched agent was sent to read
  * nothing. A role definition already states what binds it, so naming that here
  * was a second home for the answer, and the copy is the one that went stale.
  */
@@ -285,7 +288,7 @@ function agentWrapper(target, { name, wrapped, description, shape }) {
     'purpose, responsibilities, constraints, the governance that binds you, and',
     'the shape of what you return.',
     '',
-    'If that file does not exist, AEP is not installed here — report that and stop.',
+    'If that file does not exist, AEP is not installed here. Report that and stop.',
     '',
   ];
 
@@ -315,14 +318,14 @@ export function renderAdapter(distributionRoot, target, shape) {
         target, { name, wrapped, description, shape, relativePath },
       );
       // `kind` and `name` ride along so a caller can judge the render without
-      // inferring either from the path — the suite has to count skills against
+      // inferring either from the path. The suite has to count skills against
       // agents, and a path is the one thing a target is free to change.
       files.push({ kind, name, wrapped, relativePath, contents });
     }
   };
 
   // Top-level files only. `skills/<skill>/<note>.md` is depth reached by link
-  // from its own skill, not an entry point — wrapping one would publish a
+  // from its own skill, not an entry point. Wrapping one would publish a
   // command the protocol does not have, under a name (`ui`, `tests`) that reads
   // like a skill in a runtime's listing.
   wrap('skill', topLevel(path.join(distributionRoot, 'skills')));
@@ -343,7 +346,7 @@ export function writeAdapter(distributionRoot, target, targetDir, shape) {
   return written;
 }
 
-/** The distribution root — `src/`, since this script lives in `src/scripts/`. */
+/** The distribution root, `src/`, since this script lives in `src/scripts/`. */
 export function distributionRoot() {
   return path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 }
@@ -358,7 +361,7 @@ if (process.argv[1] && path.basename(process.argv[1]) === 'adapters.mjs') {
 
   const only = value('--target', null);
   if (only && !(only in TARGETS)) {
-    process.stderr.write(`unknown runtime: ${only} — known: ${Object.keys(TARGETS).join(', ')}\n`);
+    process.stderr.write(`unknown runtime: ${only}. Known: ${Object.keys(TARGETS).join(', ')}\n`);
     process.exit(2);
   }
 

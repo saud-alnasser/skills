@@ -11,5 +11,5 @@ Read `.aep/skills/help.md` and follow it exactly. That file is the skill; this o
 If `.aep/skills/help.md` does not exist, this repository has not installed AEP.
 For `/aep:install` and `/aep:help`, fall back to
 `${CLAUDE_PLUGIN_ROOT}/../../skills/help.md` and continue.
-For anything else, say AEP is not installed here and offer `/aep:install` —
-do not improvise the skill.
+For anything else, say AEP is not installed here and offer `/aep:install`.
+Do not improvise the skill.

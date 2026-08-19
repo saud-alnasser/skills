@@ -1,7 +1,7 @@
 ---
-aep: 2.4.0
+aep: 2.7.0
 owner: protocol
-date: 2026-08-17
+date: 2026-08-19
 kind: skill
 mode: [implement]
 report: full
@@ -118,6 +118,11 @@ role, which branches — before creating anything. Stated, not gated.
    what you ran and what it printed**. "It should work" is not verification.
 
 ## 4 — Close out
+
+**A run that dispatched children reconciles before it reviews.**
+`[[policies/execution]]` holds what the orchestrator owes once the last child
+returns, under `## What the orchestrator owns once the last child returns`, and
+that is where to read it.
 
 `[[skills/review]]`, apply the fixes, then `[[skills/commit]]` — **without
 prompting.** Committing reviewed work is part of finishing. Then mark the task

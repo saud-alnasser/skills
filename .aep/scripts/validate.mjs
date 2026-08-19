@@ -1,8 +1,8 @@
 // Validates a `.aep/` tree against the artifact contract.
 //
 // Everything checked here is mechanically checkable by construction; the one
-// thing that is not — whether a `use-when` states a trigger rather than a topic
-// — is called out in the summary rather than silently passed, because a check
+// thing that is not, whether a `use-when` states a trigger rather than a topic,
+// is called out in the summary rather than silently passed, because a check
 // that cannot fire reads exactly like a check that passed.
 //
 //   node validate.mjs [--root <path-to-.aep>] [--quiet]
@@ -51,7 +51,7 @@ function checkArtifact(root, file) {
   checked += 1;
 
   if (!artifact.hasFrontmatter) {
-    fail(rel, 'no frontmatter — every Markdown artifact under .aep/ must declare aep, owner, date');
+    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ must declare aep, owner, date');
     return;
   }
   for (const error of artifact.errors) fail(rel, `frontmatter ${error}`);
@@ -62,22 +62,22 @@ function checkArtifact(root, file) {
   if (!isNonEmptyString(fields.aep)) fail(rel, 'missing required field: aep');
   if (!isNonEmptyString(fields.owner)) fail(rel, 'missing required field: owner');
   else if (!OWNERS.includes(fields.owner)) {
-    fail(rel, `owner is "${fields.owner}" — must be one of: ${OWNERS.join(', ')}`);
+    fail(rel, `owner is "${fields.owner}", must be one of: ${OWNERS.join(', ')}`);
   } else if (DIRECTORY_OWNERS[topDir] && fields.owner !== DIRECTORY_OWNERS[topDir]) {
     // The two governance directories admit one owner each. A policy is AEP's law
-    // and a rule is the repository's, so the misplacement is the defect — an
+    // and a rule is the repository's, so the misplacement is the defect. An
     // upgrade preserves such a file rather than overwriting it, and this is what
     // says so afterwards.
     const belongs = fields.owner === 'protocol' ? 'policies/' : 'rules/';
-    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]} — this declares ` +
+    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]}, and this declares ` +
       `owner: ${fields.owner}, which belongs under ${belongs}`);
   }
   if (!isNonEmptyString(fields.date)) fail(rel, 'missing required field: date');
-  else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}" — must be a real YYYY-MM-DD`);
+  else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}", must be a real YYYY-MM-DD`);
 
   // Situational fields, when present.
   if (fields.kind !== undefined && !KINDS.includes(fields.kind)) {
-    fail(rel, `kind is "${fields.kind}" — must be one of: ${KINDS.join(', ')}`);
+    fail(rel, `kind is "${fields.kind}", must be one of: ${KINDS.join(', ')}`);
   }
   if (fields.mode !== undefined) {
     if (!Array.isArray(fields.mode)) {
@@ -100,15 +100,15 @@ function checkArtifact(root, file) {
   const isSkill = /^skills\/[^/]+\.md$/.test(rel);
   if (isSkill) {
     if (fields.report === undefined) {
-      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')} — ` +
-        'without it, what this skill tells the human has no defined shape');
+      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')}. ` +
+        'Without it, what this skill tells the human has no defined shape');
     } else if (!REPORT_FORMS.includes(fields.report)) {
-      fail(rel, `report is "${fields.report}" — must be one of: ${REPORT_FORMS.join(', ')}`);
+      fail(rel, `report is "${fields.report}", must be one of: ${REPORT_FORMS.join(', ')}`);
     }
   } else if (fields.report !== undefined) {
     const note = /^skills\/[^/]+\/.+\.md$/.test(rel);
     fail(rel, note
-      ? 'report is legal only on a skill — a note is reached from one and opens no report of its own'
+      ? 'report is legal only on a skill. A note is reached from one and opens no report of its own'
       : 'report is legal only on a skill');
   }
 
@@ -121,13 +121,13 @@ function checkArtifact(root, file) {
   // has a namespace two projects can collide in. A limit keyed by directory
   // would advertise a nesting nothing wants.
   if (topDir === 'contexts' && segments.length > 3) {
-    fail(rel, 'a context sits at contexts/<area>.md or contexts/<project>/<area>.md — ' +
+    fail(rel, 'a context sits at contexts/<area>.md or contexts/<project>/<area>.md, ' +
       'one project directory deep, no more');
   }
 
   // `use-when` is required where discovery depends on it.
   if (USE_WHEN_REQUIRED_DIRS.includes(topDir) && !isNonEmptyString(fields['use-when'])) {
-    fail(rel, `${topDir}/ requires use-when — without it this artifact can never be selected`);
+    fail(rel, `${topDir}/ requires use-when. Without it this artifact can never be selected`);
   }
 
   // `status`, `blocked-by`, `part-of` are legal only where they mean something.
@@ -135,9 +135,9 @@ function checkArtifact(root, file) {
   const isTicket = /^efforts\/[^/]+\/tickets\//.test(rel);
   if (fields.status !== undefined) {
     if (isSpec && !SPEC_STATUSES.includes(fields.status)) {
-      fail(rel, `spec status is "${fields.status}" — must be one of: ${SPEC_STATUSES.join(', ')}`);
+      fail(rel, `spec status is "${fields.status}", must be one of: ${SPEC_STATUSES.join(', ')}`);
     } else if (isTicket && !TICKET_STATUSES.includes(fields.status)) {
-      fail(rel, `ticket status is "${fields.status}" — must be one of: ${TICKET_STATUSES.join(', ')}`);
+      fail(rel, `ticket status is "${fields.status}", must be one of: ${TICKET_STATUSES.join(', ')}`);
     } else if (!isSpec && !isTicket) {
       fail(rel, 'status is legal only on an effort spec.md or a local ticket');
     }
@@ -153,7 +153,7 @@ function checkArtifact(root, file) {
   // Links.
   for (const target of wikiLinks(artifact.body)) {
     if (!linkResolves(root, target)) {
-      fail(rel, `[[${target}]] resolves to nothing — repair it or report it, never invent the target`);
+      fail(rel, `[[${target}]] resolves to nothing. Repair it or report it, never invent the target`);
     }
   }
 }
@@ -161,13 +161,13 @@ function checkArtifact(root, file) {
 function checkStructure(root) {
   for (const forbidden of FORBIDDEN_DIRS) {
     if (fs.existsSync(path.join(root, forbidden))) {
-      fail(`${forbidden}/`, 'this directory was retired and must not exist — see protocol.md');
+      fail(`${forbidden}/`, 'this directory was retired and must not exist. See protocol.md');
     }
   }
 
   const protocolFile = path.join(root, 'protocol.md');
   if (!fs.existsSync(protocolFile)) {
-    fail('protocol.md', 'missing — it is the bootstrap and everything starts there');
+    fail('protocol.md', 'missing. It is the bootstrap and everything starts there');
   } else {
     const size = fs.statSync(protocolFile).size;
     if (size > PROTOCOL_BUDGET_BYTES) {
@@ -177,7 +177,7 @@ function checkStructure(root) {
 
   const ignoreFile = path.join(root, '.gitignore');
   if (!fs.existsSync(ignoreFile)) {
-    fail('.gitignore', 'missing — position/ and worktrees/ must never be committed');
+    fail('.gitignore', 'missing. position/ and worktrees/ must never be committed');
   } else {
     const ignored = fs.readFileSync(ignoreFile, 'utf8');
     for (const entry of ['position/', 'worktrees/']) {
@@ -193,7 +193,7 @@ function checkStructure(root) {
       if (!entry.isDirectory()) continue;
       const effort = path.join(effortsDir, entry.name);
       if (fs.existsSync(path.join(effort, 'plan.md'))) {
-        fail(`efforts/${entry.name}/plan.md`, 'plan.md must not exist — planning extends spec.md');
+        fail(`efforts/${entry.name}/plan.md`, 'plan.md must not exist. Planning extends spec.md');
       }
       if (!fs.existsSync(path.join(effort, 'spec.md'))) {
         fail(`efforts/${entry.name}/`, 'an effort must have a spec.md');
@@ -201,7 +201,7 @@ function checkStructure(root) {
       for (const sub of [path.join('evidence', 'research'), path.join('evidence', 'prototypes'), 'tickets']) {
         const target = path.join(effort, sub);
         if (fs.existsSync(target) && walk(target).length === 0) {
-          fail(`efforts/${entry.name}/${sub.split(path.sep).join('/')}/`, 'exists but is empty — create it when something goes in it');
+          fail(`efforts/${entry.name}/${sub.split(path.sep).join('/')}/`, 'exists but is empty. Create it when something goes in it');
         }
       }
     }
@@ -215,7 +215,7 @@ function main() {
 
   const root = resolveAepRoot(rootArg, import.meta.url);
   if (!root) {
-    process.stderr.write('no .aep/ found — pass --root, or run from a repository that has one\n');
+    process.stderr.write('no .aep/ found. Pass --root, or run from a repository that has one\n');
     process.exit(2);
   }
 
@@ -228,7 +228,7 @@ function main() {
   // The index is derived, so staleness is a defect in the tree, not a warning.
   const indexFile = path.join(root, 'index.md');
   if (!fs.existsSync(indexFile)) {
-    fail('index.md', 'missing — run: node .aep/scripts/index.mjs');
+    fail('index.md', 'missing. Run: node .aep/scripts/index.mjs');
   }
 
   if (failures.length === 0) {

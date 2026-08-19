@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.6.0
+**Version:** 2.7.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
 
@@ -494,12 +494,12 @@ Every skill MUST carry the frontmatter contract (§8). **A skill that enters a m
 
 A skill MAY invoke another skill without collapsing their responsibilities.
 
-The conforming skill set is exactly seventeen:
+The conforming skill set is exactly eighteen:
 
 **Spine (7)** — `specify`, `refine`, `plan`, `tasks`, `implement`, `review`, `commit`
 **Adaptive (3)** — `research`, `prototype`, `survey`
 **Lifecycle (5)** — `install`, `update`, `prune`, `handoff`, `help`
-**Sub-skills (2)** — `tdd`, `domain`
+**Sub-skills (3)** — `tdd`, `domain`, `prose`
 
 | Skill | Purpose |
 | --- | --- |
@@ -520,8 +520,9 @@ The conforming skill set is exactly seventeen:
 | `help` | explain AEP usage and available operations |
 | `tdd` | test-driven development — used by `implement` and `prototype` |
 | `domain` | domain-model development — used by `specify` and `refine` |
+| `prose` | make a text read as though a person wrote it — used wherever an agent writes for a human |
 
-`tdd` and `domain` are sub-skills: reached from inside another skill rather than started on their own.
+`tdd`, `domain`, and `prose` are sub-skills: reached from inside another skill rather than started on their own.
 
 ### 16.1 Skill depth
 
@@ -536,13 +537,19 @@ A note:
 - **MUST NOT govern** (§16) and MUST NOT restate a rule. Depth is procedure — how to do the thing well once you are doing it;
 - **MAY omit `mode:`.** The skill that reaches it has already entered the mode.
 
-A note is **not** a skill. It is not one of the seventeen, it is not invoked, and no runtime adapter (§29) exposes it — the only way in is through the skill that owns it.
+A note is **not** a skill. It is not one of the eighteen, it is not invoked, and no runtime adapter (§29) exposes it — the only way in is through the skill that owns it.
 
 **A repository MAY add its own note beside a shipped skill**, declaring `owner: repository`. Ownership is read off the field rather than the path (§7), so an upgrade preserves it exactly as it preserves any other repository-owned file. This is the extension point that keeps *this is how we prototype here* out of a protocol-owned file, and a repository-owned note is reached from a repository-owned rule or context — because the shipped skill cannot link to a file that does not exist in every installation.
 
-### 16.2 What a turn tells the human
+### 16.2 What the human reads
 
-Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` and `commit` from `implement`'s close-out, or either sub-skill — is a stage of that run and opens no report of its own.
+Everything an agent writes for a human is governed here. **Who reads a text decides whether it is governed: a human reads it, it is governed; a protocol agent reads it, it is exempt** — and exempt means written *for that reader* instead, never written carelessly. Session output, a commit message, a pull request title or body, a comment or docstring in source, what a script prints to a person, and a repository's own documentation are governed. Prose inside `.aep/` artifacts, a brief written for a sub-agent, and data a script writes into an artifact an agent reads are not.
+
+**Normative protocol text is exempt wherever it lives, including a repository root.** It is `.aep/` prose that happens to sit elsewhere, its reader is the agent building against it, and it is where the vocabulary is defined that a catalogue of tells would otherwise flag. This document is one.
+
+**How a governed text reads** is fixed for all of it and stated in exactly one shipped artifact, which also carries the prohibitions a script can check. **What shape it takes** is fixed for the turn report, which the rest of this section defines.
+
+Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` and `commit` from `implement`'s close-out, or any sub-skill — is a stage of that run and opens no report of its own.
 
 The opening report carries four slots in order — **standing**, the state the skill establishes on entry, verified; **classification and routing**, what the request was judged to be and which skill is therefore running; **assumptions in force**, held apart from what was checked; and **the stages ahead**. The closing block carries three — **state**, **next**, and **what is unsettled together with how to settle it** — and a turn that stops early carries them too, because that is where the third is worth the most.
 
@@ -769,7 +776,7 @@ An adapter MUST NOT:
 
 Concretely, a runtime skill wrapper carries only what the runtime needs to route — its own frontmatter and a pointer — and the body it executes is the canonical `.aep/skills/<name>.md`. A wrapper that restates the skill is a second home (§6).
 
-**An adapter wraps the seventeen skills and nothing else.** Skill notes (§16.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§18); where it has no such location, the agents do not reach it and the adapter says nothing about them.
+**An adapter wraps the eighteen skills and nothing else.** Skill notes (§16.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§18); where it has no such location, the agents do not reach it and the adapter says nothing about them.
 
 Where a runtime's frontmatter schema and AEP's contract (§8) collide, the runtime's schema wins **in the adapter file only**, and AEP's fields move under whatever free-form map that runtime reserves. The canonical artifact keeps AEP's contract unchanged. Where a runtime reserves no such map for a kind of artifact, AEP's fields are **omitted rather than smuggled in** — a runtime that silently absorbs an unknown key turns a typo into behaviour nobody can see.
 
@@ -910,7 +917,8 @@ The suite MUST assert at least:
 - an upgrade from a release predating a move removes the protocol-owned source, rewrites the links that pointed at it inside repository-owned artifacts, updates the `date` of each file it repairs, preserves a repository-owned file standing at the source path, and reports all three; and an upgrade of a tree that already declares the release applies no move at all (§31);
 - a dry run previews the same repairs a real run would perform — a preview that understates the change is worse than none;
 - every `[[...]]` link resolves (§9);
-- the skill set is exactly the seventeen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
+- the skill set is exactly the eighteen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
+- `help` links every shipped skill but itself — the one artifact whose job is answering *what do I reach for* is the one place a new skill must not go missing, and it is reachable from no other;
 - every skill note (§16.1) sits under a directory named for a real skill, declares `kind: skill` and a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
 - the mode set is exactly the eight of §14;
 - a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (§12.1);

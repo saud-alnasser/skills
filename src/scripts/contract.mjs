@@ -17,7 +17,7 @@ export const OWNERS = ['protocol', 'repository'];
  * Directories that admit exactly one owner.
  *
  * The two governance directories, and only those. Ownership is otherwise read
- * off the declared field and never inferred from a path — but a policy is AEP's
+ * off the declared field and never inferred from a path. But a policy is AEP's
  * law and a rule is the repository's, so a file in the wrong one is a defect to
  * report rather than a case to decide. An installer still reads the field before
  * overwriting anything; this is what makes the misplacement visible afterwards.
@@ -53,7 +53,7 @@ export const MODES = [
 ];
 
 /**
- * Values the `report` field may take — the form a skill's turn report is in.
+ * Values the `report` field may take, the form a skill's turn report is in.
  *
  * Declared per skill, once, when the skill is authored: `full` where it writes
  * to the repository, dispatches, or decides on the human's behalf. Never
@@ -68,7 +68,7 @@ export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
 /** Directories that must never exist under `.aep/`. */
 export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill'];
 
-/** The seventeen conforming skills. */
+/** The eighteen conforming skills. */
 export const SKILLS = [
   'specify',
   'refine',
@@ -87,6 +87,7 @@ export const SKILLS = [
   'help',
   'tdd',
   'domain',
+  'prose',
 ];
 
 /** The two skills that enter no mode and therefore declare none (specs.md §16). */
@@ -148,7 +149,7 @@ export function parseFrontmatterBlock(block) {
 
     const pair = /^([A-Za-z][A-Za-z0-9_-]*):(.*)$/.exec(line);
     if (!pair) {
-      errors.push(`line ${i + 1}: not a "key: value" pair — ${JSON.stringify(line)}`);
+      errors.push(`line ${i + 1}: not a "key: value" pair, ${JSON.stringify(line)}`);
       continue;
     }
 
@@ -198,13 +199,13 @@ export function readArtifact(file) {
  * Every `[[wiki-link]]` target in a body, in order of appearance.
  *
  * Only fenced blocks are stripped. A link inside a fence is the syntax being
- * *shown* — in a template, or in an example — rather than a reference to a file
+ * *shown*, in a template or in an example, rather than a reference to a file
  * that must exist.
  *
  * Inline code spans are deliberately NOT stripped, even though they also hold
  * examples occasionally. The convention throughout the payload is to wrap real
  * links in backticks so they render as monospace, so stripping inline code
- * silently excused almost every link in the corpus from being checked — a
+ * silently excused almost every link in the corpus from being checked, a
  * checker that passes by not looking. Generic placeholders are written without
  * bracket syntax instead, which costs a word and keeps the check honest.
  */
@@ -289,8 +290,8 @@ export function isIsoDate(value) {
  * Resolution order, so the same script works from both places it legitimately
  * runs: an explicit argument; the installed position, where the script itself
  * sits at `.aep/scripts/`; then `<cwd>/.aep`. Returns null when there is none,
- * which callers report rather than treating as an empty tree — "no AEP here"
- * and "AEP here with nothing in it" are different answers.
+ * which callers report rather than treating as an empty tree, since "no AEP
+ * here" and "AEP here with nothing in it" are different answers.
  */
 export function resolveAepRoot(explicit, scriptUrl) {
   const candidates = [];

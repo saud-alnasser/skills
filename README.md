@@ -1,7 +1,7 @@
-# AEP — the Agentic Engineering Protocol
+# AEP, the Agentic Engineering Protocol
 
 An **agent-agnostic, filesystem-first engineering protocol** for AI-assisted
-software work. All of its state is plain Markdown under `.aep/` — no runtime, no
+software work. All of its state is plain Markdown under `.aep/`. No runtime, no
 database, no resident process. Claude Code, Codex, Cursor, Gemini, and unassisted
 humans are all consumers; what a runtime provides is an *adapter*, never AEP.
 
@@ -13,23 +13,23 @@ hard to violate, and cheap for an agent to understand.**
 ## The model
 
 ```
-policies    what MUST be done — AEP's, protocol-owned, never edited here
-rules       what MUST be done here — yours, and an upgrade preserves them
+policies    what MUST be done. AEP's, protocol-owned, never edited here
+rules       what MUST be done here. Yours, and an upgrade preserves them
 references  how a tool is operated here
 contexts    what to know about an area, and where to look
-evidence    what has been discovered — research, prototypes
+evidence    what has been discovered: research, prototypes
 efforts     what change is being made; spec.md is its truth
 tasks       executable work derived from the spec
 modes       how to think during an activity
 agents      who does the work, in what role
 skills      reusable capabilities
-worktrees   isolated execution — never knowledge
-position    lightweight operational state — never truth
+worktrees   isolated execution, never knowledge
+position    lightweight operational state, never truth
 ```
 
 Every artifact declares **when it applies** (`use-when`, `paths`, `mode`), so
 knowledge loads by relevance rather than by stage. Nothing tells an agent to read
-the whole governance layer before starting — a policy is rigid in authority, not
+the whole governance layer before starting. A policy is rigid in authority, not
 in when it loads.
 
 ## The workflow
@@ -58,7 +58,7 @@ Then, once per repository:
 ```
 
 That writes `.aep/`, seeds the repository-owned starting points its setup calls
-for — a version-control rule, and references for the tools it actually detects —
+for, a version-control rule and references for the tools it actually detects,
 and points the entrypoint at `.aep/protocol.md`.
 
 **Already running AEP 1.x?** Run `/aep:update` instead. `/aep:install` and the
@@ -75,16 +75,16 @@ node <checkout>/src/scripts/install.mjs --into <repository> --adapters claude
 
 ```
 specs.md                  the normative specification
-AGENTS.md                 the entrypoint — points at .aep/protocol.md
+AGENTS.md                 the entrypoint, pointing at .aep/protocol.md
 src/                      everything that ships
 ├── protocol.md           the bootstrap installed as .aep/protocol.md
-├── rules/ modes/ skills/ agents/ templates/   protocol-owned payload
+├── policies/ modes/ skills/ agents/ templates/  protocol-owned payload
 │   └── skills/<skill>/    depth read only when that skill branches to it
 ├── seed/                 repository-owned starting points, installed on detection
 ├── scripts/              install, verify, and the scripts .aep/ gets
 ├── gitignore             becomes .aep/.gitignore
-└── adapters/claude/      the Claude Code adapter — pointers, never copies, and
-                          the plugin itself: its manifest, skills, and agents
+└── adapters/<runtime>/   the committed adapters: pointers, never copies, and
+                          the Claude plugin itself, its manifest and its skills
 .claude-plugin/           the marketplace that publishes that adapter
 .aep/                     this repository's own installation
 ```
@@ -114,11 +114,11 @@ upgrade cannot eat repository knowledge; and evidence bound to the effort that
 motivated it, so investigation survives the conversation.
 
 **What is taken from each is a shape, not text.** AEP 2.0 vendors no code or
-prose from either project — every shipped file was written for this protocol — so
-no third-party licence condition attaches to it.
+prose from either project, because every shipped file was written for this
+protocol, so no third-party licence condition attaches to it.
 
 AEP 1.x was a Claude Code skill framework rooted in `.claude/`. 2.0 is a rewrite
-of the framework, so none of it upgrades in place — `specs.md` §33 lists what was
+of the framework, so none of it upgrades in place. `specs.md` §33 lists what was
 removed and what replaced it. A 1.x repository's **own** knowledge does move
 across: `/update` detects the old layout and runs a carry-across that installs
 2.0 fresh, re-homes the contexts, tool guides, specs, tickets, and evidence, and
@@ -126,4 +126,4 @@ reports every assumption it made on your behalf.
 
 ## Licence
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

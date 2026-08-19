@@ -2,16 +2,20 @@
 //
 // AEP ships as Markdown and JavaScript, so there is no compiler to catch a
 // broken build. This is the substitute, and its scope is deliberate: it checks
-// what the protocol *distributes* — everything under `src/`, plus the plugin
-// manifest that points at it — against the specification that defines them. It
+// what the protocol *distributes*, everything under `src/` plus the plugin
+// manifest that points at it, against the specification that defines them. It
 // does not audit this repository's own installed `.aep/`; that tree is an
 // installation, checked by `validate.mjs` exactly as any other repository's is.
 //
 // Every mechanically checkable requirement in specs.md gets an assertion here,
 // named after the section that demands it. A requirement that cannot be checked
-// mechanically — whether a `use-when` states a trigger rather than a topic,
-// whether a mode really gives something up — is reported as unchecked at the
+// mechanically, whether a `use-when` states a trigger rather than a topic or
+// whether a mode really gives something up, is reported as unchecked at the
 // end rather than quietly omitted.
+//
+// Where this file has to match an em dash a shipped surface legitimately carries,
+// it is written as `\u2014`: the shipped scripts are scanned flat for the
+// character, and a literal here would be indistinguishable from a stray one.
 //
 //   node src/scripts/verify.mjs [--section <name>] [--verbose]
 
@@ -49,12 +53,31 @@ import {
   SEEDS,
 } from './payload.mjs';
 
-/** `src/` — the distribution. */
+/** `src/`, the distribution. */
 const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 /** The repository that builds it. */
 const REPO = path.dirname(SRC);
 
 const PROTOCOL_BUDGET_BYTES = 8192;
+
+/**
+ * The em dash, as an escape.
+ *
+ * The scan in the `governed text` section looks for this character across the
+ * shipped scripts, so a literal here would be the first thing it found.
+ */
+const EM_DASH = '\u2014';
+
+/**
+ * The documentation this repository writes for a human, and the documentation
+ * it writes for the agent building the protocol.
+ *
+ * Pinned rather than derived from a glob over the root. A glob would sweep the
+ * second list into the first the moment either grew, and the exemption is the
+ * half that cannot defend itself: an over-broad sweep reads as thoroughness.
+ */
+const GOVERNED_DOCS = ['README.md', 'CHANGELOG.md'];
+const EXEMPT_DOCS = ['specs.md', 'AGENTS.md'];
 
 /**
  * The release the upgrade fixture pretends to be coming from.
@@ -81,7 +104,7 @@ function section(name, body) {
   try {
     body();
   } catch (error) {
-    failures.push(`[${name}] section aborted — ${error.message}`);
+    failures.push(`[${name}] section aborted: ${error.message}`);
     process.stdout.write(`  ABORT ${error.message}\n`);
   }
 }
@@ -99,11 +122,11 @@ function assert(because, condition, { silent = false } = {}) {
     passes += 1;
     if (verbose && !silent) process.stdout.write(`  PASS  ${because}\n`);
   } else {
-    failures.push(`[${current}] ${because}${detail ? ` — ${detail}` : ''}`);
+    failures.push(`[${current}] ${because}${detail ? `: ${detail}` : ''}`);
     // `silent` exists for the self-test below, whose assertion is *meant* to
     // fail. Printing it would put the word FAIL in the output of a passing run,
     // which is the one thing a reader scans for.
-    if (!silent) process.stdout.write(`  FAIL  ${because}${detail ? ` — ${detail}` : ''}\n`);
+    if (!silent) process.stdout.write(`  FAIL  ${because}${detail ? `: ${detail}` : ''}\n`);
   }
 }
 
@@ -118,7 +141,7 @@ const readSrc = (...parts) => fs.readFileSync(path.join(SRC, ...parts), 'utf8');
  *
  * Declared up here with the other helpers rather than beside its first caller.
  * Section bodies run as they are declared, so a helper defined below a section
- * that uses it is a temporal-dead-zone abort — and an aborted section skips
+ * that uses it is a temporal-dead-zone abort, and an aborted section skips
  * every assertion after the throw, which reads as a smaller failure than it is.
  */
 const flat = (text) => text.replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
@@ -142,7 +165,7 @@ const release = (value) => {
   return parsed ? parsed.slice(1, 4).map(Number) : null;
 };
 
-/** Whether `a` precedes `b` — the installer's notice and move gate, mirrored. */
+/** Whether `a` precedes `b`, the installer's notice and move gate, mirrored. */
 const precedesRelease = (a, b) => {
   const left = release(a);
   const right = release(b);
@@ -157,7 +180,7 @@ const precedesRelease = (a, b) => {
  * Whether `value` is a real release no later than the one being built.
  *
  * `aep:` is the release an artifact's content last changed in, so most shipped
- * artifacts legitimately declare an *older* release than this one — that is the
+ * artifacts legitimately declare an *older* release than this one, which is the
  * field carrying information rather than repeating `protocol.md`. What is never
  * legitimate is a stamp ahead of the release being built, which names a release
  * that does not exist yet.
@@ -263,7 +286,7 @@ section('manifest', () => {
   assert('scripts are .mjs, so a consuming package.json cannot change how they parse', () =>
     fs.readdirSync(path.join(SRC, 'scripts')).every((name) => name.endsWith('.mjs')));
 
-  // Every shipped .mjs, not only the ones under scripts/ — the adapter's hook is
+  // Every shipped .mjs, not only the ones under scripts/. The adapter's hook is
   // just as much a thing a user runs, and a dependency there fails at the worst
   // possible moment, on somebody else's machine at session start.
   assert('no shipped script declares a third-party dependency', () => {
@@ -294,7 +317,7 @@ section('manifest', () => {
 
   // A payload directory at the repository root is a real hazard: a second
   // `skills/`, `agents/`, or `policies/` there reads as canonical and drifts
-  // from the one that ships. Nothing needs to sit there — the plugin is
+  // from the one that ships. Nothing needs to sit there, since the plugin is
   // published from the adapter's own directory, so the runtime's scans land
   // inside `src/`.
   assert('every shipped surface lives under src/', () => {
@@ -315,13 +338,13 @@ section('stamps', () => {
   const stamps = readStamps();
   const shipped = shippedArtifacts();
 
-  assert('the release baseline exists — run scripts/release.mjs to create it', () =>
+  assert('the release baseline exists. Run scripts/release.mjs to create it', () =>
     Object.keys(stamps).length > 0);
 
   for (const file of shipped) {
     const rel = toPosix(SRC, file);
     const hash = contentHash(fs.readFileSync(file, 'utf8'));
-    assert(`${rel} is stamped for its current content — run scripts/release.mjs <version>`, () => {
+    assert(`${rel} is stamped for its current content. Run scripts/release.mjs <version>`, () => {
       if (!(rel in stamps)) throw new Error('not in the baseline: it has never been released');
       if (stamps[rel] !== hash) throw new Error('content changed since it was last stamped');
       return true;
@@ -431,7 +454,7 @@ section('protocol.md', () => {
 section('skills', () => {
   // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§16.1).
   const onDisk = topLevel(path.join(SRC, 'skills')).map((f) => path.basename(f, '.md')).sort();
-  assert('the skill set is exactly the seventeen specs.md names', () =>
+  assert('the skill set is exactly the eighteen specs.md names', () =>
     JSON.stringify(onDisk) === JSON.stringify([...SKILLS].sort()));
   if (JSON.stringify(onDisk) !== JSON.stringify([...SKILLS].sort())) {
     process.stdout.write(`        on disk: ${onDisk.join(', ')}\n`);
@@ -457,6 +480,21 @@ section('skills', () => {
     }
   }
 
+  // The discovery surface. `protocol.md` gives `help` one job, answering *what do
+  // I reach for*, so a skill it does not name is unreachable through the only
+  // artifact whose purpose is reaching them. Derived from `SKILLS`, never from a
+  // second hand-written list: that list is the same failure one level up, and
+  // nothing would catch it drifting either. `help` is excluded from its own
+  // table because a reader already holding it does not need telling where it is.
+  const helpSkill = readSrc('skills', 'help.md');
+  const unrouted = SKILLS
+    .filter((name) => name !== 'help')
+    .filter((name) => !helpSkill.includes(`[[skills/${name}]]`));
+  assert('skills/help routes to every shipped skill but itself', () => unrouted.length === 0);
+  if (unrouted.length > 0) {
+    process.stdout.write(`        not reachable from help: ${unrouted.join(', ')}\n`);
+  }
+
   assert('skills/plan forbids plan.md', /NEVER create `plan\.md`/.test(readSrc('skills', 'plan.md')));
 
   const reviewSkill = readSrc('skills', 'review.md');
@@ -480,7 +518,7 @@ section('skills', () => {
   assert('skills/tasks routes to the tracker note before writing external tasks', () =>
     readSrc('skills', 'tasks.md').includes('skills/tasks/labels'));
 
-  // §31.1 — the migration's five rules, each pinned by the thing that goes wrong
+  // §31.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
   // success, so nothing downstream notices.
   const migration = readSrc('skills', 'update', 'migration.md');
@@ -532,7 +570,7 @@ section('skill notes', () => {
     assert(`${rel} declares kind: skill`, artifact.fields.kind === 'skill');
     assert(`${rel} declares a use-when naming the branch it is for`,
       isNonEmptyString(artifact.fields['use-when']));
-    assert(`${rel} is linked from skills/${owner}.md — an unlinked note is unreachable`, () =>
+    assert(`${rel} is linked from skills/${owner}.md. An unlinked note is unreachable`, () =>
       linkedBy.get(owner)?.has(target) === true);
   }
 
@@ -639,7 +677,7 @@ section('policies', () => {
     const artifact = readArtifact(file);
     assert(`${rel} declares kind: policy`, artifact.fields.kind === 'policy');
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
-    assert(`${rel} declares use-when — without it, it cannot be selected`,
+    assert(`${rel} declares use-when. Without it, it cannot be selected`,
       isNonEmptyString(artifact.fields['use-when']));
   }
 
@@ -655,13 +693,13 @@ section('policies', () => {
     return true;
   });
 
-  assert('the distribution ships no rules/ — that directory is the repository\'s', () =>
+  assert('the distribution ships no rules/. That directory is the repository\'s', () =>
     !inSrc('rules'));
   assert('version-control is a repository-owned seed, not protocol governance', () =>
     inSrc('seed', 'rules', 'version-control.md'));
 
-  // What `aep:` answers. The policy said the opposite until 2.5.1 — that every
-  // release stamps every protocol-owned artifact — which contradicted §6, §8,
+  // What `aep:` answers. The policy said the opposite until 2.5.1, that every
+  // release stamps every protocol-owned artifact, which contradicted §6, §8,
   // release.mjs, and the stale-stamp guard above, and described an upgrade check
   // nothing implements. Pinned so it cannot drift back, in both directions:
   // saying the field records the last content change, and not saying the sweep.
@@ -684,7 +722,7 @@ section('policies', () => {
   assert('policies/execution requires independence to be read, not inferred', () =>
     /never infer independence/i.test(execution));
 
-  // §15.4 — the external half of the same rule. Without these, a repository whose
+  // §15.4, the external half of the same rule. Without these, a repository whose
   // work lives in a tracker is governed by the frontier rule and given no way to
   // satisfy it, which reads exactly like being governed.
   // Pinned with `\s+` between words rather than literal spaces: the payload is
@@ -705,6 +743,66 @@ section('policies', () => {
   assert('policies/execution separates carrying the fact from mirroring', () =>
     /None of this is mirroring/.test(execution));
 
+  const reconciliation = flat(execution);
+
+  // §20 the three things a child structurally could not do. Each is asserted on
+  // its own, because a reconciliation section that states two of them reads as
+  // complete: the missing one is invisible from inside the file.
+  for (const [name, pattern] of [
+    ['the seams between children\'s diffs', /\*\*The seams\*\*/],
+    ['the decisions a child stopped on', /\*\*Every decision a child recorded and stopped on\.\*\*/],
+    ['one account of the work', /\*\*One account of the work\*\*/],
+  ]) {
+    assert(`policies/execution makes the orchestrator own ${name}`, () =>
+      pattern.test(reconciliation));
+  }
+
+  // The bound, and its reason. An unbounded seam pass and a bounded one read
+  // identically until a parent uses the difference, so the words that draw the
+  // line are the whole assertion.
+  assert('policies/execution bounds the seam pass at the shared surfaces', () =>
+    /The seam is the bound\./.test(reconciliation) &&
+    /raised, not taken/.test(reconciliation));
+  assert('policies/execution says why the bound is the diffs and not the effort', () =>
+    /cannot distinguish reconciling a seam from rebuilding a task/.test(reconciliation));
+
+  // Both halves of the account clause. The first half alone reads as permission
+  // to hide a lost task, which is the version this pins against.
+  assert('policies/execution says the account describes the work, not the workers', () =>
+    /describes the work rather than the workers/.test(reconciliation));
+  assert('policies/execution surfaces sub-agent structure where it changed the outcome', () =>
+    /Sub-agent structure surfaces where it changed the outcome/.test(reconciliation) &&
+    /not permission to suppress a failure/.test(reconciliation));
+
+  // The presentation clause needs its substance half for the same reason: on its
+  // own it licenses a rewritten question wearing the child's name.
+  assert('policies/execution has the orchestrator present the child\'s question', () =>
+    /The child writes the question plainly and the orchestrator presents it\./.test(reconciliation));
+  assert('policies/execution keeps substance out of what may be reshaped', () =>
+    /Wording may be reshaped\. Substance never is\./.test(reconciliation) &&
+    /which options are offered, survive unchanged/.test(reconciliation));
+  assert('policies/execution attributes the question to its source, not its author', () =>
+    /Attribution names the source, not the author of the words/.test(reconciliation));
+
+  // Reachable from the skill that dispatches, not only from the policy that
+  // states it.
+  const implementSkill = readSrc('skills', 'implement.md');
+  assert('skills/implement routes its close-out to the reconciliation section', () =>
+    /What the orchestrator owns once the last child returns/.test(implementSkill) &&
+    /\[\[policies\/execution\]\]/.test(implementSkill));
+
+  // The obligation is the orchestrator's. A child brief that named the catalogue
+  // would be the version where it drifted downward, which is the shape the human
+  // rejected rather than one nobody thought of.
+  const agentBriefs = topLevel(path.join(SRC, 'agents'))
+    .filter((f) => /skills\/prose|catalogue of tells/.test(fs.readFileSync(f, 'utf8')))
+    .map((f) => toPosix(SRC, f));
+  assert('no agent brief carries the catalogue down to a child', () =>
+    agentBriefs.length === 0);
+  if (agentBriefs.length > 0) {
+    process.stdout.write(`        carried by: ${agentBriefs.join(', ')}\n`);
+  }
+
   const authority = readSrc('policies', 'authority.md');
   assert('policies/authority places policies above rules', () =>
     /policies\s+→\s+rules/.test(authority));
@@ -721,9 +819,9 @@ const CLOSING_SLOTS = ['State', 'Next', 'Unsettled'];
 /**
  * Skills whose report is the short form.
  *
- * Pinned here rather than derived, because the test that assigns a form — does
- * this skill write to the repository, dispatch, or decide on the human's behalf
- * — is applied by an author and not by a script. Pinning it is what turns the
+ * Pinned here rather than derived. The test that assigns a form, does this
+ * skill write to the repository, dispatch, or decide on the human's behalf, is
+ * applied by an author and not by a script. Pinning it is what turns the
  * declaration in each skill from a value nobody checks into one that has to
  * agree with a second, independent statement.
  */
@@ -734,12 +832,12 @@ const SHORT_FORM_SKILLS = ['help', 'survey', 'domain'];
  *
  * Two shapes, because both are in the corpus for good reasons: the long skills
  * carry prose under numbered headings, the compact ones a numbered list under
- * `## Procedure`. Returns `total` alongside so a caller can tell "no stages" —
- * a shape this does not know — from "a step with no name", which is the defect
+ * `## Procedure`. Returns `total` alongside so a caller can tell "no stages",
+ * a shape this does not know, from "a step with no name", which is the defect
  * that would otherwise pass as a shorter list.
  */
 function stageNames(text) {
-  const headings = [...text.matchAll(/^## (\d+) — (.+)$/gm)].map((m) => m[2].trim());
+  const headings = [...text.matchAll(/^## (\d+) \u2014 (.+)$/gm)].map((m) => m[2].trim());
   if (headings.length > 0) return { stages: headings, total: headings.length, shape: 'headings' };
 
   const procedure = /^## Procedure\s*$([\s\S]*?)(?=^## |\Z)/m.exec(text);
@@ -754,6 +852,48 @@ function stageNames(text) {
 section('reporting', () => {
   const policy = readSrc('policies', 'reporting.md');
   const prose = flat(policy);
+
+  // The policy governs every text a human reads, and the turn report is one of
+  // them rather than all of them. Each half below fails on its own, because the
+  // version that keeps the shape and loses the scope reads identically to a
+  // reader who only ever opens the second half.
+  const trigger = readArtifact(path.join(SRC, 'policies', 'reporting.md')).fields['use-when'];
+  assert('the policy triggers on more than the turn report', () =>
+    /commit message/i.test(trigger) && /code comment/i.test(trigger));
+
+  assert('the policy states the reader test in one sentence', () =>
+    /A human reads it, it is governed\.\s+A protocol agent reads it, it is\s+exempt/.test(prose));
+  assert('the reader test says exempt means written for that reader', () =>
+    /exempt means written for that reader instead, never written\s+carelessly/.test(prose));
+  assert('the policy carries both worked lists', () =>
+    /\|\s*Governed\s*\|\s*Exempt\s*\|/.test(policy) &&
+    /a commit message, a pull request title or body/.test(prose) &&
+    /prose inside `\.aep\/` artifacts/.test(prose));
+  assert('the policy says the lists are examples rather than the definition', () =>
+    /worked examples of that test rather than the definition/.test(prose));
+  assert('the policy exempts normative protocol text wherever it lives', () =>
+    /normative protocol text, wherever it lives/.test(prose) &&
+    /exempt even at a repository root/.test(prose));
+
+  // The four the policy owns, each named separately: a single assertion over all
+  // four passes while three of them are missing.
+  for (const [name, pattern] of [
+    ['em dashes', /No em dashes/],
+    ['curly quotes', /No curly quotes/],
+    ['decorative emoji', /No decorative emoji/],
+    ['title-case headings', /No title-case headings/],
+  ]) {
+    assert(`the policy prohibits ${name} by name`, () => pattern.test(prose));
+  }
+  assert('the em dash prohibition rules out the three substitutes for one', () =>
+    /Parentheses, an en dash, and a hyphen standing in for one do\s+not\s+satisfy this/.test(prose));
+
+  // The split between law and craft. Without the link the catalogue is
+  // unreachable from the only artifact that requires it.
+  assert('the policy sends the craft to skills/prose', () =>
+    /\[\[skills\/prose\]\]/.test(policy));
+  assert('the policy says the prohibitions are its own rather than the catalogue\'s', () =>
+    /they are here rather than in the catalogue/.test(prose));
 
   for (const slot of OPENING_SLOTS) {
     assert(`the contract names the opening slot ${slot}`, () => policy.includes(`**${slot}**`));
@@ -808,7 +948,7 @@ section('reporting', () => {
   const bootstrap = readSrc('protocol.md');
   // The invariant itself, not the file: protocol.md also lists the policy in
   // its governance table, and a check satisfied by that link would pass with
-  // the invariant's own pointer deleted — a guard matching something
+  // the invariant's own pointer deleted, a guard matching something
   // travelling with the thing it checks.
   const invariant = /\*\*Every turn reports\.\*\*[\s\S]*?(?=\n\n)/.exec(bootstrap);
   assert('protocol.md carries the invariant', () => invariant !== null);
@@ -837,7 +977,7 @@ section('reporting', () => {
   for (const file of walk(path.join(SRC, 'skills')).filter((f) => f.endsWith('.md'))) {
     const rel = toPosix(SRC, file);
     if (!/^skills\/[^/]+\/.+\.md$/.test(rel)) continue;
-    assert(`${rel} declares no report — a note opens none`,
+    assert(`${rel} declares no report. A note opens none`,
       readArtifact(file).fields.report === undefined);
   }
 
@@ -967,7 +1107,7 @@ section('contexts', () => {
   const listed = indexed.split('\n').find((line) => line.includes('[[contexts/web/auth]]')) ?? '';
   assert('the index lists a nested context by its full wiki-link', () => listed !== '');
   assert('a nested context declaring no paths acquires none from its directory', () =>
-    listed !== '' && /\|\s*—\s*\|\s*repository\s*\|/.test(listed));
+    listed !== '' && /\|\s*\u2014\s*\|\s*repository\s*\|/.test(listed));
 
   // Leave the fixture as it was found: a file left behind changes what every
   // later section sees in this tree.
@@ -989,9 +1129,9 @@ section('seeds', () => {
 
     if (seed.root) {
       // A root seed lands outside `.aep/`, so it is not an AEP artifact and must
-      // carry no frontmatter — otherwise the repository's own entrypoint would
+      // carry no frontmatter. Otherwise the repository's own entrypoint would
       // arrive claiming to be governed by a contract that does not reach it.
-      assert(`${seed.source} carries no AEP frontmatter — it lands outside .aep/`,
+      assert(`${seed.source} carries no AEP frontmatter, it lands outside .aep/`,
         !artifact.hasFrontmatter);
       assert(`${seed.source} points at the protocol rather than restating it`, () =>
         artifact.body.includes('.aep/protocol.md'));
@@ -1120,6 +1260,44 @@ section('forbidden', () => {
     !/\bADR \d{4}\b/.test(all) && !/\bspecs\.md\b/.test(all));
 });
 
+// --- §16.2 the prohibitions a script can check ------------------------------
+// The policy's four are one scan away from being checked, and the first of them
+// is the one this repository had most of. Scoped to what the reader test calls
+// governed: the shipped scripts, whose comments and messages a person reads, and
+// this repository's own documentation. Everything the test calls exempt is
+// asserted to be absent from the list, because an over-broad sweep is the
+// failure that reads as thoroughness.
+
+section('governed text', () => {
+  const scripts = walk(SRC).filter((f) => f.endsWith('.mjs'));
+  assert('there are shipped scripts to scan', () => scripts.length > 0);
+
+  const holding = scripts
+    .filter((f) => fs.readFileSync(f, 'utf8').includes(EM_DASH))
+    .map((f) => toPosix(SRC, f));
+  assert('no shipped script carries an em dash', () => holding.length === 0);
+  if (holding.length > 0) process.stdout.write(`        holding one: ${holding.join(', ')}\n`);
+
+  // Read inside the callback, so a file that has gone missing fails this
+  // assertion rather than throwing and aborting the section, which would take
+  // the scan above down with it and read as a smaller failure than it is.
+  for (const name of GOVERNED_DOCS) {
+    assert(`${name} carries no em dash`, () =>
+      !fs.readFileSync(path.join(REPO, name), 'utf8').includes(EM_DASH));
+  }
+
+  // The exemption, proven two ways. That the exempt files are not in the swept
+  // list is the claim; that each of them actually holds em dashes is what makes
+  // the claim load-bearing. Without the second, a day when specs.md happens to
+  // have none would leave this passing on nothing.
+  for (const name of EXEMPT_DOCS) {
+    assert(`${name} is exempt: it is not in the swept list`, () =>
+      !GOVERNED_DOCS.includes(name));
+    assert(`${name} exercises its exemption`, () =>
+      fs.readFileSync(path.join(REPO, name), 'utf8').includes(EM_DASH));
+  }
+});
+
 // --- §29 the adapter is a pointer, and it is current ------------------------
 
 section('adapter', () => {
@@ -1128,8 +1306,8 @@ section('adapter', () => {
 
   // Stated here rather than read off the target, because a target asserted
   // against its own declaration asserts nothing. A new runtime has to be
-  // written down twice — once as a target, once as what it is expected to
-  // publish — and the two disagreeing is the whole point.
+  // written down twice, once as a target and once as what it is expected to
+  // publish, and the two disagreeing is the whole point.
   const EXPECTED = {
     claude: {
       prefix: '',
@@ -1247,7 +1425,7 @@ section('adapter', () => {
       });
 
       // A shape that ships outside a repository has to reach the payload it
-      // travelled with — that is the only path that works before `.aep/` exists
+      // travelled with, the only path that works before `.aep/` exists
       // anywhere. A shape that ships inside one must carry no reach at all: it
       // would resolve to a place nothing put a payload.
       const reach = /(?:\$\{CLAUDE_PLUGIN_ROOT\}\/|`)((?:\.\.\/)+[^`\s]+\.md)/;
@@ -1293,12 +1471,12 @@ section('adapter', () => {
       const committed = path.join(adapterDir, ...relativePath.split('/'));
       assert(`adapters/${runtime}/${relativePath} is committed`, fs.existsSync(committed));
       if (!fs.existsSync(committed)) continue;
-      assert(`adapters/${runtime}/${relativePath} is current — regenerate with scripts/adapters.mjs`,
+      assert(`adapters/${runtime}/${relativePath} is current. Regenerate with scripts/adapters.mjs`,
         fs.readFileSync(committed, 'utf8') === contents);
     }
 
     // Only the generated subdirectories are swept. An adapter may also carry
-    // hand-written runtime glue — a hook, its configuration, a manifest — which
+    // hand-written runtime glue, a hook or its configuration or a manifest, which
     // the generator does not produce and must not be reported as stale.
     const generatedDirs = [...new Set(committedRender.map((file) => file.relativePath.split('/')[0]))];
     const committedFiles = generatedDirs
@@ -1344,7 +1522,7 @@ section('adapter', () => {
   // The manifest sits inside the adapter, not at the repository root, and that
   // placement is the whole mechanism: Claude Code reads a plugin's agents from
   // `<plugin root>/agents/` and a manifest `agents` path does not redirect that
-  // scan — a directory there fails validation outright, and naming the files
+  // scan. A directory there fails validation outright, and naming the files
   // loads none of them. Publishing the adapter as the plugin puts both kinds of
   // wrapper where the runtime already looks, which is why neither key is set.
   const pluginRoot = adapterDir;
@@ -1357,12 +1535,12 @@ section('adapter', () => {
 
   // Every standard directory at the plugin root loads on its own, and naming
   // one in the manifest is never a no-op: `agents` and `skills` replace the
-  // scan, and `hooks` registers the same file twice — which the runtime rejects
+  // scan, and `hooks` registers the same file twice, which the runtime rejects
   // as a duplicate, taking the plugin's hooks down with it. Each key reads like
   // configuration and behaves like a deletion, so each absence is asserted.
   const standard = { skills: 'skills', agents: 'agents', hooks: path.join('hooks', 'hooks.json') };
   for (const [key, location] of Object.entries(standard)) {
-    assert(`plugin.json declares no ${key} path — the standard location loads itself`, () =>
+    assert(`plugin.json declares no ${key} path. The standard location loads itself`, () =>
       !(key in manifest));
     assert(`the runtime's standard ${key} location exists to be found`, () =>
       fs.existsSync(path.join(pluginRoot, location)));
@@ -1540,7 +1718,7 @@ section('install adapters', () => {
   assert('t3.json does not seed the OpenCode reference', () => !withT3('opencode.md'));
 
   const withDirOnly = seeded({ '.opencode/opencode-is-not-config.txt': '' });
-  assert('a .opencode directory is not evidence — an adapter writes one', () =>
+  assert('a .opencode directory is not evidence. An adapter writes one', () =>
     !withDirOnly('opencode.md'));
 
   const bare = seeded({});
@@ -1583,7 +1761,7 @@ section('install fixture', () => {
 
   // A bare `git init` directory has a .git and nothing else, so exactly the
   // always-seeds plus git should land. That the detected ones stay away is the
-  // half worth asserting — a detector that fires on everything is no detector.
+  // half worth asserting: a detector that fires on everything is no detector.
   assert('always-seeds install', () =>
     fs.existsSync(path.join(aep, 'rules', 'version-control.md')) &&
     fs.existsSync(path.join(aep, 'contexts', 'repository.md')));
@@ -1641,7 +1819,7 @@ section('install fixture', () => {
     return true;
   });
 
-  // §31.1 — the one failure that reports success. A 1.x repository has no
+  // §31.1, the one failure that reports success. A 1.x repository has no
   // `.aep/`, so the "already installed?" check answers no and a fresh install
   // lands beside a live 1.x tree, orphaning everything in it.
   assert('a fresh install onto a 1.x layout is refused, and names the way forward', () => {
@@ -1772,8 +1950,8 @@ section('install fixture', () => {
   // proves only that the invention is handled.
   //
   // One of the nine is deliberately repository-owned. It is the case the whole
-  // design turns on — a repository that wrote its own rule under a name the
-  // protocol has since vacated — and it is simultaneously the negative case for
+  // design turns on, a repository that wrote its own rule under a name the
+  // protocol has since vacated, and it is simultaneously the negative case for
   // the link rewriter, whose link must be left exactly as it is.
 
   const legacyTree = ({ dryRun = false } = {}) => {
@@ -1784,7 +1962,7 @@ section('install fixture', () => {
     const tree = path.join(old, '.aep');
 
     // Wind the tree back: governance lived in rules/, policies/ did not exist,
-    // and — the part that decides whether the moves apply at all — the tree
+    // and, the part that decides whether the moves apply at all, the tree
     // declared the earlier release.
     fs.rmSync(path.join(tree, 'policies'), { recursive: true, force: true });
     const bootstrap = path.join(tree, 'protocol.md');
@@ -1802,14 +1980,14 @@ section('install fixture', () => {
       const owner = name === 'evidence.md' ? 'repository' : 'protocol';
       fs.writeFileSync(
         path.join(tree, 'rules', name),
-        [...frontmatter(owner, 'rule'), `# Rule — ${name.replace('.md', '')}`, ''].join('\n'),
+        [...frontmatter(owner, 'rule'), `# Rule \u2014 ${name.replace('.md', '')}`, ''].join('\n'),
         'utf8',
       );
     }
 
     fs.writeFileSync(
       path.join(tree, 'contexts', 'moved.md'),
-      [...frontmatter('repository', 'context'), '# Context — links across the move', '',
+      [...frontmatter('repository', 'context'), '# Context \u2014 links across the move', '',
         'Governed by `[[rules/engineering]]`, and by our own `[[rules/evidence]]`.', '',
         'The syntax, shown rather than used:', '',
         '```', '[[rules/change-control]]', '```', ''].join('\n'),
@@ -1913,7 +2091,7 @@ section('install fixture', () => {
       mine,
       ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-17', 'kind: rule',
         'use-when: "a name the protocol vacated, and this repository then took"',
-        '---', '', '# Rule — ours', ''].join('\n'),
+        '---', '', '# Rule \u2014 ours', ''].join('\n'),
       'utf8',
     );
     const output = execFileSync(
@@ -1927,7 +2105,7 @@ section('install fixture', () => {
     return fs.existsSync(mine);
   });
 
-  // §31 — notices. The negative case is the one that matters: a filter matching
+  // §31, notices. The negative case is the one that matters: a filter matching
   // every tree reads exactly like a filter that works, and every reader of a
   // current tree would be told to go and check something already true.
   assert('an upgrade reports the notices for the releases it crosses', () => {
@@ -1957,9 +2135,9 @@ section('install fixture', () => {
     NOTICES.every((notice) => release(notice.since) !== null && isNonEmptyString(notice.check)));
 
   // Pinned on the file it names and the reason it exists, not on the word
-  // "tracker" — which appears four times in this notice, so a looser test passes
+  // "tracker", which appears four times in this notice, so a looser test passes
   // on a notice that has lost its actual subject.
-  // Pinned to 2.3.0, the release that actually changed those references — not to
+  // Pinned to 2.3.0, the release that actually changed those references, not to
   // whichever release is being built. Tied to specVersion it demanded that every
   // future release re-declare a notice about a change it did not make.
   assert('the release that changed the tracker references declares a notice for it', () =>
@@ -1984,7 +2162,7 @@ section('install fixture', () => {
       throw new Error('previewed no moves');
     }
     if (!/links repaired/.test(preview.output)) {
-      throw new Error('previewed moves but no link repairs — the preview understates the upgrade');
+      throw new Error('previewed moves but no link repairs. The preview understates the upgrade');
     }
     return true;
   });
@@ -2094,7 +2272,7 @@ section('the guard fires', () => {
   if (failures.length === before + 1) {
     failures.pop();
     passes += 1;
-    process.stdout.write('  PASS  the failure path works — seeded failure discarded\n');
+    process.stdout.write('  PASS  the failure path works. Seeded failure discarded\n');
   } else {
     failures.push('[the guard fires] the harness did not record a seeded failure');
     process.stdout.write('  FAIL  the harness did not record a seeded failure\n');
