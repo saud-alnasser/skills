@@ -147,6 +147,7 @@ export const PAYLOAD_SCRIPTS = [
   'index.mjs',
   'validate.mjs',
   'position.mjs',
+  'scope.mjs',
 ];
 
 /**

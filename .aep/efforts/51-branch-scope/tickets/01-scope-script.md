@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 ---
 
 # feat(scripts): the claim, the working set, and the isolation are computed
@@ -14,21 +14,21 @@ entry in `PAYLOAD_SCRIPTS` and a regenerated manifest.
 
 ## Acceptance Criteria
 
-- [ ] `scope.mjs read` prints `claim`, `working`, `isolation`, and `base` in the
+- [x] `scope.mjs read` prints `claim`, `working`, `isolation`, and `base` in the
       shape `[[efforts/51-branch-scope/plan]]` fixes, exiting 0 with a non-empty
       claim, 1 when unscoped, and 2 when git or the tree cannot be read
       (criterion 1).
-- [ ] On a branch named `t3code/<hex>`, `read` prints `unscoped` before that
+- [x] On a branch named `t3code/<hex>`, `read` prints `unscoped` before that
       branch has a commit of its own and resolves to the effort once it has one
       (criterion 2). **This pair is the point of the ticket:** it passes only if
       resolution reads content rather than the branch name.
-- [ ] A branch whose commits touch two effort directories resolves to both, and
+- [x] A branch whose commits touch two effort directories resolves to both, and
       `check` still passes (criterion 4).
-- [ ] `scope.mjs check` exits 1 and lists every working-set path outside the
+- [x] `scope.mjs check` exits 1 and lists every working-set path outside the
       claim, and exits 0 when the claim is empty (criterion 5).
-- [ ] `read` reports `worktree` inside a linked worktree and `checkout` in a main
+- [x] `read` reports `worktree` inside a linked worktree and `checkout` in a main
       one, and names the sibling worktree holding a given branch (criterion 7).
-- [ ] `PAYLOAD_SCRIPTS` carries `scope.mjs` and
+- [x] `PAYLOAD_SCRIPTS` carries `scope.mjs` and
       `node src/scripts/manifest.mjs --check` exits 0 (criterion 11).
 
 ## Relevant areas
