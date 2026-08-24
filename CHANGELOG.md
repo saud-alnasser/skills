@@ -77,6 +77,20 @@ skills that entered it.
   how. 2.0 folded them into one file, and the fold made every reader of a change
   pay for its design. An effort whose approach is obvious still needs no plan.
 
+- **A status is not written without the evidence it claims.** Two gates, one per
+  level. The run that closes an effort stamps `spec.md` to `status: implemented`
+  before it readies the pull request, which is the answer it just gave recorded
+  in the file that asked for it; `/tasks`, `/prune`, and the validator all read
+  that value and until now nothing set it. And a task cannot be `resolved` while
+  one of its acceptance criteria is unticked, because the status is the claim
+  that the work is done and the ticks are the evidence for it. Validation fails
+  both by name.
+
+  A criterion that cannot be met parks the task unresolved or marks it
+  `obsolete`; ticking it is not one of the ways out. Efforts you have already
+  landed are exempt from both checks: a merged effort is the record of what was
+  reviewed, and this release does not rewrite it.
+
 ### Upgrading
 
 - **Two mechanisms classify a tree, and the older one has a stated end.** `/update`
