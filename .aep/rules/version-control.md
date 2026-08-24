@@ -85,6 +85,14 @@ plain-git sense.
 
 One branch per effort or task, named for the work.
 
+**A new effort's branch starts from `main`'s tip**, fetched first, whatever is
+checked out at the time. Nothing here stacks (above), so an effort has no reason
+to carry another's commits, and the log agrees: `branch-scope`,
+`post-merge-labels` and `artifact-paths` each have `main`'s tip as their merge
+base with it. Branch from whatever `HEAD` happened to be on instead and the new
+effort's pull request diff holds work its reviewer never asked for. The one
+exception is the chain below, which shares a branch rather than basing on one.
+
 **A chain of efforts that build on unmerged work shares one branch**, named for
 the first of them. Each effort still lands as its own commits, and the branch
 opens one pull request.
@@ -104,6 +112,23 @@ that commit rather than adding beside it.
 
 Check `git show --stat` after any amend — an amend here can pick up files no
 command staged.
+
+**A ticket branch is named `<effort>/<ticket-id>-<slug>`** — the effort
+directory's full name as the namespace, so ticket `06` of effort
+`51-branch-scope` is `51-branch-scope/06-seeds`. The directory name and not the
+effort branch's, which drops the number here: `branch-scope` is what the effort
+is on, and `51-branch-scope` is what a run resolves a name against.
+
+The namespace is there because ticket ids restart at `01` in every effort, so a
+bare `06-seeds` is a name two efforts can both want, and each ticket here runs
+in its own worktree under `.aep/worktrees/`, where git refuses the second claim
+on a branch outright. `[[policies/execution]]` requires the uniqueness; this is
+how it is reached.
+
+**Ticket branches already cut keep their names.** `04-skills-entry` and
+`06-seeds` resolve to their effort by what their commits touch, with no help
+from the name, and renaming a branch a live worktree is holding takes that
+thread's claim out from under it.
 
 *The 2.0 rewrite used to be named here as a standing exception, a single amended
 commit on a branch `2.0`. That branch exists neither locally nor on the remote,

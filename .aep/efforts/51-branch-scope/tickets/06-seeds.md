@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 blocked-by: [03]
 ---
 
@@ -15,16 +15,16 @@ operational line a worktree runtime needs.
 
 ## Acceptance Criteria
 
-- [ ] The seeded version-control rule names the ticket branch
+- [x] The seeded version-control rule names the ticket branch
       `<effort>/<ticket-id>-<slug>` and says why the namespace exists: ticket ids
       restart per effort, so two efforts otherwise want one branch name
       (criterion 8).
-- [ ] It states where a new effort's branch is based, in both shapes, and ties
+- [x] It states where a new effort's branch is based, in both shapes, and ties
       that to the stacking row it already carries (criterion 9).
-- [ ] `.aep/rules/version-control.md` carries both, corrected against this
+- [x] `.aep/rules/version-control.md` carries both, corrected against this
       repository's actual history rather than copied from the seed (criteria 8
       and 9).
-- [ ] The seeded t3 Code reference states that the worktree path must be
+- [x] The seeded t3 Code reference states that the worktree path must be
       gitignored, and why: an untracked worktree directory enters the position
       fingerprint through `git ls-files --others`, so every thread reads as
       drifted (requirement 11).
