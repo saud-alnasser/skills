@@ -63,52 +63,79 @@ scopes name the surface changed (`protocol`, `configure`, `tracker`).
 
 ## How work reaches the default branch
 
-**A branch, merged by a human.** The runner opens its pull request as a draft and
-marks it ready (above); the merge is the human's and only theirs. Not stacked
-changes, though not for want of tooling: `gt` is installed and this repository is
-`gt init`ed against trunk `main`. **No branch has ever been tracked in it** —
-`.git/refs/branch-metadata` does not exist and Graphite holds no pull request
-info — and every merge in the log is a flat squash from a single branch. The
-shape below is what the history demonstrates, not what the tooling permits.
+**A stack, submitted with Graphite, merged bottom-first by a human.** Switched on
+2026-08-24, when `artifact-paths`, `post-merge-labels`, and the branch carrying
+this rule were tracked into one stack in priority order. Every merge in the log
+up to `#52` is a flat squash from a single branch, so the history below that line
+is what the old shape produced rather than a description of what this repository
+does now.
 
-So a commit **references a task without closing it**: a closing keyword in a
-commit fires on a later cherry-pick or rebase and closes something nobody merged.
-The keyword belongs in the pull request body, which a human writes.
+`gt` is installed and `gt init`ed against trunk `main`, and **every branch in
+flight is tracked in it**. An untracked branch is not in the stack: nothing
+restacks it when what sits under it moves, and it will be reviewed against a base
+that has drifted.
 
-The log shows merged pull requests append their number — `… (#34)` — which is
-GitHub's squash-merge doing it, not something to write by hand.
+Tracking lives in `.git/.graphite_metadata.db`, with `.graphite_pr_info` beside
+it, on `gt` 1.8.6. An older note in this file took the absence of
+`refs/branch-metadata` as proof that nothing was tracked; this version never
+writes that path, so its absence proved nothing either way. `gt log --stack` is
+the check that answers.
 
-Consequently `blocked-by` means **wait until that task is resolved**, in the
-plain-git sense.
+So a commit **carries the closing keyword** — `Closes #<n>` on the commit that
+completes the work. A stacked commit reaches the default branch only through its
+own branch's pull request, so the cherry-pick hazard that makes a keyword unsafe
+in a flat repository cannot arise here. The pull request body still names the
+issue in prose; the keyword itself is the commit's.
+
+*Why this row matters more than it looks: it is the whole difference between the
+two shapes, and getting it backwards leaves an issue open after its own merge.
+That is exactly what happened to #51, under the flat rule, when the keyword was
+written as `Refs`.*
+
+Consequently `blocked-by` means **stack on top of**, not wait until resolved. A
+ticket declaring an edge is built on a branch cut from the branch of the ticket
+it names.
+
+**Merging is bottom-first and the human's.** The lowest pull request merges into
+`main`, everything above it restacks, and the next one merges. A stack merged out
+of order asks a reviewer to read work against a base that does not exist yet.
 
 ## Branches
 
-One branch per effort or task, named for the work.
+One branch per effort or task, named for the work, and **tracked in Graphite from
+the moment it exists**.
 
-**A new effort's branch starts from `main`'s tip**, fetched first, whatever is
-checked out at the time. Nothing here stacks (above), so an effort has no reason
-to carry another's commits, and the log agrees: `branch-scope`,
-`post-merge-labels` and `artifact-paths` each have `main`'s tip as their merge
-base with it. Branch from whatever `HEAD` happened to be on instead and the new
-effort's pull request diff holds work its reviewer never asked for. The one
-exception is the chain below, which shares a branch rather than basing on one.
+**A new effort's branch is cut from the branch you are standing on**, the top of
+the current stack, and tracked with that branch as its parent. That is what
+stacking means, and it replaces the rule this file carried until 2026-08-24,
+which had a new effort start from `main`'s tip precisely because nothing here
+stacked. Where new work genuinely depends on nothing unmerged, cut it from `main`
+and start a second stack rather than lengthening an unrelated one.
 
-**A chain of efforts that build on unmerged work shares one branch**, named for
-the first of them. Each effort still lands as its own commits, and the branch
-opens one pull request.
+*The chain exception went with it.* A chain of efforts used to share a single
+branch, on the reasoning that the alternative was a stack and this repository had
+never used one. It uses one now, so each effort in a chain takes its own branch
+and its own pull request, stacked in order, and each stays reviewable against the
+one below it.
 
-*Why: the second effort cannot branch from the default branch without losing what
-the first one added, and its own branch off the first is a stack — which the
-tooling here supports and this repository has never once used. Sharing the branch
-is the option that keeps every commit reviewable against something that exists
-without making this repository the first place to try stacking.*
+**A branch in the stack is one commit**, and changes to it are **amended into
+that commit** rather than landed beside it. Amend, then `gt restack` so everything
+above it moves with the change. `gt squash` is how a branch that grew several
+commits is brought back to the shape.
 
-Reconsider that when a chain actually appears. Until then the flat shape is the
-one every merge in the log was reviewed under.
+*Why: a level of the stack is one reviewable change. A branch carrying four
+commits asks its reviewer to work out which of them is the point, and it makes
+every branch above it rebase across four moving parts instead of one.*
 
-**An effort branch carries one commit per ticket.** `aep-3` is the working
-example: each ticket lands its own commit and further work on that ticket amends
-that commit rather than adding beside it.
+So the unit changed with the shape. Until 2026-08-24 an effort branch carried one
+commit per ticket, `aep-3` being the worked example. Under stacking a ticket is a
+**branch** with a single commit, its parent is the branch of the ticket its
+`blocked-by` names, and the effort is the stack rather than one branch inside it.
+An effort small enough to be one ticket is one branch, which is most of them.
+
+The closing keyword goes on the commit that completes the work (above), so a
+branch still being amended carries `Refs #<n>` and gains `Closes #<n>` on the
+amend that finishes it.
 
 Check `git show --stat` after any amend — an amend here can pick up files no
 command staged.
