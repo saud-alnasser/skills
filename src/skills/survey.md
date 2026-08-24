@@ -23,8 +23,13 @@ Not for a specific bug, and not for a change already described — that is
 
 ## Procedure
 
-1. **Bound the survey.** A directory, a package, a subsystem. An unbounded survey
-   returns a list nobody acts on.
+1. **Read the scope, then bound the survey.** `node .aep/scripts/scope.mjs read`,
+   quoted. A non-empty claim confines this run like any other, and a subject that
+   is the whole codebase buys no exemption (`[[policies/execution]]`): reaching
+   another effort's artifact stops the run and names it, and a tree-wide subject
+   belongs on an unscoped checkout. The claim and the isolation go in `Position`,
+   beside the bound (`[[policies/reporting]]`). Then bound it — a directory, a
+   package, a subsystem. An unbounded survey returns a list nobody acts on.
 2. **Read what is there.** `[[contexts]]` for the area, then the code.
 3. **Look for the four costs**, in this order:
 

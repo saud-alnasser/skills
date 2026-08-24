@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 blocked-by: [01, 03]
 ---
 
@@ -16,19 +16,19 @@ whatever `HEAD` is checked out.
 
 ## Acceptance Criteria
 
-- [ ] `specify`, `plan`, `tasks`, `implement`, `refine`, `review`, `prune`, and
+- [x] `specify`, `plan`, `tasks`, `implement`, `refine`, `review`, `prune`, and
       `survey` each invoke `scope.mjs read` on entry and say what a non-empty
       claim obliges (criterion 10).
-- [ ] Each states that the claim and the isolation go in `Position`, beside
+- [x] Each states that the claim and the isolation go in `Position`, beside
       whatever that skill already verifies (criterion 10).
-- [ ] `implement` states that an empty claim takes any effort, so an unscoped run
+- [x] `implement` states that an empty claim takes any effort, so an unscoped run
       is unchanged from today (criterion 3).
-- [ ] `implement` states the mismatch behaviour it performs: clean switches, dirty
+- [x] `implement` states the mismatch behaviour it performs: clean switches, dirty
       stops naming both efforts and the uncommitted paths (criterion 6).
-- [ ] `specify` reads the base of a new effort branch from
+- [x] `specify` reads the base of a new effort branch from
       `[[rules/version-control]]` and names both shapes, stacking and not
       (criterion 9).
-- [ ] `prune` and `survey` state that they are confined like everything else and
+- [x] `prune` and `survey` state that they are confined like everything else and
       belong on an unscoped checkout (criterion 5).
 
 ## Relevant areas

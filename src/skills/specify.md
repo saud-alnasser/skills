@@ -19,6 +19,11 @@ whole effort and is cheapest to fix here.
 1. **Orient.** Read `[[index]]`. Check `position/marker.json` against the current
    `HEAD` and working tree — where they differ, the tree moved under you and
    anything you remember about it is suspect.
+
+   **Then read the scope** — `node .aep/scripts/scope.mjs read` — and quote what
+   it prints. A non-empty claim confines this run to the efforts it names
+   (`[[policies/execution]]`). The claim and the isolation go in `Position`,
+   beside the marker read above (`[[policies/reporting]]`).
 2. **Check for an existing effort, and for an existing boundary.** A request that
    extends work already specified belongs in that effort's spec, not a new one —
    two efforts describing one change is the failure this step prevents. A request
@@ -87,9 +92,16 @@ it is the same step for a one-line fix and a fifteen-ticket feature:
 | --- | --- |
 | 1 | **create the issue**, body `spec.md`, each requirement's acceptance criterion a checkbox |
 | 2 | **rename** `efforts/xxxx-<slug>/` to `efforts/<number>-<slug>/`, before the first commit, so the rename never appears in history |
-| 3 | **create the effort branch** |
+| 3 | **create the effort branch**, based where `[[rules/version-control]]` says |
 | 4 | **commit the effort's artifacts** as one `docs` commit |
 | 5 | **push, and open a draft pull request** carrying the approach from `plan.md`, and each ticket's criteria as checkboxes — or **saying tickets are not yet cut**, never an empty list |
+
+**Where the new branch is based is the repository's, not AEP's.**
+`[[rules/version-control]]` says which shape this repository is in: where it
+stacks, the new effort's branch is created on the current branch and the rule is
+quoted as the reason; where it does not, the base is the default branch's tip,
+whatever `HEAD` happens to be. Read it rather than branching from where you are
+standing, or the new effort carries the unmerged commits of the one you were on.
 
 **The pull request exists from the first draft** because it is what the effort's
 own artifacts land through, and because it is where the run will keep its memory

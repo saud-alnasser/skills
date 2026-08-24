@@ -17,7 +17,11 @@ uncomfortable precisely when it matters most.
 
 ## Procedure
 
-1. **Read the spec.** The effort's `spec.md`. If `status:` is still `draft` and material
+1. **Read the scope, then the spec.** `node .aep/scripts/scope.mjs read`, quoted:
+   it names the effort whose `spec.md` this reads, and a non-empty claim confines
+   the run to the efforts it names (`[[policies/execution]]`). The claim and the
+   isolation go in `Position`, beside that spec's `status:`
+   (`[[policies/reporting]]`). If `status:` is still `draft` and material
    questions are open, go back to `[[skills/refine]]` first.
 2. **Read the code you intend to change** — not the parts you remember, the parts
    you will touch. `[[policies/engineering]]`: names are not proof.
