@@ -156,13 +156,86 @@ whichever runtime adapters the repository asks for.
    **Nothing created here names AEP** (`[[policies/execution]]`). A tracker is
    read by people who never installed it.
 
-9. **Validate**, and report the output:
+9. **Offer the merge-time job — only where there is a tracker at all.**
+
+   The vocabulary above is a projection of an effort's state, and its terminal
+   value is the one no file can derive: merged is a fact the forge holds and the
+   repository never learns. Something native to the forge has to move the label
+   when a human merges, and that something ships beside each tracker reference,
+   one file per forge, at `seed/automation/<forge>.yml` in the distribution.
+
+   **Skip this exactly where the step above was skipped, and say so.** Nothing
+   here reads a tracker: the condition is the answer that step already has, and
+   the offer itself is text and a write. A run that reached no tracker gains no
+   call to one by making this offer.
+
+   **Read `[[rules/version-control]]` first.** A repository that declined this
+   before recorded the decision there. Where that record stands, say it was read
+   and **do not offer again** — the installer reads it too, and writes nothing
+   while it stands.
+
+   Otherwise show what would happen. It prints what the forge needs provisioned
+   before it prints anything else, then where the job would land, then the text
+   verbatim. `.aep/` exists by now, so this is the same `--update` the step above
+   it ran:
 
    ```
-   node .aep/scripts/validate.mjs
+   node <distribution>/scripts/install.mjs --into <repository> --update --automation <forge> --dry-run
    ```
 
-10. **Name what still needs a human**: which seeds were installed and remain
+   **The two forges are two offers rather than one offer twice.** GitHub needs
+   nothing created, because the job runs on the token the forge already hands
+   it. GitLab needs a project access token with `api` scope, which is a person's
+   to create and store, and its offer says so before it says anything else, so a
+   repository that declines knows what it declined. Provisioning a credential on
+   somebody's behalf is not something an installer does.
+
+   | The repository | What is offered |
+   | --- | --- |
+   | has no workflow that assigns labels | the job as a new file, written whole |
+   | already has one | **an addition to that file**, quoted exactly, and no second file |
+
+   The installer answers that from the files already there, so the second row
+   arrives as text to add rather than as a file to write. **Where the file's own
+   shape cannot take the addition** — its trigger written inline, or a
+   `pull_request` key it already has — the installer names the obstacle and
+   proposes nothing, because a paste that does not parse breaks a workflow this
+   repository owns. Report that as it stands; adding the job there is a
+   judgement about that file and it is the human's.
+
+   **The offer adds a job.** It does not modernise an action the repository
+   already runs, swap one out, or reconcile its label globs.
+
+   Then ask — files outside `.aep/` belong to the repository, and a workflow is
+   executable, which makes it a larger thing to write into somebody's tree than
+   a reference file. **On acceptance**, re-run the same command without
+   `--dry-run` where the offer was a new file, and make the addition yourself,
+   exactly as quoted, where one was proposed: the installer proposes into a file
+   the repository owns and never edits it.
+
+   **On a refusal, write nothing, and record the decision** in
+   `[[rules/version-control]]`, in the repository's own words, saying which forge
+   was declined and when. Begin it with this sentence exactly, because it is
+   what the installer reads to know the question is settled:
+
+   ```
+   The merge-time status job is declined.
+   ```
+
+   That rule is where this step and `[[skills/update]]` are already reading,
+   which is what makes the next run read the decision instead of asking again. A
+   state file under `.aep/` would be a primitive nothing else uses. **It is a
+   recorded decision and not a deviation** — a refusal is a path this step
+   offers, so nothing is being varied from, and filing it as a deviation would
+   have every later upgrade report a settled question as an open fork.
+
+10. **Validate**, and report the output:
+
+    ```
+    node .aep/scripts/validate.mjs
+    ```
+
+11. **Name what still needs a human**: which seeds were installed and remain
     unverified, `AGENTS.md`'s first line, what `contexts/` lacks, and which rules
     this repository will want to add that AEP cannot know about.
 

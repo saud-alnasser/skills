@@ -1,5 +1,100 @@
 # Changelog
 
+## 3.5.0
+
+The status ladder ended on a row nothing executed. Every row above it projects
+`spec.md`'s own `status:`, but merged turns on an event no run is still alive
+for: `/implement`'s close moves both objects to `in review`, marks the pull
+request ready, and stops, and the merge is deliberately the human's. So the last
+agent act in an effort's life left both objects reading `in review` for ever.
+
+It is not hypothetical. Pull request #46 merged at 15:47:25 and issue #45 still
+read `status: in review` until a person removed it by hand seven minutes later.
+The label was right only because somebody noticed.
+
+The row's premise was unowned too. "Closed by the pull request" is a claim about
+a closing keyword, and nothing shipped put one anywhere, so an issue closed on
+its own merge only when somebody remembered. #46 carried `Closes #45` and the
+issue closed itself. #52 carried `Refs #51`, which is the referencing form, and
+#51 survived its own merge until a person closed it. Same protocol, different
+luck.
+
+### Added
+
+- **A merge-time job for your forge, offered once.** It fires on the forge's own
+  merge event, moves `status: done` onto the change request and the issue it
+  closes, and reaches the same value for a change request closed without merging,
+  so an abandoned effort leaves more than a flag behind. On GitHub it needs
+  nothing provisioned and runs on the built-in token. On GitLab it needs a project
+  access token with `api` scope, because no pipeline fires at merge and the job
+  token cannot write to a merge request, and the offer says so before it says
+  anything else.
+
+  Offered at install and at update, written only if you accept, and never by
+  default. Where you already run a workflow that assigns labels it is proposed as
+  an addition to that file rather than a second one, and where that file's shape
+  cannot take the addition the obstacle is named and nothing is proposed.
+
+- **A refusal is recorded rather than re-asked.** Decline and nothing is written:
+  the decision goes into your own `.aep/rules/version-control.md` as an
+  decision, and it is read before the offer is made again. Delete that paragraph
+  and you are asked once more, which is how you change your mind. It is not filed
+  as a declared deviation, which would have `/update` report a settled answer as
+  an open fork on every upgrade.
+
+- **`.aep/scripts/reconcile.mjs`, which needs no decision and arrives either way.** It
+  reads an observation you already fetched, on stdin or from a file, and prints
+  which efforts have tracker labels disagreeing with their `spec.md`, including an
+  issue left open after its change request merged. It makes no network call of its
+  own, which is the point rather than an omission: this is the component that
+  exists for a repository which declined the job, so a forge call inside it would
+  make the fallback carry the cost it was built to avoid.
+
+  With no observation it reports every effort `unobserved` and exits 0. A
+  repository with no tracker runs it and learns nothing, which is the answer
+  rather than a fault.
+
+- **The ladder is a value as well as a table.** `contract.mjs` exports
+  `STATUS_LADDER`, one entry per row, carrying the spec status a row projects and
+  the observed change-request state that selects a terminal one. That second input
+  is what `spec.md` cannot supply: it stops at `implemented`, so `status: done` is
+  reachable from no file at all. The suite holds the value and the policy equal
+  row for row, in both directions.
+
+### Changed
+
+- **The terminal row names two owners, at two latencies.** The job the forge fires
+  on its own merge event, and the reconciliation the next run computes from what
+  it already fetched. No row in the ladder is left without one, and the ladder now
+  covers a change request closed without merging as well as one merged.
+
+- **The runner writes the closing keyword, in the half your repository's shape
+  puts it.** `/specify` owns the body half when it opens the pull request and
+  `/implement` owns the commit half on the amend that finishes the work, and each
+  reads which half applies from `.aep/rules/version-control.md` rather than
+  shape. Where a repository stacks, the keyword names the change that merges last:
+  a stack merges bottom-first, so a keyword below the top would close the issue
+  with the effort still unbuilt.
+
+- **The specification stops contradicting the ladder.** Its prohibition on
+  labelling a fact the tracker already models is narrowed rather than lifted: a
+  `status:` family AEP maintains keeps its terminal value, because a family with a
+  hole cannot be filtered on, and the value is a projection of the effort's state
+  rather than a second copy of the forge's. Outside such a family the prohibition
+  stands.
+
+- **A tracker reference cannot ship without its merge-time job.** The two are
+  declared together, so a forge reference added later fails the suite rather than
+  shipping half.
+
+### Upgrading
+
+Nothing you own changes shape and no file of yours stops validating. `/update`
+makes the offer once and acts on your answer. Your forge reference is yours, so
+the fetch that produces the reconciliation's observation is not added to it for
+you: read it from the shipped seed and copy it across, or run the two commands
+the notice names.
+
 ## 3.4.0
 
 Shipped text made claims about the implementation and nothing tied the two
@@ -89,6 +184,7 @@ no opinion about it at all.
 A tree that validated before this release can fail after it, and what changed is
 that a defect you already had became visible. The fix is to move the directory
 under `.aep/` and run validate again. Nothing here moves it for you.
+
 
 ## 3.3.0
 

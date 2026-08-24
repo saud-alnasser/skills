@@ -65,6 +65,7 @@ export const PROTOCOL_FILES = [
   'scripts/frontier.mjs',
   'scripts/index.mjs',
   'scripts/position.mjs',
+  'scripts/reconcile.mjs',
   'scripts/scope.mjs',
   'scripts/validate.mjs',
   'skills/domain.md',
@@ -272,6 +273,91 @@ export function useWhenProblems(value, { heading = '', name = '', directory = ''
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
+
+/**
+ * The status ladder, as rows a script can compute with.
+ *
+ * `[[policies/execution]]` states this table in prose, one row per state an
+ * effort passes through, and a script wanting to answer *what `status:` label
+ * should this effort's issue carry* had nothing to read but that prose. The rows
+ * are here so it can read a value instead, and the suite asserts the two equal
+ * row for row, because a projection written down twice is a projection that
+ * drifts.
+ *
+ * Two inputs, and two outputs:
+ *
+ *   spec           the `spec.md` `status:` this row projects, and null on a row
+ *                  no file reaches
+ *   changeRequest  `merged` or `closed`, the observed state that selects a
+ *                  terminal row, and null everywhere else
+ *   issue          the label the issue carries
+ *   pullRequest    the label the change request carries
+ *
+ * The terminal rows are why the second input is here rather than left to
+ * whoever reads this. `spec.md` stops at `implemented`, so `status: done` is
+ * reachable from no file at all: it turns on whether a human merged the change
+ * request or closed it without merging, and a consumer that has to know that on
+ * its own is a consumer that can get it wrong.
+ *
+ * `accepted` reaches two rows, `ready` and `in progress`, because taking the
+ * first ticket moves the label without moving the field. So a spec status
+ * projects onto the set of labels it may legitimately show, and a consumer that
+ * compares an observation against the first matching row rather than all of them
+ * reports a run in flight as drift.
+ *
+ * `effort` is the policy's own wording of the row, verbatim, which is what lets
+ * the equality check catch a reworded row rather than only a deleted one. The
+ * policy's fourth column, what moves each label, is deliberately absent: it
+ * names who acts, which is something to read rather than something to project,
+ * and the policy is where it is checked.
+ *
+ * Nothing here reads these rows. This file is the contract, and a script's logic
+ * living in it is how the contract stops being readable as one.
+ */
+export const STATUS_LADDER = [
+  {
+    effort: 'the spec is being drafted',
+    spec: 'draft',
+    changeRequest: null,
+    issue: 'status: backlog',
+    pullRequest: 'status: backlog',
+  },
+  {
+    effort: 'the spec is accepted and the tickets are cut',
+    spec: 'accepted',
+    changeRequest: null,
+    issue: 'status: ready',
+    pullRequest: 'status: ready',
+  },
+  {
+    effort: 'the runner is working',
+    spec: 'accepted',
+    changeRequest: null,
+    issue: 'status: in progress',
+    pullRequest: 'status: in progress',
+  },
+  {
+    effort: 'converge found no gap, and the spec is stamped `implemented`',
+    spec: 'implemented',
+    changeRequest: null,
+    issue: 'status: in review',
+    pullRequest: 'status: in review',
+  },
+  {
+    effort: 'merged',
+    spec: null,
+    changeRequest: 'merged',
+    issue: 'status: done',
+    pullRequest: 'status: done',
+  },
+  {
+    effort: 'closed without merging',
+    spec: null,
+    changeRequest: 'closed',
+    issue: 'status: done',
+    pullRequest: 'status: done',
+  },
+];
 
 /**
  * Directories that must never exist under `.aep/`.

@@ -268,6 +268,18 @@ cannot act on is a wall rather than a check.
    supplies the default only where the repository is silent, **including which
    form the ticket reference takes**. Say what capability changed and why, and
    **never give a file-by-file account** — the diff already lists the files.
+
+   **The closing keyword is one of those forms, and the same rule decides it.**
+   Where the repository stacks, the keyword rides a commit — the one on the
+   change that merges **last**. A stack merges bottom-first, so a keyword
+   anywhere below the top closes the issue while the rest of the effort is still
+   unbuilt: every change under the last carries `Refs #<issue>`, and the last one
+   carries `Closes #<issue>`. Where the repository merges a branch through a pull
+   request, the keyword belongs in the body instead, written there when the
+   effort opened (`[[skills/specify]]`) — a commit carrying one in that shape
+   fires again on a later cherry-pick and closes something nobody merged. Read
+   `[[rules/version-control]]` for which; neither shape is the default.
+
 4. **Commit — one commit per ticket, with no exception for a ticket that
    produced no diff.** A ticket that verifies something is already true lands an
    **empty commit** whose message carries what was checked and what it printed.

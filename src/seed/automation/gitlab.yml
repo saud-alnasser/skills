@@ -1,0 +1,95 @@
+# Provision this first: a project access token with `api` scope, stored as a
+# masked, protected CI/CD variable named AEP_STATUS_TOKEN. Without it this job
+# fails on its first run and on every run after. GitLab's own job token is
+# read-only against merge requests, so no scope you can grant the pipeline makes
+# it able to do this, and a missing token is what a first failure means.
+#
+# The second thing to know: GitLab fires no pipeline when a merge request is
+# merged. So this runs on the push that merge produced, on the default branch,
+# and finds the merge request from the commit. A merge request closed without
+# merging produces no commit and therefore no pipeline at all: run this job from
+# the Pipelines tab with AEP_MERGE_REQUEST set to that merge request's iid, and
+# it reaches the same terminal label.
+#
+# What it does: moves the status label to its terminal value on the merge request
+# and on every issue that merge request closes. Both labels named under
+# `variables:` have to exist in this project already.
+#
+# Merging stays a person's. This only records that it happened.
+
+effort-status:
+  stage: .post
+  image: alpine:latest
+  variables:
+    # The vocabulary is this project's rather than this job's. Change these two
+    # values where the status labels here read differently: another separator,
+    # another case, an emoji in front.
+    TERMINAL_LABEL: "status: done"
+    IN_REVIEW_LABEL: "status: in review"
+  rules:
+    # A merge request closed without merging, reached by hand because GitLab
+    # offers no event for it.
+    - if: $AEP_MERGE_REQUEST
+    # The push a merge produced.
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - apk add --no-cache curl jq > /dev/null
+    - |
+      set -eu
+      api="$CI_API_V4_URL/projects/$CI_PROJECT_ID"
+      auth="PRIVATE-TOKEN: $AEP_STATUS_TOKEN"
+
+      api_get() {
+        if ! body=$(curl -sf -H "$auth" "$1"); then
+          echo "GitLab refused GET $1." >&2
+          echo "AEP_STATUS_TOKEN needs api scope. A job token cannot read or write a merge request." >&2
+          exit 1
+        fi
+        printf '%s' "$body"
+      }
+
+      # Which merge request: the one named by hand, or the one this commit came
+      # from. No merge request behind the commit is an ordinary outcome, since
+      # anything pushed straight to the default branch lands here too.
+      if [ -n "${AEP_MERGE_REQUEST:-}" ]; then
+        iid="$AEP_MERGE_REQUEST"
+      else
+        iid=$(api_get "$api/repository/commits/$CI_COMMIT_SHA/merge_requests" \
+          | jq -r '.[0].iid // empty')
+      fi
+      if [ -z "$iid" ]; then
+        echo "no merge request behind $CI_COMMIT_SHA. Nothing to move."
+        exit 0
+      fi
+
+      # The guard. A terminal label goes on a merge request that actually
+      # reached a terminal state, read from the API rather than inferred from
+      # this pipeline having run at all. Merged and closed both qualify: an
+      # effort abandoned is over too, and leaving it sitting at the in-review
+      # value is the drift this job exists to remove.
+      state=$(api_get "$api/merge_requests/$iid" | jq -r '.state')
+      if [ -z "$state" ] || [ "$state" = "null" ]; then
+        echo "merge request $iid returned no state. Refusing to guess." >&2
+        exit 1
+      fi
+      case "$state" in
+        merged | closed)
+          echo "merge request $iid is $state. Moving to $TERMINAL_LABEL"
+          ;;
+        *)
+          echo "merge request $iid is $state, which is not terminal. Nothing to move."
+          exit 0
+          ;;
+      esac
+
+      move() {
+        curl -sf -X PUT -H "$auth" \
+          --data-urlencode "add_labels=$TERMINAL_LABEL" \
+          --data-urlencode "remove_labels=$IN_REVIEW_LABEL" \
+          "$1" > /dev/null
+      }
+
+      move "$api/merge_requests/$iid"
+      for issue in $(api_get "$api/merge_requests/$iid/closes_issues" | jq -r '.[].iid'); do
+        move "$api/issues/$issue"
+      done

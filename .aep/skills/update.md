@@ -82,6 +82,33 @@ directory *outside* `.aep/` says 1.x.
    notice and moving on is how it is missed: the output scrolls, the upgrade
    reports success, and nothing ever asks again.
 
+   **One thing to act on here is standing rather than per release: the
+   merge-time job.** A repository whose `references/` carries a tracker with
+   nothing beside it moving the status label at merge gets
+   `[[skills/install]]`'s offer now, in this run — the same exact text, the same
+   two shapes, a new file or an addition to a workflow that already assigns
+   labels, and the same refusal path, which writes nothing and records the
+   decision in `[[rules/version-control]]`. It is standing because a repository
+   can gain a tracker reference in any release, or decline once and change its
+   mind, and because it asks for a write outside `.aep/` that no upgrade makes
+   on its own.
+
+   **Where that record already stands, say it was read and do not offer again.**
+   Re-asking a settled question is what recording it exists to stop. It is a
+   recorded decision rather than a declared deviation, so step 8 does not report
+   it and no later upgrade files a settled answer as an open fork.
+
+   **Where the offer cannot be settled in this run, report it as outstanding,
+   naming the forge and what is left.** GitLab's is the case that has this
+   built in: it needs a project access token with `api` scope that a person
+   creates, so accepting it here still leaves that, and an offer reported as
+   accepted-and-done would be false.
+
+   Which repositories this applies to is read from the tree — `references/`, and
+   the workflow files that are there — and never from a tracker. The offer is
+   text and a write, so an upgrade that reached no tracker gains no call to one
+   by making it.
+
 7. **Reconcile the rules against the law that changed under them.** `rules/` is
    the repository's and the installer does not touch it — which is why nothing
    has ever read a rule against the policy it tightens. A rule may tighten or
@@ -223,7 +250,9 @@ visible to everyone in it, and a deleted milestone does not come back.
 
 The declared release matches the running one, `validate.mjs` passes, repository
 knowledge is intact, every deviation and collision has been reported, and every
-notice the upgrade printed has been done or reported as outstanding.
+notice the upgrade printed has been done or reported as outstanding. The
+merge-time job has been offered and written, declined and recorded as a
+decision, read as already declined, or reported as outstanding.
 
 Every rule citing a policy the crossed releases changed has been reconciled or
 reported, no rule was rewritten without its before-and-after shown first, and a

@@ -22,6 +22,50 @@ glab ci status
 
 Reading is always allowed; `[[policies/authority]]` still governs writing.
 
+### The observation `reconcile.mjs` reads
+
+`.aep/scripts/reconcile.mjs` computes which efforts have tracker objects
+disagreeing with their `spec.md`, and it fetches nothing itself: it is the
+component that exists for a repository which declined the merge-time job, so a
+forge call inside it would be the one unconditional tracker call the protocol
+does not allow. The caller fetches, because the caller is already here.
+
+```sh
+glab issue list --all --output json
+glab mr list --all --output json
+```
+
+**A merge request list carries no link to the issue it closes**, which is where
+this differs from the GitHub side rather than mirroring it. The link is its own
+endpoint, one call per merge request:
+
+```sh
+glab api projects/:id/merge_requests/<iid>/closes_issues
+```
+
+Each merge request is given a `closesIssues` key holding that call's result, and
+the two lists are then combined into one object with an `issues` key and a
+`changeRequests` key:
+
+```json
+{
+  "issues": [{ "iid": 45, "state": "closed", "labels": ["status: done"] }],
+  "changeRequests": [
+    {
+      "iid": 46,
+      "state": "merged",
+      "labels": ["status: done"],
+      "closesIssues": [{ "iid": 45 }]
+    }
+  ]
+}
+```
+
+Piped in with `node .aep/scripts/reconcile.mjs --observed -`. The script reads
+either forge's shape and says which one it read, so a shape it does not
+recognise reports that rather than answering with an empty list of findings.
+
+
 ## An effort here: one issue, one merge request
 
 **AEP creates exactly two objects per effort** (`[[policies/execution]]`). The

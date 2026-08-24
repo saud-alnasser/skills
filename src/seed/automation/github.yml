@@ -1,0 +1,73 @@
+# Nothing to provision. This runs on the token GitHub already hands the job, with
+# the two scopes declared below, so there is no secret to create, store, or
+# rotate before it works.
+#
+# What it does: when a change request closes, it moves the status label to its
+# terminal value on the change request and on every issue that change request
+# closes. Both labels named under `env:` have to exist in this repository's label
+# list already. The `gh` CLI refuses a label it cannot find, which is the failure
+# to expect on a first run and the one thing to check before blaming the trigger.
+#
+# Merging stays a person's. This only records that it happened.
+
+name: effort status
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  effort-status:
+    name: move status to its terminal value
+    # The guard travels with the job, and this is why it is here rather than
+    # left to `on:` above. `on:` is the file's rather than the job's, so this
+    # job added to a workflow that already triggers on something else would run
+    # on that trigger too, and label change requests that are still open. This
+    # keeps it to a change request that actually closed, wherever it lands.
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    env:
+      # The vocabulary is this repository's rather than this job's. Change these
+      # two values where the status labels here read differently: another
+      # separator, another case, an emoji in front.
+      TERMINAL_LABEL: "status: done"
+      IN_REVIEW_LABEL: "status: in review"
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      # The guard, and the thing to read before deleting either branch of it.
+      # `closed` fires whether or not a merge happened, so whether one did is
+      # read rather than assumed. Both branches reach the same terminal label on
+      # purpose: an effort abandoned is over too, and leaving it sitting at the
+      # in-review value is the drift this file exists to remove.
+      - name: The change request merged
+        if: github.event.pull_request.merged == true
+        run: echo "merged. Moving to $TERMINAL_LABEL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: The change request closed without merging
+        if: github.event.pull_request.merged != true
+        run: echo "closed without merging. Moving to $TERMINAL_LABEL as well" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Move the change request
+        run: |
+          gh pr edit "$NUMBER" --repo "$REPO" \
+            --add-label "$TERMINAL_LABEL" --remove-label "$IN_REVIEW_LABEL"
+
+      - name: Move every issue it closes
+        run: |
+          # `closingIssuesReferences` resolves the linked issue from the change
+          # request itself, so nothing here reads a body looking for a keyword.
+          # An empty result means this change request closed no issue, which is
+          # an ordinary outcome rather than a failure.
+          issues=$(gh pr view "$NUMBER" --repo "$REPO" \
+            --json closingIssuesReferences \
+            --jq '.closingIssuesReferences[].number')
+          for issue in $issues; do
+            gh issue edit "$issue" --repo "$REPO" \
+              --add-label "$TERMINAL_LABEL" --remove-label "$IN_REVIEW_LABEL"
+          done

@@ -141,6 +141,15 @@ Say in `Position` which surface the run is using, and where none was taken, why.
 **A refusal at the ask leaves no worktree behind.** The spec stays local and
 unopened, and nothing was created to clean up.
 
+**Which half of the closing keyword belongs to this step is the repository's
+answer, not AEP's.** `[[rules/version-control]]` carries both rows. Where the
+repository merges a branch through a pull request, the keyword belongs in the
+body: the draft opened at row 5 carries `Closes #<issue>` beside the approach
+and the checkboxes. Where the repository stacks, it rides the change that merges
+last instead, and `[[skills/implement]]` writes it there. Read the row rather
+than assuming a shape — an issue whose pull request merged without a keyword
+stays open until a person notices, and noticing is not a mechanism.
+
 **The pull request exists from the first draft** because it is what the effort's
 own artifacts land through, and because it is where the run will keep its memory
 (`[[policies/execution]]`).
