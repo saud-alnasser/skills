@@ -125,7 +125,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | aep-3 | resolved | 16 |
 | [[efforts/aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | aep-3 | resolved | 06 |
 | [[efforts/aep-3/tickets/19-version-control]] chore(rules): this repository states what the runner may push | aep-3 | resolved | 10 |
-| [[efforts/aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | aep-3 | open | 08, 11, 12, 13, 17, 18, 19 |
+| [[efforts/aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | aep-3 | resolved | 08, 11, 12, 13, 17, 18, 19 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |

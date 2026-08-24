@@ -17,11 +17,12 @@ skills that entered it.
   the same case as any other.
 
 - **Frontmatter is `use-when`, and `paths` where applicability follows the
-  repository.** Six fields are gone: `aep`, `date`, `kind`, `mode`, `report`,
-  and `owner`. `kind` restated the directory, `date` was a freshness claim
-  nothing checked, `report` chose between two shapes the reporting policy now
-  fixes at one, and the release is named once, in the bootstrap's `version:`,
-  instead of on every shipped file.
+  repository.** Seven fields are gone: `aep`, `date`, `kind`, `mode`, `report`,
+  `owner`, and `part-of`. `kind` restated the directory, `date` was a freshness
+  claim nothing checked, `report` chose between two shapes the reporting policy
+  now fixes at one, `part-of` restated the effort directory a ticket is filed
+  under, and the release is named once, in the bootstrap's `version:`, instead of
+  on every shipped file.
 
   A tree you own is not edited by the upgrade, so your own rules and contexts
   keep whatever they carry. Validation rejects a retired field only on a path
@@ -49,6 +50,55 @@ skills that entered it.
   manifest from the payload, and the suite fails when the committed one is
   stale. A stale manifest fails open: a new file would be treated as the
   repository's and never installed.
+
+- **Two skills are gone, and one note moved.** `/commit` is no longer a command:
+  landing a task is part of finishing it, so the mechanics run inline at the end
+  of `/implement`, and the two judgements `/commit` made about a whole effort,
+  whether the effort is implemented and whether the change falsified a context or
+  a reference, are made once the effort has no unresolved task left.
+  `skills/tasks/labels.md` is gone with its ladder and its approval gate; what
+  replaces it asks which of your labels describe an effort rather than which
+  label carries a grouping fact. `skills/commit/conflicts.md` is now
+  `skills/implement/conflicts.md`, beside the skill that reads it.
+
+- **One invocation runs the effort, not the wave.** `/implement` reads the
+  frontier, builds every task on it, and reads it again, until nothing is
+  unresolved. It stops on exactly three conditions and there is no fourth: a task
+  that cannot be built as specified, a criterion the plan cannot satisfy, and a
+  change that would widen the effort's scope. Everything else it decides and
+  records.
+
+- **An effort is one issue and one pull request.** The tracker carries the effort,
+  not the tasks: tasks are files under `efforts/<effort>/tickets/` in the
+  repository, and the pull request body is the run's durable memory, rewritten as
+  the run proceeds so that a session that dies is resumed from it.
+
+- **`plan.md` is back.** `spec.md` holds what is changing and why, `plan.md` holds
+  how. 2.0 folded them into one file, and the fold made every reader of a change
+  pay for its design. An effort whose approach is obvious still needs no plan.
+
+### Upgrading
+
+- **Two mechanisms classify a tree, and the older one has a stated end.** `/update`
+  reads the layout before the version, because a version field is a claim and the
+  files are a fact. A tree carrying `owner:` on its artifacts was written under
+  the contract where that field decided ownership, and is classified by it; a tree
+  without one is classified by the manifest this release ships. The `owner:`
+  branch goes when no repository the maintainer knows of still carries that
+  layout, which is written in `skills/update.md` rather than left to judgement.
+
+- **The upgrade names what it will not convert, and converts nothing on its own.**
+  An artifact still carrying a retired field, and an effort still in flight whose
+  `spec.md` holds a `# Architecture` section, are both reported and left. Dropping
+  a field decides its content is really answered elsewhere, and splitting a spec
+  decides what is WHAT and what is HOW: those are judgements, and a script that
+  made them silently would have edited a file you own to do it. `/update` makes
+  them with you.
+
+- **An effort that has already landed is left alone.** Its spec is not split, and
+  its issues and pull request are not reshaped. They are the record of what was
+  built and reviewed, and rewriting them to match a layout the work was never done
+  under loses the record and gains nothing.
 
 ## 2.7.0
 

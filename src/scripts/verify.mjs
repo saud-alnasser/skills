@@ -1983,6 +1983,21 @@ section('templates', () => {
   assert('the plan template forbids restating the spec', () =>
     /Never restate the spec/i.test(planTemplate));
 
+  // §8 makes `status` legal on an effort's spec and on a ticket, and nowhere
+  // else -- so a plan template showing one hands every reader frontmatter that
+  // `validate.mjs` then rejects, which is the worst kind of template: the file
+  // it produces is wrong, and the tool that catches it blames the author.
+  assert('the plan template shows a use-when and no status', () => {
+    const block = (planTemplate.split('```markdown')[1] ?? '').split('---')[1] ?? '';
+    const fields = [...block.matchAll(/^([a-z-]+):/gm)].map((m) => m[1]);
+    if (JSON.stringify(fields) !== JSON.stringify(['use-when'])) {
+      throw new Error(`shows: ${fields.join(', ') || 'nothing'}`);
+    }
+    return true;
+  });
+  assert("the plan template says why the effort's status is not its to declare", () =>
+    /`status` is the spec's, and is illegal here/.test(planTemplate));
+
   // The frontmatter block a ticket copies, pinned as the exact pair, so a field
   // creeping back in fails rather than passing as a superset.
   assert('the ticket template shows status and blocked-by, and nothing else', () => {
@@ -2374,8 +2389,53 @@ section('adapter', () => {
 // --- release readiness ------------------------------------------------------
 
 section('release', () => {
-  assert('the changelog records this version', () =>
-    fs.readFileSync(path.join(REPO, 'CHANGELOG.md'), 'utf8').includes(`## ${specVersion}`));
+  const changelog = fs.readFileSync(path.join(REPO, 'CHANGELOG.md'), 'utf8');
+  assert('the changelog records this version', () => changelog.includes(`## ${specVersion}`));
+
+  // Cutting a release is one command, and this is what says so. The version
+  // reaches four files, and `release.mjs` writes all four from one argument, so
+  // a disagreement between them means somebody set one by hand: the newest entry
+  // in the changelog is then a release nothing else has been stamped for.
+  assert('every place the release is written agrees', () => {
+    const bootstrap = readArtifact(path.join(SRC, 'protocol.md')).fields.version;
+    const plugin = JSON.parse(fs.readFileSync(
+      path.join(SRC, 'adapters', 'claude', '.claude-plugin', 'plugin.json'), 'utf8')).version;
+    const newest = (changelog.match(/^## (\S+)/m) ?? [])[1];
+    const seen = [specVersion, bootstrap, plugin, newest];
+    if (new Set(seen).size !== 1) throw new Error(`specs, bootstrap, plugin, changelog: ${seen.join(', ')}`);
+    return true;
+  });
+
+  // The entry for this release, up to the previous one. Scoped, because every
+  // subject below is discussed somewhere in the file's history and a search of
+  // the whole document would pass on a release that said nothing.
+  const entry = () => {
+    const from = changelog.indexOf(`## ${specVersion}`);
+    if (from < 0) return '';
+    const rest = changelog.slice(from);
+    const next = rest.slice(1).search(/^## \d/m);
+    return next < 0 ? rest : rest.slice(0, next + 1);
+  };
+
+  // What an upgrading repository cannot find out by reading its own tree: every
+  // field and directory that stopped being legal, every command that stopped
+  // existing, and how this release decides which contract a tree was written
+  // under. A release that removes something and does not say so is one every
+  // repository discovers through a validation failure.
+  assert('the changelog names every retired field', () =>
+    RETIRED_FIELDS.every((field) => new RegExp(`\`${field}\``).test(entry())));
+  assert('the changelog names every directory this release stopped shipping', () =>
+    RETIRED_DIRS.every(({ dir }) => entry().includes(`\`${dir}/\``)));
+  assert('the changelog names the commands this release removed', () =>
+    /Two skills are gone/.test(entry())
+    && entry().includes('`/commit`')
+    && entry().includes('skills/tasks/labels.md'));
+  assert('the changelog names both ways a tree is classified', () =>
+    /Two mechanisms classify a tree/.test(entry())
+    && /carrying `owner:`/.test(entry())
+    && /classified by the manifest/.test(entry()));
+  assert('the changelog states when the older classifier goes', () =>
+    /no repository the maintainer knows of/.test(entry()));
 
   assert('a licence ships', () => fs.existsSync(path.join(REPO, 'LICENSE')));
 
@@ -2413,6 +2473,25 @@ section('release', () => {
   assert('this repository has installed the release it ships', () => {
     const installed = readArtifact(path.join(REPO, '.aep', 'protocol.md'));
     return installed.fields.version === specVersion;
+  });
+
+  // The dogfood, asked the way an upgrading repository asks it. This tree is the
+  // first one every release meets, so a release that would ask its own tree for
+  // a conversion is one that would ask everybody's, and the ask would be noise:
+  // the release is what wrote the tree.
+  //
+  // A dry run, so the suite writes nothing into the repository it is verifying.
+  assert('this repository needs nothing converted by the release it ships', () => {
+    const out = execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', REPO, '--update', '--dry-run'],
+      { encoding: 'utf8' },
+    );
+    const asked = out.split(/\r?\n/)
+      .filter((line) => /written under an older contract|no longer shipped/.test(line))
+      .map((line) => line.trim());
+    if (asked.length > 0) throw new Error(asked.join(' | '));
+    return true;
   });
 
   assert("the building repository's own tree carries no stale 1.x layout", () =>
@@ -3367,10 +3446,26 @@ section('install fixture', () => {
     if (missing.length > 0) throw new Error(`unreported: ${missing.join(', ')}`);
     return true;
   });
-  assert('the upgrade names every spec still holding an architecture section', () => {
+  assert('the upgrade names an in-flight spec still holding an architecture section', () => {
     const listed = reported('written under an older contract');
-    return ['efforts/landed/spec.md', 'efforts/in-flight/spec.md'].every((rel) =>
-      listed.includes(`${rel} (holds # Architecture, which 3 keeps in plan.md)`));
+    return listed.includes(
+      'efforts/in-flight/spec.md (holds # Architecture, which 3 keeps in plan.md)');
+  });
+
+  // Criterion 33. The landed effort's spec holds the same section and is not
+  // asked to split: it is the record of what was built, and an upgrade that
+  // asked would go on asking on every upgrade the repository ever runs.
+  //
+  // Its retired frontmatter is still named, and that is the difference. Dropping
+  // a field the contract no longer has changes nothing the record says; moving
+  // half a document into another file does.
+  assert('the upgrade asks no landed effort to split its spec', () => {
+    const listed = reported('written under an older contract');
+    const named = listed.filter((entry) =>
+      entry.startsWith('efforts/landed/') && entry.includes('# Architecture'));
+    if (named.length > 0) throw new Error(named.join(', '));
+    return listed.includes(
+      'efforts/landed/spec.md (frontmatter written under an older contract)');
   });
 
   // Criterion 32 again, from the other direction: naming is the whole of what

@@ -399,13 +399,26 @@ function carriesRetiredFields(aep) {
     .map((file) => toPosix(aep, file));
 }
 
-/** An effort spec still holding the architecture 3 keeps in `plan.md`. */
+/**
+ * An effort still in flight whose spec holds the architecture 3 keeps in
+ * `plan.md`.
+ *
+ * A landed effort is skipped, for the reason a landed effort's tracker
+ * artifacts are never reshaped: the spec is the record of what was built and
+ * reviewed, and splitting it rewrites that record to match a layout the work
+ * was never done under. It would also mean an upgraded tree reporting the same
+ * finished efforts on every upgrade it ever runs, with no action available that
+ * would make the report stop.
+ */
 function specsHoldingArchitecture(aep) {
   const efforts = path.join(aep, 'efforts');
   if (!fs.existsSync(efforts)) return [];
   return walk(efforts)
     .filter((file) => path.basename(file) === 'spec.md')
-    .filter((file) => /^#\s+Architecture\s*$/m.test(fs.readFileSync(file, 'utf8')))
+    .filter((file) => {
+      const { fields, body } = readArtifact(file);
+      return fields.status !== 'implemented' && /^#\s+Architecture\s*$/m.test(body);
+    })
     .map((file) => toPosix(aep, file));
 }
 

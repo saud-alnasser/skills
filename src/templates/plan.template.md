@@ -16,9 +16,14 @@ moments.
 **Omit a heading rather than writing "N/A" under it.** An empty section reads as
 considered-and-empty; an absent one reads as not yet reached, which is the truth.
 
+**`status` is the spec's, and is illegal here.** An effort has one state, the
+spec declares it, and a plan declaring a second one gives the effort two answers
+that can disagree. What this file carries is a `use-when` naming the occasion to
+read it, like any other artifact.
+
 ```markdown
 ---
-status: draft            # draft → accepted → implemented
+use-when: "building a ticket in this effort and the approach is not obvious from the spec"
 ---
 
 # Architecture
