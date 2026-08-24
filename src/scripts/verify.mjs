@@ -4532,6 +4532,19 @@ section('scope', () => {
     return true;
   });
 
+  assert('a root that is not an AEP tree is refused rather than answered about', () => {
+    // The trap this closes: an explicit root that failed to resolve used to fall
+    // through to wherever the script sat, so a scope read pointed at the wrong
+    // place answered `unscoped` about a different tree. `unscoped` means take
+    // anything, so the fail-open direction was the dangerous one.
+    const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-notaep-'));
+    const { code, out, err } = run('read', { cwd: dir, root: bare });
+    fs.rmSync(bare, { recursive: true, force: true });
+    if (code !== 2) throw new Error(`exit ${code} for a root holding no protocol.md. stdout: ${out}`);
+    if (!err.includes(bare)) throw new Error(`the refusal does not name the root given: ${err}`);
+    return true;
+  });
+
   assert('the script ships, and reaches an installed tree', () => {
     if (!PAYLOAD_SCRIPTS.includes('scope.mjs')) throw new Error('not in PAYLOAD_SCRIPTS');
     return fs.existsSync(path.join(installFixture().aep, 'scripts', 'scope.mjs'));
@@ -4615,6 +4628,12 @@ section('scope surfaces', () => {
     /restart at `01`/.test(seedRule) && /\[\[policies\/execution\]\]/.test(seedRule));
   assert('no shipped rule still names a bare ticket branch', () =>
     !/named\s+`<task-id>-<slug>`/.test(seedRule));
+  // The runner shows the branch names a run creates, so a bare example there
+  // contradicts the rule shipped beside it, and a repository following both
+  // gets two answers for one name.
+  assert('the runner shows a ticket branch namespaced by its effort', () =>
+    /ticket branch\s+`?<effort>\/<ticket-id>-<slug>/.test(implement)
+    && !/ticket branch\s+`?<ticket-id>-<slug>/.test(implement));
   assert('the seeded rule says where a new effort branch is based, both shapes', () =>
     /A new effort's branch is based on/.test(seedRule)
     && /the default branch's tip/.test(seedRule)

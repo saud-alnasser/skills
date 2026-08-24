@@ -359,7 +359,12 @@ function main() {
 
   const root = resolveAepRoot(rootArg, import.meta.url);
   if (!root) {
-    process.stderr.write('no .aep/ found. Pass --root, or run from a repository that has one\n');
+    // Naming the root that was given rather than repeating the generic advice.
+    // A `--root` that does not resolve is refused rather than fallen back from,
+    // so the useful thing to say is which one was refused.
+    process.stderr.write(rootArg
+      ? `not an AEP tree, so there is nothing to scope: ${rootArg}\n`
+      : 'no .aep/ found. Pass --root, or run from a repository that has one\n');
     process.exit(2);
   }
 

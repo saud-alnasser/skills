@@ -479,14 +479,23 @@ export function isIsoDate(value) {
  * Locates the `.aep/` directory these scripts should act on.
  *
  * Resolution order, so the same script works from both places it legitimately
- * runs: an explicit argument; the installed position, where the script itself
- * sits at `.aep/scripts/`; then `<cwd>/.aep`. Returns null when there is none,
- * which callers report rather than treating as an empty tree, since "no AEP
- * here" and "AEP here with nothing in it" are different answers.
+ * runs: an explicit argument, alone where one is given; otherwise the installed
+ * position, where the script itself sits at `.aep/scripts/`, then `<cwd>/.aep`.
+ * Returns null when there is none, which callers report rather than treating as
+ * an empty tree, since "no AEP here" and "AEP here with nothing in it" are
+ * different answers.
  */
 export function resolveAepRoot(explicit, scriptUrl) {
+  // An explicit root is an instruction rather than a hint, so a wrong one ends
+  // here. Falling through to the other candidates meant a script pointed at a
+  // directory that is not an AEP tree answered about whichever tree it happened
+  // to sit in, which reads as an answer about the one that was asked for.
+  if (explicit) {
+    const named = path.resolve(explicit);
+    return fs.existsSync(path.join(named, 'protocol.md')) ? named : null;
+  }
+
   const candidates = [];
-  if (explicit) candidates.push(path.resolve(explicit));
   if (scriptUrl) {
     const scriptDir = path.dirname(new URL(scriptUrl).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
     if (path.basename(scriptDir) === 'scripts') candidates.push(path.dirname(scriptDir));

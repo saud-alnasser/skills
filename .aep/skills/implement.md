@@ -105,7 +105,7 @@ first edit is a report of a race already lost.
 
 ```
 effort branch      <effort>                     aep-3
-ticket branch      <ticket-id>-<slug>           17-assignment-and-claim
+ticket branch      <effort>/<ticket-id>-<slug>  aep-3/17-assignment-and-claim
 ```
 
 The effort branch is created once and every wave lands on it. **Children in a
