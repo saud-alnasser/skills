@@ -24,7 +24,7 @@ survive an upgrade like anyone else's.
 | Directory | Holds |
 | --- | --- |
 | `src/protocol.md` | the bootstrap, installed as `.aep/protocol.md` |
-| `src/policies/` `src/modes/` `src/skills/` `src/agents/` `src/templates/` | the protocol-owned payload |
+| `src/policies/` `src/skills/` `src/agents/` `src/templates/` | the protocol-owned payload. The list `src/scripts/contract.mjs` carries is the one that decides |
 | `src/seed/` | repository-owned starting points, installed where detected |
 | `src/scripts/` | the scripts `.aep/` gets, plus install, adapters, manifest, release, and verify |
 | `src/adapters/<runtime>/` | the committed runtime adapters — generated, never hand-edited. A tree is committed only where that directory is itself what a user registers |
