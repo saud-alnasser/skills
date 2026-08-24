@@ -21,6 +21,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readArtifact, walk, toPosix, isProtocolPath } from './contract.mjs';
+import { contentHash } from './release.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
@@ -159,8 +160,16 @@ function applyMoves(aep, declared, dryRun) {
     if (declared && !precedes(declared, move.since)) continue;
     const source = path.join(aep, ...move.from.split('/'));
     if (!fs.existsSync(source)) continue;
-    if (readArtifact(source).fields.owner === 'repository') {
-      report.collided.push(`${move.from} is the repository's; ${move.to} now ships the protocol's`);
+
+    // Location cannot answer for a move source: the file left the payload, so
+    // the manifest does not name it, and a repository may legitimately have
+    // written its own under a name the protocol vacated. Content answers it.
+    // Anything that is not the protocol's own text, byte for byte under the
+    // release hash, is somebody's work and is left where it is.
+    if (contentHash(fs.readFileSync(source, 'utf8')) !== move.was) {
+      report.collided.push(
+        `${move.from} is not the protocol's text; ${move.to} now ships that. Left in place`,
+      );
       continue;
     }
     if (!dryRun) fs.rmSync(source);
@@ -207,7 +216,7 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
     // work that is about to be thrown away. Matched by path rather than by
     // basename: a repository may legitimately own some other `index.md`.
     if (!file.endsWith('.md') || file === derivedIndex) continue;
-    if (readArtifact(file).fields.owner !== 'repository') continue;
+    if (isProtocolPath(toPosix(aep, file))) continue;
 
     const before = fs.readFileSync(file, 'utf8');
     let replaced = 0;
@@ -352,9 +361,16 @@ function main() {
   // Read before the payload overwrites it: what the tree declared on arrival is
   // what decides which moves still apply, and one line later it declares this
   // release instead.
-  const declared = existing
-    ? readArtifact(path.join(aep, 'protocol.md')).fields.aep
-    : null;
+  //
+  // `version:` is where a 3 tree names its release and `aep:` is where a 2.x one
+  // did, so both are read. This is the same layout branch the migration needs,
+  // arriving early because everything downstream of it depends on the answer:
+  // a tree that declares nothing is treated as predating everything, so reading
+  // the wrong field replays every move and every notice on every upgrade.
+  const bootstrapFields = existing
+    ? readArtifact(path.join(aep, 'protocol.md')).fields
+    : {};
+  const declared = bootstrapFields.version ?? bootstrapFields.aep ?? null;
 
   if (existing && !args.includes('--update')) {
     process.stderr.write(

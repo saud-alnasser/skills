@@ -92,6 +92,12 @@ const EXEMPT_DOCS = ['specs.md', 'AGENTS.md'];
  */
 const PRE_MOVE_RELEASE = '2.1.1';
 
+// The commit that removed the moved rules, so `^` holds the protocol's own text
+// for each. Pinned rather than searched: this repository squash-merges, so the
+// commit is permanent, and a search that found the wrong one would build a
+// fixture that silently tests nothing.
+const PRE_MOVE_COMMIT = '8752757^';
+
 const args = process.argv.slice(2);
 const only = args.includes('--section') ? args[args.indexOf('--section') + 1] : null;
 const verbose = args.includes('--verbose');
@@ -226,6 +232,39 @@ function installFixture() {
 
 section('manifest', () => {
   assert('specs.md declares a version', isNonEmptyString(specVersion));
+
+  // A move whose `was` is missing or wrong puts the installer back to deleting a
+  // file it cannot identify, and nothing else would notice: the removal branch
+  // simply stops firing and the tree quietly keeps two copies of one text.
+  assert('every move carries the hash of the text it replaced', () => {
+    const missing = MOVES.filter((move) => !move.was).map((move) => move.from);
+    if (missing.length > 0) throw new Error(`no was: ${missing.join(', ')}`);
+    return true;
+  });
+
+  assert('each was matches the protocol text at the commit that moved it', () => {
+    for (const move of MOVES) {
+      const name = path.basename(move.from);
+      const text = execFileSync('git', ['show', `${PRE_MOVE_COMMIT}:src/rules/${name}`],
+        { encoding: 'utf8', cwd: REPO });
+      if (contentHash(text) !== move.was) {
+        throw new Error(`${move.from}: was does not match the text at ${PRE_MOVE_COMMIT}`);
+      }
+    }
+    return true;
+  });
+
+  // The failure that started this: install.mjs read three fields the payload is
+  // removing, and every one of them failed silently. Two returned undefined and
+  // changed a branch; the third made a tree look like it declared no release, so
+  // every move and notice replayed on every upgrade.
+  assert('install.mjs reads no frontmatter field the payload is removing', () => {
+    const text = fs.readFileSync(path.join(SRC, 'scripts', 'install.mjs'), 'utf8');
+    const found = ['owner', 'aep', 'date', 'kind', 'mode', 'report']
+      .filter((field) => new RegExp(String.raw`fields\.${field}\b`).test(text));
+    if (found.length > 0) throw new Error(`still reads: ${found.join(', ')}`);
+    return true;
+  });
 
   // Ownership is a fact about location, and the exact list is what tells a
   // shipped file from a stray standing beside it. It is generated, so the only
@@ -2061,14 +2100,25 @@ section('install fixture', () => {
       ['---', `aep: ${PRE_MOVE_RELEASE}`, `owner: ${owner}`, 'date: 2026-08-16', `kind: ${kind}`,
         'use-when: "a trigger that predates the move"', '---', ''];
 
+    // The protocol's own pre-move text, recovered from the commit that removed
+    // it. Ownership of a move source is decided by content now, so a fixture
+    // writing text it invented proves only that invented text is not the
+    // protocol's, which is the branch that passes anyway. This is what makes the
+    // removal branch mean anything.
+    //
+    // `evidence.md` stays invented text on purpose: it stands for the repository
+    // that wrote its own file under a name the protocol vacated, and it must
+    // survive the upgrade untouched.
+    const preMove = (name) => execFileSync(
+      'git', ['show', `${PRE_MOVE_COMMIT}:src/rules/${name}`], { encoding: 'utf8', cwd: REPO },
+    );
+
     for (const move of MOVES) {
       const name = path.basename(move.from);
-      const owner = name === 'evidence.md' ? 'repository' : 'protocol';
-      fs.writeFileSync(
-        path.join(tree, 'rules', name),
-        [...frontmatter(owner, 'rule'), `# Rule \u2014 ${name.replace('.md', '')}`, ''].join('\n'),
-        'utf8',
-      );
+      const body = name === 'evidence.md'
+        ? [...frontmatter('repository', 'rule'), `# Rule \u2014 ${name.replace('.md', '')}`, ''].join('\n')
+        : preMove(name);
+      fs.writeFileSync(path.join(tree, 'rules', name), body, 'utf8');
     }
 
     fs.writeFileSync(
@@ -2109,11 +2159,16 @@ section('install fixture', () => {
     [...new Set(MOVES.map((move) => move.to))]
       .every((to) => fs.existsSync(path.join(upgraded.tree, ...to.split('/')))));
 
-  assert('a repository-owned file at a vacated path survives, and is reported', () => {
+  // The distinction the `owner:` field used to make, made by content instead: a
+  // file at a vacated path whose text is not the protocol's own is somebody's
+  // work, and the move leaves it alone and says so.
+  assert('a file at a vacated path that is not the protocol\'s text survives, and is reported', () => {
     const kept = path.join(upgraded.tree, 'rules', 'evidence.md');
-    if (!fs.existsSync(kept)) throw new Error('the upgrade removed a file the repository owns');
-    if (readArtifact(kept).fields.owner !== 'repository') throw new Error('it was overwritten');
-    if (!upgraded.output.includes('rules/evidence.md is the repository\'s')) {
+    if (!fs.existsSync(kept)) throw new Error('the upgrade removed a file it could not identify');
+    if (!fs.readFileSync(kept, 'utf8').includes('a trigger that predates the move')) {
+      throw new Error('it was overwritten rather than left alone');
+    }
+    if (!upgraded.output.includes('rules/evidence.md is not the protocol\'s text')) {
       throw new Error('the collision was not reported');
     }
     return true;
@@ -2234,6 +2289,32 @@ section('install fixture', () => {
     const update = readSrc('skills', 'update.md');
     return /A notice is acted on, not read/.test(update) &&
       /report it as outstanding/.test(update);
+  });
+
+  // A 3 tree names its release in `version:` and a 2.x one named it in `aep:`.
+  // Both are read, because the alternative is not a smaller failure: a tree whose
+  // release cannot be found is treated as predating everything, so every move
+  // and every notice replays on every upgrade, forever and silently.
+  assert('a bootstrap declaring version: is current, not a tree that declares nothing', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-version-'));
+    execFileSync(process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir], { stdio: 'ignore' });
+
+    const bootstrap = path.join(dir, '.aep', 'protocol.md');
+    fs.writeFileSync(bootstrap,
+      fs.readFileSync(bootstrap, 'utf8').replace(/^aep: (.*)$/m, 'version: $1'), 'utf8');
+
+    const output = String(execFileSync(process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir, '--update'], { encoding: 'utf8' }));
+    fs.rmSync(dir, { recursive: true, force: true });
+
+    // Keyed on the header the installer actually prints. An earlier version of
+    // this assertion looked for the word "notice", which appears nowhere in the
+    // output, so it passed whatever the code did.
+    if (/things? to check, crossing these releases/.test(output)) {
+      throw new Error(`a current tree was told to act on notices it has already crossed:\n${output}`);
+    }
+    return true;
   });
 
   assert('a dry run previews the notices as well as the repairs', () => {

@@ -1088,14 +1088,22 @@ does not move:
    2, because removing an export and its only consumers is one atomic change.
 2. **The classifiers.** `install.mjs`'s two functions, `validate.mjs`'s
    frontmatter and stray-file checks, `release.mjs`'s stamping pass.
-3. **The artifacts.** Frontmatter stripped across the payload, `modes/` deleted
+3. **The installer stops reading what step 4 removes.** Corrected during
+   implementation, after `install.mjs` was found reading three fields the strip
+   deletes: `applyMoves` and `rewriteMovedLinks` read `owner:`, and the move and
+   notice gating reads the bootstrap's `aep:`. All three failed silently, and the
+   suite could not catch them because its own fixtures still carried the fields.
+   Ownership of a move source is now decided by content, so `MOVES` carries the
+   hash of the text it replaced.
+
+4. **The artifacts.** Frontmatter stripped across the payload, `modes/` deleted
    into its skills, `commit.md` and `tasks/labels.md` deleted, templates split.
    One mechanical pass, because step 2 built the tree that validates it.
-4. **The bootstrap and the specification**, which describe what steps 1 to 3
+5. **The bootstrap and the specification**, which describe what steps 1 to 3
    built rather than what was intended.
-5. **`frontier.mjs`, then the runner.** The loop, converge, integration, the run
+6. **`frontier.mjs`, then the runner.** The loop, converge, integration, the run
    log, landing.
-6. **`install.mjs` and `update`.** Entrypoints, labels, the layout branch,
+7. **`update`.** Entrypoints, labels, the layout branch,
    tracker reshape. Last, because it migrates into a target the earlier steps
    define.
 
@@ -1168,7 +1176,15 @@ repository at all. That edit belongs to step 6 rather than to an afterthought.
 
 # Technical Risks
 
-- **Step 3 is a mechanical pass over every shipped artifact**, and a mechanical
+- **A guard can be dead and green, and only breaking it deliberately says so.**
+  Two written during this effort could never have fired: one used `` inside a
+  template literal, where it is the backspace character rather than a word
+  boundary, and one keyed on a word the installer does not print. Both passed
+  every run. `[[rules/authoring]]` already requires breaking a new guard and
+  watching it fail with the right name, and this is the second and third instance
+  of what that rule exists for.
+
+- **Step 4 is a mechanical pass over every shipped artifact**, and a mechanical
   pass is where a hand-edit gets reverted silently. Mitigated by step 2 landing
   first, so the tree that validates the result exists before the result does.
 
