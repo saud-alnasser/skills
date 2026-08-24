@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 ---
 
 # Problem
@@ -159,8 +159,13 @@ guarantee, and the run says which it is.
    with no linked worktrees, it reports the claim as advisory. Both are asserted
    against a real worktree created and removed by the test.
 8. Two efforts each carrying a ticket `03` produce two distinct branch names under
-   the shipped seed's convention, and a repository whose rule produces one is
-   named by the suite as failing the requirement.
+   the shipped seed's convention, and the suite fails any shipped surface that
+   reverts to the bare form.
+
+   *Narrowed by the human at close. The clause removed asked the suite to fail a
+   consuming repository whose own rule produces a colliding name, which it has no
+   standing to do: verification covers what ships and does not audit an installed
+   tree, and AEP judges no repository's own written rules anywhere else.*
 9. `/specify` from an effort branch in a non-stacking repository bases the new
    effort's branch on the default branch's tip, and no commit of the old effort
    appears in `git log <default>..<new>`. In a repository whose rule declares
