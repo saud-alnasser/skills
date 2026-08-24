@@ -136,7 +136,7 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/45-aep-3/tickets/26-no-unconditional-tracker-call]] fix(protocol): nothing shipped reaches for a tracker before establishing there is one | 45-aep-3 | resolved | — |
 | [[efforts/51-branch-scope/tickets/01-scope-script]] feat(scripts): the claim, the working set, and the isolation are computed | 51-branch-scope | resolved | — |
 | [[efforts/51-branch-scope/tickets/02-specification]] docs(specs): the specification says what a run is scoped by | 51-branch-scope | resolved | — |
-| [[efforts/51-branch-scope/tickets/03-execution-policy]] feat(policies): the claim is read before the work, and confinement has no exemptions | 51-branch-scope | open | 02 |
+| [[efforts/51-branch-scope/tickets/03-execution-policy]] feat(policies): the claim is read before the work, and confinement has no exemptions | 51-branch-scope | resolved | 02 |
 | [[efforts/51-branch-scope/tickets/04-skills-entry]] feat(skills): a skill that names an effort resolves its scope on entry | 51-branch-scope | open | 01, 03 |
 | [[efforts/51-branch-scope/tickets/05-plan-skill-correction]] fix(skills): the plan skill stops contradicting the specification | 51-branch-scope | open | 04 |
 | [[efforts/51-branch-scope/tickets/06-seeds]] feat(seed): the seeded rules and references state their halves | 51-branch-scope | open | 03 |

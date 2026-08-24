@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 blocked-by: [02]
 ---
 
@@ -15,18 +15,18 @@ efforts.
 
 ## Acceptance Criteria
 
-- [ ] The policy states that a run resolves its claim before acting and quotes the
+- [x] The policy states that a run resolves its claim before acting and quotes the
       script's output rather than judging a branch name (criterion 1).
-- [ ] It states the ambiguity stop: a run needing one effort, given a larger claim
+- [x] It states the ambiguity stop: a run needing one effort, given a larger claim
       and none named, ends the turn listing the set (criterion 4).
-- [ ] It states confinement, that reading is unrestricted, and that source outside
+- [x] It states confinement, that reading is unrestricted, and that source outside
       `efforts/` is untouched by the rule (criterion 5).
-- [ ] It states that there are no exemptions, including for a skill whose subject
+- [x] It states that there are no exemptions, including for a skill whose subject
       is the whole tree, and that such a run belongs on an unscoped checkout
       (criterion 5).
-- [ ] It states the mismatch behaviour, clean switches and dirty stops, naming
+- [x] It states the mismatch behaviour, clean switches and dirty stops, naming
       what the stop must report (criterion 6).
-- [ ] It states that a ticket branch must be unique across efforts and that the
+- [x] It states that a ticket branch must be unique across efforts and that the
       mechanism is the repository's to fix in its own rule (criterion 8).
 
 ## Relevant areas
