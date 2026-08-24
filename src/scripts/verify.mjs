@@ -248,7 +248,7 @@ function installFixture() {
   return fixtureCache;
 }
 
-// --- §32 the manifest is complete ------------------------------------------
+// --- §31 the manifest is complete ------------------------------------------
 
 section('manifest', () => {
   assert('specs.md declares a version', isNonEmptyString(specVersion));
@@ -320,7 +320,7 @@ section('manifest', () => {
   // on, so a specification that loses it leaves a shipped surface conforming to
   // nothing written down.
   assert('specs.md defines a target as a declaration, not a renderer per runtime', () =>
-    /###\s*29\.1\s+Targets and shapes/.test(specText) &&
+    /###\s*28\.1\s+Targets and shapes/.test(specText) &&
     /a \*\*target\*\* is a declaration rather than a program/.test(specText));
 
   assert('specs.md requires a prefix where a runtime would shadow a skill', () =>
@@ -682,7 +682,7 @@ section('protocol.md', () => {
   });
 });
 
-// --- §16 the skill set ------------------------------------------------------
+// --- §15 the skill set ------------------------------------------------------
 
 // The skills that entered a mode, and so carry a posture now that `modes/` is
 // gone. Written here rather than in `contract.mjs`: nothing an installed tree
@@ -694,7 +694,7 @@ const POSTURED_SKILLS = [
 ];
 
 section('skills', () => {
-  // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§16.1).
+  // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§15.1).
   const onDisk = topLevel(path.join(SRC, 'skills')).map((f) => path.basename(f, '.md')).sort();
   assert('the skill set is exactly the specs.md names', () =>
     JSON.stringify(onDisk) === JSON.stringify([...SKILLS].sort()));
@@ -915,7 +915,7 @@ section('skills', () => {
   assert('skills/implement states that neither tracker object carries a ticket', () =>
     /neither carries a ticket/.test(readSrc('skills', 'implement.md')));
 
-  // §31.1, the migration's five rules, each pinned by the thing that goes wrong
+  // §30.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
   // success, so nothing downstream notices.
   const migration = readSrc('skills', 'update', 'migration.md');
@@ -934,7 +934,7 @@ section('skills', () => {
     /validate\.mjs` must pass with no exemption/.test(migration));
 });
 
-// --- §16.1 skill notes ------------------------------------------------------
+// --- §15.1 skill notes ------------------------------------------------------
 // Depth reached from a skill, never an entry point. Three ways a note goes
 // wrong, and all three read as working: it sits under a directory no skill
 // owns, nothing links to it, or an adapter publishes it as a command.
@@ -991,7 +991,7 @@ section('skill notes', () => {
   });
 });
 
-// --- §18 agents -------------------------------------------------------------
+// --- §17 agents -------------------------------------------------------------
 
 section('agents', () => {
   const agents = listMarkdown('agents').map((file) => path.basename(file, '.md'));
@@ -1124,7 +1124,7 @@ section('policies', () => {
   assert('policies/execution requires independence to be read, not inferred', () =>
     /never infer independence/i.test(execution));
 
-  // §15.4, the external half of the same rule. Without these, a repository whose
+  // §14.4, the external half of the same rule. Without these, a repository whose
   // work lives in a tracker is governed by the frontier rule and given no way to
   // satisfy it, which reads exactly like being governed.
   // Pinned with `\s+` between words rather than literal spaces: the payload is
@@ -1152,7 +1152,7 @@ section('policies', () => {
 
   const reconciliation = flat(execution);
 
-  // §20 the three things a child structurally could not do. Each is asserted on
+  // §19 the three things a child structurally could not do. Each is asserted on
   // its own, because a reconciliation section that states two of them reads as
   // complete: the missing one is invisible from inside the file.
   for (const [name, pattern] of [
@@ -1376,7 +1376,7 @@ section('converge', () => {
     /evaded one round at a time/.test(engineering));
 });
 
-// --- §16.2 what a turn tells the human --------------------------------------
+// --- §15.2 what a turn tells the human --------------------------------------
 
 /** The two slots before the work, in the order the contract fixes, then the two after. */
 const OPENING_SLOTS = ['Position', 'Assuming'];
@@ -1813,7 +1813,7 @@ section('contexts', () => {
     !fs.existsSync(path.join(contextsDir, 'web')) && fs.existsSync(path.join(dir, '.aep')));
 });
 
-// --- §7, §30 the seeds ------------------------------------------------------
+// --- §7, §29 the seeds ------------------------------------------------------
 
 section('seeds', () => {
   for (const seed of SEEDS) {
@@ -1955,7 +1955,7 @@ section('links', () => {
   process.stdout.write(`        ${count} links checked\n`);
 });
 
-// --- §5, §15.2, §17 structures that must not exist --------------------------
+// --- §5, §14.2, §16 structures that must not exist --------------------------
 
 section('forbidden', () => {
   // Read from the contract, never from a second list here: two lists of the
@@ -1983,7 +1983,7 @@ section('forbidden', () => {
     !/\bADR \d{4}\b/.test(all) && !/\bspecs\.md\b/.test(all));
 });
 
-// --- §16.2 the prohibitions a script can check ------------------------------
+// --- §15.2 the prohibitions a script can check ------------------------------
 // The policy's four are one scan away from being checked, and the first of them
 // is the one this repository had most of. Scoped to what the reader test calls
 // governed: the shipped scripts, whose comments and messages a person reads, and
@@ -2021,7 +2021,7 @@ section('governed text', () => {
   }
 });
 
-// --- §29 the adapter is a pointer, and it is current ------------------------
+// --- §28 the adapter is a pointer, and it is current ------------------------
 
 section('adapter', () => {
   // What a runtime should publish, which is every top-level skill except the
@@ -2349,7 +2349,7 @@ section('release', () => {
     !fs.existsSync(path.join(REPO, 'scripts')));
 });
 
-// --- §30 the install writes the adapters it was asked for ------------------
+// --- §29 the install writes the adapters it was asked for ------------------
 
 section('install adapters', () => {
   /** Runs a real install into a throwaway repository. Never throws on exit. */
@@ -2458,7 +2458,7 @@ section('install adapters', () => {
     !bare('opencode.md') && !bare('t3code.md'));
 });
 
-// --- §32 the install fixture ------------------------------------------------
+// --- §31 the install fixture ------------------------------------------------
 
 section('install fixture', () => {
   const { dir, aep } = installFixture();
@@ -2554,7 +2554,7 @@ section('install fixture', () => {
     return true;
   });
 
-  // §31.1, the one failure that reports success. A 1.x repository has no
+  // §30.1, the one failure that reports success. A 1.x repository has no
   // `.aep/`, so the "already installed?" check answers no and a fresh install
   // lands beside a live 1.x tree, orphaning everything in it.
   assert('a fresh install onto a 1.x layout is refused, and names the way forward', () => {
@@ -2881,7 +2881,7 @@ section('install fixture', () => {
     return fs.existsSync(mine);
   });
 
-  // §31, notices. The negative case is the one that matters: a filter matching
+  // §30, notices. The negative case is the one that matters: a filter matching
   // every tree reads exactly like a filter that works, and every reader of a
   // current tree would be told to go and check something already true.
   assert('an upgrade reports the notices for the releases it crosses', () => {
@@ -3291,6 +3291,144 @@ section('traceability', () => {
   });
 
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Ticket 08. The specification is what every other section in this file checks
+// against, so a claim in it that no longer describes the payload turns the whole
+// suite into a check of one stale document against another. These assertions run
+// the comparison in the other direction: the specification's own counts and lists
+// against the payload that is supposed to satisfy them.
+section('the specification', () => {
+  const bootstrap = readSrc('protocol.md');
+
+  // The renumbering hazard, and the cheapest check here. A section renumbered by
+  // an edit elsewhere leaves every citation of it pointing at different text
+  // while still reading correctly, so nothing about the document looks wrong.
+  const sections = new Set([...specText.matchAll(/^## (\d+)\./gm)].map((m) => m[1]));
+  const subsections = new Set(
+    [...specText.matchAll(/^### (\d+)\.(\d+)/gm)].map((m) => `${m[1]}.${m[2]}`),
+  );
+  const dangling = [];
+  for (const match of specText.matchAll(/§(\d+)(\.\d+)?/g)) {
+    const key = match[1] + (match[2] ?? '');
+    const known = match[2] ? subsections.has(key) : sections.has(match[1]);
+    if (!known) dangling.push(key);
+  }
+  assert('specs.md carries sections to cite at all', () => sections.size > 0);
+  assert('every section reference in specs.md resolves', () => dangling.length === 0);
+  if (dangling.length > 0) {
+    process.stdout.write(`        dangling: ${[...new Set(dangling)].sort().join(', ')}\n`);
+  }
+  assert('specs.md declares the section it says it removed', () =>
+    !/^## \d+\. Modes\s*$/m.test(specText));
+
+  // The primitive set, counted off both tables rather than matched as prose. A
+  // regex for seven names passes while an eighth row sits beside them, and the
+  // bootstrap and the specification growing apart is the drift nobody sees:
+  // each reads correctly on its own.
+  const rowsOf = (text, heading) =>
+    [...headingBlock(text, heading).matchAll(/^\|\s*\*\*(\w+)\*\*\s*\|/gm)].map((m) => m[1]);
+  const specPrimitives = rowsOf(specText, '3. Primitives and terminology');
+  const bootPrimitives = rowsOf(bootstrap, 'The primitives');
+  assert('specs.md names seven primitives', () => specPrimitives.length === 7);
+  assert('the specification and the bootstrap name the same primitives', () =>
+    JSON.stringify(specPrimitives) === JSON.stringify(bootPrimitives));
+  assert('specs.md states the count it lists', () =>
+    specText.includes('AEP defines seven primitives'));
+  assert('the retired primitives are not listed as primitives', () =>
+    ['Modes', 'Evidence', 'Tasks', 'Worktrees', 'Position']
+      .every((name) => !specPrimitives.includes(name)));
+
+  // The skill set, read out of the specification's own list. The `skills`
+  // section already compares disk against contract.mjs; both move together in
+  // one commit, so a specification left behind would never fail there.
+  const skillList = headingBlock(specText, '15. Skills');
+  const named = [...skillList.matchAll(/^\*\*(?:Spine|Adaptive|Lifecycle|Sub-skills) \(\d+\)\*\*(.+)$/gm)]
+    .flatMap((line) => [...line[1].matchAll(/`([a-z]+)`/g)].map((m) => m[1]));
+  assert('specs.md lists its skills in named groups', () => named.length > 0);
+  assert('the specification and the payload name the same skills', () =>
+    JSON.stringify([...named].sort()) === JSON.stringify([...SKILLS].sort()));
+  if (JSON.stringify([...named].sort()) !== JSON.stringify([...SKILLS].sort())) {
+    process.stdout.write(`        specs.md: ${[...named].sort().join(', ')}\n`);
+    process.stdout.write(`        payload:  ${[...SKILLS].sort().join(', ')}\n`);
+  }
+  assert('specs.md states the skill count it lists', () =>
+    specText.includes(`exactly seventeen`) && named.length === 17);
+  assert('specs.md no longer carries commit as a skill', () => !named.includes('commit'));
+
+  // The four typed commands, in both documents. A specification that still
+  // names seven stages and a bootstrap that names four is the disagreement a
+  // reader resolves by picking whichever they happened to load.
+  for (const [where, text] of [['specs.md', specText], ['protocol.md', bootstrap]]) {
+    assert(`${where} states four commands and no more`, () =>
+      /\*\*Four commands/.test(text));
+    assert(`${where} spells the spine as the four`, () =>
+      text.includes('/specify → /plan? → /tasks → /implement'));
+  }
+  assert('specs.md names refine, research, and review as stages rather than commands', () => {
+    const block = headingBlock(specText, '15. Skills');
+    return /`refine`, `research`, and `review` are \*\*stages\*\*/.test(block);
+  });
+
+  // The frontmatter contract, and the fields it lost. The migration and the
+  // removals record still name them, and must: a retired field nobody documents
+  // is one a 2.x tree carries with nothing to say what became of it. Everything
+  // before the upgrade section is the live contract, and a retired field there
+  // reads as current.
+  const live = specText.slice(0, specText.indexOf('## 30. Upgrade'));
+  for (const field of ['owner:', '`owner`', 'mode:', '`mode`', 'kind:', '`kind`',
+    'report:', '`report`', 'part-of', '`aep`', '`date`']) {
+    assert(`the live contract does not describe ${field}`, () => !live.includes(field));
+  }
+  for (const field of ['use-when', 'paths', 'status', 'blocked-by']) {
+    assert(`the frontmatter contract still states ${field}`, () =>
+      headingBlock(specText, '8. Frontmatter contract').includes(`\`${field}\``));
+  }
+  assert('the removals record says where each retired field went', () => {
+    const block = headingBlock(specText, '32. What each release removes');
+    return ['owner:', 'mode:', 'kind:', 'report:', 'part-of'].every((f) => block.includes(f));
+  });
+
+  // The four use-when checks, stated in the specification and implemented in
+  // the validator. Pinned as a count because a fifth check added to one side
+  // only is exactly the shape this misses.
+  const checks = headingBlock(specText, '8. Frontmatter contract');
+  assert('specs.md states four use-when checks', () =>
+    /\*\*Four checks, each a hard failure naming the file:\*\*/.test(checks) &&
+    [...checks.matchAll(/^\d\. \*\*/gm)].length === 4);
+
+  // The upgrade's two classifiers, and the condition that ends the older one. A
+  // compatibility branch with no stated end is one nobody removes.
+  const upgrade = headingBlock(specText, '30. Upgrade');
+  assert('specs.md states both layout classifiers', () =>
+    /an `owner:` field on its artifacts \| \*\*that field\*\*/.test(upgrade) &&
+    /no `owner:` field \| \*\*the manifest\*\*/.test(upgrade));
+  assert('specs.md states when the older classifier is removed', () =>
+    /\*\*The removal condition is stated rather than left to judgement/.test(upgrade));
+
+  // plan.md, reinstated. The specification forbade it in 2.0 and the forbidden
+  // list still ran on that sentence, so both halves are checked: it is an
+  // artifact now, and nothing still calls it forbidden.
+  assert('specs.md states plan.md as the effort artifact holding HOW', () =>
+    specText.includes('The technical approach lives beside it in **`plan.md`**'));
+  assert('specs.md does not also forbid plan.md', () =>
+    !specText.includes('**There is no `plan.md`.**') &&
+    !specText.includes('No `plan.md` exists.'));
+  assert('the forbidden structures no longer include plan.md', () => {
+    const line = specText.split('\n').find((l) => l.includes('the forbidden structures are absent'));
+    return Boolean(line) && !line.includes('plan.md') && line.includes('`modes/`');
+  });
+
+  // Tickets, local without qualification. The 2.x wording made them optional and
+  // permitted an external tracker, and every scheduling claim in the payload now
+  // depends on the opposite.
+  const ticketing = headingBlock(specText, '14. Efforts, specs, and tasks');
+  assert('specs.md places an effort\'s tickets in the repository', () =>
+    ticketing.includes('**An effort\'s tasks are files in this repository**'));
+  assert('specs.md says a ticket is never a tracker object', () =>
+    ticketing.includes('**A ticket is never an object in a tracker**'));
+  assert('specs.md states exactly two tracker objects per effort', () =>
+    ticketing.includes('**Exactly two tracker objects exist per effort**'));
 });
 
 section('the guard fires', () => {
