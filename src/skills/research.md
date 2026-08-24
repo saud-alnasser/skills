@@ -2,10 +2,15 @@
 use-when: "a decision turns on a fact that is not in this repository"
 ---
 
-# /research — establish what is true
+# research — establish what is true
 
 Investigates one question against primary sources and writes the answer as
-evidence. A **capability, never a stage** — most changes never need it.
+evidence.
+
+**A stage, not a command.** `[[skills/specify]]` and `[[skills/plan]]` run this
+where a material fact is not in this repository, inside the same invocation.
+Nobody types it, and it opens no report of its own (`[[policies/reporting]]`).
+Most changes never need it.
 
 **Posture.** Evidence over conclusions. Keep what the source says, what you
 observed, what you infer, and what you conclude labelled apart — collapsing

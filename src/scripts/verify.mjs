@@ -159,6 +159,22 @@ const readSrc = (...parts) => fs.readFileSync(path.join(SRC, ...parts), 'utf8');
  */
 const flat = (text) => text.replace(/^\s*>\s?/gm, '').replace(/\s+/g, ' ');
 const inSrc = (...parts) => fs.existsSync(path.join(SRC, ...parts));
+
+/**
+ * The body of one `## ` section of a document, up to the next `## `.
+ *
+ * Scoping an assertion to a section is what separates "this file says it
+ * somewhere" from "this step says it". A phrase that drifts out of the step it
+ * governs and into a paragraph three sections away still satisfies a whole-file
+ * match, and it no longer governs anything.
+ */
+const headingBlock = (text, heading) => {
+  const start = text.indexOf(`## ${heading}`);
+  if (start < 0) return '';
+  const rest = text.slice(start);
+  const end = rest.slice(1).search(/^##\s/m);
+  return end < 0 ? rest : rest.slice(0, end + 1);
+};
 const listMarkdown = (dir) =>
   inSrc(dir) ? walk(path.join(SRC, dir)).filter((f) => f.endsWith('.md')) : [];
 
@@ -890,10 +906,14 @@ section('skills', () => {
   assert('skills/update branches to the 1.x migration rather than upgrading in place', () =>
     readSrc('skills', 'update.md').includes('skills/update/migration'));
 
-  assert('skills/implement reads an external frontier from the recorded query', () =>
-    /frontier comes from the recorded query/.test(readSrc('skills', 'implement.md')));
-  assert("skills/tasks sends external tasks to that tracker's own reference", () =>
-    readSrc('skills', 'tasks.md').includes('[[references]]'));
+  assert('skills/implement computes the frontier from the local ticket files', () => {
+    const runner = readSrc('skills', 'implement.md');
+    return runner.includes('frontier.mjs')
+      && runner.includes('tickets are files under `efforts/<effort>/tickets/`')
+      && !runner.includes('frontier comes from the recorded query');
+  });
+  assert('skills/implement states that neither tracker object carries a ticket', () =>
+    /neither carries a ticket/.test(readSrc('skills', 'implement.md')));
 
   // §31.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
@@ -1110,20 +1130,25 @@ section('policies', () => {
   // Pinned with `\s+` between words rather than literal spaces: the payload is
   // wrapped at 80 columns, so any phrase long enough to be worth pinning is long
   // enough to have a newline land in the middle of it.
-  assert('policies/execution requires an external task to be findable in its tracker', () =>
-    /attributable to its effort by a query the\s+tracker\s+answers natively/.test(execution));
-  assert('policies/execution requires exactly one fact of an external task', () =>
-    /Exactly one fact is required/.test(execution));
-  assert('policies/execution keeps status out of it, and says why', () =>
-    /`status`\s+is not carried separately/.test(execution) &&
-    /closes\s+an issue from the tracker's own interface/.test(execution));
-  assert('policies/execution keeps a dependency edge out of it, and says why', () =>
-    /dependency edge is not carried as set membership/.test(execution) &&
-    /nothing in the tracker knows to\s+do it/.test(execution));
-  assert('policies/execution prefers what the tracker already models', () =>
-    /What the tracker already models, the tracker carries/.test(execution));
-  assert('policies/execution separates carrying the fact from mirroring', () =>
-    /None of this is mirroring/.test(execution));
+  // Two tracker objects per effort, and no third. The old shape put a task in
+  // the tracker too, which is what put the dependency graph behind a paginated
+  // fetch.
+  assert('policies/execution fixes exactly one issue and one pull request per effort', () =>
+    /\*\*Exactly two objects per effort: one issue and one pull request\.\*\*/.test(execution) &&
+    /creates\s+no other tracker object/.test(execution));
+  assert('policies/execution keeps the ticket and its graph in the repository', () =>
+    /\*\*A ticket is never a tracker object, and the dependency graph never leaves the\s+repository\.\*\*/
+      .test(execution));
+  assert('policies/execution says why the graph stays local', () =>
+    /read on every scheduling pass/.test(execution) &&
+    /fetch, paginate, and interpret/.test(execution));
+  assert('policies/execution says why one issue and not one per ticket', () =>
+    /Why one issue rather than one per ticket/.test(execution) &&
+    /fifteen things to close/.test(execution));
+  assert('policies/execution keeps the tracker read-only into .aep/', () =>
+    /\*\*The tracker is read, and never mirrored into `\.aep\/`\*\*/.test(execution));
+  assert('policies/execution proposes a tracker write before making it', () =>
+    /proposed before it happens\*\*, with exact\s+strings/.test(execution));
 
   const reconciliation = flat(execution);
 
@@ -1356,6 +1381,148 @@ section('converge', () => {
 /** The two slots before the work, in the order the contract fixes, then the two after. */
 const OPENING_SLOTS = ['Position', 'Assuming'];
 const CLOSING_SLOTS = ['State', 'Next'];
+
+
+// Ticket 14. The opening step is the one place AEP publishes, and the one place
+// it interrupts a human. Both halves are pinned: what it creates (exactly two
+// objects, the same two for the smallest change and the largest), and what it
+// does when told no. A refusal that quietly degrades to a local branch is the
+// failure this section exists to catch.
+section('the effort opens', () => {
+  const specify = readSrc('skills', 'specify.md');
+  const execution = readSrc('policies', 'execution.md');
+  const opening = headingBlock(specify, 'Opening the effort');
+
+  assert('specify carries an opening step at all', () => opening.length > 0);
+
+  // Criterion 1. Size changes the floor above, never the shape of the opening.
+  assert('the opening is the same step for the smallest and largest change', () =>
+    opening.includes('the same step for a one-line fix and a fifteen-ticket feature'));
+  assert('a bug fix still reaches tasks without a plan', () =>
+    specify.includes('docs, config, a bug fix, an isolated refactor | straight to `[[skills/tasks]]`'));
+
+  // Criterion 2. The rename has to precede the first commit or the placeholder
+  // number is in history forever, and every later reader has two names for one
+  // effort.
+  assert('the directory is a literal xxxx until the tracker gives it a number', () =>
+    /a literal `xxxx`, because the number is the\s+tracker's/.test(specify));
+  assert('the rename happens before the first commit, so it never enters history', () =>
+    opening.includes('before the first commit, so the rename never appears in history'));
+
+  // Criterion 3, as five ordered steps. Asserted by position, not by presence:
+  // a set of steps in the wrong order opens a pull request against a branch
+  // that does not exist yet, and every one of these strings would still be
+  // there.
+  const order = [
+    'create the issue',
+    'rename',
+    'create the effort branch',
+    "commit the effort's artifacts",
+    'push, and open a draft pull request',
+  ].map((step) => opening.indexOf(step));
+  assert('every step of the opening is present', () => order.every((at) => at >= 0));
+  assert('the opening steps are in an order that could actually run', () =>
+    order.every((at, i) => i === 0 || at > order[i - 1]));
+
+  // Criterion 6, both bodies. The empty list is called out because it is what
+  // an agent writes when tickets do not exist yet, and it reads as "no work".
+  assert('the issue body carries each requirement criterion as a checkbox', () =>
+    opening.includes("each requirement's acceptance criterion a checkbox"));
+  assert('the pull request says tickets are not yet cut rather than listing none', () =>
+    opening.includes('saying tickets are not yet cut') && opening.includes('never an empty list'));
+
+  // Criterion 4. Revisions land as further commits, or the pull request shows
+  // one drop at the end and the grilling that produced it is invisible.
+  assert('later revisions are further docs commits on the effort branch', () =>
+    /is a\s+further `docs` commit/.test(specify));
+  assert('the issue body is rewritten as the spec changes, not copied once', () =>
+    /It is the spec's projection,\s+not a copy taken once/.test(specify));
+
+  // Criterion 5. An abandoned draft left open reads as work in flight to
+  // everyone who was not in the conversation.
+  assert('abandoning closes both objects', () =>
+    specify.includes('**Abandoning the effort closes both objects**'));
+  assert('the abandoned pair is labelled rather than silently closed', () =>
+    specify.includes('flag: wontfix'));
+
+  // The single ask. Two things, one interruption, and a refusal that stops
+  // rather than sliding to whatever the agent is allowed to do unasked.
+  assert('the ask happens once, at the opening, and nowhere else', () =>
+    specify.includes('### It asks once, and only here'));
+  assert('the ask covers both the push and the priority', () =>
+    specify.includes('permission to push and open a public pull request') &&
+    specify.includes("the effort's `priority:`"));
+  assert('the ask carries the exact strings it will write', () =>
+    specify.includes('issue title and body, branch name, pull request title'));
+  assert('a refusal stops the opening rather than degrading to something quieter', () =>
+    specify.includes('**A refusal stops the opening.**') &&
+    /does not slide to something the agent is\s+allowed to do instead/.test(specify));
+
+  // Criterion 30. The stages resolve uncertainty inside the invocation. A turn
+  // that ends by naming a command has renamed the uncertainty, not resolved it,
+  // and that is exactly what this effort exists to remove.
+  assert('specify resolves material uncertainty in the same invocation', () =>
+    /\*\*These run inside this invocation and hand nothing back for the human to\s+type\.\*\*/.test(specify));
+  assert('one specify on a factual unknown produces the spec and the evidence', () =>
+    specify.includes('produces the spec *and* the evidence file'));
+  assert('ambiguity is not offered as a next step', () =>
+    specify.includes('**Ambiguity is not a next step**'));
+  for (const [kind, target] of [
+    ['factual', 'skills/research'],
+    ['product, or a tradeoff', 'skills/refine'],
+    ['technical', 'skills/prototype'],
+  ]) {
+    assert('specify routes ' + kind + ' uncertainty to ' + target, () => {
+      const row = specify.split('\n').find((line) => line.includes('| **' + kind));
+      return Boolean(row) && row.includes(target);
+    });
+  }
+
+  // The stages are not commands. A skill whose heading still reads as a slash
+  // command invites a human to type it, which is the workflow this replaced.
+  for (const name of ['refine', 'research']) {
+    const stage = readSrc('skills', name + '.md');
+    assert('skills/' + name + ' declares itself a stage rather than a command', () =>
+      stage.includes('**A stage, not a command.**'));
+    assert('skills/' + name + ' is not headed as a slash command', () =>
+      new RegExp('^# ' + name + ' ', 'm').test(stage) &&
+      !new RegExp('^# /' + name, 'm').test(stage));
+    assert('skills/' + name + ' opens no report of its own', () =>
+      stage.includes('opens no report of its own'));
+  }
+
+  // Requirement 35, in the policy and then in both seeds. The seeds are what a
+  // repository actually reads, so a policy that says two objects and a seed
+  // that still says one issue per ticket is the disagreement that ships.
+  assert('the policy states exactly two tracker objects per effort', () =>
+    execution.includes('**Exactly two objects per effort: one issue and one pull request.**'));
+  assert('the policy says a ticket is never a tracker object', () =>
+    /\*\*A ticket is never a tracker object, and the dependency graph never leaves the\s+repository\.\*\*/.test(execution));
+  assert('the policy explains why the graph stays local', () =>
+    execution.includes('nobody schedules by hand'));
+
+  for (const [forge, unit] of [['github', 'pull request'], ['gitlab', 'merge request']]) {
+    const seed = readSrc('seed', 'references', forge + '.md');
+    assert('the ' + forge + ' seed heads its effort section with one issue and one ' + unit, () =>
+      new RegExp('^## An effort here: one issue, one ' + unit + '$', 'm').test(seed));
+    assert('the ' + forge + ' seed keeps the tickets in the repository', () =>
+      seed.includes('efforts/<effort>/tickets/'));
+    assert('the ' + forge + ' seed computes the frontier locally', () =>
+      seed.includes('.aep/scripts/frontier.mjs'));
+    assert('the ' + forge + ' seed does not send the dependency graph to the forge', () =>
+      /never comes here|no longer applies/.test(seed));
+  }
+
+  // The sub-issue resolution this repository never adopted. It is recorded as a
+  // declined option rather than deleted, because the next reader will find the
+  // feature and wonder why it is unused.
+  const github = readSrc('seed', 'references', 'github.md');
+  assert('the github seed records why sub-issues are declined', () =>
+    /^## Sub-issues, and why they are not used$/m.test(github) &&
+    /\*\*This\s+repository does not use it\*\*/.test(github));
+  assert('the github seed declines sub-issues on grounds other than capability', () =>
+    github.includes('the reason is not that it is missing anything'));
+});
 
 /**
  * The stage names a skill declares, read from its own procedure.
@@ -1681,7 +1848,7 @@ section('seeds', () => {
   // invented per repository.
   for (const forge of ['github', 'gitlab']) {
     assert(`seed/references/${forge}.md carries the section a resolution is recorded in`, () =>
-      readSrc('seed', 'references', `${forge}.md`).includes('## AEP tasks in this tracker'));
+      readSrc('seed', 'references', `${forge}.md`).includes('## AEP in this tracker'));
   }
 
   // A seed file nothing declares ships in the distribution and installs

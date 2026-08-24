@@ -2,11 +2,15 @@
 use-when: "a spec exists but reads as ambiguous, under-constrained, or too agreeable"
 ---
 
-# /refine — grill the specification
+# refine — grill the specification
 
 Attacks an effort's `spec.md` until ambiguity and unresolved tradeoffs have
-surfaced. Optional, repeatable, and frequently the highest-value step in the
-spine.
+surfaced. Repeatable, and frequently the highest-value work in the spine.
+
+**A stage, not a command.** `[[skills/specify]]` and `[[skills/plan]]` run this
+where product uncertainty or an unresolved tradeoff would otherwise reach the
+spec. Nobody types it, and it opens no report of its own
+(`[[policies/reporting]]`) — everything it produces still reaches the human.
 
 **Posture.** Adversarial, on purpose. Find the reading of this spec under
 which the delivered thing is wrong and everybody was technically correct.

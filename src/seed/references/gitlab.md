@@ -22,76 +22,72 @@ glab ci status
 
 Reading is always allowed; `[[policies/authority]]` still governs writing.
 
-## Tasks as issues
+## An effort here: one issue, one merge request
 
-Where this repository keeps AEP tasks in GitLab Issues rather than under the
-effort, **use what GitLab already models** before introducing anything:
+**AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
+tickets stay in the repository under `efforts/<effort>/tickets/`, and so does the
+dependency graph.
 
-| The fact | Carried by | Note |
+| The fact | Carried by | Never |
 | --- | --- | --- |
-| which effort this task belongs to | a **milestone** named for the effort | native, and directly queryable |
-| open, resolved | the issue's **state** | native |
-| what gates this task | **linked issues** — *is blocked by* | Premium and Ultimate only, and `glab` has no subcommand for it. See the gap below |
-| obsolete, as distinct from resolved | **a label** | the one fact with no native carrier here |
+| what the effort is, and its acceptance criteria | **the issue description**, which is `spec.md` | a second copy under `.aep/` |
+| the approach, the tickets, and the run's memory | **the merge request description** | one merge request per ticket |
+| what gates a ticket | **`blocked-by` in the ticket file** | a linked issue, a `blocked-by-<n>` label |
+| draft, accepted, implemented | **`spec.md`'s `status:`**, projected onto a label | a label that is the source of truth |
 
 ```sh
-glab issue create --title "<type(scope): summary>" --description "<text>" \
-  --milestone "<effort>" --label <name>
+glab issue create --title "<effort>" --description "$(cat efforts/<effort>/spec.md)"
+glab mr create --draft --title "<effort>" --description "$(cat <file>)"
+glab issue update <id> --description "$(cat efforts/<effort>/spec.md)"
+glab mr update <id> --description "$(cat <file>)"
+glab mr update <id> --ready                  # converge found no gap
 
-glab issue update <id> --label <name>
-glab issue update <id> --unlabel <name>
-glab issue update <id> --milestone "<effort>"
-
-glab issue close <id>
+glab issue close <id>                        # abandoned, with the merge request
+glab mr close <id>
 ```
 
-`--description` takes text rather than a path — read a file in with your shell
-(`--description "$(cat <file>)"`) or use `--description -` to open an editor.
+`--description` takes text rather than a path, so a file is read in through the
+shell as above, or `--description -` opens an editor.
 
-**Creating an issue publishes.** Write the whole set first — issues, and any
-label or milestone the resolution needs created alongside them — show it, get it
-approved, then create.
+**Creating an issue or a merge request publishes.** It lands in other people's
+workspace, so the whole set is written out first with exact strings, shown, and
+approved before anything is created (`[[rules/version-control]]`). `/specify`
+asks once, at the opening step, and a refusal leaves the effort local.
 
 ## Finding the effort, and the frontier
 
+**The frontier is computed locally, and GitLab is not consulted for it:**
+
 ```sh
-glab issue list --milestone "<effort>"          # open by default
-glab issue list --milestone "<effort>" --all
-glab issue list --label <name> --not-label <name>
+node .aep/scripts/frontier.mjs <effort>
 ```
 
-The milestone query returns the effort's work. **The gating edges do not come
-back with it** — see below — so on GitLab the frontier is the milestone query
-plus whatever carries the edges. `[[policies/execution]]` still holds: the edges
-are read, never inferred from which files a task looks like it touches.
+The tickets and their `blocked-by` edges are files in this repository.
+`[[policies/execution]]` requires independence read off declared edges rather
+than inferred, and a field in a file is the cheapest declaration there is.
 
-## The dependency gap
+What is read from GitLab is the effort's own two objects:
 
-Two separate limits, and they compound:
+```sh
+glab issue view <id>
+glab mr view <id>
+```
 
-1. **`glab` has no subcommand for issue links at all.** The `issue` subcommands
-   are `board`, `close`, `create`, `delete`, `list`, `note`, `reopen`,
-   `subscribe`, `unsubscribe`, `update`, and `view`. Nothing links one issue to
-   another.
-2. **`blocks` and `is blocked by` are Premium and Ultimate.** On Free, only
-   *relates to* exists, and it carries no direction — so it cannot express a
-   gate even where it can be set.
+Record the effort's issue and merge request ids where the effort is defined, so
+neither has to be found by search.
 
-So on GitLab the gating edge is recorded **in the issue description**, in a form
-a person and an agent can both read, and maintained there. That is a real
-degradation from GitHub, and writing it down is better than a `blocked-by-<n>`
-label that nothing removes when the gate clears.
+## The dependency gap that no longer applies
 
-**Be exact about what that is.** GitLab parses no dependency out of a
-description — `#123` in the text is a cross-reference and nothing more. The
-written edge is a **convention this repository maintains by hand**, not a
-mechanism, so it cannot be trusted the way `blockedBy` can on GitHub: it is only
-as current as the last person who edited the description. Read it as a claim to
-check, not as state.
+Worth knowing, because it is the reason this shape is a relief here rather than
+merely a simplification. Had the tickets lived in GitLab, two limits would
+compound: **`glab` has no subcommand for issue links at all**, and **`blocks` and
+`is blocked by` are Premium and Ultimate** — on Free only *relates to* exists,
+and it carries no direction, so it cannot express a gate even where it can be
+set. The fallback was an edge written into a description, which GitLab parses as
+nothing and which is only as current as the last person who edited it.
 
-Where this repository is on Premium or Ultimate, the links are worth setting in
-the UI or through the API even though `glab` cannot — correct this section when
-you do.
+**None of that is reachable now.** The graph is `blocked-by` in a file, read by a
+script, on every tier.
 
 ## Labels
 
@@ -109,17 +105,17 @@ glab label create --name <name> --color "#RRGGBB" --description "<text>"
 prefixing. Read the list before naming anything. Group labels are shared across
 every project in the group, so creating one there reaches further than it looks.
 
-## AEP tasks in this tracker
+## AEP in this tracker
 
 **Draft — this table is the part to correct.** It records what carries each fact
 *here*, so no later session has to work it out again.
 
 | Fact | Carried by | Kind |
 | --- | --- | --- |
-| effort membership | milestone named for the effort | native |
-| status | open / closed | native |
-| the gating edge | stated in the issue description | gap — `glab` cannot link |
-| obsolete | a label, named in this project's style | derived |
+| what the effort is | one issue per effort, description `spec.md` | native |
+| what it will land as | one draft merge request per effort | native |
+| which tickets exist, and what gates each | files under `efforts/<effort>/tickets/` | **not in this tracker** |
+| the effort's state | `spec.md`'s `status:`, projected onto a label | projection |
 
 ## Referencing a task from a commit
 
@@ -133,7 +129,10 @@ Closes #123         only where the commit reaches the default branch through
 
 ## Merge requests
 
-Opening or merging is the **human's**. Prepare the description; do not submit.
+**Merging is the human's, never an agent's** (`[[rules/version-control]]`, which
+also states what the runner may push and open here). `/specify` opens the
+effort's draft after asking once; converge marks it ready when the effort is
+done. Nothing merges it but a person.
 
 ## Failure handling
 
