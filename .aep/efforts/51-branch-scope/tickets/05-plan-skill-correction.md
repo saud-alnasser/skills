@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 blocked-by: [04]
 ---
 
@@ -14,12 +14,12 @@ where the approach goes stop disagreeing.
 
 ## Acceptance Criteria
 
-- [ ] `skills/plan.md` names `plan.md` as what it writes, in its opening line, its
+- [x] `skills/plan.md` names `plan.md` as what it writes, in its opening line, its
       step 7, and its `## Output` section (criterion 12).
-- [ ] No sentence in it says the approach is written into `spec.md`, and its
+- [x] No sentence in it says the approach is written into `spec.md`, and its
       `## Output` no longer lists the technical headings as sections `spec.md`
       gains (criterion 12).
-- [ ] It still says the plan is written only where the approach is not obvious,
+- [x] It still says the plan is written only where the approach is not obvious,
       which is what `specs.md` requires and what the current text gets right
       (criterion 12).
 
