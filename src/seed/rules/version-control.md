@@ -5,8 +5,8 @@ use-when: "committing, branching, or preparing work to land"
 # Rule — version control
 
 **This file is yours.** AEP installed it as a starting point because how work
-lands is specific to this repository, and it is `owner: repository` so an upgrade
-will never overwrite it. Correct anything below that this repository does
+lands is specific to this repository, and nothing under `rules/` is ever
+replaced by an upgrade. Correct anything below that this repository does
 differently — what is here was detected or assumed at install, and detection is
 not certainty.
 

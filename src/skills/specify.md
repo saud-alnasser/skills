@@ -64,7 +64,7 @@ whole effort and is cheapest to fix here.
 
    | The uncertainty is | Resolve it by |
    | --- | --- |
-   | **factual** — what an API does, what a spec says, whether a bug is fixed | `[[skills/research]]`, as a stage. It writes `evidence/research/<question>.md` |
+   | **factual** — what an API does, what a spec says, whether a bug is fixed | `[[skills/research]]`, as a stage. It writes `.aep/efforts/<effort>/evidence/research/<question>.md` |
    | **product, or a tradeoff** | `[[skills/refine]]`, as a stage. It grills and the spec comes back clarified |
    | **technical, and argument will not settle it** | `[[skills/prototype]]`, in a worktree |
 
@@ -92,7 +92,7 @@ whole effort and is cheapest to fix here.
    either direction, and their override stands. The floor is what this turn's
    `Next` names (`[[policies/reporting]]`).
 9. **Write the spec**, using `[[templates/spec.template]]`. The directory is
-   `efforts/xxxx-<slug>/` — a literal `xxxx`, because the number is the
+   `.aep/efforts/xxxx-<slug>/` — a literal `xxxx`, because the number is the
    tracker's and does not exist yet.
 10. **Open the effort**, below. Even on a draft.
 
@@ -104,7 +104,7 @@ it is the same step for a one-line fix and a fifteen-ticket feature:
 | | |
 | --- | --- |
 | 1 | **create the issue**, body `spec.md`, each requirement's acceptance criterion a checkbox |
-| 2 | **rename** `efforts/xxxx-<slug>/` to `efforts/<number>-<slug>/`, before the first commit, so the rename never appears in history |
+| 2 | **rename** `.aep/efforts/xxxx-<slug>/` to `.aep/efforts/<number>-<slug>/`, before the first commit, so the rename never appears in history |
 | 3 | **create the effort branch into the run's own worktree**, based where `[[rules/version-control]]` says, so the branch is held from the moment it exists |
 | 4 | **commit the effort's artifacts** as one `docs` commit |
 | 5 | **push, and open a draft pull request** carrying the approach from `plan.md`, and each ticket's criteria as checkboxes — or **saying tickets are not yet cut**, never an empty list |
@@ -124,8 +124,8 @@ window in which the branch exists unheld:
 git worktree add -b <effort> .aep/worktrees/<effort>/_run <base>
 ```
 
-Read the isolation `scripts/scope.mjs` already printed at step 1, and key on its
-**kind**:
+Read the isolation `.aep/scripts/scope.mjs` already printed at step 1, and key
+on its **kind**:
 
 | The isolation says | Do |
 | --- | --- |
@@ -203,7 +203,7 @@ flight to everyone who did not have this conversation.
 
 ## Output
 
-`efforts/<effort>/spec.md`, where `<effort>` is a kebab-case slug naming the
+`.aep/efforts/<effort>/spec.md`, where `<effort>` is a kebab-case slug naming the
 change, with `status: draft`:
 
 ```markdown

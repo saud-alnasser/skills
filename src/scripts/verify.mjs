@@ -38,6 +38,7 @@ import {
   USE_WHEN_MIN_WORDS,
   isIsoDate,
   isNonEmptyString,
+  outsideFences,
   readArtifact,
   toPosix,
   topLevel,
@@ -85,9 +86,17 @@ const EM_DASH = '\u2014';
  * Pinned rather than derived from a glob over the root. A glob would sweep the
  * second list into the first the moment either grew, and the exemption is the
  * half that cannot defend itself: an over-broad sweep reads as thoroughness.
+ *
+ * The exempt list is named for the one thing it exempts, the prohibitions the
+ * reporting policy fixes for prose. Under a general name it read as a general
+ * pass: the entrypoint inherited an exemption written about how a sentence may
+ * be punctuated and was thereby excused from every claim it made about the
+ * implementation, which is how it came to describe a frontmatter field two
+ * releases after that field was retired. A boolean on one constant would leave
+ * the same confusion available, so the scope is in the name.
  */
 const GOVERNED_DOCS = ['README.md', 'CHANGELOG.md'];
-const EXEMPT_DOCS = ['specs.md', 'AGENTS.md'];
+const EXEMPT_FROM_PROSE_RULES = ['specs.md', 'AGENTS.md'];
 
 /**
  * The release the upgrade fixture pretends to be coming from.
@@ -187,6 +196,328 @@ function payloadArtifacts() {
   for (const dir of PAYLOAD_DIRS) files.push(...listMarkdown(dir));
   return files;
 }
+
+/**
+ * The nine directories AEP owns, protocol-side and repository-side.
+ *
+ * Not the whole tree, which also holds `position/`, `worktrees/`, and two root
+ * files. These nine are the ones a path can name an artifact inside, so §9.1
+ * governs how a path starting with one of them is written down.
+ */
+const TREE_DIRS = [...PROTOCOL_DIRS, ...REPOSITORY_DIRS];
+
+/**
+ * A tree path written without its root: a tree directory, a slash, and a second
+ * segment behind it.
+ *
+ * Two exclusions carry the whole rule. The lookbehind is what makes
+ * `.aep/efforts/<effort>/spec.md` invisible here, since that `efforts` sits
+ * behind a slash and the path already says where it starts from.
+ *
+ * The second is what a segment may begin with, and it is narrower than *any
+ * character* for a reason found in review: a glob is not a segment. `scripts/*`
+ * names an area, the way `scripts/` does, and §9.1 leaves an area name bare
+ * because nobody writes a file to one. Matching a name character keeps the two
+ * together and keeps trailing punctuation out of the reported path.
+ */
+const BARE_TREE_PATH = new RegExp(`(?<![\\w./-])(?:${TREE_DIRS.join('|')})/[\\w<][^\\s\`]*`, 'g');
+
+/**
+ * What a line's own number rides on, through a strip that would lose it.
+ *
+ * A NUL, because no Markdown holds one, so nothing in the corpus collides with
+ * it. Written as an escape because a literal one makes this a binary file to
+ * grep, which answers `Binary file matches` and prints nothing.
+ */
+const LINE_TAG = '\u0000';
+
+/**
+ * Every line of a body outside a fenced block, still knowing where it sat.
+ *
+ * `outsideFences` hands back prose with the blocks gone, and with them the
+ * correspondence between what survived and the line it came from. A failure
+ * nobody can locate is one nobody can act on, so the number rides through the
+ * strip on the line itself. Fence detection is untouched: the tag lands where
+ * an info string would, which is content the fence regex never reads.
+ */
+function numberedProse(body) {
+  const tagged = body.split('\n').map((line, i) => `${line}${LINE_TAG}${i + 1}`);
+  return outsideFences(tagged.join('\n'))
+    .split('\n')
+    .filter((line) => line.includes(LINE_TAG))
+    .map((line) => {
+      const cut = line.lastIndexOf(LINE_TAG);
+      return { text: line.slice(0, cut), line: Number(line.slice(cut + 1)) };
+    });
+}
+
+/**
+ * Every site in a body where a path names an artifact without saying where it
+ * starts from.
+ *
+ * Read inside inline code spans only. The convention is about paths written as
+ * paths, and this corpus writes those in backticks; a sentence that happens to
+ * mention efforts and tickets is not an instruction anybody resolves. Wiki
+ * links come out first, because they are the other convention entirely: already
+ * resolved against `.aep/`, already checked by `links`, and a relationship
+ * rather than a place anybody writes to.
+ */
+function barePathSites(body) {
+  const sites = [];
+  for (const { text, line } of numberedProse(body)) {
+    for (const span of text.match(/`[^`\n]+`/g) ?? []) {
+      const written = span.slice(1, -1).replace(/\[\[[^\]]*\]\]/g, '');
+      for (const found of written.match(BARE_TREE_PATH) ?? []) sites.push({ line, path: found });
+    }
+  }
+  return sites;
+}
+
+/**
+ * Where one sentence ends and the next begins.
+ *
+ * A terminator, optional closing markup, whitespace, then something that opens
+ * a sentence. Requiring the opener is what keeps `3.0.0` and `validate.mjs`
+ * from splitting mid-token, since neither has whitespace after its dots.
+ *
+ * A digit opens a sentence here as readily as a capital does, because this
+ * corpus starts them with `1.x`, `2.x` and a release number. Left out of the
+ * class, such a sentence merged into the one above it, and since `1.x` is
+ * itself a retirement marker the merge licensed whatever its neighbour said.
+ */
+const SENTENCE_BREAK = /(?<=[.!?][)"'`*_\]]*)\s+(?=[A-Z0-9*_`"([])/;
+
+/**
+ * A line that starts a block of its own rather than continuing the one above.
+ *
+ * A bullet, a numbered item, a table row, a heading, a quote. Each is a record
+ * rather than a clause, and running them together is how a scope meant to be a
+ * sentence quietly becomes a section: one bullet saying a field was removed
+ * would license a live claim three bullets below it, which is the looseness
+ * the sentence scope was chosen over.
+ */
+const BLOCK_START = /^\s*(?:[-*+]\s|\d+\.\s|\||#{1,6}\s|>)/;
+
+/**
+ * Every sentence of a body outside a fenced block, flattened onto one line.
+ *
+ * The unit is the sentence because that is where a claim's tense lives. A
+ * retired field is named legitimately in "the `aep:` field was retired in
+ * 3.0.0" and illegitimately in "`aep:` is the release an artifact last changed
+ * in", and the two are the same token in the same position: only the words
+ * around it separate them. Widening to the paragraph or the section lets an
+ * unrelated mention of retirement excuse every live claim beside it.
+ *
+ * A blank line ends a sentence whether or not it was punctuated, and so does
+ * the start of any block: a table row, a bullet, a heading. Otherwise a table
+ * with no blank lines in it arrives as one sentence, and the marker in its
+ * last row licenses every claim in the rows above.
+ */
+function proseSentences(body) {
+  const out = [];
+  let buffer = '';
+  const flush = () => {
+    for (const part of buffer.split(SENTENCE_BREAK)) {
+      if (part.trim() !== '') out.push(part.trim());
+    }
+    buffer = '';
+  };
+  for (const { text } of numberedProse(body)) {
+    if (text.trim() === '' || BLOCK_START.test(text)) flush();
+    if (text.trim() === '') continue;
+    buffer += (buffer === '' ? '' : ' ') + text.trim();
+  }
+  flush();
+  return out;
+}
+
+/**
+ * A retired frontmatter field, named as a field.
+ *
+ * The colon is what separates the field from the English word, and what
+ * follows the colon is what separates it from a namespace: the shipped GitHub
+ * reference writes `aep:effort/x` to show a tracker label nobody should create,
+ * which is `aep:` in backticks outside a fence and is not this field at all.
+ */
+const RETIRED_FIELD = new RegExp(`(?<![\\w-])(?:${RETIRED_FIELDS.join('|')}):(?![\\w-])`, 'g');
+
+/**
+ * What makes a sentence a description of something gone.
+ *
+ * Deliberately short. Every word here is a licence to name a retired field, so
+ * a wide vocabulary is a wide hole. `no longer` and `stopped` were in it and
+ * are not: both are ordinary English about degree, so "a skill's `mode:` is no
+ * longer optional" bought a licence while describing the field as live.
+ *
+ * **What this catches is a claim written with no retirement language at all**,
+ * which is the failure that occurred: an entrypoint went on describing `aep:`
+ * as the release an artifact last changed in. A claim worded to include one of
+ * these words passes, and no vocabulary fixes that, because the words are about
+ * the sentence rather than about the field. The bound is stated here so nobody
+ * reads the check as stronger than it is.
+ */
+const RETIREMENT_SAID = /retire|removed|removal|used to|1\.x|2\.x/i;
+
+/**
+ * Files where a retired field may be named without its own sentence saying so,
+ * and the reason each one is here.
+ *
+ * Named for what it grants rather than for what it holds, which is the lesson
+ * `EXEMPT_FROM_PROSE_RULES` above was renamed to carry.
+ *
+ * **Both describe a tree where the field is live.** An upgrade reads a 1.x or
+ * 2.x tree, where `owner:` and the rest are present and load-bearing, and says
+ * what each becomes. A rule about a field being gone cannot be applied sentence
+ * by sentence to prose whose subject is the tree it is still in. The first
+ * version of this comment said their hits were table cells; both hold prose
+ * hits as well, so that reason was untrue of the files it excused.
+ *
+ * `AGENTS.md` is deliberately absent. It is the file that failed, and the
+ * sentence scope exists so the entrypoint is checked rather than excused.
+ */
+const EXEMPT_FROM_RETIREMENT_SCAN = {
+  'src/skills/update.md': 'the upgrade skill, which reads a 2.x tree where owner: is still live',
+  'src/skills/update/migration.md': 'the 1.x migration, converting trees that still carry them',
+};
+
+/**
+ * Every sentence in a body that names a retired field without saying it is
+ * retired.
+ *
+ * Reported as the sentence rather than as a line, because a sentence is what
+ * the rule is about and it routinely spans two of them. It is also its own
+ * locator: a grep for the quoted text lands on it.
+ */
+function retiredFieldSites(body) {
+  const sites = [];
+  // Frontmatter comes off first. It is where a field *lives* rather than
+  // where one is described, so a hit there is a different defect with its own
+  // check: `validate.mjs` fails a protocol path carrying a retired field, and
+  // the `frontmatter` section asserts it. The adapters are why it matters:
+  // their wrappers carry a runtime key that merely shares the name.
+  const prose = body.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+  for (const sentence of proseSentences(prose)) {
+    if (RETIREMENT_SAID.test(sentence)) continue;
+    const found = [...new Set(sentence.match(RETIRED_FIELD) ?? [])];
+    for (const field of found) sites.push({ field, sentence });
+  }
+  return sites;
+}
+
+/**
+ * Every backticked token in a body that names a path.
+ *
+ * A path is a token ending in a slash or in an extension this repository ships.
+ * That is deliberately mechanical: the net costs nothing to maintain and
+ * catches the whole class of *the entrypoint names a file that moved*, which no
+ * hand-written assertion generalises to. Merely holding a slash was the first
+ * test and it admitted `WHAT/WHY`, which is a pair of words.
+ *
+ * A span holding whitespace is prose rather than a path, so a flag shown with
+ * its argument, or a label written `type: bug`, is not a token here, and
+ * `use-when` is a field name with neither a slash nor an extension. No flag is
+ * spelled out anywhere in this file: the suite is invoked by the entrypoint it
+ * checks, so a flag named here would satisfy a search of the scripts the
+ * entrypoint runs, and the guard would pass on its own text.
+ */
+function pathTokens(body) {
+  const found = [];
+  for (const { text } of numberedProse(body)) {
+    for (const span of text.match(/`[^`\n]+`/g) ?? []) {
+      const token = span.slice(1, -1).replace(/[.,;:]+$/, '');
+      if (!/^[\w@.\/-]+$/.test(token)) continue;
+      if (!token.endsWith('/') && !/\.(?:md|mjs|json)$/.test(token)) continue;
+      found.push(token);
+    }
+  }
+  return [...new Set(found)];
+}
+
+/**
+ * Every flag a body documents, paired with the command it is documented under.
+ *
+ * The nearest `node <script>` line above it, and a heading ends the
+ * association, so a flag under one command is never attributed to another.
+ * Pooling the flags against every script the entrypoint invokes was the first
+ * shape and it failed open: this suite is one of those scripts and it names
+ * what it checks, so a flag it mentions anywhere satisfied a search of the
+ * pool.
+ *
+ * A flag with no command above it is reported against `null` rather than
+ * dropped. Dropped, a flag documented before the first command was one the
+ * check could never fail on, and nothing said so.
+ */
+function documentedFlags(body) {
+  const pairs = [];
+  let script = null;
+  for (const line of body.split('\n')) {
+    if (/^#{1,6}\s/.test(line)) script = null;
+    const invoked = /^\s*node\s+(\S+)/.exec(line);
+    if (invoked !== null) {
+      script = invoked[1];
+      continue;
+    }
+    for (const span of line.match(/`[^`\n]+`/g) ?? []) {
+      for (const flag of span.match(/--[a-z][\w-]*/g) ?? []) pairs.push({ script, flag });
+    }
+  }
+  return pairs;
+}
+
+/**
+ * Every script a fenced command in a body invokes.
+ *
+ * Read inside the fences rather than outside them, which is the opposite of
+ * every other scan here and is the point: a command is shown in a block, and a
+ * command naming a script that no longer exists is the failure this catches.
+ */
+function fencedScripts(body) {
+  const scripts = [];
+  for (const block of body.match(/^[ 	]*```[\s\S]*?^[ 	]*```/gm) ?? []) {
+    for (const line of block.split('\n')) {
+      const invoked = /^\s*node\s+(\S+)/.exec(line);
+      if (invoked !== null) scripts.push(invoked[1]);
+    }
+  }
+  return [...new Set(scripts)];
+}
+
+/**
+ * Every surface a release puts in somebody else's repository, plus this
+ * repository's own entrypoint.
+ *
+ * One definition, because two checks now sweep it and a third would otherwise
+ * take a third copy. Ticket 01 of this effort extracted `outsideFences` from
+ * `wikiLinks` on exactly that reasoning, and the corpus is the same kind of
+ * fact. Returned as named arms so each caller can assert its own is non-empty:
+ * a clean run is also what an arm scanning nothing produces.
+ *
+ * The adapters are here because they are generated from the payload, and left
+ * out they would hold whatever the last regeneration wrote until somebody
+ * looked. What is deliberately absent is `src/scripts/`, and each caller states
+ * why for itself, because the reasons differ.
+ */
+function shippedSurfaces() {
+  return {
+    payload: payloadArtifacts(),
+    seeds: listMarkdown('seed'),
+    adapters: listMarkdown('adapters'),
+    entrypoint: [path.join(REPO, CANONICAL_ENTRYPOINT)],
+  };
+}
+
+/**
+ * The entrypoints whose claims are checked, and what each one is.
+ *
+ * Two, and they are different in kind. This repository's own is checked for
+ * everything below; the seeded one is handed over on install and is checked
+ * only for the paths it names, because every claim past that belongs to a
+ * repository AEP will never see again.
+ */
+const ENTRYPOINTS = {
+  [CANONICAL_ENTRYPOINT]: path.join(REPO, CANONICAL_ENTRYPOINT),
+  'src/seed/AGENTS.md': path.join(SRC, 'seed', CANONICAL_ENTRYPOINT),
+};
 
 const specText = fs.readFileSync(path.join(REPO, 'specs.md'), 'utf8');
 const specVersion = /^\*\*Version:\*\*\s*(\S+)/m.exec(specText)?.[1] ?? null;
@@ -585,6 +916,28 @@ section('protocol.md', () => {
     const end = rest.slice(1).search(/^##\s/m);
     return end < 0 ? rest : rest.slice(0, end + 1);
   };
+
+  // Both conventions for `.aep/`, in the one section that states either. The
+  // link rule reads as though it covered paths too and does not: a path inside
+  // backticks in an instruction to write a file is not a link, and an agent
+  // following one literally built a whole effort at the repository root.
+  //
+  // Scoped to the section rather than to the file, because a sentence that
+  // drifts away from its sibling is one the reader meets on a different page
+  // from the rule it qualifies, which is the state this assertion exists to end.
+  assert('the bootstrap states the path convention beside the link convention', () => {
+    const discovery = flat(sectionOf('How to discover what matters'));
+    if (!/double-bracketed, relative to `\.aep\/`/.test(discovery)) {
+      throw new Error('the link convention is no longer in this section');
+    }
+    if (!/two segments or more carries `\.aep\/`/.test(discovery)) {
+      throw new Error('nothing says when a filesystem path carries the root');
+    }
+    if (!/bare area name does not/.test(discovery)) {
+      throw new Error('the single-segment case is left to be guessed');
+    }
+    return true;
+  });
 
   // Seven primitives, counted off the table rather than matched as prose. A
   // regex for the seven names passes while an eighth row sits beside them,
@@ -1027,10 +1380,13 @@ section('skills', () => {
   assert('skills/update branches to the 1.x migration rather than upgrading in place', () =>
     readSrc('skills', 'update.md').includes('skills/update/migration'));
 
+  // The path carries its root (§9.1), so this fails on a convention change as
+  // well as on a frontier one. `path convention` names the first; this names the
+  // second, and the literal is why both land here.
   assert('skills/implement computes the frontier from the local ticket files', () => {
     const runner = readSrc('skills', 'implement.md');
     return runner.includes('frontier.mjs')
-      && runner.includes('tickets are files under `efforts/<effort>/tickets/`')
+      && runner.includes('tickets are files under `.aep/efforts/<effort>/tickets/`')
       && !runner.includes('frontier comes from the recorded query');
   });
   assert('skills/implement states that neither tracker object carries a ticket', () =>
@@ -1178,9 +1534,12 @@ section('skills', () => {
 });
 
 // --- §15.1 skill notes ------------------------------------------------------
-// Depth reached from a skill, never an entry point. Three ways a note goes
-// wrong, and all three read as working: it sits under a directory no skill
-// owns, nothing links to it, or an adapter publishes it as a command.
+// Depth reached from a skill, never an entry point. Four ways a note goes
+// wrong, and all four read as working: it sits under a directory no skill
+// owns, nothing links to it, an adapter publishes it as a command, or the tree
+// refuses to hold it at all. The fourth is a repository's own note rather than
+// a shipped one, so it is checked against a live installed tree in the
+// `install fixture` section rather than here.
 
 section('skill notes', () => {
   const skillsDir = path.join(SRC, 'skills');
@@ -1232,6 +1591,122 @@ section('skill notes', () => {
     if (published.length > 0) throw new Error(published.join(', '));
     return true;
   });
+});
+
+// --- §21 a skill writes what the specification assigns it -------------------
+
+/** The header of the spine table, and the reason this check has an input. */
+const SPINE_HEADER = '| Stage | Establishes | Writes | Reached |';
+
+/**
+ * The spine table of §21, as what each stage establishes and what it writes.
+ *
+ * Read out of `specs.md` rather than restated here. A release that reassigns an
+ * output edits that table, and the table is then what fails the skill. A list
+ * of outputs maintained beside the specification would be a second home for one
+ * fact, and would drift exactly the way the skill it is meant to check did.
+ */
+function spineTable() {
+  const start = specText.indexOf(SPINE_HEADER);
+  if (start < 0) return [];
+  const rows = [];
+  for (const line of specText.slice(start).split('\n').slice(2)) {
+    if (!line.startsWith('|')) break;
+    const cells = line.split('|').slice(1, -1).map((cell) => cell.trim());
+    if (cells.length === 4) rows.push({ stage: cells[0].replace(/`/g, ''), writes: cells[2] });
+  }
+  return rows;
+}
+
+section('skill output', () => {
+  const rows = spineTable();
+
+  // The vacuous-pass guard, and it earns its lines here more than usual. A
+  // parse that matched nothing returns no rows, and asserting over no rows
+  // passes every row it does not have: a green run and a dead check, which is
+  // indistinguishable from a corpus that agrees. So a reformat of `specs.md`
+  // has to fail as a broken check rather than read as a clean one.
+  assert('the spine table is where the check reads it', () => specText.includes(SPINE_HEADER));
+  assert('the spine table parses, with every stage the specification lists', () => {
+    if (rows.length < 8) throw new Error(`parsed ${rows.length} rows, expected at least 8`);
+    return true;
+  });
+
+  // A row binds when its Writes cell names an artifact. Four of the eight
+  // describe an outcome instead, such as repository source or findings, and
+  // there is no file for a skill to disagree with about those.
+  const assigned = rows
+    .map(({ stage, writes }) => ({ stage, artifact: /`([^`]+)`/.exec(writes)?.[1] ?? null }))
+    .filter(({ artifact }) => artifact !== null);
+  assert('the specification assigns a named artifact to at least four stages', () => {
+    if (assigned.length < 4) throw new Error(`${assigned.length} stages write a named artifact`);
+    return true;
+  });
+
+  const everyArtifact = [...new Set(assigned.map(({ artifact }) => artifact))];
+
+  // The specification's other skill table, against this one. §15 lists the
+  // seventeen with a line of description each, and one of those lines said
+  // `plan` adds technical detail to the same spec while §21 two hundred lines
+  // below assigned it `plan.md`. The correction is this effort's, and until
+  // now nothing stopped the two drifting apart again.
+  //
+  // What this catches is a description **naming** an artifact assigned
+  // elsewhere. It does not catch one describing the wrong artifact in words,
+  // which is what the stale cell did, because no mechanical rule reads that.
+  const skillRows = headingBlock(specText, '15. Skills')
+    .split('\n')
+    .filter((line) => line.startsWith('| `'))
+    .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()))
+    .filter((cells) => cells.length === 2)
+    .map(([stage, describes]) => ({ stage: stage.replace(/`/g, ''), describes }));
+  assert('the specification describes each of its skills in one line', () =>
+    skillRows.length === 17);
+
+  // The pairings, counted before any of them is judged. A `continue` past a
+  // stage §15 does not name is the same vacuum the row-count guard exists to
+  // close: rename a stage in one table and every cross-check for it vanishes
+  // without a word, which reads exactly like a corpus that agrees.
+  const paired = assigned.filter(({ stage }) =>
+    skillRows.some((candidate) => candidate.stage === stage));
+  assert('the two skill tables name the same stages, for every assigned artifact', () => {
+    const orphaned = assigned.filter(({ stage }) => !paired.includes(
+      assigned.find((candidate) => candidate.stage === stage)));
+    if (orphaned.length > 0) {
+      throw new Error(`named by §21 and not by §15: ${orphaned.map((r) => r.stage).join(', ')}`);
+    }
+    return paired.length === assigned.length && paired.length >= 4;
+  });
+
+  for (const { stage, artifact } of paired) {
+    const row = skillRows.find((candidate) => candidate.stage === stage);
+    assert(`the specification describes ${stage} without naming another stage's artifact`, () => {
+      const foreign = everyArtifact.filter((other) => other !== artifact
+        && row.describes.includes(other));
+      if (foreign.length > 0) throw new Error(`assigned ${artifact}, described with ${foreign.join(', ')}`);
+      return true;
+    });
+  }
+
+  for (const { stage, artifact } of assigned) {
+    if (!inSrc('skills', `${stage}.md`)) continue;
+    const output = headingBlock(readSrc('skills', `${stage}.md`), 'Output');
+    assert(`skills/${stage} has an Output section to check`, () => output !== '');
+    assert(`skills/${stage} names ${artifact}, the artifact §21 assigns it`, () =>
+      output.includes(artifact));
+
+    // The other half, and the half that catches what happened: the stale skill
+    // named `spec.md` while §21 assigned it `plan.md`, so naming the right one
+    // is not enough on its own. A skill that named both would still be sending
+    // its reader to the wrong file half the time.
+    const foreign = everyArtifact.filter((other) => other !== artifact && output.includes(other));
+    assert(`skills/${stage} names no artifact §21 assigns to another stage`, () => {
+      if (foreign.length > 0) {
+        throw new Error(`assigned ${artifact}, also names ${foreign.join(', ')}`);
+      }
+      return true;
+    });
+  }
 });
 
 // --- §17 agents -------------------------------------------------------------
@@ -1320,6 +1795,40 @@ section('policies', () => {
   });
   assert('policies/artifacts no longer forbids an effort plan file', () =>
     !/effort's `plan\.md`/.test(artifacts));
+
+  // Where the path convention lives, with the reason the bootstrap has no room
+  // for. Scoped to "Where it goes", because the question it answers is the one
+  // the ownership table beside it already half-answers: that section is what a
+  // reader opens when they are about to put a file somewhere.
+  //
+  // The convention and the reason are two assertions rather than one. A
+  // convention whose reason has been edited away still reads like a rule and is
+  // one the next author overrules with a preference, which is how these
+  // surfaces drifted apart in the first place. The reason has to be able to go
+  // red on its own.
+  const placement = flat(headingBlock(readSrc('policies', 'artifacts.md'), 'Where it goes'));
+  assert('policies/artifacts states the path convention where it states location', () => {
+    if (!placement) throw new Error('the section answering where a file goes is gone');
+    if (!/carries `\.aep\/` where it has two segments or more/.test(placement)) {
+      throw new Error('nothing says when a filesystem path carries the root');
+    }
+    if (!/bare area name does not/.test(placement)) {
+      throw new Error('the single-segment case is left to be guessed');
+    }
+    return true;
+  });
+  assert('policies/artifacts says why the convention takes this form', () => {
+    if (!/Why the split falls there/.test(placement)) {
+      throw new Error('nothing says why the rule turns on the segment count');
+    }
+    if (!/Why not a leading slash/.test(placement)) {
+      throw new Error('the root sigil is not recorded as rejected');
+    }
+    if (!/read from the middle/.test(placement)) {
+      throw new Error('stating the root once at the top is not recorded as rejected');
+    }
+    return true;
+  });
 
   // Two statements from the absorbed rules that carry the most weight, pinned by
   // name so a rewrite of the surrounding prose cannot quietly drop them.
@@ -1916,7 +2425,7 @@ section('the effort opens', () => {
     assert('the ' + forge + ' seed heads its effort section with one issue and one ' + unit, () =>
       new RegExp('^## An effort here: one issue, one ' + unit + '$', 'm').test(seed));
     assert('the ' + forge + ' seed keeps the tickets in the repository', () =>
-      seed.includes('efforts/<effort>/tickets/'));
+      seed.includes('.aep/efforts/<effort>/tickets/'));
     assert('the ' + forge + ' seed computes the frontier locally', () =>
       seed.includes('.aep/scripts/frontier.mjs'));
     assert('the ' + forge + ' seed does not send the dependency graph to the forge', () =>
@@ -2384,9 +2893,10 @@ section('contexts', () => {
   const template = readSrc('templates', 'context.template.md');
   const prose = flat(template);
 
-  assert('the template gives the flat shape', () => prose.includes('contexts/<area>.md'));
+  assert('the template gives the flat shape', () =>
+    prose.includes('.aep/contexts/<area>.md'));
   assert('the template gives the namespaced shape', () =>
-    prose.includes('contexts/<project>/<area>.md'));
+    prose.includes('.aep/contexts/<project>/<area>.md'));
   assert('the template bounds the depth', () =>
     /one project directory deep, no more/i.test(prose));
   assert('the template says when to nest rather than only that you may', () =>
@@ -2686,12 +3196,266 @@ section('governed text', () => {
   // list is the claim; that each of them actually holds em dashes is what makes
   // the claim load-bearing. Without the second, a day when specs.md happens to
   // have none would leave this passing on nothing.
-  for (const name of EXEMPT_DOCS) {
+  for (const name of EXEMPT_FROM_PROSE_RULES) {
     assert(`${name} is exempt: it is not in the swept list`, () =>
       !GOVERNED_DOCS.includes(name));
     assert(`${name} exercises its exemption`, () =>
       fs.readFileSync(path.join(REPO, name), 'utf8').includes(EM_DASH));
   }
+});
+
+// --- §9.1 a path in shipped text says where it starts from ------------------
+
+section('path convention', () => {
+  // The fixtures come first, and the three that assert nothing is found are the
+  // ones worth the lines. A guard reporting every path would fail the corpus
+  // below exactly as loudly as a working one, and the failing run alone cannot
+  // tell those apart.
+  assert('a bare multi-segment path is a finding, named at the line it sits on', () => {
+    const sites = barePathSites('one\ntwo\nCopy to `efforts/<effort>/spec.md`.\n');
+    return sites.length === 1 && sites[0].line === 3 && sites[0].path === 'efforts/<effort>/spec.md';
+  });
+  assert('a path that already carries the root is not a finding', () =>
+    barePathSites('Copy to `.aep/efforts/<effort>/spec.md`.').length === 0);
+  assert('an area name is not a finding, bare or globbed', () =>
+    barePathSites('A policy lives under `policies/`, and `scripts/*` served 1.x.').length === 0);
+  // This arm reaches exactly what `outsideFences` reaches. An indented fence is
+  // among that now, and it is the shape the corpus actually uses, so the arm
+  // above pins it. A tilde fence and four backticks wrapping three are still
+  // read as prose; the corpus holds neither, and this comment is the only place
+  // that says so.
+  // The corpus puts most of its examples inside numbered list items, so the
+  // fence is indented to the item's content. Anchored at column zero the strip
+  // skipped every one, and a path being shown read as one being written.
+  assert('a path inside an indented fence is not a finding', () =>
+    barePathSites('1. Like so:\n\n   ```md\n   Copy to `efforts/<effort>/spec.md`\n   ```\n')
+      .length === 0);
+
+  assert('a path being shown inside a fence is not a finding', () =>
+    barePathSites('```md\nCopy to `efforts/<effort>/spec.md`\n```\n').length === 0);
+
+  // Everything the release puts in somebody else's repository, plus this
+  // repository's own entrypoint; the seeded one rides in with the seeds. The
+  // adapters are here because they are generated from the payload, and left out
+  // they would hold the old form until whoever regenerated them next looked.
+  // `src/scripts/` is deliberately absent: its docstrings do write these paths,
+  // but so does every JavaScript template literal building one, and there are
+  // sixty-four of those.
+  const arms = shippedSurfaces();
+
+  // Each arm counted separately, because a clean run is what an arm scanning
+  // nothing produces too. The adapters are the one that would go quiet: they
+  // report nothing today, so an empty list there reads exactly like a pass.
+  for (const [arm, files] of Object.entries(arms)) {
+    assert(`the ${arm} arm has surfaces to scan`, () => files.length > 0);
+  }
+
+  const bare = [];
+  for (const file of Object.values(arms).flat()) {
+    for (const site of barePathSites(fs.readFileSync(file, 'utf8'))) {
+      bare.push(`${toPosix(REPO, file)}:${site.line}  ${site.path}`);
+    }
+  }
+  assert('no shipped or entrypoint surface writes a bare artifact path', () => bare.length === 0);
+  if (bare.length > 0) {
+    process.stdout.write(`        ${bare.length} bare paths:\n`);
+    for (const site of bare) process.stdout.write(`          ${site}\n`);
+  }
+});
+
+// --- §32 a retired field is never described as live -------------------------
+
+section('retired fields', () => {
+  // Both directions, because this check has to pass a sentence that names the
+  // field in order to say it is gone. A guard that only ever fires and one
+  // that never fires look the same from a single run, and this one has a
+  // legitimate mention of every string it hunts.
+  assert('a field named as live is a finding', () =>
+    retiredFieldSites('Contexts are always `owner: repository`.').length === 1);
+  assert('the same field named as retired is not', () =>
+    retiredFieldSites('The `owner:` field was retired in 3.0.0.').length === 0);
+  assert('a marker anywhere in the sentence licenses it', () =>
+    retiredFieldSites('Nothing reads `owner:`, which 3.0.0 removed.').length === 0);
+
+  // The narrowing, pinned. `no longer` and `stopped` are ordinary English about
+  // degree, and while they were markers this sentence bought a licence to
+  // describe the field as live.
+  assert('a claim about degree is not a claim about retirement', () =>
+    retiredFieldSites("A skill's `mode:` is no longer optional.").length === 1);
+
+  // A sentence opening with a digit is its own sentence. Merged into the one
+  // above it, and `1.x` being a marker, it licensed its neighbour.
+  assert('a sentence opening with a digit does not license the one above it', () =>
+    retiredFieldSites('Every artifact carries `owner: repository`.\n1.x had no such rule.')
+      .length === 1);
+  assert('a field shown inside a fence is not a finding', () =>
+    retiredFieldSites('```md\n---\naep: 3.0.0\n---\n```\n').length === 0);
+  assert('the English word is not a finding', () =>
+    retiredFieldSites('The mode a skill takes, and the report it opens.').length === 0);
+
+  // The shipped GitHub reference writes this to show a tracker label nobody
+  // should create. It is the field's own name, in backticks, outside a fence,
+  // and it is not the field, which is why the colon alone cannot decide.
+  assert('a label namespace is not a finding', () =>
+    retiredFieldSites('A tracker labelled `area/api` does not want `aep:effort/x` beside them.')
+      .length === 0);
+
+  // A sentence carries its marker across a line break as readily as within
+  // one, so the unit has to survive the reflow that produced this corpus.
+  assert('a sentence is read across the lines it wraps onto', () =>
+    retiredFieldSites('The `aep:` frontmatter field this used to work\nthrough was retired.')
+      .length === 0);
+
+  // Driven over the whole list rather than over `aep:`. That is the field that
+  // failed, so an assertion written around it would pass on it and generalise
+  // to nothing. A release retiring an eighth field extends this by editing
+  // `RETIRED_FIELDS`, which it already has to do.
+  assert('the list holds more than the field that failed', () =>
+    RETIRED_FIELDS.length > 1 && RETIRED_FIELDS.includes('aep'));
+  for (const field of RETIRED_FIELDS) {
+    assert(`a live ${field}: is a finding and a retired one is not`, () => {
+      const written = retiredFieldSites(`Every artifact carries \`${field}: something\`.`);
+      if (written.length !== 1 || written[0].field !== `${field}:`) {
+        throw new Error(`live fixture reported ${JSON.stringify(written)}`);
+      }
+      return retiredFieldSites(`The \`${field}:\` field was retired in 3.0.0.`).length === 0;
+    });
+  }
+
+  // Everything the release puts in somebody else's repository, plus this
+  // repository's own entrypoint, which is the file that failed. `src/scripts/`
+  // is absent: a script's object keys collide with field names, `scope.mjs`
+  // alone holding five `kind:`, and `RETIRED_FIELDS` itself lives there, so
+  // scanning scripts would check the list against its own definition.
+  const arms = shippedSurfaces();
+  for (const [arm, files] of Object.entries(arms)) {
+    assert(`the ${arm} arm has surfaces to scan`, () => files.length > 0);
+  }
+
+  // The allowlist is pinned before it is applied, so a third entry is a
+  // failure rather than a quietly wider hole, and each entry is proven to be
+  // exercised: an allowlisted file with nothing to excuse is an exemption
+  // nobody would notice had stopped meaning anything.
+  assert('the allowlist is two files, each carrying its reason', () =>
+    Object.keys(EXEMPT_FROM_RETIREMENT_SCAN).length === 2
+    && Object.values(EXEMPT_FROM_RETIREMENT_SCAN).every(isNonEmptyString));
+  assert('the entrypoint is not on the allowlist', () =>
+    EXEMPT_FROM_RETIREMENT_SCAN[CANONICAL_ENTRYPOINT] === undefined);
+  for (const name of Object.keys(EXEMPT_FROM_RETIREMENT_SCAN)) {
+    assert(`${name} is on the allowlist and exists`, () => fs.existsSync(path.join(REPO, name)));
+    assert(`${name} exercises its exemption`, () =>
+      retiredFieldSites(fs.readFileSync(path.join(REPO, name), 'utf8')).length > 0);
+  }
+
+  const live = [];
+  for (const file of Object.values(arms).flat()) {
+    const name = toPosix(REPO, file);
+    if (EXEMPT_FROM_RETIREMENT_SCAN[name] !== undefined) continue;
+    for (const site of retiredFieldSites(fs.readFileSync(file, 'utf8'))) {
+      live.push(`${name}  ${site.field}  ${site.sentence.slice(0, 90)}`);
+    }
+  }
+  assert('no shipped or entrypoint surface describes a retired field as live', () =>
+    live.length === 0);
+  if (live.length > 0) {
+    process.stdout.write(`        ${live.length} live claims:\n`);
+    for (const site of live) process.stdout.write(`          ${site}\n`);
+  }
+});
+
+// --- the entrypoint's claims are checked ------------------------------------
+
+section('entrypoint claims', () => {
+  // The split, asserted as the two facts it is. The entrypoint keeps its
+  // exemption from the prose prohibitions and has lost its exemption from
+  // everything else, and stating both here is what stops the second quietly
+  // being reabsorbed into the first.
+  assert('the entrypoint keeps only its prose exemption', () =>
+    EXEMPT_FROM_PROSE_RULES.includes(CANONICAL_ENTRYPOINT));
+  assert('the entrypoint is claim-checked', () =>
+    ENTRYPOINTS[CANONICAL_ENTRYPOINT] !== undefined);
+  assert('both entrypoints are covered and no third was assumed', () =>
+    Object.keys(ENTRYPOINTS).length === 2);
+
+  // The general net. Zero maintenance, and it is what catches the class the
+  // named claims below cannot: a file that moved.
+  for (const [name, file] of Object.entries(ENTRYPOINTS)) {
+    const tokens = pathTokens(fs.readFileSync(file, 'utf8'));
+    assert(`${name} names paths to check`, () => tokens.length > 0);
+    const missing = tokens.filter((token) => !fs.existsSync(path.join(REPO, token)));
+    assert(`every path ${name} names exists`, () => {
+      if (missing.length > 0) throw new Error(`missing: ${missing.join(', ')}`);
+      return true;
+    });
+  }
+
+  // The seed is a consuming repository's file the moment it lands, so the only
+  // paths it may name are ones every installed tree has. One naming `src/`
+  // would be describing this repository to somebody who does not have it.
+  assert('the seeded entrypoint names only paths an installed tree has', () => {
+    const outside = pathTokens(fs.readFileSync(ENTRYPOINTS['src/seed/AGENTS.md'], 'utf8'))
+      .filter((token) => !token.startsWith('.aep/'));
+    if (outside.length > 0) throw new Error(`outside .aep/: ${outside.join(', ')}`);
+    return true;
+  });
+
+  const entrypoint = fs.readFileSync(ENTRYPOINTS[CANONICAL_ENTRYPOINT], 'utf8');
+
+  // Every command it shows, against the scripts on disk. Read inside the
+  // fences, which is where a command is written.
+  const invoked = fencedScripts(entrypoint);
+  assert('the entrypoint shows commands to check', () => invoked.length > 0);
+  assert('every script the entrypoint invokes exists', () => {
+    const absent = invoked.filter((script) => !fs.existsSync(path.join(REPO, script)));
+    if (absent.length > 0) throw new Error(`no such script: ${absent.join(', ')}`);
+    return true;
+  });
+
+  // The claim that went stale, generalised. Naming one runtime was true when
+  // the table held one and became false when it grew, so the assertion is
+  // against the table rather than against the word `Claude`.
+  const runtimes = Object.keys(TARGETS);
+  assert('the release ships adapters for more than one runtime', () => runtimes.length > 1);
+  assert('the entrypoint names no single runtime as the adapter', () => {
+    const named = runtimes.filter((runtime) => {
+      const proper = runtime.charAt(0).toUpperCase() + runtime.slice(1);
+      return new RegExp(`the (?:${runtime}|${proper}) adapter`).test(entrypoint);
+    });
+    if (named.length > 0) throw new Error(`names ${named.join(', ')}`);
+    return true;
+  });
+
+  // The baseline, against the constant the release script actually writes,
+  // rather than against the string the entrypoint happens to carry.
+  assert('the entrypoint names the baseline a release writes', () =>
+    entrypoint.includes(`src/${STAMPS_SOURCE}`) && fs.existsSync(path.join(SRC, STAMPS_SOURCE)));
+  assert('the baseline is not itself payload', () => !PAYLOAD_FILES.includes(STAMPS_SOURCE));
+
+  // Every flag it documents, against the command it is documented under. The
+  // pairing is what makes this honest rather than merely general: pooled
+  // against every script the entrypoint invokes, a flag this suite happens to
+  // mention would count as accepted, and the suite is one of those scripts.
+  const flags = documentedFlags(entrypoint);
+  // Three shapes this net got wrong once, each pinned so the correction is not
+  // undone by the next reader who finds the test too narrow.
+  assert('a pair of words joined by a slash is not a path', () =>
+    pathTokens('Route `WHAT/WHY` and `and/or`, then read `x.md`.').join() === 'x.md');
+  assert('a flag documented before any command is reported, not dropped', () =>
+    documentedFlags('Pass `--root` first.\n\n```\nnode a.mjs\n```\n')
+      .some(({ script, flag }) => script === null && flag === '--root'));
+  assert('a heading ends the claim a command has on the flags below it', () =>
+    documentedFlags('```\nnode a.mjs\n```\n\n## Elsewhere\n\nPass `--root`.\n')
+      .every(({ script }) => script === null));
+
+  assert('the entrypoint documents flags to check', () => flags.length > 0);
+  assert('every flag the entrypoint documents is one that command accepts', () => {
+    const invented = flags
+      .filter(({ script, flag }) => script === null
+        || !fs.readFileSync(path.join(REPO, script), 'utf8').includes(flag))
+      .map(({ script, flag }) => `${script ?? 'no command above it'} ${flag}`);
+    if (invented.length > 0) throw new Error(`not accepted: ${invented.join(', ')}`);
+    return true;
+  });
 });
 
 // --- §28 the adapter is a pointer, and it is current ------------------------
@@ -3457,6 +4221,118 @@ section('install fixture', () => {
     return true;
   });
 
+  // The one file a repository may add inside a protocol directory. The
+  // specification states the permission and argues it: a skill's own file is
+  // paid for on every invocation, so what applies to one branch of a run lives
+  // beside it, and that is what keeps a repository's own procedure out of a
+  // file an upgrade replaces. The validator refused it from 3.0.0 until now,
+  // which made the stated extension point unusable.
+  const validateFixture = () => {
+    try {
+      execFileSync(process.execPath, [path.join(aep, 'scripts', 'validate.mjs'), '--root', aep],
+        { stdio: 'pipe' });
+      return { failed: false, output: '' };
+    } catch (error) {
+      return { failed: true, output: String(error.stderr ?? '') };
+    }
+  };
+  const note = ['---', 'use-when: "the plan turns on where a boundary goes here"', '---', '',
+    '# Plan: the house style for boundaries', '', 'What this covers.', ''].join('\n');
+  const writeUnderSkills = (relative, body) => {
+    const target = path.join(aep, 'skills', ...relative.split('/'));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, body, 'utf8');
+    return target;
+  };
+
+  assert("a repository's own note beside a shipped skill validates", () => {
+    const written = writeUnderSkills('plan/house-style.md', note);
+    const { failed, output } = validateFixture();
+    fs.rmSync(written);
+    if (failed) throw new Error(`refused the extension point: ${output}`);
+    return true;
+  });
+
+  // The set is exactly seventeen, so the permission reaches a note and stops
+  // there. Asserted beside the one above because each is the other's boundary:
+  // either alone would pass on a check that had lost the distinction.
+  assert('a skill the release does not ship is still refused', () => {
+    const written = writeUnderSkills('house-style.md', note);
+    const { failed, output } = validateFixture();
+    fs.rmSync(written);
+    if (!failed) throw new Error('validate accepted a skill outside the manifest');
+    if (!/skills\/ holds only what the protocol ships/.test(output)) {
+      throw new Error(`failed for some other reason: ${output}`);
+    }
+    return true;
+  });
+
+  assert('a note answering to no shipped skill is refused', () => {
+    const written = writeUnderSkills('house/style.md', note);
+    const { failed, output } = validateFixture();
+    fs.rmSync(written);
+    fs.rmSync(path.join(aep, 'skills', 'house'), { recursive: true, force: true });
+    if (!failed) throw new Error('validate accepted a note beside no skill');
+    if (!/skills\/ holds only what the protocol ships/.test(output)) {
+      throw new Error(`failed for some other reason: ${output}`);
+    }
+    return true;
+  });
+
+  assert('depth below a note is refused', () => {
+    const written = writeUnderSkills('plan/house/style.md', note);
+    const { failed, output } = validateFixture();
+    fs.rmSync(written);
+    fs.rmSync(path.join(aep, 'skills', 'plan', 'house'), { recursive: true, force: true });
+    if (!failed) throw new Error('validate accepted a note nested two levels deep');
+    if (!/skills\/ holds only what the protocol ships/.test(output)) {
+      throw new Error(`failed for some other reason: ${output}`);
+    }
+    return true;
+  });
+
+  // The permission is `skills/` alone. `policies/` is asserted above; this is
+  // the second directory, so a widening that reached every protocol directory
+  // fails here rather than passing on the one that was checked.
+  assert('another protocol directory gains no such permission', () => {
+    const target = path.join(aep, 'templates', 'plan', 'house-style.md');
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, note, 'utf8');
+    const { failed, output } = validateFixture();
+    fs.rmSync(path.join(aep, 'templates', 'plan'), { recursive: true, force: true });
+    if (!failed) throw new Error('validate accepted a repository file inside templates/');
+    if (!/templates\/ holds only what the protocol ships/.test(output)) {
+      throw new Error(`failed for some other reason: ${output}`);
+    }
+    return true;
+  });
+
+  // The installer half. `validate.mjs` accepting the note and `install.mjs`
+  // listing it as protocol residue is the two disagreeing about who owns one
+  // path, and the human who follows the installer's own advice deletes the
+  // extension point. Asserted through a real upgrade rather than by reading
+  // the report, because the report is what the human acts on.
+  assert('an upgrade does not offer a repository note for pruning', () => {
+    const written = writeUnderSkills('plan/house-style.md', note);
+    const printed = update();
+    fs.rmSync(written);
+    if (printed.includes('house-style.md')) {
+      throw new Error(`named it to the human: ${printed.split('\n').filter(
+        (line) => line.includes('house-style.md')).join(' / ')}`);
+    }
+    return true;
+  });
+
+  assert('an upgrade still offers a file no release ships', () => {
+    const written = writeUnderSkills('house-style.md', note);
+    const printed = update();
+    fs.rmSync(written);
+    if (!/no longer shipped[\s\S]*house-style\.md/.test(printed)) {
+      throw new Error('a top-level file outside the manifest went unreported');
+    }
+    return true;
+  });
+
   assert('an upgrade replaces a protocol-owned file that was edited locally', () => {
     const shipped = path.join(aep, 'policies', 'artifacts.md');
     fs.writeFileSync(shipped, 'tampered\n', 'utf8');
@@ -3712,6 +4588,25 @@ section('install fixture', () => {
       /references\/github\.md/.test(notice.check)
       && /nothing reads that query any more/.test(notice.check)
       && /never edits a reference you own/.test(notice.check)));
+
+  // The stray check makes a previously-passing tree fail, which is the one kind
+  // of change a release cannot make silently. Pinned to the release that made
+  // it rather than to whichever release is being built: tied to specVersion
+  // this would demand every future release re-declare a notice about a change
+  // it did not make. The literal moved once, from 3.1.0, when 3.3.0 shipped
+  // from `main` while this work was still building and took the number this
+  // effort had assumed.
+  //
+  // Pinned on what the reader has to do rather than on the word "stray", which
+  // could survive a rewrite that dropped the instruction. A notice is an
+  // instruction, and the two halves that matter are that the fix is a move and
+  // that nothing here performs it.
+  assert('the release that made an outside artifact visible declares a notice for it', () =>
+    NOTICES.some((notice) => notice.since === '3.4.0' &&
+      /looks one level outside the tree/.test(notice.check) &&
+      /move the directory under \.aep\//.test(notice.check) &&
+      /will not move it for you/.test(notice.check) &&
+      /never by the name of the directory/.test(notice.check)));
 
   assert('skills/update acts on a notice rather than printing it', () => {
     const update = readSrc('skills', 'update.md');
@@ -4407,6 +5302,258 @@ section('traceability', () => {
       throw new Error(`the ticket was blamed instead of the spec: ${err}`);
     }
     return true;
+  });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// An artifact written outside `.aep/` used to be invisible rather than wrong:
+// every walk starts at the root, so a whole effort at the repository root was
+// absent, and absent reads exactly like never having existed.
+//
+// The arms that decide whether this ships are the negative ones. A check firing
+// on a consuming repository's own `templates/` is worse than the defect it
+// catches, because it teaches people the validator is noise and after that it
+// catches nothing at all. So every positive arm below is paired with the same
+// directory holding ordinary files, and the true-positive arms remove the stray
+// and confirm the tree goes green again: a check that fires on everything looks
+// identical to a working one from the failing run alone.
+section('strays', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-stray-'));
+  const aep = path.join(dir, '.aep');
+  fs.mkdirSync(aep, { recursive: true });
+  // A stub bootstrap, as in `traceability`: the real one links to every
+  // primitive directory, so a fixture carrying it would be testing the tree.
+  fs.writeFileSync(
+    path.join(aep, 'protocol.md'),
+    ['---', 'version: 0.0.0', '---', '', '# AEP', 'A stub for the stray fixture.', ''].join('\n'),
+    'utf8',
+  );
+  fs.writeFileSync(path.join(aep, 'index.md'), '# Index\n', 'utf8');
+  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+  // The scripts arm compares bytes against the installed tree, so the fixture
+  // needs a script installed for it to compare against. It is the real one
+  // rather than a stand-in: what the arm claims to recognise is the script this
+  // release ships, and a stand-in would only prove that a comparison compares.
+  const SHIPPED_SCRIPT = path.join(SRC, 'scripts', 'index.mjs');
+  fs.mkdirSync(path.join(aep, 'scripts'), { recursive: true });
+  fs.copyFileSync(SHIPPED_SCRIPT, path.join(aep, 'scripts', 'index.mjs'));
+
+  /** Writes a file at the fixture's repository root, outside `.aep/`. */
+  const place = (relative, lines) => {
+    const target = path.join(dir, ...relative.split('/'));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, `${lines.join('\n')}\n`, 'utf8');
+  };
+  const drop = (relative) =>
+    fs.rmSync(path.join(dir, ...relative.split('/')), { recursive: true, force: true });
+
+  const stray = (status) => [`---`, `status: ${status}`, '---', '', '# Problem', 'x', ''];
+  const governed = ['---', 'use-when: "a fixture is probed and the gate must recognise it"',
+    '---', '', '# Ours', 'x', ''];
+
+  const run = () => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'validate.mjs'), '--root', aep],
+      { encoding: 'utf8' },
+    );
+    return { out: result.stdout, err: result.stderr, code: result.status };
+  };
+
+  assert('a repository root with nothing on it passes, so the arms below mean something', () => {
+    const { out, code, err } = run();
+    if (code !== 0) throw new Error(`exit ${code}: ${err}`);
+    return /no failures/.test(out);
+  });
+
+  // Criterion 3. The failure has to name three things, because two of them are
+  // useless alone: knowing an effort is misplaced without knowing where it
+  // belongs leaves the reader guessing, and this check will not move it.
+  assert('an effort at the repository root fails, naming what, where, and where it belongs', () => {
+    place('efforts/47-stray/spec.md', stray('accepted'));
+    const { err, code } = run();
+    if (code === 0) throw new Error('a whole effort at the repository root passed');
+    if (!/^\s*efforts\/: sits at the repository root rather than under \.aep\//m.test(err)) {
+      throw new Error(`the location was not reported from the repository root: ${err}`);
+    }
+    if (!/efforts\/47-stray\/spec\.md declares status: accepted/.test(err)) {
+      throw new Error(`the failure did not name what it found: ${err}`);
+    }
+    if (!/belongs at \.aep\/efforts\//.test(err)) {
+      throw new Error(`the failure did not name where it belongs: ${err}`);
+    }
+    return true;
+  });
+
+  // It reports and it never moves. Asserted on the run that just failed, since
+  // this is the moment a helpful implementation would have tidied up.
+  assert('the stray is still where it was found, because the check moves nothing', () =>
+    fs.existsSync(path.join(dir, 'efforts', '47-stray', 'spec.md')) &&
+    !fs.existsSync(path.join(aep, 'efforts', '47-stray', 'spec.md')));
+
+  // The other half of criterion 3, and the one that carries the evidence. A
+  // stray check that fired on every tree would produce the failure above too.
+  assert('the same fixture with the stray removed passes', () => {
+    drop('efforts');
+    const { out, code, err } = run();
+    if (code !== 0) throw new Error(`the check fires on a clean tree: ${err}`);
+    return /no failures/.test(out);
+  });
+
+  // Criterion 4, and the case that decides whether any of this ships.
+  assert('a root templates/ of ordinary project files is not a finding', () => {
+    place('templates/card.hbs', ['<div>{{title}}</div>']);
+    place('templates/README.md', ['# Templates', '', 'Handlebars partials for the site.']);
+    place('templates/email/welcome.html', ['<p>Hello.</p>']);
+    const { code, err } = run();
+    drop('templates');
+    if (code !== 0) throw new Error(`fired on a repository's own templates/: ${err}`);
+    return true;
+  });
+
+  assert('a root references/ of citations is not a finding', () => {
+    place('references/bibliography.md', ['# Sources', '', '1. Someone, 2019.']);
+    place('references/rfc-7231.md', ['# HTTP semantics']);
+    const { code, err } = run();
+    drop('references');
+    if (code !== 0) throw new Error(`fired on a repository's own references/: ${err}`);
+    return true;
+  });
+
+  // Recognition is by the contract. The directory name is identical in both
+  // arms, so the name cannot be what either of them turned on.
+  assert('a root rules/ carrying a use-when fails, and one of plain files does not', () => {
+    place('rules/linting.md', ['# Linting', '', 'Two spaces.']);
+    const plain = run();
+    place('rules/security.md', governed);
+    const governedRun = run();
+    drop('rules');
+    if (plain.code !== 0) throw new Error(`fired on a repository's own rules/: ${plain.err}`);
+    if (governedRun.code === 0) throw new Error('a rules/ of AEP artifacts passed');
+    return /rules\/: sits at the repository root/.test(governedRun.err) &&
+      /rules\/security\.md carries a use-when/.test(governedRun.err);
+  });
+
+  // The four protocol directories that ship Markdown answer the same question
+  // `rules/` above does, and the name is deliberately pulled apart from the
+  // finding in both arms: `skills/plan.md` is a path this release ships and is
+  // silent without a `use-when`, while `skills/onboarding.md` is a name it has
+  // never shipped and is the finding, because it carries one.
+  assert('a root skills/ turns on the use-when, not on the name this release ships', () => {
+    place('skills/plan.md', ['# Plan', '', 'How we plan a sprint here.']);
+    const shippedName = run();
+    place('skills/onboarding.md', governed);
+    const governedRun = run();
+    drop('skills');
+    if (shippedName.code !== 0) {
+      throw new Error(`fired on a repository's own skills/plan.md: ${shippedName.err}`);
+    }
+    if (governedRun.code === 0) throw new Error('a skills/ of AEP artifacts passed');
+    return /skills\/onboarding\.md carries a use-when/.test(governedRun.err);
+  });
+
+  assert("a root agents/ turns on the use-when, so somebody else's researcher.md is quiet", () => {
+    place('agents/researcher.md', ['# Researcher', '', 'The analyst rota, not a prompt.']);
+    const ours = run();
+    place('agents/reviewer.md', governed);
+    const governedRun = run();
+    drop('agents');
+    if (ours.code !== 0) throw new Error(`fired on a repository's own agents/: ${ours.err}`);
+    if (governedRun.code === 0) throw new Error('an agents/ of AEP artifacts passed');
+    return /agents\/reviewer\.md carries a use-when/.test(governedRun.err);
+  });
+
+  // A script has no frontmatter to declare anything, so this arm reads the only
+  // content there is: the bytes. Every name below is one this release ships, and
+  // reporting any of them would send its author to a protocol-owned path that
+  // the next upgrade overwrites, which is what the check did until it read them.
+  assert("a repository's own root scripts/ is not a finding, empty or ordinary", () => {
+    const entrypoint = path.join(dir, 'scripts', 'index.mjs');
+    fs.mkdirSync(path.dirname(entrypoint), { recursive: true });
+    fs.writeFileSync(entrypoint, '', 'utf8');
+    const empty = run();
+    place('scripts/index.mjs', ['console.log("our build entrypoint");']);
+    place('scripts/contract.mjs', ['export const ROUTES = [];']);
+    const ordinary = run();
+    drop('scripts');
+    if (empty.code !== 0) throw new Error(`fired on a zero-byte scripts/index.mjs: ${empty.err}`);
+    if (ordinary.code !== 0) throw new Error(`fired on a repository's own build scripts: ${ordinary.err}`);
+    return true;
+  });
+
+  // The arm that carries the evidence, because one that has stopped firing on
+  // anything is indistinguishable from a correct one on the passing runs above.
+  // One appended byte is the whole difference between AEP's file and somebody's.
+  assert('a root scripts/ holding a byte-identical copy of a shipped script fails', () => {
+    const copy = path.join(dir, 'scripts', 'index.mjs');
+    fs.mkdirSync(path.dirname(copy), { recursive: true });
+    fs.copyFileSync(SHIPPED_SCRIPT, copy);
+    const identical = run();
+    fs.appendFileSync(copy, '\n');
+    const altered = run();
+    drop('scripts');
+    if (identical.code === 0) throw new Error('a copy of a shipped script at the root passed');
+    if (altered.code !== 0) throw new Error(`fired on a script that is not the shipped one: ${altered.err}`);
+    return /scripts\/: sits at the repository root/.test(identical.err) &&
+      /scripts\/index\.mjs is byte-identical to the script this release ships/.test(identical.err);
+  });
+
+  // The shape gate is tight in both directions, and this is the direction it
+  // gives something up in: a malformed effort outside the tree is missed. That
+  // is the trade requirement 4 asks for, so it is asserted rather than left to
+  // be discovered as a surprise.
+  assert('an efforts/ whose spec declares no legal status is not recognised', () => {
+    place('efforts/48-wip/spec.md', stray('wip'));
+    const withStatus = run();
+    place('efforts/48-wip/spec.md', ['# Problem', 'No frontmatter at all.']);
+    const without = run();
+    drop('efforts');
+    return withStatus.code === 0 && without.code === 0;
+  });
+
+  // Depth is half of the gate for the kinds that have no manifest to answer for
+  // them. A context is one project directory in at most, so anything deeper is
+  // somebody's own tree of notes rather than an AEP artifact.
+  assert('a context is recognised at the depth the policy allows and no deeper', () => {
+    place('contexts/team/auth.md', governed);
+    const allowed = run();
+    drop('contexts');
+    place('contexts/team/web/auth.md', governed);
+    const deeper = run();
+    drop('contexts');
+    if (allowed.code === 0) throw new Error('a contexts/<project>/<area>.md at the root passed');
+    if (deeper.code !== 0) throw new Error('fired on a tree nested deeper than a context may sit');
+    return /contexts\/team\/auth\.md carries a use-when/.test(allowed.err);
+  });
+
+  // `skills` is the one entry in USE_WHEN_DEPTHS whose value is observable at
+  // all: shallowFiles pushes a top-level file before it consults maxDepth, so
+  // every value at or below 1 behaves identically on a flat directory, and
+  // perturbing policies, agents, or templates proves nothing. Narrowed to 1,
+  // a strayed skill note goes unread and validate reports no failures with a
+  // whole artifact at the repository root, which is the original defect back
+  // for one kind. Widened, a repository's own skills/a/b/c.md is a finding.
+  assert('a skill note is recognised at the depth the layout allows and no deeper', () => {
+    place('skills/plan/depth.md', governed);
+    const allowed = run();
+    drop('skills');
+    place('skills/plan/note/depth.md', governed);
+    const deeper = run();
+    drop('skills');
+    if (allowed.code === 0) throw new Error('a skills/<skill>/<note>.md at the root passed');
+    if (deeper.code !== 0) throw new Error('fired on a tree nested deeper than a skill note may sit');
+    return /skills\/plan\/depth\.md carries a use-when/.test(allowed.err);
+  });
+
+  // The scan stops at the root's immediate children. A deeper walk was rejected
+  // because it would flag this repository's own `src/skills/`, so the bound is
+  // asserted rather than left as an implementation detail nobody could see.
+  assert('a stray nested below the repository root is out of reach, and stays quiet', () => {
+    place('docs/efforts/49-buried/spec.md', stray('accepted'));
+    const { code } = run();
+    drop('docs');
+    return code === 0;
   });
 
   fs.rmSync(dir, { recursive: true, force: true });

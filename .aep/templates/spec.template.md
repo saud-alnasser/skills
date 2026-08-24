@@ -4,8 +4,8 @@ use-when: "writing or extending an effort's spec.md"
 
 # Template — effort spec
 
-Copy to `efforts/<effort>/spec.md`. `<effort>` is a kebab-case slug naming the
-change.
+Copy to `.aep/efforts/<effort>/spec.md`. The `<effort>` segment is a kebab-case
+slug naming the change.
 
 **What is changing and why.** How it will be built belongs in
 `[[templates/plan.template]]`, written by `/plan` where the approach is not

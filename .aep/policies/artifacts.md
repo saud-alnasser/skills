@@ -56,7 +56,7 @@ The artifact describes this repository.
 | --- | --- |
 | `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`, `scripts/` | protocol |
 | `rules/`, `contexts/`, `references/`, `efforts/` | repository |
-| `index.md` | derived — regenerate with `scripts/index.mjs`, never hand-edit |
+| `index.md` | derived — regenerate with `.aep/scripts/index.mjs`, never hand-edit |
 
 **`policies/` and `rules/` admit one owner each, with no exception.** A policy is
 AEP's law and a rule is the repository's, so a file in the wrong directory is a
@@ -118,6 +118,25 @@ Consequently:
   its evidence, its tickets — lives in that effort's directory. What spans every
   effort lives at the root of `.aep/`.
 
+### How a path is written down
+
+**A filesystem path naming an AEP artifact carries `.aep/` where it has two
+segments or more. A bare area name does not**, so an instruction to write
+`.aep/efforts/<effort>/spec.md` says where it starts from, and a sentence about
+`policies/` reads as it always did.
+
+*Why the split falls there: a path with a second segment is an instruction
+somebody acts on, and a reader who resolves it against the repository root writes
+the artifact outside the tree — unindexed, unvalidated, and owned by nobody,
+since ownership is where a file sits. A single name is a directory rather than a
+destination, nobody writes a file to one, and a root on it would be noise.*
+
+*Why not a leading slash: it reads as filesystem-absolute, which sends a reader
+further from the tree than a bare path does, and it is notation that has to be
+taught everywhere it appears. Why not a sentence fixing the root at the top of
+each file: an artifact is loaded by applicability and read from the middle, so an
+opening paragraph never reaches the person acting on a path halfway down.*
+
 ## What it must contain
 
 Every Markdown file under `.aep/` MUST open with YAML frontmatter:
@@ -171,4 +190,4 @@ relative to `.aep/`, without `.md`:
 `modes/`. Each was tried and retired; see `[[protocol]]` for what replaced it.
 Do not reintroduce one because it seems locally convenient.
 
-Run `scripts/validate.mjs` to check a tree against everything above.
+Run `.aep/scripts/validate.mjs` to check a tree against everything above.

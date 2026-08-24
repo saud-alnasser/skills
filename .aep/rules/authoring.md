@@ -51,9 +51,9 @@ node src/scripts/release.mjs <version>
 ```
 
 It writes the version of record into `protocol.md`, updates the baseline in
-`src/stamps.json`, syncs the plugin manifest, and regenerates the adapter. That
-one write is the only place a release number is stored: no artifact carries a
-stamp of its own any more.
+`src/stamps.json`, syncs the plugin manifest, and regenerates every committed
+adapter. That one write is the only place a release number is stored: no
+artifact carries a stamp of its own any more.
 
 `verify.mjs` compares every shipped artifact's content against the baseline, so
 an edit that never got released fails the suite by name. **The baseline is the
@@ -78,16 +78,17 @@ to the payload and missing from the manifest is treated as the repository's, so
 the installer preserves whatever stands there instead of shipping the new one,
 and nothing about that looks wrong until somebody notices the file never arrived.
 
-## Regenerate the adapter whenever a skill or agent changes
+## Regenerate the adapters whenever a skill or agent changes
 
 ```
 node src/scripts/adapters.mjs
 ```
 
-The adapter is **generated from the payload** and never hand-edited — its
+An adapter is **generated from the payload** and never hand-edited — its
 descriptions are derived from each artifact's own heading and `use-when`, so the
 text a runtime matches on cannot disagree with the text the protocol declares.
-The suite fails if the committed adapter is stale.
+`TARGETS` in that file is the list and `--target <runtime>` narrows it to one.
+The suite fails if any committed adapter is stale.
 
 ## `.aep/` here is output
 

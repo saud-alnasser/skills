@@ -72,7 +72,7 @@ complex:  /specify → research → prototype → /plan → /tasks
 | carry work into a fresh session | `[[skills/handoff]]` |
 
 A skill file is what that skill does on **every** invocation. Depth for one
-branch sits beside it as `skills/<skill>/<note>.md` and is read only when the
+branch sits beside it as `.aep/skills/<skill>/<note>.md`, read only when the
 skill sends you there — so *what a good test asserts* or *how to prototype a UI*
 costs nothing on the runs that never ask.
 

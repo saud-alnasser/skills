@@ -4,7 +4,7 @@ use-when: "recording what a prototype answered, before deleting the code"
 
 # Template — prototype
 
-Copy to `efforts/<effort>/evidence/prototypes/<hypothesis-slug>.md`.
+Copy to `.aep/efforts/<effort>/evidence/prototypes/<hypothesis-slug>.md`.
 
 **Write the first two sections before building.** A prototype with no stated
 falsifier confirms whatever you were hoping for.

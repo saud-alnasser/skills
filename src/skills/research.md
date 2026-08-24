@@ -33,7 +33,9 @@ here (`[[skills/prototype]]`).
 
 1. **Write the question down first**, as one sentence that an answer could be
    wrong about. A vague question returns a summary of the topic.
-2. **Check what is already recorded.** `efforts/<effort>/evidence/research/` — it may already be answered.
+2. **Check what is already recorded** under
+   `.aep/efforts/<effort>/evidence/research/`. The question may be answered
+   there.
 3. **Go to primary sources.** The specification, the reference documentation, the
    library's own source, the changelog, the issue tracker.
 4. **Trace every claim** back to the source that owns it.
@@ -44,7 +46,7 @@ here (`[[skills/prototype]]`).
 
 ## Output
 
-`efforts/<effort>/evidence/research/<question-slug>.md`, in the shape
+`.aep/efforts/<effort>/evidence/research/<question-slug>.md`, in the shape
 `[[templates/research.template]]` gives: Question, Sources, Findings, Conclusion, and what
 was **not** checked.
 

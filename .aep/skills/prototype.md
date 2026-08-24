@@ -45,7 +45,7 @@ API behave as documented under our load. `[[policies/engineering]]` routes facts
 
 ## Output
 
-`efforts/<effort>/evidence/prototypes/<hypothesis-slug>.md`, in the shape
+`.aep/efforts/<effort>/evidence/prototypes/<hypothesis-slug>.md`, in the shape
 `[[templates/prototype.template]]` gives: Hypothesis, Falsifier, Experiment, Observation,
 Result, Conclusion, and the disposition of the code.
 

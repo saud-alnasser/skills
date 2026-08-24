@@ -78,7 +78,7 @@ specs.md                  the normative specification
 AGENTS.md                 the entrypoint, pointing at .aep/protocol.md
 src/                      everything that ships
 ├── protocol.md           the bootstrap installed as .aep/protocol.md
-├── policies/ modes/ skills/ agents/ templates/  protocol-owned payload
+├── policies/ skills/ agents/ templates/         protocol-owned payload
 │   └── skills/<skill>/    depth read only when that skill branches to it
 ├── seed/                 repository-owned starting points, installed on detection
 ├── scripts/              install, verify, and the scripts .aep/ gets
@@ -93,7 +93,7 @@ src/                      everything that ships
 
 ```
 node src/scripts/verify.mjs        # shipped surfaces against specs.md, plus a fixture install
-node src/scripts/adapters.mjs      # regenerate the Claude adapter
+node src/scripts/adapters.mjs      # regenerate every committed adapter
 node .aep/scripts/validate.mjs     # any installed tree against the artifact contract
 node .aep/scripts/index.mjs        # regenerate the discovery index
 ```

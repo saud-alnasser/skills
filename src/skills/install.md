@@ -44,8 +44,8 @@ whichever runtime adapters the repository asks for.
 
    | Seeded | On detecting |
    | --- | --- |
-   | `rules/version-control.md`, `contexts/repository.md` | always |
-   | one reference per tool, under `references/` | that tool's own evidence — a lockfile, a configuration file, a remote host |
+   | `.aep/rules/version-control.md`, `.aep/contexts/repository.md` | always |
+   | one reference per tool, at `.aep/references/<tool>.md` | that tool's own evidence — a lockfile, a configuration file, a remote host |
 
    The reference catalogue is wide: version control and forges, package managers
    and runtimes, linters and formatters, test runners, bundlers and monorepo
@@ -74,8 +74,8 @@ whichever runtime adapters the repository asks for.
    detector fires on a configuration file, and an abandoned one is evidence
    enough for the installer and not enough for a reference.
 
-3. **Fill in `contexts/repository.md`** — what this repository is, its shape, its
-   vocabulary. Keep it small; areas earn their own context later.
+3. **Fill in `.aep/contexts/repository.md`** — what this repository is, its
+   shape, its vocabulary. Keep it small; areas earn their own context later.
 
 4. **Initialize position**: `node .aep/scripts/position.mjs stamp`.
 
@@ -168,8 +168,10 @@ whichever runtime adapters the repository asks for.
 
 ## Constraints
 
-- **MUST preserve every existing `owner: repository` artifact.** If any exist,
-  this is an update.
+- **MUST preserve everything the repository owns** — `rules/`, `contexts/`,
+  `references/`, and `efforts/`. Ownership is where a file sits and nothing
+  declares it (`[[policies/artifacts]]`). If any of them holds anything, this is
+  an update.
 - **Do not commit.** Show the human what was written and let them.
 - **Do not invent a reference** for a tool this repository does not use. An empty
   `references/` is honest; a speculative one is a trap.

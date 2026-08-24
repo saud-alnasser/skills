@@ -33,8 +33,8 @@ diff violates something here and that you have not found it yet.
 5. **Documentation requirements** — whatever the rules actually require. Not
    whatever you would have written.
 6. **AEP artifact conformance**, where the diff touches `.aep/`:
-   `[[policies/artifacts]]` and `[[policies/artifacts]]` — frontmatter, resolving
-   links, and above all whether a `owner: protocol` file was edited.
+   `[[policies/artifacts]]` — frontmatter, resolving links, and above all
+   whether a protocol-owned file was edited.
 
 ## What you do not check
 

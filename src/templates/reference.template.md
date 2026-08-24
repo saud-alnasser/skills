@@ -4,8 +4,9 @@ use-when: "recording how a tool is actually operated in this repository"
 
 # Template — reference
 
-Copy to `references/<tool>.md`. References are always `owner: repository` —
-they describe *this* repository's usage, never an ecosystem in the abstract.
+Copy to `.aep/references/<tool>.md`. Everything under `references/` is the
+repository's, and a reference describes *this* repository's usage rather than an
+ecosystem in the abstract.
 
 ```markdown
 ---

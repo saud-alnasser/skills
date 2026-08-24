@@ -100,8 +100,8 @@ interaction feels right.
 
 ## What gets recorded
 
-Evidence lives at `efforts/<effort>/evidence/`, in `research/` or `prototypes/`.
-Those are the only two kinds.
+Evidence lives at `.aep/efforts/<effort>/evidence/`, in `research/` or
+`prototypes/`. Those are the only two kinds.
 
 - **Research records findings, never decisions.** If a finding changes the
   design, change `spec.md` deliberately. *Why: research that quietly becomes a

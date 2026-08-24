@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.3.0
+**Version:** 3.4.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -142,6 +142,18 @@ A conforming repository:
 
 Additional directories MUST NOT be introduced unless this specification names them. `.aep/` MUST NOT contain a `decisions/` directory, a `tools/` directory, a `grill/` directory, or a `modes/` directory — the first three were 1.x concepts and the fourth was 2.x's, and each is retired (§32). `policies/` is named here and is **not** the 1.x directory of that name; §32 records what changed.
 
+### 5.1 An artifact outside the tree
+
+**An AEP artifact written outside `.aep/` is a defect, and an implementation MUST report it** (§31.2). Until it does, a walk that starts at the root cannot represent the case at all: an artifact written outside is not wrong to such a walk, it is absent, and absent is indistinguishable from never having existed. A whole effort can sit at a repository root, unindexed, unvalidated, and owned by nobody, while the command that exists to judge the tree reports no failures.
+
+Three things bound the check, and each of them is what keeps it usable:
+
+- **Recognition is by the contract, never by the directory's name.** A repository may legitimately keep its own `templates/`, `references/`, or `contexts/`, and a check firing on those is worse than the defect it catches, because it teaches people the validator is noise and after that it catches nothing at all. A directory is a finding only where something inside it satisfies the contract this specification defines: a child effort whose `spec.md` declares a legal `status` (§8), an artifact carrying a `use-when` at a depth this layout allows for its kind, or a script byte-identical to the installed copy of the one this release ships, at the path the manifest names (§7). **Every one of those reads content.** Matching a path against the manifest reads a name, and the name is one a repository's own `scripts/index.mjs` already has, so reporting it would send its author to a protocol-owned path that the next upgrade overwrites.
+- **The location is reported as found, relative to the repository root.** Every other location a validator reports is relative to `.aep/`, and a stray's whole problem is that it is not there, so a tree-relative path would name the correct location while reporting the incorrect one.
+- **It reports and MUST NOT move anything.** Relocating a repository's files is a write nobody requested, and the correct destination is not always inferable.
+
+*Why the scan stops at the repository root's immediate children rather than walking the repository: a deeper walk trades a bounded cost and a bounded false-positive surface for an exclusion list that grows once per consuming repository. It misses a stray buried under `docs/`, which is the cheaper of the two failures.*
+
 ## 6. The bootstrap
 
 `.aep/protocol.md` is the single entry point. It is protocol-owned, small by design, and answers exactly seven questions:
@@ -279,6 +291,16 @@ Within Markdown prose, a reference to another AEP artifact MUST use Obsidian-sty
 Links form a lightweight filesystem knowledge graph without a database. They are **relationships, not a second source of truth** — the referenced artifact remains authoritative, and a link MUST NEVER be accompanied by a summary of what it says.
 
 Frontmatter `paths:` is a matching field and is NOT a substitute for a link. An implementation SHOULD validate that every `[[...]]` resolves, and an agent MUST NEVER invent protocol state to satisfy a broken one — a link that cannot be resolved is repaired or reported, never guessed at.
+
+### 9.1 Filesystem paths in prose
+
+A link is a relationship between artifacts. A path inside backticks, in an instruction to write or read a file, is not one, and the rule above does not reach it.
+
+A filesystem path naming an AEP artifact, written in the prose of a shipped or entrypoint artifact, MUST carry the `.aep/` root where it has two segments or more. A single-segment area name — `policies/`, `efforts/` — MUST NOT carry it.
+
+*Why the split rather than a uniform prefix: a path with a second segment is a destination somebody acts on, and one written bare is resolved against the repository root, which is how a protocol artifact comes to be created outside the tree, where §26 does not index it, §31 does not validate it, and §7 gives it no owner. A single name is a directory rather than a destination and nobody writes a file to one. A leading-slash sigil is rejected because it reads as filesystem-absolute, which is a further wrong answer than a bare path; a sentence fixing the root at the top of each file is rejected because an artifact is loaded by applicability (§23) and read from the middle.*
+
+An implementation MUST verify this over the surfaces it ships (§31.2).
 
 ---
 
@@ -502,7 +524,7 @@ The conforming skill set is exactly seventeen:
 | --- | --- |
 | `specify` | initially specify an effort — WHAT and WHY |
 | `refine` | grill a specification until ambiguity and tradeoffs resolve |
-| `plan` | add technical detail to the same spec — HOW |
+| `plan` | establish the technical approach beside the spec — HOW |
 | `tasks` | derive executable work from the spec |
 | `implement` | implement task(s), with sub-agents and worktrees where useful |
 | `review` | review implementation against the effort and applicable rules |
@@ -1039,6 +1061,12 @@ The suite MUST assert at least:
 - no shipped surface stating the report contract names a terminal, a colour, a display size, or a runtime;
 - `protocol.md` exists and is within its size budget (SS6);
 - the forbidden structures are absent — no `decisions/`, `tools/`, `grill/`, or `modes/` (SS5, SS16);
+- **an AEP artifact written outside `.aep/` fails validation** (§5.1), recognised by the contract its content satisfies rather than by the name of the directory holding it, named at its path relative to the repository root, and left exactly where it was found — checked with a stray present, with the same stray removed, and against a repository's own directory of ordinary files sharing one of the names, because a check that fires on everything is indistinguishable from a working one on the failing run alone;
+- **a filesystem path naming an AEP artifact carries the `.aep/` root where it has two segments or more** (§9.1), over every shipped and entrypoint surface, with a single-segment area name left alone and a path inside a fenced block ignored — checked with a fixture for each shape the rule turns on, including one the guard must not report, because a guard that has quietly stopped matching is indistinguishable from a corpus that is clean;
+- **no shipped or entrypoint surface describes a retired field (§32) as one an artifact carries**, driven from the list of retired fields rather than from any field's name, so a release that retires an eighth is covered by the edit it already makes — checked with a fixture per retired field, in both directions, because passing on the one field that failed is indistinguishable from a check written around it;
+- **a skill's declared output is what §21 assigns it**, read from that table rather than from a list maintained beside it, and the parse MUST assert a minimum row count before asserting anything about rows, and a minimum count of the stages the two tables share: a parse matching nothing passes every row it does not have, and so does a comparison that quietly skips a stage one table stopped naming;
+- **a repository's own note validates beside a shipped skill, and nothing wider does** (§15.1) — checked with the note accepted, with a skill outside the manifest still refused, with a note answering to no shipped skill refused, with depth below a note refused, and against a second protocol directory, because a permission that reached every one of them would pass on the directory that happened to be checked;
+- **an entrypoint's factual claims are checked against what they describe** — every path it names exists, every command it shows names a script that exists, and every flag it documents is one that command accepts — and an entrypoint is exempt from prose prohibitions only, never from having its claims read;
 - **every ticket traces to a requirement or an acceptance criterion of its own effort**, and a ticket citing a number no requirement carries fails by name (SS14.4);
 - **the effort opening is one issue, one branch, one draft pull request**, in an order that could run, with the rename preceding the first commit; the ask happens once and a refusal stops it (SS14.1);
 - **converge is stated as the effort's termination condition**, appends rather than edits, and is bounded (SS21);

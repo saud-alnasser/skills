@@ -5,12 +5,18 @@
 // is called out in the summary rather than silently passed, because a check
 // that cannot fire reads exactly like a check that passed.
 //
+// One check looks outside the tree. An artifact written to the repository root
+// instead of into `.aep/` is not wrong to a walk that starts at the root, it is
+// absent, so `checkStrays` reads the root's immediate children and reports what
+// it finds there. It reports; it never moves anything.
+//
 //   node validate.mjs [--root <path-to-.aep>] [--quiet]
 
 import fs from 'node:fs';
 import path from 'node:path';
 import {
   PROTOCOL_DIRS,
+  REPOSITORY_DIRS,
   FORBIDDEN_DIRS,
   SPEC_STATUSES,
   TICKET_STATUSES,
@@ -22,6 +28,7 @@ import {
   walk,
   wikiLinks,
   isProtocolPath,
+  isRepositoryNote,
   RETIRED_FIELDS,
   useWhenProblems,
 } from './contract.mjs';
@@ -58,7 +65,7 @@ function checkArtifact(root, file) {
   // This is what the `owner:` field used to say per artifact. It says it once,
   // for every directory, and it catches the case the field never could: a file
   // that simply omits the declaration.
-  if (PROTOCOL_DIRS.includes(topDir) && !isProtocolPath(rel)) {
+  if (PROTOCOL_DIRS.includes(topDir) && !isProtocolPath(rel) && !isRepositoryNote(rel)) {
     fail(rel, `${topDir}/ holds only what the protocol ships, and this release ships ` +
       'no such file. Repository-owned governance belongs under rules/, orientation ' +
       'under contexts/, and tool operation under references/');
@@ -327,6 +334,200 @@ function checkStructure(root) {
   }
 }
 
+/**
+ * How deep an artifact of each kind that declares a `use-when` may sit inside
+ * its own directory, counted in segments below it.
+ *
+ * `rules/` and `references/` are repository-wide, so neither has a namespace to
+ * nest in and both sit flat. A context takes one project directory, so that two
+ * projects of a monorepo can each call an area `auth`. A skill takes one for its
+ * notes, so a note is reached from the skill owning it. `policies/`, `agents/`,
+ * and `templates/` are flat because none of them namespaces anything: a policy
+ * is one file with nothing to sit inside. The gate asks for these depths rather
+ * than for a file that merely ends in `.md`, because depth is half of what makes
+ * a directory AEP's rather than somebody's own folder of notes.
+ *
+ * The four protocol directories are here rather than in an arm of their own
+ * because every Markdown artifact this release ships under them carries a
+ * `use-when`, so the test they need is this one and not one resembling it.
+ * That guarantee is weaker for `agents/` and `templates/` than for the rest: a
+ * `use-when` is required of a policy, a rule, a reference, and a context, and on
+ * those two it is held by the suite instead. Either way the gate stays sound and
+ * would fall quiet, never loud, for a kind that stopped carrying one.
+ */
+const USE_WHEN_DEPTHS = {
+  policies: 1,
+  skills: 2,
+  agents: 1,
+  templates: 1,
+  rules: 1,
+  references: 1,
+  contexts: 2,
+};
+
+/**
+ * Paths under `dir`, relative to it, POSIX, no deeper than `maxDepth` segments.
+ *
+ * Depth-capped rather than a full walk because nothing the gate below recognises
+ * sits deeper than two: the protocol ships no file under `<dir>/<x>/<y>`, and a
+ * context is one project directory in at most. The cap is also what keeps this
+ * affordable against a consuming repository whose own `scripts/` is enormous.
+ *
+ * Deliberately not `walk` from `contract.mjs`, which it otherwise resembles.
+ * That one enumerates the protocol tree, which this release owns and can trust;
+ * this one reads a directory belonging to somebody else, where the depth cap is
+ * a bound on a stranger rather than a shortcut. One traversal serving both would
+ * have the tree and the suspect sharing a definition of how far to look.
+ */
+function shallowFiles(dir, maxDepth) {
+  const found = [];
+  const visit = (current, prefix, depth) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const rel = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
+      if (entry.isFile()) found.push(rel);
+      else if (entry.isDirectory() && depth < maxDepth) {
+        visit(path.join(current, entry.name), rel, depth + 1);
+      }
+    }
+  };
+  visit(dir, '', 1);
+  return found;
+}
+
+/**
+ * What makes a directory outside the tree AEP's, or null where nothing does.
+ *
+ * **Recognition is by the contract and never by the name.** A consuming
+ * repository may perfectly well keep its own `templates/`, `references/`, or
+ * `contexts/` at its root, and a check firing on those would teach people the
+ * validator is noise, after which it catches nothing at all. So each arm asks a
+ * question only an AEP artifact answers yes to, and returns the file that
+ * answered it, so the failure can say what it found rather than only that it
+ * found something.
+ *
+ * The gate is deliberately tight in the other direction too: an effort with no
+ * frontmatter, or a `status` outside the contract, is not recognised and not
+ * reported. A false positive lands on somebody else's install, where it is least
+ * recoverable, and a malformed spec inside the tree already fails for its own
+ * reasons.
+ *
+ * **Every arm reads content.** An arm that matched a path against the manifest
+ * would be reading a name, and it reported a repository's own `scripts/index.mjs`,
+ * an empty one included, while telling its author to move it to a protocol-owned
+ * path the next upgrade overwrites.
+ */
+function strayEvidence(root, name, dir) {
+  if (name === 'efforts') {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+    for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      if (!entry.isDirectory()) continue;
+      const spec = path.join(dir, entry.name, 'spec.md');
+      if (!fs.existsSync(spec)) continue;
+      const { fields } = readArtifact(spec);
+      if (SPEC_STATUSES.includes(fields.status)) {
+        return `efforts/${entry.name}/spec.md declares status: ${fields.status}`;
+      }
+    }
+    return null;
+  }
+
+  // A script carries no frontmatter, so identity is the only content this arm
+  // has to read, and the installed tree holds the only bytes to read it against:
+  // nothing here carries a content baseline, and the manifest answers paths.
+  //
+  // So the oracle is part of the subject. That is sound only because a
+  // protocol-owned file differing from its release is already a defect to
+  // reinstall, an invariant this script does not itself check, and the arm
+  // inherits it: against a drifted `.aep/scripts/`, a real copy stops matching
+  // and goes unreported. Silence is the failure this accepts, having rejected
+  // the loud one; it lifts when a content baseline reaches a consuming tree.
+  //
+  // `isProtocolPath` stays as the prefilter and is load-bearing rather than
+  // decorative. Without it a repository keeping its own `.aep/scripts/mine.mjs`
+  // would see its root `scripts/mine.mjs` reported for matching itself.
+  if (name === 'scripts') {
+    for (const rel of shallowFiles(dir, 1)) {
+      if (!isProtocolPath(`scripts/${rel}`)) continue;
+      let found;
+      let shipped;
+      try {
+        found = fs.readFileSync(path.join(dir, rel));
+        shipped = fs.readFileSync(path.join(root, 'scripts', rel));
+      } catch {
+        continue;
+      }
+      if (found.equals(shipped)) {
+        return `scripts/${rel} is byte-identical to the script this release ships`;
+      }
+    }
+    return null;
+  }
+
+  for (const rel of shallowFiles(dir, USE_WHEN_DEPTHS[name])) {
+    if (!rel.endsWith('.md')) continue;
+    const artifact = readArtifact(path.join(dir, ...rel.split('/')));
+    if (artifact.hasFrontmatter && isNonEmptyString(artifact.fields['use-when'])) {
+      return `${name}/${rel} carries a use-when`;
+    }
+  }
+  return null;
+}
+
+/**
+ * A protocol artifact written outside the tree.
+ *
+ * Every other check here starts at the root, so *outside the root* was not a
+ * state this script could represent: an artifact written outside was not wrong
+ * to it, it was absent, and absent reads exactly like never having existed. A
+ * whole effort sat at a repository root with a complete spec under it and the
+ * command reported no failures.
+ *
+ * The scan reaches the repository root's immediate children and no deeper. A
+ * walk of the whole repository would catch a stray at any depth and would flag
+ * the source tree of the repository that wrote this, so its first act would be
+ * to need an exception for itself.
+ *
+ * **It reports and it never moves anything.** Relocating somebody's files is a
+ * write nobody requested, and the correct destination is not always inferable.
+ */
+function checkStrays(root) {
+  const repository = path.dirname(root);
+  if (repository === root) return;
+
+  let entries;
+  try {
+    entries = fs.readdirSync(repository, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  const areas = new Set([...PROTOCOL_DIRS, ...REPOSITORY_DIRS]);
+  for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (!entry.isDirectory() || !areas.has(entry.name)) continue;
+    const evidence = strayEvidence(root, entry.name, path.join(repository, entry.name));
+    if (!evidence) continue;
+
+    // The location is the one as found, relative to the repository root. Every
+    // other failure in this file is tree-relative, and a stray's whole problem
+    // is that it is not in the tree, so the message says which root it is
+    // counted from rather than leaving two readings of the same string.
+    fail(`${entry.name}/`, 'sits at the repository root rather than under .aep/, and ' +
+      `${evidence}. It belongs at .aep/${entry.name}/, and moving it is yours: a stray is ` +
+      'reported and never relocated, because the destination is not always the obvious one');
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
   const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
@@ -339,6 +540,7 @@ function main() {
   }
 
   checkStructure(root);
+  checkStrays(root);
   checkTraceability(root);
 
   const artifacts = walk(root, { skip: ['position', 'worktrees'] })

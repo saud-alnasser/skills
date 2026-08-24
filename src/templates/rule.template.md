@@ -4,8 +4,8 @@ use-when: "adding a rule this repository discovered about how work must be done 
 
 # Template — rule, this repository's own governance
 
-Copy to `rules/<name>.md`. **Every rule is `owner: repository`** — `rules/` holds
-what this repository decides for itself, and nothing else.
+Copy to `.aep/rules/<name>.md`. **Every rule is the repository's** — `rules/`
+holds what this repository decides for itself, and nothing else.
 
 AEP's own governance ships as `[[policies]]`, which are protocol-owned and never
 written or edited in a repository. So this template is the only governance

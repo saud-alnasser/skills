@@ -28,7 +28,7 @@ how a guess acquires a citation.
    library's own source, the changelog, the issue tracker.
 4. Follow every claim back to the source that owns it.
 5. Write the findings to
-   `efforts/<effort>/evidence/research/<question-slug>.md`.
+   `.aep/efforts/<effort>/evidence/research/<question-slug>.md`.
 
 ## Constraints
 

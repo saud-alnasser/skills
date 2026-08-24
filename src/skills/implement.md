@@ -97,10 +97,10 @@ is reading the graph rather than inventing work. When nothing unresolved remains
 at all — `frontier.mjs` exiting 1 — **go to step 5 and converge.** That is never
 the end of the run by itself.
 
-**The tickets are files under `efforts/<effort>/tickets/`, and the graph is read
-from them** (`[[policies/execution]]`). The tracker holds the effort's issue and
-its pull request, and neither carries a ticket — so scheduling never waits on a
-fetch, and there is no query to get wrong.
+**The tickets are files under `.aep/efforts/<effort>/tickets/`, and the graph is
+read from them** (`[[policies/execution]]`). The tracker holds the effort's
+issue and its pull request, and neither carries a ticket — so scheduling never
+waits on a fetch, and there is no query to get wrong.
 
 If the invocation carried a *request* rather than an effort, go to
 `[[skills/specify]]` — do not hand back a command for the human to type. A ticket

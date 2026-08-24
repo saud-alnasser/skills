@@ -58,27 +58,17 @@ uncomfortable precisely when it matters most.
    `[[skills/plan/design-it-twice]]` is how to generate ones that genuinely
    disagree. Where the approach turns on **where a module boundary goes**,
    `[[skills/plan/depth]]` has the vocabulary and the rules for moving one.
-7. **Write the approach** into `efforts/<effort>/plan.md`, using
+7. **Write the approach** into `.aep/efforts/<effort>/plan.md`, using
    `[[templates/plan.template]]`, and set `spec.md`'s `status: accepted` once the
    human has agreed. **`status` stays the spec's** — an effort has one state, and
    a plan declaring a second gives it two answers that can disagree.
 
 ## Output
 
-`efforts/<effort>/plan.md`, carrying whichever of these apply:
-
-```markdown
-# Architecture
-# Components
-# Interfaces
-# Data Model
-# Technical Approach
-# Integration
-# Migration
-# Testing Strategy
-# Operational Considerations
-# Technical Risks
-```
+`.aep/efforts/<effort>/plan.md`, in the shape `[[templates/plan.template]]`
+gives. Take the headings the approach actually turns on and omit the rest — a
+plan carrying every one of them because the template offers every one of them
+has decided nothing and takes a reviewer's attention anyway.
 
 ## Constraints
 

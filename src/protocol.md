@@ -1,5 +1,5 @@
 ---
-version: 3.3.0
+version: 3.4.0
 use-when: "at the start of every session, before doing anything else in a repository that has a .aep/ directory"
 ---
 
@@ -25,7 +25,7 @@ to it.
 | **Rules** | what MUST be done **here** — yours | `rules/` |
 | **References** | how a tool or procedure is operated here | `references/` |
 | **Contexts** | what to know about an area, and where to look | `contexts/` |
-| **Efforts** | what change is being made | `efforts/<e>/` |
+| **Efforts** | what change is being made | `.aep/efforts/<e>/` |
 | **Agents** | who performs work, in what role | `agents/` |
 | **Skills** | reusable capabilities | `skills/` |
 
@@ -72,8 +72,10 @@ repository state → index.md → current effort → applicable policies and rul
 ```
 
 Links between AEP files are double-bracketed, relative to `.aep/`, without the
-`.md` — as in `[[policies/artifacts]]`, which is one. A link that does not resolve
-is repaired or reported, **never invented**.
+`.md` — as in `[[policies/artifacts]]`, which is one. A filesystem path of two
+segments or more carries `.aep/`; a bare area name does not.
+`[[policies/artifacts]]` says why. A link that does not resolve is repaired or
+reported, **never invented**.
 
 ## The workflow
 
@@ -89,8 +91,8 @@ capabilities: reach for one when uncertainty or the codebase warrants it.
 `index.md` lists every skill against the trigger that calls for it, and
 `[[skills/help]]` answers *what do I reach for*. `[[skills/tdd]]`,
 `[[skills/domain]]`, and `[[skills/prose]]` are sub-skills, reached from inside
-another skill. A skill may keep depth beside it in `skills/<skill>/` — read one
-only when that skill sends you there.
+another skill. A skill may keep depth beside it in `.aep/skills/<skill>/` — read
+one only when that skill sends you there.
 
 **Pick the smallest process that produces a reliable result.** Not every change
 needs research, a prototype, a grill, sub-agents, or worktrees. A one-line fix
@@ -148,9 +150,9 @@ contexts, evidence, specs, or the source. Never in session state, task
 descriptions, worktree metadata, or position.
 
 **Nothing is invented.** Where an artifact already defines protocol state, use
-it. Where a script can compute an answer, run it and quote the output:
-`scripts/index.mjs` regenerates `index.md`, `scripts/validate.mjs` checks the
-tree, `scripts/position.mjs` reads and stamps the marker.
+it. Where a script can compute an answer, run it and quote the output. Under
+`.aep/scripts/`, `index.mjs` regenerates `index.md`, `validate.mjs` checks the
+tree, `position.mjs` reads and stamps the marker.
 
 ## Governance that loads when it applies
 

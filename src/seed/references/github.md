@@ -26,8 +26,8 @@ repository freely, write to none.
 ## An effort here: one issue, one pull request
 
 **AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
-tickets stay in the repository under `efforts/<effort>/tickets/`, and so does the
-dependency graph.
+tickets stay in the repository under `.aep/efforts/<effort>/tickets/`, and so
+does the dependency graph.
 
 | The fact | Carried by | Never |
 | --- | --- | --- |
@@ -41,11 +41,11 @@ is a field a script reads; here, it is a paginated fetch to interpret before a
 frontier can be computed, and nobody schedules by hand anyway.*
 
 ```sh
-gh issue create --title "<effort>" --body-file efforts/<effort>/spec.md
+gh issue create --title "<effort>" --body-file .aep/efforts/<effort>/spec.md
 gh pr create --draft --title "<effort>" --body-file <file>
-gh issue edit <number> --body-file efforts/<effort>/spec.md   # the spec changed
-gh pr edit <number> --body-file <file>                        # tickets, run log
-gh pr ready <number>                                          # converge found no gap
+gh issue edit <number> --body-file .aep/efforts/<effort>/spec.md  # the spec changed
+gh pr edit <number> --body-file <file>                            # tickets, run log
+gh pr ready <number>                                              # converge found no gap
 
 gh issue close <number> --reason "not planned"   # abandoned
 gh pr close <number>                             # with it, both labelled flag: wontfix
@@ -181,7 +181,7 @@ read rather than rederived.
 | --- | --- | --- |
 | what the effort is | one issue per effort, body `spec.md` | native |
 | what it will land as | one draft pull request per effort | native |
-| which tickets exist, and what gates each | files under `efforts/<effort>/tickets/` | **not in this tracker** |
+| which tickets exist, and what gates each | files under `.aep/efforts/<effort>/tickets/` | **not in this tracker** |
 | the effort's state | `spec.md`'s `status:`, projected onto a `status:` label | projection |
 
 ## Referencing a task from a commit

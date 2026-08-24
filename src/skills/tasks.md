@@ -26,7 +26,7 @@ reviews it.
    surface rather than checking its branch out** (`[[policies/execution]]`). An
    effort in flight holds its branch in a worktree, so `git switch` to it is
    refused, and what this skill writes has to land on that branch.
-2. **Tasks live under `efforts/<effort>/tickets/`, and there is nowhere to
+2. **Tasks live under `.aep/efforts/<effort>/tickets/`, and there is nowhere to
    look.** Not per repository, not per convention: a task is a file, its
    `blocked-by` is an edge a script reads, and the frontier is computed from the
    directory rather than queried (`[[policies/execution]]`).
@@ -92,7 +92,7 @@ a live effort's two files together.
 - **relevant files or areas**
 - **implementation constraints**
 
-Local tickets go to `efforts/<effort>/tickets/`, in the shape
+Local tickets go to `.aep/efforts/<effort>/tickets/`, in the shape
 `[[templates/ticket.template]]` gives, with `status: open` and `blocked-by:` where
 it applies, and nothing else in the frontmatter.
 

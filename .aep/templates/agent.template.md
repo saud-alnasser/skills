@@ -4,7 +4,7 @@ use-when: "defining a new agent role that a skill will dispatch"
 
 # Template — agent role
 
-Copy to `agents/<name>.md`.
+Copy to `.aep/agents/<name>.md`.
 
 **A role is only worth defining if some skill dispatches it.** An agent nobody
 dispatches is a file that will drift unnoticed.
