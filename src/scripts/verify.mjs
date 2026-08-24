@@ -28,7 +28,10 @@ import {
   SKILLS,
   FORBIDDEN_DIRS,
   RETIRED_FIELDS,
+  PROTOCOL_DIRS,
   PROTOCOL_FILES,
+  PROTOCOL_ROOT_FILES,
+  REPOSITORY_ROOT_FILES,
   isProtocolPath,
   useWhenProblems,
   USE_WHEN_MAX_WORDS,
@@ -554,6 +557,113 @@ section('protocol.md', () => {
     /\[\[policies\/\w/.test(body) && /`?\[\[rules/.test(body));
   assert('protocol.md does not become a second governance layer', () =>
     !/^##\s+(Rules|Policies)\s*$/m.test(body));
+
+  /** The body of one `## ` section, to the next one. */
+  const sectionOf = (heading) => {
+    const start = body.indexOf(`## ${heading}`);
+    if (start < 0) return '';
+    const rest = body.slice(start);
+    const end = rest.slice(1).search(/^##\s/m);
+    return end < 0 ? rest : rest.slice(0, end + 1);
+  };
+
+  // Seven primitives, counted off the table rather than matched as prose. A
+  // regex for the seven names passes while an eighth row sits beside them,
+  // which is exactly how a cut grows back.
+  const PRIMITIVES = ['Policies', 'Rules', 'References', 'Contexts', 'Efforts', 'Agents', 'Skills'];
+  assert('the primitives table has exactly seven rows, and they are the seven', () => {
+    const rows = [...sectionOf('The primitives').matchAll(/^\|\s*\*\*(\w+)\*\*\s*\|/gm)]
+      .map((match) => match[1]);
+    if (rows.length !== PRIMITIVES.length || rows.some((row, i) => row !== PRIMITIVES[i])) {
+      throw new Error(`${rows.length} rows: ${rows.join(', ')}`);
+    }
+    return true;
+  });
+
+  // The four that were cut are described where they are used, not deleted. A
+  // reader who never hears of evidence again has lost a primitive rather than
+  // a table row.
+  for (const [cut, where] of [
+    ['evidence', 'The primitives'],
+    ['tickets', 'The primitives'],
+    ['Worktrees', 'The primitives'],
+    ['position marker', 'The primitives'],
+  ]) {
+    assert(`${cut} survives the cut as prose rather than a row`, () => {
+      const section = sectionOf(where);
+      if (!section.includes(cut)) throw new Error(`${cut} is named nowhere under ${where}`);
+      return !new RegExp(`^\\|\\s*\\*\\*${cut}\\*\\*`, 'im').test(section);
+    });
+  }
+
+  // Ownership is stated once, here, for every directory the lookup knows. A
+  // directory the code classifies and the bootstrap never mentions is a reader
+  // who has to guess, which is the situation `owner:` was removed to end.
+  const ownership = sectionOf('The invariants');
+  assert('the bootstrap states ownership as a fact about location', () =>
+    /\*\*Ownership is where a file sits\.\*\*/.test(ownership));
+  for (const dir of PROTOCOL_DIRS) {
+    assert(`the ownership table names ${dir}/ as the protocol's`, () =>
+      new RegExp(`\`${dir}/\`[^|]*\\|`).test(ownership));
+  }
+  for (const dir of REPOSITORY_DIRS) {
+    assert(`the ownership table names ${dir}/ as the repository's`, () =>
+      ownership.includes(`\`${dir}/\``));
+  }
+  // Named individually, because no directory rule reaches a file at the root.
+  for (const file of [...PROTOCOL_ROOT_FILES, ...REPOSITORY_ROOT_FILES]) {
+    assert(`the ownership table names ${file} individually`, () =>
+      new RegExp(`\`${file.replace('.', '\\.')}\``).test(ownership));
+  }
+
+  // And the other direction, which the loop above cannot see: a directory the
+  // table claims and the lookup has never heard of. A retired directory left in
+  // this table outlives the release that retired it, and the bootstrap is the
+  // one file every session reads first.
+  assert('the ownership table claims no directory the lookup does not classify', () => {
+    const classified = [...PROTOCOL_DIRS, ...REPOSITORY_DIRS];
+    const claimed = [...ownership.matchAll(/`(\w+)\/`/g)].map((match) => match[1]);
+    const unknown = [...new Set(claimed)].filter((dir) => !classified.includes(dir));
+    if (unknown.length > 0) throw new Error(`claims ${unknown.join(', ')}`);
+    return true;
+  });
+
+  assert('the bootstrap no longer claims ownership is declared per file', () =>
+    !/owner:\s*(protocol|repository)/.test(body));
+
+  // Four commands, and the stages named as stages. A reader who types /review
+  // has been told wrong by the bootstrap, which is the file they were told to
+  // read first.
+  const workflow = sectionOf('The workflow');
+  assert('the workflow names exactly the four invocable commands', () => {
+    const line = (workflow.match(/^\/specify.*$/m) ?? [])[0] ?? '';
+    if (!line) throw new Error('no workflow line at all');
+    const commands = [...line.matchAll(/\/(\w+)/g)].map((match) => match[1]);
+    const expected = ['specify', 'plan', 'tasks', 'implement'];
+    if (JSON.stringify(commands) !== JSON.stringify(expected)) {
+      throw new Error(`the line reads ${commands.join(' → ')}`);
+    }
+    return true;
+  });
+  assert('the capability sentence names what became a stage', () =>
+    /\*\*stages those four\s+run for you\*\*/.test(workflow) &&
+    ['refine', 'research', 'review', 'converge'].every((stage) => workflow.includes(`\`${stage}\``)));
+
+  // The single release of record. Asserted over the payload rather than over
+  // `src/`, because what a repository ends up carrying is what matters.
+  assert('protocol.md carries version:, and it is a release', () =>
+    /^\d+\.\d+\.\d+$/.test(String(artifact.fields.version ?? '')));
+  assert('protocol.md is the only shipped file naming a release', () => {
+    const offenders = shippedArtifacts()
+      .filter((file) => path.basename(file) !== 'protocol.md')
+      .filter((file) => {
+        const { fields } = readArtifact(file);
+        return fields.version !== undefined || fields.aep !== undefined;
+      })
+      .map((file) => toPosix(SRC, file));
+    if (offenders.length > 0) throw new Error(`also named by: ${offenders.join(', ')}`);
+    return true;
+  });
 });
 
 // --- §16 the skill set ------------------------------------------------------

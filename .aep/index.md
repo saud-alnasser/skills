@@ -117,7 +117,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | open | 04, 05, 06 |
+| [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | resolved | 04, 05, 06 |
 | [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | open | 07 |
 | [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | aep-3 | resolved | 09 |
