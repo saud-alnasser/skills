@@ -90,7 +90,7 @@ Start at [[protocol]].
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
-| 45-aep-3 | accepted | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
+| 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
