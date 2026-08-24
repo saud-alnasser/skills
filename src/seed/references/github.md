@@ -133,6 +133,31 @@ gh label create <name> --description <text> --color <hex>
 casing, its prefixing. A tracker labelled `area/api` and `type: bug` does not
 want `aep:effort/x` beside them. Read the list before naming anything.
 
+**Creating one is reported, with the reason.** A label that appears here with no
+explanation is one nobody can tell from a mistake.
+
+### The five families, and which of them re-sync
+
+`[[policies/execution]]` decides this; what belongs here is the vocabulary *this
+tracker* uses for each, so no later session has to work it out again.
+
+| Family | Set from | Maintained |
+| --- | --- | --- |
+| `status:` | `spec.md`'s `status:`, and where the run has reached | **derived** — re-synced on every write |
+| `type:` | what the spec describes | **derived** |
+| `size:` | the diff, when the pull request goes ready | **derived**, against the thresholds in each `size:` label's own description |
+| `priority:` | the human, once, when the effort opens | **initial** — never updated by an agent |
+| `flag:` | a fact: the diff, the trip-wire, a diagnosis | **derived**, except `discussion` and `wontfix`, which invite a person and are initial |
+
+```sh
+gh issue edit <number> --add-label "status: ready" --remove-label "status: backlog"
+gh pr edit <number> --add-label "size: m"
+gh pr diff <number> --name-only        # what the size and the flags are computed from
+```
+
+**The file wins when a label disagrees with it.** Correct the label; never edit
+`spec.md` to match a label somebody moved by hand.
+
 ## Gaps in `gh`
 
 - **There is no `gh milestone` command.** Milestones are filtered and assigned by

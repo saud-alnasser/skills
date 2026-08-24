@@ -118,13 +118,13 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | resolved | 04, 05, 06 |
-| [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | open | 07 |
+| [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | resolved | 07 |
 | [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | aep-3 | resolved | 09 |
 | [[efforts/aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/13-report-shape]] feat(policies): the turn report is four slots and a ledger | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | aep-3 | open | 06, 07 |
+| [[efforts/aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | aep-3 | resolved | 06, 07 |
 | [[efforts/aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | aep-3 | open | 14 |
 | [[efforts/aep-3/tickets/16-install]] feat(install): entrypoints and the label seed land on the way in | aep-3 | open | 15, 01 |
 | [[efforts/aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | aep-3 | open | 16 |

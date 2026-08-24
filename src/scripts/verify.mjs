@@ -58,6 +58,7 @@ import {
   PAYLOAD_SCRIPTS,
   REPOSITORY_DIRS,
   SEEDS,
+  LABEL_SEED,
 } from './payload.mjs';
 
 /** `src/`, the distribution. */
@@ -1856,7 +1857,7 @@ section('seeds', () => {
   // authoritative, and no repository ever receives it. Across a catalogue this
   // size that is one forgotten line in the manifest.
   assert('every file under seed/ is declared in SEEDS', () => {
-    const declared = new Set(SEEDS.map((seed) => seed.source));
+    const declared = new Set([...SEEDS.map((seed) => seed.source), LABEL_SEED]);
     const orphans = walk(path.join(SRC, 'seed'))
       .map((file) => toPosix(SRC, file))
       .filter((source) => !declared.has(source));
@@ -3298,6 +3299,156 @@ section('traceability', () => {
 // suite into a check of one stale document against another. These assertions run
 // the comparison in the other direction: the specification's own counts and lists
 // against the payload that is supposed to satisfy them.
+// Ticket 15. A label is the one AEP artifact that lives where other people can
+// edit it, so the whole section turns on one distinction: which labels an agent
+// re-derives and which it must never touch. Getting that backwards overwrites a
+// human, silently, on a run they did not ask for.
+section('labels', () => {
+  // Line endings are normalised here because this section reads structure --
+  // paragraphs, and table rows anchored to the start and end of a line -- rather
+  // than phrases. A CRLF checkout would otherwise fail every one of them for a
+  // reason that has nothing to do with what they assert.
+  const CR = String.fromCharCode(13);
+  const lf = (text) => text.split(CR).join('');
+  const execution = lf(readSrc('policies', 'execution.md'));
+  const specify = lf(readSrc('skills', 'specify.md'));
+  const runner = lf(readSrc('skills', 'implement.md'));
+  const github = lf(readSrc('seed', 'references', 'github.md'));
+  const policy = headingBlock(execution, 'Labels are markings, never state');
+
+  assert('the execution policy states the label rule', () => policy.length > 0);
+  assert('a label is a projection and the file is the source', () =>
+    policy.includes('**`spec.md` and `plan.md` are what the effort is'));
+  assert('the file wins when a label disagrees with it', () =>
+    /\*\*Where a label and the file disagree, the file\s+wins\*\*/.test(policy) &&
+    policy.includes('never by editing the file to match a label'));
+
+  // The split, and the two lists on either side of it. Asserted per family
+  // rather than as prose, because a family that drifts to the wrong side reads
+  // exactly as well as one on the right side.
+  assert('the policy separates derived from initial', () =>
+    /\| \*\*derived\*\* \| from a file or a diff \|/.test(policy) &&
+    /\| \*\*initial\*\* \| once, when the effort is opened \|/.test(policy));
+  const derivedLine = policy.split('\n\n').find((p) => p.startsWith('**Derived:**')) ?? '';
+  const initialLine = policy.split('\n\n').find((p) => p.startsWith('**Initial:**')) ?? '';
+  assert('the policy names what is derived', () => derivedLine.length > 0);
+  assert('the policy names what is initial', () => initialLine.length > 0);
+  for (const family of ['`status:`', '`type:`', '`size:`']) {
+    assert(`${family} is derived`, () =>
+      derivedLine.includes(family) && !initialLine.includes(family));
+  }
+  assert('`priority:` is initial and not derived', () =>
+    initialLine.includes('`priority:`') && !derivedLine.includes('`priority:`'));
+  assert('an initial label is never updated by an agent', () =>
+    /\*\*never updated by an agent\*\*, and a human's change to one is never overwritten\*\*/
+      .test(policy) || policy.includes("a human's change to one is never overwritten"));
+
+  // The status projection, as a table with a row per effort state. A missing row
+  // is a state whose label nobody sets, and the effort then sits at whatever the
+  // previous state left behind.
+  const rows = policy.split('\n').filter((line) =>
+    line.startsWith('| ') && line.endsWith('|') && line.includes('status: '));
+  assert('the status projection covers every effort state', () => rows.length === 5);
+  if (rows.length !== 5) process.stdout.write(`        projection rows: ${rows.length}\n`);
+  for (const state of ['backlog', 'ready', 'in progress', 'in review', 'done']) {
+    assert(`the projection reaches status: ${state}`, () =>
+      policy.includes(`status: ${state}`));
+  }
+
+  // size:, and where its thresholds live. A size label whose thresholds are
+  // stated somewhere else is one nobody reading the tracker can check.
+  assert('size is computed from the diff at ready', () =>
+    /\*\*`size:` is computed from the diff\*\* when the pull request goes ready/.test(policy));
+  assert('the thresholds live in the label descriptions', () =>
+    policy.includes("against the thresholds the repository's own label descriptions state") &&
+    policy.includes('A\nsize label whose thresholds live somewhere else is one nobody can check.'));
+
+  // A flag states a fact. Without this, flags become decoration and the two that
+  // actually matter stop being read.
+  assert('a flag with no fact behind it is not set', () =>
+    policy.includes('**A flag with no fact behind it is not set.**'));
+  for (const [flag, fact] of [
+    ['breaking changes', 'public-contract trip-wire'],
+    ['dependencies', 'diff'],
+    ['discussion', 'open questions'],
+  ]) {
+    assert(`the policy says what establishes flag: ${flag}`, () =>
+      policy.includes(flag) && policy.includes(fact));
+  }
+
+  // The vocabulary is the repository's, and nothing names AEP. A tracker is read
+  // by people who never installed it.
+  assert('AEP sets every family using labels that already exist', () =>
+    /\*\*AEP sets every family[\s\S]{0,120}using labels that already exist here\.\*\*/.test(policy));
+  assert('creating a label is reported with its reason', () =>
+    policy.includes('**Creating a label is reported, with the reason.**'));
+  assert('no label AEP sets names AEP', () =>
+    policy.includes('**No label AEP sets names AEP.**'));
+
+  // The two skills that actually write labels, each on its own side of the
+  // split: specify sets the initial ones once, implement re-syncs the derived
+  // ones and must leave priority alone.
+  assert('specify moves both objects when the spec is accepted', () =>
+    /Both objects open at `status: backlog`, and accepting the\s+spec moves both to `status: ready` in the same step/.test(specify));
+  assert('specify keeps the spec field as the source', () =>
+    /`spec\.md` still carrying\s+`status: accepted`/.test(specify));
+  assert('specify corrects the label rather than the file', () =>
+    /corrects \*\*the label to match the file\*\*, never the file to match the\s+label/.test(specify));
+  assert('specify sets priority once and never again', () =>
+    specify.includes('**`priority:` is set once, here, and never touched again.**'));
+  assert('the runner re-syncs the derived labels', () =>
+    runner.includes('**Re-sync the derived labels**'));
+  assert('the runner is told priority is not among them', () =>
+    /\*\*`priority:` is not among them\*\*/.test(runner));
+  assert('the runner computes size against the stated thresholds', () =>
+    /\*\*compute\s+`size:` from the diff\*\* against the thresholds/.test(runner));
+
+  // The seeded vocabulary. Five families, and a description that states a
+  // trigger rather than restating the name.
+  const labels = JSON.parse(fs.readFileSync(path.join(SRC, LABEL_SEED), 'utf8'));
+  const families = Object.keys(labels.families ?? {});
+  assert('the label seed carries five families', () =>
+    JSON.stringify(families.sort()) ===
+    JSON.stringify(['flag', 'priority', 'size', 'status', 'type']));
+  assert('every family says how it is maintained', () =>
+    families.every((f) => /derived|initial|Derived|Initial/.test(labels.families[f].why ?? '')));
+
+  const all = families.flatMap((f) => labels.families[f].labels ?? []);
+  assert('the seed carries labels at all', () => all.length >= 20);
+  assert('every seeded label carries a name, a colour, and a description', () =>
+    all.every((l) => l.name && /^[0-9a-f]{6}$/.test(l.color ?? '') && l.description));
+  assert('every seeded label is prefixed by its own family', () =>
+    families.every((f) => (labels.families[f].labels ?? []).every((l) => l.name.startsWith(`${f}: `))));
+  assert('no seeded label names AEP', () =>
+    all.every((l) => !/\baep\b/i.test(l.name)) &&
+    all.every((l) => !/\baep\b/i.test(l.description)));
+
+  // The one description that is unusable without its numbers. A size label
+  // saying "a medium change" is a label a reviewer cannot check or recompute.
+  const sizes = labels.families.size.labels;
+  assert('every size description states a line threshold', () =>
+    sizes.every((l) => /\d/.test(l.description)));
+  assert('the size thresholds do not overlap or leave a gap', () => {
+    const bounds = sizes.map((l) => (l.description.match(/\d+/g) ?? []).map(Number));
+    return bounds.length === 5
+      && bounds[0].length === 1
+      && bounds[4].length === 1
+      && bounds.slice(1, 4).every((b) => b.length === 2 && b[1] > b[0])
+      && bounds[1][0] === bounds[0][0]
+      && bounds[2][0] === bounds[1][1] + 1
+      && bounds[3][0] === bounds[2][1] + 1
+      && bounds[4][0] === bounds[3][1] + 1;
+  });
+
+  // The forge seed, which is what an installed repository actually reads.
+  assert('the github seed records the five families and how each is maintained', () =>
+    github.includes('### The five families, and which of them re-sync'));
+  assert('the github seed routes the decision to the policy', () =>
+    /\[\[policies\/execution\]\]` decides this/.test(github));
+  assert('the github seed says the file wins', () =>
+    github.includes('**The file wins when a label disagrees with it.**'));
+});
+
 section('the specification', () => {
   const bootstrap = readSrc('protocol.md');
 

@@ -121,6 +121,22 @@ end.
 **The issue body is rewritten as the spec changes.** It is the spec's projection,
 not a copy taken once.
 
+**So are the labels.** Both objects open at `status: backlog`, and accepting the
+spec moves both to `status: ready` in the same step — `spec.md` still carrying
+`status: accepted`, because the field is the source and the label is the
+projection (`[[policies/execution]]`). Where either has been edited by hand, the
+next run corrects **the label to match the file**, never the file to match the
+label.
+
+**`priority:` is set once, here, and never touched again.** It came from the
+human, and re-deriving it would overwrite the only person who knows the answer.
+The same holds for any flag that invites someone to act: `flag: discussion` goes
+on while the spec carries open questions, and it is the human who takes it off.
+
+**Every label comes from what this tracker already uses.** Read the list before
+naming anything; where one has to be created, say so and say why
+(`[[references]]`). **Nothing AEP sets names AEP.**
+
 **Abandoning the effort closes both objects**, labelled `flag: wontfix`. An
 abandoned draft is never left open: an open draft pull request reads as work in
 flight to everyone who did not have this conversation.

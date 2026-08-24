@@ -155,6 +155,74 @@ disagrees with the original the moment one is written and the other is not.
 **A tracker write to shared data is proposed before it happens**, with exact
 strings rather than a summary, because it lands in other people's workspace.
 
+## Labels are markings, never state
+
+**`spec.md` and `plan.md` are what the effort is. A label is a projection of
+them onto the tracker**, so that somebody scanning a list sees what the files
+say without opening either. **Where a label and the file disagree, the file
+wins** (`[[policies/authority]]`) and the label is corrected — never the
+reverse, and never by editing the file to match a label somebody changed.
+
+A repository with no tracker loses the projection and nothing else.
+
+### Derived, and initial
+
+Every label AEP sets is one or the other, and the two are maintained
+differently. **Getting this backwards is how an agent overwrites a human.**
+
+| | Set | Then |
+| --- | --- | --- |
+| **derived** | from a file or a diff | **re-synced on every write** to the issue or the pull request |
+| **initial** | once, when the effort is opened | **never updated by an agent**, and a human's change to one is never overwritten |
+
+**Derived:** `status:` from the spec's state, `type:` from what the spec
+describes, `size:` from the diff, and every flag a fact establishes.
+
+**Initial:** `priority:`, and any flag that invites another person to act.
+
+*Why the split rather than one rule: a derived label restates something the
+repository already says, so re-syncing it can only correct drift. An initial
+label states a judgement the agent is not the authority on, and re-syncing that
+overwrites the human who is.*
+
+### What projects onto what
+
+`status:` is the family AEP requires, because it is what the effort's own state
+projects onto. A repository whose vocabulary differs records the mapping in its
+forge `[[references]]` rather than adding a second vocabulary beside its own.
+
+| The effort | Issue | Pull request |
+| --- | --- | --- |
+| the spec is being drafted | `status: backlog` | `status: backlog` |
+| the spec is accepted and the tickets are cut | `status: ready` | `status: ready` |
+| the runner is working | `status: in progress` | `status: in progress` |
+| converge found no gap | `status: in review` | `status: in review` |
+| merged | closed by the pull request | `status: done` |
+
+**`size:` is computed from the diff** when the pull request goes ready for
+review, against the thresholds the repository's own label descriptions state. A
+size label whose thresholds live somewhere else is one nobody can check.
+
+**A flag with no fact behind it is not set.** `breaking changes` comes from the
+public-contract trip-wire, `dependencies` and `release` from the diff,
+`discussion` while the spec carries open questions, `triage` on a fresh draft,
+`confirmed`, `unconfirmed`, and `cant reproduce` from a diagnosis, and `wontfix`
+when an effort is abandoned.
+
+### The vocabulary is the repository's
+
+**AEP sets every family — `status:`, `type:`, `size:`, `priority:`, `flag:` —
+using labels that already exist here.** It reads the list before naming
+anything, and a new label matches the separator, the casing, and the prefixing
+already in use.
+
+**Creating a label is reported, with the reason.** A label that appears in a
+tracker with no explanation is one nobody can tell from a mistake.
+
+**No label AEP sets names AEP.** A tracker is read by people who never installed
+it, and a vocabulary that advertises its tooling has stopped describing the
+work.
+
 ## Claiming, before dispatching
 
 **The branch is the claim, and the parent creates every branch in the set before

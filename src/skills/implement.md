@@ -195,6 +195,14 @@ Further changes amend that commit.
    is reported, never continued past** — the run has just lost its memory and
    does not know it yet.
 
+7. **Re-sync the derived labels** on both objects: `status:` from where the
+   effort now stands, `type:` from what the spec describes, and every flag the
+   diff establishes — `flag: dependencies` where a dependency manifest or a
+   lockfile moved, `flag: release` where what a release publishes moved,
+   `flag: breaking changes` where the public-contract trip-wire fired.
+   **`priority:` is not among them** (`[[policies/execution]]`): it was set when
+   the effort opened, and re-deriving it overwrites a human.
+
 **Then schedule again.** Back to step 1, against the tip this wave just made.
 
 ## 5 — Converge
@@ -236,9 +244,10 @@ work incomplete, and that is the trip-wire above rather than more rounds.*
 
 ### When a round finds no gap
 
-The effort is complete. Finalise the pull request description, compute `size:`,
-move the issue and the pull request to `status: in review`, and **mark the pull
-request ready** — the run's own last act, permitted by
+The effort is complete. Finalise the pull request description, **compute
+`size:` from the diff** against the thresholds that repository's own `size:`
+descriptions state, move the issue and the pull request to `status: in review`,
+and **mark the pull request ready** — the run's own last act, permitted by
 `[[rules/version-control]]`. The human reviews and merges.
 
 ## What may stop the run

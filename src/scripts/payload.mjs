@@ -187,6 +187,23 @@ export const GITIGNORE_SOURCE = 'gitignore';
  */
 export { REPOSITORY_DIRS } from './contract.mjs';
 
+/**
+ * The seeded label vocabulary, offered to the tracker rather than written into
+ * the tree.
+ *
+ * It is a seed by every test that matters: shipped as a starting point, owned by
+ * the repository the moment it is accepted, and never reconsidered afterwards.
+ * What it is not is a file that lands under `.aep/`, because the thing it seeds
+ * lives in the tracker. A repository that already has labels keeps them and AEP
+ * maps onto what is there; this set exists for the one that has only its
+ * tracker's defaults.
+ *
+ * Declared here rather than in `SEEDS` so that neither list has to grow a
+ * conditional for the other: every entry in `SEEDS` has a path in the tree, and
+ * this one never will.
+ */
+export const LABEL_SEED = 'seed/labels.json';
+
 /** Directories that are per-clone and gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];
 
