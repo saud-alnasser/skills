@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [plan]
-report: full
 use-when: "a spec is accepted and needs to become executable work"
 ---
 
@@ -13,21 +7,26 @@ use-when: "a spec is accepted and needs to become executable work"
 Converts an accepted effort into tasks. Tasks are a **map of the work**, never a
 second definition of the change.
 
-**Enters `[[modes/plan]]`.**
+**Posture.** Decomposition is a reading of the spec, never a second draft of
+it. Map what is already decided, and where the map will not close, the spec is
+what is wrong. **What this gives up** is the chance to fix a gap in passing: a
+task that quietly repairs a weak criterion hides the repair somewhere nobody
+reviews it.
 
 ## Procedure
 
 1. **Read the spec.** The effort's `spec.md` — requirements, acceptance criteria, and the
    technical sections if `[[skills/plan]]` ran.
-2. **Find where tasks live.** Ask the repository, in this order: an existing
-   `efforts/<effort>/tickets/` directory; a `[[references]]` describing the
-   forge or tracker in use; the human. **Never create a local ticket system in a
-   repository that already has one** — `[[policies/execution]]` and the
-   protocol both forbid mirroring an external tracker.
+2. **Tasks live under `efforts/<effort>/tickets/`, and there is nowhere to
+   look.** Not per repository, not per convention: a task is a file, its
+   `blocked-by` is an edge a script reads, and the frontier is computed from the
+   directory rather than queried (`[[policies/execution]]`).
 
-   **Where the answer is an external tracker, go to `[[skills/tasks/labels]]`
-   before writing anything.** The effort has to be findable in that tracker, and
-   what carries it is the tracker's own to answer — settled once, then read.
+   **The tracker carries the effort, never its tasks** — one issue and one pull
+   request, and no third object. A dependency graph in a tracker is a graph
+   nothing can read back: it lives in prose, in a checklist, or in whatever that
+   forge calls a relationship this quarter, and every run that needs it asks the
+   network for an answer the repository already had.
 3. **Decompose by acceptance criterion**, not by file or by layer. A task that
    maps to no criterion is either scope nobody asked for or a criterion the spec
    is missing — resolve which before writing it.
@@ -41,10 +40,40 @@ second definition of the change.
    licenses parallel work (`[[policies/execution]]`); an edge you leave implicit
    becomes a collision later.
 5. **Write the tasks.**
-6. **Regenerate the index** — `node .aep/scripts/index.mjs`. Local tickets earn a
+6. **Check that every ticket traces**, below. A ticket citing no requirement is
+   an error, not a warning, and finding it here costs a line where finding it at
+   implementation costs a wave.
+7. **Regenerate the index** — `node .aep/scripts/index.mjs`. Local tickets earn a
    section there listing each one's effort, `status`, and `blocked-by`, which is
    how a later session finds the frontier without reading every ticket.
-7. **Report the graph**: what can start now, what is blocked, and on what.
+8. **Report the graph**: what can start now, what is blocked, and on what.
+
+## Every ticket traces to a requirement, and it is checked
+
+```
+node .aep/scripts/validate.mjs
+```
+
+**A ticket whose acceptance criteria cite no requirement and no acceptance
+criterion of the effort's `spec.md` is an error, and the run exits non-zero
+naming the ticket.** A citation reads `requirement 12` or `criterion 4`, and it
+is checked against what the spec actually numbers, so a spec renumbered under a
+ticket fails as loudly as a ticket written against nothing.
+
+**This is what replaced the one-file rule.** Until AEP 3 the spec and the
+technical approach lived in one file, and a ticket could not describe a design
+the spec did not contain, because there was nowhere else for one to live. Two
+files can drift apart. A citation that has to resolve is what the split traded
+for, so run it before reporting the graph rather than at the end of the effort.
+
+**What it does not catch:** a ticket that cites a requirement and then
+contradicts it, or a plan that contradicts the spec. It answers *does this
+ticket come from somewhere*, never *is this ticket right*. The second is a
+reading, and `[[skills/review]]` is where a reading gets made.
+
+An effort whose spec is `implemented` is skipped, and the summary names it. A
+landed effort is the record of what was reviewed, and this check exists to keep
+a live effort's two files together.
 
 ## What a task must expose
 
@@ -55,8 +84,8 @@ second definition of the change.
 - **implementation constraints**
 
 Local tickets go to `efforts/<effort>/tickets/`, in the shape
-`[[templates/ticket.template]]` gives, with `status: open`, `part-of: <effort>`, and
-`blocked-by:` where it applies.
+`[[templates/ticket.template]]` gives, with `status: open` and `blocked-by:` where
+it applies, and nothing else in the frontmatter.
 
 ## Constraints
 

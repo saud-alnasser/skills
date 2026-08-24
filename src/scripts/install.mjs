@@ -1,11 +1,15 @@
 // Installs the protocol-owned payload into a repository's `.aep/`.
 //
 // The one rule that shapes every branch here: an upgrade may replace what the
-// protocol owns and must never touch what the repository owns. So nothing is
-// overwritten on the strength of its path. Each existing target is read and its
-// declared `owner` decides, because a repository is entitled to add a rule whose
-// filename happens to match a shipped one, and losing it would be exactly the
-// silent overwrite the ownership rule forbids.
+// protocol owns and must never touch what the repository owns. Ownership is a
+// fact about location, so a target is overwritten exactly when the manifest in
+// `contract.mjs` names it and preserved otherwise. That manifest is generated
+// from the payload, so it cannot disagree with what is being copied.
+//
+// The consequence worth stating: a repository file cannot stand at a path the
+// protocol ships. It is not silently overwritten so much as impossible to have,
+// because `validate.mjs` fails on a file in a protocol directory that the
+// manifest does not name.
 //
 // Seeds are the same principle from the other side: shipped as repository-owned
 // starting points, written once, and never reconsidered by any later run.
@@ -16,7 +20,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { readArtifact, walk } from './contract.mjs';
+import {
+  CANONICAL_ENTRYPOINT, RETIRED_FIELDS, readArtifact, walk, toPosix, isProtocolPath,
+} from './contract.mjs';
+import { contentHash } from './release.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
@@ -26,13 +33,15 @@ import {
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
   PER_CLONE_DIRS,
+  RETIRED_DIRS,
   REPOSITORY_DIRS,
   SEEDS,
 } from './payload.mjs';
 
 const report = {
-  written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [],
+  written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [], edited: [],
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
+  pointed: [], unconverted: [], retiredDirs: [],
 };
 
 /** The distribution root, `src/`, since this script lives in `src/scripts/`. */
@@ -42,19 +51,26 @@ function distributionRoot() {
 
 /**
  * True when an existing target must not be overwritten.
- * A file the repository declared as its own is protected. Anything else,
- * including a file with no frontmatter at all, is the protocol's to replace.
+ * A path the manifest does not name belongs to the repository, whatever it
+ * contains and whether or not it has frontmatter at all.
  */
-function repositoryOwned(target) {
+function repositoryOwned(aep, target) {
   if (!fs.existsSync(target)) return false;
-  if (!target.endsWith('.md')) return false;
-  return readArtifact(target).fields.owner === 'repository';
+  return !isProtocolPath(toPosix(aep, target));
 }
 
-function copyFile(source, target, dryRun) {
-  if (repositoryOwned(target)) {
+function copyFile(source, target, aep, dryRun) {
+  if (repositoryOwned(aep, target)) {
     report.preserved.push(target);
     return;
+  }
+  // The protection the `owner:` field used to give, recovered from content.
+  // A path the protocol ships is the protocol's whatever stands there, so this
+  // does not refuse the write. It refuses to make it silently, which is the
+  // half that mattered: somebody edited a shipped file, or wrote their own
+  // where one lands, and either way they are told rather than finding out later.
+  if (fs.existsSync(target) && fs.readFileSync(target, 'utf8') !== fs.readFileSync(source, 'utf8')) {
+    report.edited.push(target);
   }
   if (!dryRun) {
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -63,25 +79,25 @@ function copyFile(source, target, dryRun) {
   report.written.push(target);
 }
 
-function copyDir(sourceDir, targetDir, dryRun) {
+function copyDir(sourceDir, targetDir, aep, dryRun) {
   if (!fs.existsSync(sourceDir)) return;
   const shipped = new Set();
   for (const source of walk(sourceDir)) {
     const relative = path.relative(sourceDir, source);
     shipped.add(relative.split(path.sep).join('/'));
-    copyFile(source, path.join(targetDir, relative), dryRun);
+    copyFile(source, path.join(targetDir, relative), aep, dryRun);
   }
 
-  // A protocol-owned file present in the repository but no longer shipped was
-  // retired by a release. It is reported, never deleted: deciding a file is
-  // obsolete is /prune's job and the human's call.
+  // A file left in a protocol directory that this release does not ship is
+  // either one a release retired or one the repository put somewhere it may not.
+  // The manifest names what ships now and so cannot tell them apart, and neither
+  // is deleted here: deciding a file is obsolete is /prune's job and the human's
+  // call, and a misplaced repository file is /validate's to name.
   if (fs.existsSync(targetDir)) {
     for (const existing of walk(targetDir)) {
       const relative = path.relative(targetDir, existing).split(path.sep).join('/');
       if (shipped.has(relative)) continue;
-      if (existing.endsWith('.md') && readArtifact(existing).fields.owner === 'protocol') {
-        report.retired.push(existing);
-      }
+      report.retired.push(existing);
     }
   }
 }
@@ -148,8 +164,16 @@ function applyMoves(aep, declared, dryRun) {
     if (declared && !precedes(declared, move.since)) continue;
     const source = path.join(aep, ...move.from.split('/'));
     if (!fs.existsSync(source)) continue;
-    if (readArtifact(source).fields.owner === 'repository') {
-      report.collided.push(`${move.from} is the repository's; ${move.to} now ships the protocol's`);
+
+    // Location cannot answer for a move source: the file left the payload, so
+    // the manifest does not name it, and a repository may legitimately have
+    // written its own under a name the protocol vacated. Content answers it.
+    // Anything that is not the protocol's own text, byte for byte under the
+    // release hash, is somebody's work and is left where it is.
+    if (contentHash(fs.readFileSync(source, 'utf8')) !== move.was) {
+      report.collided.push(
+        `${move.from} is not the protocol's text; ${move.to} now ships that. Left in place`,
+      );
       continue;
     }
     if (!dryRun) fs.rmSync(source);
@@ -196,7 +220,7 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
     // work that is about to be thrown away. Matched by path rather than by
     // basename: a repository may legitimately own some other `index.md`.
     if (!file.endsWith('.md') || file === derivedIndex) continue;
-    if (readArtifact(file).fields.owner !== 'repository') continue;
+    if (isProtocolPath(toPosix(aep, file))) continue;
 
     const before = fs.readFileSync(file, 'utf8');
     let replaced = 0;
@@ -213,7 +237,9 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
       },
     );
     if (replaced === 0) continue;
-    const stamped = after.replace(/^date:\s*\d{4}-\d{2}-\d{2}$/m, `date: ${today}`);
+    // `date:` is retired, so a repaired file carries no last-modified stamp to
+    // move. Version control records when it changed, and it cannot go stale.
+    const stamped = after;
     if (!dryRun) fs.writeFileSync(file, stamped, 'utf8');
     report.relinked.push(`${file} (${replaced})`);
   }
@@ -285,6 +311,117 @@ function installSeeds(repo, from, aep, dryRun) {
   }
 }
 
+/**
+ * The paragraph a runtime entrypoint carries, and the whole of what one says.
+ *
+ * It names the canonical entrypoint and nothing under `.aep/`. A pointer that
+ * named the bootstrap directly would be a second thing to update the day the
+ * canonical entry moves, and the two would disagree in the file a runtime
+ * loads first.
+ */
+function pointerTo(canonical) {
+  return [
+    '## Start here',
+    '',
+    `Read **\`${canonical}\`** in this directory. It is this repository's entrypoint,`,
+    'and it is not specific to any one runtime.',
+  ].join('\n');
+}
+
+/**
+ * One entrypoint per targeted runtime, pointing at the canonical one.
+ *
+ * Three cases, and the third is the one worth writing down:
+ *
+ *   the runtime reads the canonical entry   nothing to write. A pointer from a
+ *                                           file to itself is a loop
+ *   its entrypoint does not exist           write the pointer, and only that
+ *   its entrypoint exists                   append the pointer and change
+ *                                           nothing else
+ *
+ * The third case is what makes this safe to run on a repository that had a
+ * `CLAUDE.md` years before AEP. That file is the repository's, it may say
+ * anything, and an installer that rewrites it destroys instructions nobody
+ * asked it to touch. Appending is the only operation available on a file whose
+ * contents are none of AEP's business.
+ */
+function installEntrypoints(repo, requested, dryRun) {
+  const pointer = pointerTo(CANONICAL_ENTRYPOINT);
+  const written = new Set();
+
+  for (const name of requested) {
+    const entry = TARGETS[name].entry;
+    if (!entry || entry === CANONICAL_ENTRYPOINT || written.has(entry)) continue;
+    written.add(entry);
+
+    const target = path.join(repo, entry);
+    const exists = fs.existsSync(target);
+    const before = exists ? fs.readFileSync(target, 'utf8') : '';
+
+    // Idempotent by content rather than by a marker: a marker is a thing to
+    // maintain, and an update that appends a second identical paragraph every
+    // run is the failure this guards.
+    if (before.includes(CANONICAL_ENTRYPOINT)) {
+      report.skipped.push(`${entry} (already points at ${CANONICAL_ENTRYPOINT})`);
+      continue;
+    }
+
+    const body = exists
+      ? `${before.replace(/\s+$/, '')}\n\n${pointer}\n`
+      : `${pointer}\n`;
+    if (!dryRun) fs.writeFileSync(target, body);
+    report.pointed.push(exists ? `${entry} (pointer added, rest untouched)` : entry);
+  }
+}
+
+/**
+ * Which contract a tree was written under, read from the tree itself.
+ *
+ * A tree carrying `owner:` on its artifacts is 2.x, classified by that field
+ * because that is what the field was for. A tree without it is 3, classified by
+ * the manifest. The version a tree declares is not consulted: a repository that
+ * hand-edited its bootstrap, or one written before the field existed, declares
+ * something that is not evidence of anything.
+ *
+ * **The removal condition is stated here rather than left to judgement: this
+ * branch goes when no repository the maintainer knows of still declares a 2.x
+ * layout.** A compatibility branch with no stated end is one nobody removes, and
+ * it is read on every upgrade forever.
+ */
+function carriesRetiredFields(aep) {
+  if (!fs.existsSync(aep)) return [];
+  return walk(aep)
+    .filter((file) => file.endsWith('.md'))
+    .filter((file) => {
+      const { fields } = readArtifact(file);
+      return RETIRED_FIELDS.some((field) => fields[field] !== undefined);
+    })
+    .map((file) => toPosix(aep, file));
+}
+
+/**
+ * An effort still in flight whose spec holds the architecture 3 keeps in
+ * `plan.md`.
+ *
+ * A landed effort is skipped, for the reason a landed effort's tracker
+ * artifacts are never reshaped: the spec is the record of what was built and
+ * reviewed, and splitting it rewrites that record to match a layout the work
+ * was never done under. It would also mean an upgraded tree reporting the same
+ * finished efforts on every upgrade it ever runs, with no action available that
+ * would make the report stop.
+ */
+function specsHoldingArchitecture(aep) {
+  const efforts = path.join(aep, 'efforts');
+  if (!fs.existsSync(efforts)) return [];
+  return walk(efforts)
+    .filter((file) => path.basename(file) === 'spec.md')
+    .filter((file) => {
+      const { fields, body } = readArtifact(file);
+      return fields.status !== 'implemented' && /^#\s+Architecture\s*$/m.test(body);
+    })
+    .map((file) => toPosix(aep, file));
+}
+
 function ensureDir(target, dryRun) {
   if (fs.existsSync(target)) return;
   if (!dryRun) fs.mkdirSync(target, { recursive: true });
@@ -341,9 +478,16 @@ function main() {
   // Read before the payload overwrites it: what the tree declared on arrival is
   // what decides which moves still apply, and one line later it declares this
   // release instead.
-  const declared = existing
-    ? readArtifact(path.join(aep, 'protocol.md')).fields.aep
-    : null;
+  //
+  // `version:` is where a 3 tree names its release and `aep:` is where a 2.x one
+  // did, so both are read. This is the same layout branch the migration needs,
+  // arriving early because everything downstream of it depends on the answer:
+  // a tree that declares nothing is treated as predating everything, so reading
+  // the wrong field replays every move and every notice on every upgrade.
+  const bootstrapFields = existing
+    ? readArtifact(path.join(aep, 'protocol.md')).fields
+    : {};
+  const declared = bootstrapFields.version ?? bootstrapFields.aep ?? null;
 
   if (existing && !args.includes('--update')) {
     process.stderr.write(
@@ -367,13 +511,13 @@ function main() {
   }
 
   for (const file of PAYLOAD_FILES) {
-    copyFile(path.join(from, file), path.join(aep, file), dryRun);
+    copyFile(path.join(from, file), path.join(aep, file), aep, dryRun);
   }
   for (const dir of PAYLOAD_DIRS) {
-    copyDir(path.join(from, dir), path.join(aep, dir), dryRun);
+    copyDir(path.join(from, dir), path.join(aep, dir), aep, dryRun);
   }
   for (const script of PAYLOAD_SCRIPTS) {
-    copyFile(path.join(from, 'scripts', script), path.join(aep, 'scripts', script), dryRun);
+    copyFile(path.join(from, 'scripts', script), path.join(aep, 'scripts', script), aep, dryRun);
   }
 
   for (const dir of [...REPOSITORY_DIRS, ...PER_CLONE_DIRS]) {
@@ -387,9 +531,31 @@ function main() {
     const today = new Date().toISOString().slice(0, 10);
     rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
     collectNotices(declared);
+
+    // A directory a past release owned and this one does not ship. Reported
+    // rather than removed, and reported before the conversion list below,
+    // because a reader who deletes it themselves has answered the next item too.
+    for (const { dir, since, was } of RETIRED_DIRS) {
+      if (fs.existsSync(path.join(aep, dir))) {
+        report.retiredDirs.push(`.aep/${dir}/ (stopped being shipped in ${since}: ${was})`);
+      }
+    }
+
+    // What this script can recognise and must not convert. Both lists are the
+    // 2.x layout showing through, and both need a judgement -- a field carries
+    // content the manifest cannot place, and splitting a spec decides what is
+    // WHAT and what is HOW. `[[skills/update]]` does that with a human; the
+    // installer's whole job here is to make sure neither goes unnoticed.
+    for (const rel of carriesRetiredFields(aep)) {
+      report.unconverted.push(`${rel} (frontmatter written under an older contract)`);
+    }
+    for (const rel of specsHoldingArchitecture(aep)) {
+      report.unconverted.push(`${rel} (holds # Architecture, which 3 keeps in plan.md)`);
+    }
   }
 
   installSeeds(repo, from, aep, dryRun);
+  installEntrypoints(repo, requested, dryRun);
 
   const ignoreTarget = path.join(aep, '.gitignore');
   if (!dryRun) fs.copyFileSync(path.join(from, GITIGNORE_SOURCE), ignoreTarget);
@@ -422,6 +588,8 @@ function main() {
   process.stdout.write(`  ${report.created.length} directories created\n`);
   list(`runtime adapter${report.adapters.length === 1 ? '' : 's'} installed`,
     report.adapters, (entry) => entry);
+  list('locally edited and replaced, recover from version control if wanted', report.edited);
+  list('runtime entrypoints pointing at the canonical one', report.pointed, (entry) => entry);
   list('repository-owned starting points seeded, review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);
@@ -430,6 +598,10 @@ function main() {
   list('name collisions, a repository file stands where a moved one did', report.collided,
     (entry) => entry);
   list('protocol files no longer shipped, review then /prune', report.retired);
+  list('directories no longer shipped, review then /prune', report.retiredDirs,
+    (entry) => entry);
+  list('written under an older contract, /update converts these with you',
+    report.unconverted, (entry) => entry);
 
   // Last, and not as a counted list. Everything above is what the upgrade did;
   // this is the part it could not do for you, so it is the thing still open when

@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [research, review]
-report: short
 use-when: "the question is where the codebase is costing you, rather than a specific change"
 ---
 
@@ -13,8 +7,10 @@ use-when: "the question is where the codebase is costing you, rather than a spec
 Surveys a codebase for deepening opportunities and reports them so one can be
 taken into `[[skills/specify]]`. Not feature work, and not a bug hunt.
 
-**Enters `[[modes/review]]`** for judgement and `[[modes/research]]` for
-gathering.
+**Posture.** Skeptical when judging and evidence-first when gathering: a cost
+you assert is an opinion, and a cost you can point at in the code is a
+finding. **What this gives up** is the tidy answer — a survey naming three
+real costs beats one naming ten plausible ones.
 
 ## When to run this
 

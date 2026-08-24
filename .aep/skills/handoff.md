@@ -1,9 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-report: full
 use-when: "this session is ending or has run long, and the next session must pick the work up"
 ---
 

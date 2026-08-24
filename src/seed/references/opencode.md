@@ -1,9 +1,4 @@
 ---
-aep: 2.6.0
-owner: repository
-date: 2026-08-18
-kind: reference
-mode: [implement, review]
 use-when: "running AEP under OpenCode, or changing what OpenCode loads from this repository"
 ---
 

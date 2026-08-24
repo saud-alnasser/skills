@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "an approach turns on where a module boundary goes, or the plan will merge, split, or hide something behind an interface"
 ---
 

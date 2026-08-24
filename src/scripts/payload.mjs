@@ -16,7 +16,7 @@
 export const PAYLOAD_FILES = ['protocol.md'];
 
 /** Protocol-owned directories copied wholesale into `.aep/`. */
-export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates'];
+export const PAYLOAD_DIRS = ['policies', 'skills', 'agents', 'templates'];
 
 /**
  * Protocol-owned files a release moved, and where their content now ships.
@@ -34,17 +34,30 @@ export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates
  *
  * `since` is the release that made the move. An entry may be dropped once no
  * supported tree predates it. A manifest that only grows is one nobody prunes.
+ *
+ * `was` is what the protocol's version of that file hashed to when it moved,
+ * under the same content hash a release stamps with. Ownership is otherwise a
+ * fact about location, and a move source is the one path location cannot answer
+ * for: the file is gone from the payload, so the manifest does not name it, and
+ * a repository is entitled to write its own file under a name the protocol
+ * vacated. Content answers what location cannot. A match is the protocol's
+ * leftover and is removed; anything else is somebody's work and is reported and
+ * left alone.
+ *
+ * The nine here were recovered from the commit that removed them. **A new move
+ * without a `was` is a defect**, and the suite says so: without it the installer
+ * is back to deleting a file it cannot identify.
  */
 export const MOVES = [
-  { from: 'rules/precedence.md', to: 'policies/authority.md', since: '2.2.0' },
-  { from: 'rules/boundary.md', to: 'policies/authority.md', since: '2.2.0' },
-  { from: 'rules/engineering.md', to: 'policies/engineering.md', since: '2.2.0' },
-  { from: 'rules/evidence.md', to: 'policies/engineering.md', since: '2.2.0' },
-  { from: 'rules/change-control.md', to: 'policies/execution.md', since: '2.2.0' },
-  { from: 'rules/sub-agents.md', to: 'policies/execution.md', since: '2.2.0' },
-  { from: 'rules/artifacts.md', to: 'policies/artifacts.md', since: '2.2.0' },
-  { from: 'rules/ownership.md', to: 'policies/artifacts.md', since: '2.2.0' },
-  { from: 'rules/placement.md', to: 'policies/artifacts.md', since: '2.2.0' },
+  { from: 'rules/precedence.md', to: 'policies/authority.md', since: '2.2.0', was: 'ed2d2ab2056a234382967bceb28e2140665a0c3f967af2f421bfe23d7cfcb140' },
+  { from: 'rules/boundary.md', to: 'policies/authority.md', since: '2.2.0', was: 'e7b2521f8ab240c3bf1da89722444bba87cfcd6595bb3a81a1338cb0ca252d5f' },
+  { from: 'rules/engineering.md', to: 'policies/engineering.md', since: '2.2.0', was: '184a48399e02cf56ec3c29d6b1845a71d3411013dd52523600b4de71a01ef3c9' },
+  { from: 'rules/evidence.md', to: 'policies/engineering.md', since: '2.2.0', was: 'ca94f29efe6c786b0824de4e36e8d7e57e0442381d43a8ded46f60cd17d767bd' },
+  { from: 'rules/change-control.md', to: 'policies/execution.md', since: '2.2.0', was: '95c012cdec66b27ab025c591659a880484895cc9e4ff5864d07fe5412beb872d' },
+  { from: 'rules/sub-agents.md', to: 'policies/execution.md', since: '2.2.0', was: 'e144175d0c08a0694dc6a15e997edd45646b031151f301fe31f2997bf9098e62' },
+  { from: 'rules/artifacts.md', to: 'policies/artifacts.md', since: '2.2.0', was: '84c08a0cd9ee9473f8c18e475c6617757ad9f0a5b7c32b767fda3bc7953be6fa' },
+  { from: 'rules/ownership.md', to: 'policies/artifacts.md', since: '2.2.0', was: 'fd91ca623bbd60c9fa990cbf996dd940fc5ad6bd952baea3fbd2417be59d8753' },
+  { from: 'rules/placement.md', to: 'policies/artifacts.md', since: '2.2.0', was: 'd2bc66fbd7e39479ac52b18e64c2a3459bc8a1a871e946f915ce2f00d0bf905b' },
 ];
 
 /**
@@ -65,6 +78,32 @@ export const MOVES = [
  * notice**, and most releases will not.
  */
 export const NOTICES = [
+  {
+    since: '3.0.0',
+    check:
+      'Two skills are gone and one moved. /commit is no longer a command: landing is ' +
+      'part of finishing a task, so its mechanics run inline at the end of /implement, ' +
+      'and the two judgements it made about a whole effort, whether the effort is ' +
+      'implemented and whether the change falsified a context or a reference, are made ' +
+      'once the effort has no unresolved task left. skills/tasks/labels.md is gone with ' +
+      'its ladder and its approval gate; what replaces it asks which of your labels ' +
+      'describe an effort rather than which label carries a grouping fact. And ' +
+      'skills/commit/conflicts.md is now skills/implement/conflicts.md, beside the skill ' +
+      'that reads it. Your own reference for a tracker is untouched, and the query it ' +
+      'records is still what the frontier is read from.',
+  },
+  {
+    since: '3.0.0',
+    check:
+      'modes/ is gone. A mode existed to state a posture, its mindset and what that ' +
+      'mindset gives up, and every one of those now sits inside the skill that used to ' +
+      'enter it, where it is read at the moment it applies rather than fetched. Delete ' +
+      '.aep/modes/: validate.mjs now fails a tree that still has one, because a ' +
+      'directory nothing ships and nothing links to is a second copy of text the skills ' +
+      'now carry. If you wrote a mode of your own, its content belongs in your own skill ' +
+      'or rule. Nothing under modes/ is preserved by the upgrade, and nothing there is ' +
+      'deleted for you either.',
+  },
   {
     since: '2.7.0',
     check:
@@ -89,29 +128,22 @@ export const NOTICES = [
       'file you own. A flat tree needs no change at all.',
   },
   {
-    since: '2.4.0',
-    check:
-      'Skills you wrote yourself now need one more frontmatter field: report: full, or ' +
-      'report: short, if the skill neither writes to the repository, dispatches a sub-agent, ' +
-      'nor decides anything on your behalf. It says which form that skill\'s turn report takes, ' +
-      'and validate.mjs fails a skill without one, because a skill with no declared form has no ' +
-      'defined shape to report in. Shipped skills already carry it; an upgrade never edits a ' +
-      'file you own, so yours are yours to add.',
-  },
-  {
     since: '2.3.0',
     check:
-      'Tasks in an external tracker: your reference for that tracker, references/github.md, ' +
-      'references/gitlab.md, or your own, now records what carries an effort and the query ' +
-      'that finds its open work. An upgrade never re-seeds a reference you have corrected, so ' +
-      'this release cannot add that section for you. The next /tasks run in a tracker-backed ' +
-      'repository writes it; add it by hand if you would rather not wait.',
+      'Tasks are files under efforts/<effort>/tickets/ and are never in a tracker. If 2.3.0 ' +
+      'had you record a query in references/github.md, references/gitlab.md, or your own ' +
+      'reference for finding an effort\'s open work, nothing reads that query any more: the ' +
+      'frontier is computed from the ticket files, which is what keeps blocked-by machine- ' +
+      'readable. What the tracker still carries is the effort itself, one issue and one pull ' +
+      'request, and the part of that section naming what carries an effort is still right. ' +
+      'An upgrade never edits a reference you own, so this is yours to trim.',
   },
 ];
 
 /** Scripts installed to `.aep/scripts/`, available to every configured repository. */
 export const PAYLOAD_SCRIPTS = [
   'contract.mjs',
+  'frontier.mjs',
   'index.mjs',
   'validate.mjs',
   'position.mjs',
@@ -125,6 +157,7 @@ export const BUILD_ONLY_SCRIPTS = [
   'payload.mjs',
   'adapters.mjs',
   'install.mjs',
+  'manifest.mjs',
   'release.mjs',
   'verify.mjs',
 ];
@@ -149,8 +182,54 @@ export const GITIGNORE_SOURCE = 'gitignore';
  * `rules/` is one of them: governance the protocol defines ships as policies,
  * and `rules/` holds what this repository decides for itself. It arrives empty
  * apart from the version-control seed.
+ *
+ * Re-exported from `contract.mjs` rather than restated. The same list decides
+ * what an upgrade preserves and what the validator will not police, and two
+ * copies of it would disagree on the first directory either version gains.
  */
-export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
+export { REPOSITORY_DIRS } from './contract.mjs';
+
+/**
+ * The canonical entrypoint, re-exported for the same reason `REPOSITORY_DIRS`
+ * is: the seed that writes it and the target table that points at it both need
+ * the name, and two copies would disagree the day it changes.
+ */
+export { CANONICAL_ENTRYPOINT } from './contract.mjs';
+import { CANONICAL_ENTRYPOINT } from './contract.mjs';
+
+/**
+ * The seeded label vocabulary, offered to the tracker rather than written into
+ * the tree.
+ *
+ * It is a seed by every test that matters: shipped as a starting point, owned by
+ * the repository the moment it is accepted, and never reconsidered afterwards.
+ * What it is not is a file that lands under `.aep/`, because the thing it seeds
+ * lives in the tracker. A repository that already has labels keeps them and AEP
+ * maps onto what is there; this set exists for the one that has only its
+ * tracker's defaults.
+ *
+ * Declared here rather than in `SEEDS` so that neither list has to grow a
+ * conditional for the other: every entry in `SEEDS` has a path in the tree, and
+ * this one never will.
+ */
+export const LABEL_SEED = 'seed/labels.json';
+
+/**
+ * Directories a past release owned and this one does not ship.
+ *
+ * Not a move: a move relocates content, and these hold a concept that is gone.
+ * Not a deletion either -- deciding a file is obsolete is a human's call, and a
+ * repository may have written its own notes inside one. So an upgrade reports
+ * them and leaves them, which is what `retired` already means for a file.
+ *
+ * Without this list the failure is silent in the worst way: ownership is a
+ * lookup now, so a directory the manifest does not name reads as the
+ * repository's, and `.aep/modes/` sits in an upgraded tree forever with nothing
+ * saying it stopped meaning anything.
+ */
+export const RETIRED_DIRS = [
+  { dir: 'modes', since: '3.0.0', was: 'the working posture, now stated in each skill' },
+];
 
 /** Directories that are per-clone and gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];
@@ -194,7 +273,7 @@ const reference = (tool, paths, remote) => ({
  * installing repository nothing, because the detector decides.
  */
 export const SEEDS = [
-  { source: 'seed/AGENTS.md', target: 'AGENTS.md', root: true },
+  { source: 'seed/AGENTS.md', target: CANONICAL_ENTRYPOINT, root: true },
   { source: 'seed/contexts/repository.md', target: 'contexts/repository.md' },
   { source: 'seed/rules/version-control.md', target: 'rules/version-control.md' },
 

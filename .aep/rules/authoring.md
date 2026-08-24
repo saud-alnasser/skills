@@ -1,9 +1,4 @@
 ---
-aep: 2.1.1
-owner: repository
-date: 2026-08-17
-kind: rule
-mode: [implement, review]
 paths:
   - src/**
 use-when: "changing anything under src/ — the protocol's own shipped surfaces"
@@ -55,17 +50,33 @@ The suite asserts this over the shipped surfaces.
 node src/scripts/release.mjs <version>
 ```
 
-It sets the version of record, stamps `aep:` and `date:` on **only the artifacts
-whose content actually changed**, updates the baseline in `src/stamps.json`,
-syncs the plugin manifest, and regenerates the adapter.
+It writes the version of record into `protocol.md`, updates the baseline in
+`src/stamps.json`, syncs the plugin manifest, and regenerates the adapter. That
+one write is the only place a release number is stored: no artifact carries a
+stamp of its own any more.
 
-**Never restamp by hand.** `aep:` is the release an artifact's content last
-changed in, so a sweep that sets every file to the new release destroys the only
-information the field carries — and it hides the defect the field exists to
-expose, because under a sweep a stale stamp and a current one are the same value.
+`verify.mjs` compares every shipped artifact's content against the baseline, so
+an edit that never got released fails the suite by name. **The baseline is the
+whole of that detection now**, where it used to have a per-file stamp beside it,
+so a re-cut baseline mid-effort is a deliberate act rather than housekeeping: it
+tells the suite that everything currently in the tree is the new reference point.
 
-`verify.mjs` compares every shipped artifact against the baseline, so an edit
-that never got released fails the suite by name.
+## Regenerate the manifest whenever a file enters or leaves the payload
+
+```
+node src/scripts/manifest.mjs
+```
+
+`scripts/contract.mjs` carries the exact list of paths the payload ships, and
+that list is **generated from the payload** rather than maintained beside it. It
+is what the installer consults to decide whether a target is the protocol's, and
+what the validator consults to name a file standing in a protocol directory that
+this release does not ship.
+
+**A stale manifest fails open, which is why the suite asserts it.** A file added
+to the payload and missing from the manifest is treated as the repository's, so
+the installer preserves whatever stands there instead of shipping the new one,
+and nothing about that looks wrong until somebody notices the file never arrived.
 
 ## Regenerate the adapter whenever a skill or agent changes
 

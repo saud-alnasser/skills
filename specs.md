@@ -1,12 +1,12 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 2.7.0
+**Version:** 3.0.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
-**Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§31.1); its copy of the framework does not.
+**Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
 This specification is self-contained: a reader with only this file understands what AEP is, what its primitives are, how they compose, how an agent runtime consumes it, and how the protocol evolves. It is written like a language specification — it defines concepts and conformance, and everything shipped or installed is an implementation of it.
 
-AEP 2.0 derives from two lines of prior work, acknowledged because it is true rather than because anything compels it: [GitHub's Spec Kit](https://github.com/github/spec-kit), from which the specify → plan → tasks → implement spine is taken, and [mattpocock/skills](https://github.com/mattpocock/skills), from which the composable-skill shape is taken. **What is taken from each is a shape, not text** — 2.0 vendors no code or prose from either, so no third-party licence condition attaches to it (§34). AEP depends on neither, requires neither installed, and defines itself as an extension of neither.
+AEP derives from two lines of prior work, acknowledged because it is true rather than because anything compels it: [GitHub's Spec Kit](https://github.com/github/spec-kit), from which the specify → plan → tasks → implement spine is taken, and [mattpocock/skills](https://github.com/mattpocock/skills), from which the composable-skill shape is taken. **What is taken from each is a shape, not text** — AEP vendors no code or prose from either, so no third-party licence condition attaches to it (§33). AEP depends on neither, requires neither installed, and defines itself as an extension of neither.
 
 ## How this specification evolves
 
@@ -32,13 +32,13 @@ AEP does **not** replace Git, a forge, project documentation, or any runtime's n
 
 ## 2. Core principles
 
-**Agent-agnostic.** AEP MUST NOT assume any particular agent runtime. Claude Code, Codex, Cursor, Gemini, bespoke agents, and unassisted humans are all consumers. What a runtime provides is an **adapter** (§29), never AEP itself.
+**Agent-agnostic.** AEP MUST NOT assume any particular agent runtime. Claude Code, Codex, Cursor, Gemini, bespoke agents, and unassisted humans are all consumers. What a runtime provides is an **adapter** (§28), never AEP itself.
 
 **One canonical location.** All AEP state lives under `.aep/`. A runtime-specific directory — `.claude/`, `.cursor/`, `.codex/` — MUST NEVER hold canonical AEP state, and a repository MUST NEVER carry separate AEP states per agent.
 
 **Separate primitives.** Each primitive (§3) answers exactly one question. Primitives are not merged because they are related, and one is never used as a substitute for another.
 
-**Progressive discovery.** Knowledge is loaded because it is *applicable*, never because it exists. Every artifact declares when it applies; agents combine those declarations with the current path, effort, task, and mode to select what to read. No conforming instruction ever tells an agent to read all rules, all contexts, or all references before beginning work.
+**Progressive discovery.** Knowledge is loaded because it is *applicable*, never because it exists. Every artifact declares when it applies; agents combine those declarations with the current path, effort, and task to select what to read. No conforming instruction ever tells an agent to read all rules, all contexts, or all references before beginning work.
 
 **Repository authority.** The repository is authoritative. AEP artifacts describe it and MUST NEVER contradict it; where they disagree, the repository wins and the artifact is corrected.
 
@@ -50,7 +50,7 @@ AEP does **not** replace Git, a forge, project documentation, or any runtime's n
 
 ## 3. Primitives and terminology
 
-AEP defines twelve primitives:
+AEP defines seven primitives:
 
 | Primitive | Answers | Lives in |
 | --- | --- | --- |
@@ -58,14 +58,13 @@ AEP defines twelve primitives:
 | **Rules** | what MUST be done **here** | `.aep/rules/` |
 | **References** | how a tool or procedure is operated here | `.aep/references/` |
 | **Contexts** | what to know about an area, and where to look | `.aep/contexts/` |
-| **Evidence** | what has been discovered | `.aep/efforts/<effort>/evidence/` |
 | **Efforts** | what change is being made | `.aep/efforts/<effort>/` |
-| **Tasks** | executable work derived from an effort | tickets, local or external |
 | **Agents** | who performs work, and in what role | `.aep/agents/` |
 | **Skills** | reusable capabilities | `.aep/skills/` |
-| **Modes** | how to think during an activity | `.aep/modes/` |
-| **Worktrees** | isolated execution environments | `.aep/worktrees/` |
-| **Position** | lightweight operational state | `.aep/position/` |
+
+**An effort holds its own parts rather than standing beside them.** Its `spec.md`, the `evidence/` that produced it, and its tasks as tickets under `tickets/` are the effort, not three further primitives (§14). Worktrees (§18) and the position marker (§20) are mechanisms and are specified where they are used; naming them primitives implied a reader had to learn them before starting, and neither is reached until a run needs it.
+
+*Why the set is stated as a count: a primitive list nobody counts grows by one every time a mechanism wants status, and each addition is individually defensible. The bootstrap names the same seven, so a reader who has loaded only that file has the whole set.*
 
 Conformance vocabulary:
 
@@ -73,8 +72,8 @@ Conformance vocabulary:
 - **SHOULD** marks the default; departing from it requires a stated reason.
 - **MAY** marks an option.
 - An **artifact** is a file under `.aep/` governed by the frontmatter contract (§8).
-- The **payload** is the set of protocol-owned artifacts a release installs (§30).
-- An **adapter** is runtime-specific glue that exposes AEP through a runtime's native mechanism (§29).
+- The **payload** is the set of protocol-owned artifacts a release installs (§29).
+- An **adapter** is runtime-specific glue that exposes AEP through a runtime's native mechanism (§28).
 
 ## 4. Authority order
 
@@ -89,14 +88,14 @@ When sources disagree, an agent trusts, in order:
 7. References
 8. Contexts
 9. Evidence
-10. Derived indexes (§27) and position (§25)
+10. Derived indexes (§26) and position (§24)
 11. Agent reasoning
 
 Ranks 2–3 are absolute against every AEP artifact: an artifact that contradicts the repository is wrong and is corrected — never the reverse, and never explained away.
 
 Three orderings inside this one are load-bearing and stated separately because they are the ones violated in practice:
 
-- **The spec outranks tasks** (§22). A task that conflicts with `spec.md` is a defect in the task, and the conflict is surfaced rather than resolved by editing the architecture.
+- **The spec outranks tasks** (§21). A task that conflicts with `spec.md` is a defect in the task, and the conflict is surfaced rather than resolved by editing the architecture.
 - **Policies outrank rules.** A rule MAY tighten or extend a policy; it MUST NOT soften one, contradict one, or opt out of one. A repository that must differ from a policy records a declared deviation (§7) rather than resolving the conflict in passing.
 - **Governance outranks references and contexts.** A reference explains how to operate something; it NEVER grants permission to do it. A context orients; it NEVER instructs.
 
@@ -113,7 +112,7 @@ A conforming repository:
 ```
 .aep/
 ├── protocol.md              the bootstrap — protocol-owned, cheap, stable
-├── index.md                 derived discovery index (§27)
+├── index.md                 derived discovery index (§26)
 ├── agents/                  agent role definitions
 ├── contexts/                navigational knowledge, repository-owned
 │   ├── <area>.md            spans the repository
@@ -121,11 +120,11 @@ A conforming repository:
 ├── efforts/
 │   └── <effort>/
 │       ├── spec.md          the durable definition of one change
+│       ├── plan.md          the technical approach, where one is needed
 │       ├── evidence/
 │       │   ├── research/
 │       │   └── prototypes/
-│       └── tickets/         optional; local tickets only
-├── modes/                   ways of working
+│       └── tickets/         the effort's tasks (§14.4)
 ├── policies/                governance AEP defines — protocol-owned
 ├── position/                per-clone operational state — gitignored
 ├── references/              procedural/operational knowledge
@@ -133,7 +132,7 @@ A conforming repository:
 ├── scripts/                 protocol scripts
 ├── skills/
 │   ├── <skill>.md           the skill — the whole of what it always does
-│   └── <skill>/<note>.md    depth, loaded only on the branch that needs it (§16.1)
+│   └── <skill>/<note>.md    depth, loaded only on the branch that needs it (§15.1)
 ├── templates/               skeletons for authoring a new artifact
 ├── worktrees/               isolated checkouts — gitignored
 └── .gitignore               defines what per-clone means
@@ -141,50 +140,64 @@ A conforming repository:
 
 `.aep/.gitignore` MUST exclude `position/` and `worktrees/`. Everything else under `.aep/` is committed.
 
-Additional directories MUST NOT be introduced unless this specification names them. `.aep/` MUST NOT contain a `decisions/` directory, a `tools/` directory, or a mandatory `grill/` directory — each was a 1.x concept and each is retired (§33). `policies/` is named here and is **not** the 1.x directory of that name; §33 records what changed.
+Additional directories MUST NOT be introduced unless this specification names them. `.aep/` MUST NOT contain a `decisions/` directory, a `tools/` directory, a `grill/` directory, or a `modes/` directory — the first three were 1.x concepts and the fourth was 2.x's, and each is retired (§32). `policies/` is named here and is **not** the 1.x directory of that name; §32 records what changed.
 
 ## 6. The bootstrap
 
-`.aep/protocol.md` is the single entry point. It is protocol-owned, small by design, and answers exactly six questions:
+`.aep/protocol.md` is the single entry point. It is protocol-owned, small by design, and answers exactly seven questions:
 
 1. What is AEP?
 2. What are its primitives?
 3. Where is AEP state?
 4. How does an agent discover what is relevant?
 5. What is the workflow spine?
-6. What are the invariants that hold on every turn?
+6. **Which files are AEP's and which are the repository's?**
+7. What are the invariants that hold on every turn?
+
+The sixth is new in 3.0 and is there because nothing declares ownership on itself any more (§7). A reader learns it once, from the one file every session loads, rather than from a field on every artifact.
 
 `protocol.md` is **not** a second rules system, a policy database, a decision database, or a replacement for rules, contexts, or specs. It routes; it never governs. Governance is rules (§10).
 
-`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 8 KB**, asserted by the verification suite (§32) — a bootstrap that costs what it saves is not a bootstrap.
+`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 8 KB**, asserted by the verification suite (§31) — a bootstrap that costs what it saves is not a bootstrap.
 
-**`protocol.md` also declares which release a tree is running.** Every release stamps its `aep` field, whether or not the prose moved, and it is the one artifact of which that is true (§8): the index derives the installation's version from it (§27), and an upgrade decides whether a repository is behind by reading it (§31). Left at whichever release last edited the text, a current installation would report itself as an old one and an upgrade would offer to redo work already done.
+**`protocol.md` also declares which release a tree is running**, in a `version:` field, and it is **the only artifact that declares a release at all**. Every protocol-owned artifact is at that release by construction, because an upgrade replaces all of them together; a repository-owned artifact has no release, because the repository edits it freely and no upgrade touches it. The index derives the installation's version from this one field (§26), and an upgrade decides whether a repository is behind by reading it (§30).
+
+*Why one field rather than one per artifact: a per-artifact stamp answers "when did this last change", and git answers that without being maintained. What the stamp was actually guarding — an artifact edited without being restamped — is caught by comparing content against the manifest (§7), which is the comparison an upgrade already makes.*
 
 A runtime's own entrypoint — `AGENTS.md`, `CLAUDE.md`, or the runtime's equivalent — MUST point at `.aep/protocol.md` and MUST NOT restate its content. Restating it creates a second home that drifts at one of them.
 
 ## 7. Ownership
 
-Every artifact declares an owner, and the owner is read off the declaration — never inferred from a directory.
+**Ownership is where a file sits.** Nothing declares it, and nothing infers it from a file's contents. The rule is a lookup, stated once in `protocol.md` (§6) and carried in machine-readable form by the payload's own contract module (§31.1):
 
-**`owner: protocol`** — the artifact defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository. Its `aep` field is **the release its content last changed in** — a release stamps only the artifacts it changed (§8), with `protocol.md` the single exception (§6), because the tree's version is read from that file alone. **An upgrade establishes provenance by comparing content**: a protocol-owned artifact that differs from the release it declares is the defect to report (§31). *Why not by stamp: a field that answered "did this come from this release" would have to be swept every release, and a swept field cannot also answer "when did this last change" — under a sweep a stale stamp and a current one are the same value, which is the one defect §8 requires an implementation to detect.*
-
-**`owner: repository`** — the artifact describes this repository. It evolves with the repository, and an upgrade MUST preserve it unless an explicit migration applies. A protocol upgrade MUST NEVER silently overwrite repository-owned governance.
-
-Which primitives are which:
-
-| Directory | Owner |
+| Directory or file | Owner |
 | --- | --- |
-| `protocol.md`, `policies/`, `modes/`, `skills/`, `agents/`, `templates/`, `scripts/` | `protocol` |
-| `rules/`, `contexts/`, `references/`, `efforts/` | `repository` |
-| `index.md` | `repository`, and **generated** — regenerated, never hand-edited (§27) |
+| `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`, `scripts/` | **the protocol's** |
+| `rules/`, `contexts/`, `references/`, `efforts/` | **the repository's** |
+| `index.md` | the repository's, and **generated** — regenerated, never hand-edited (§26) |
 
-`policies/` and `rules/` each admit **exactly one owner**, and an implementation MUST reject an artifact declaring the other (§32). This is the one place a directory constrains ownership, and it does not weaken the rule that ownership is read off the declared field: an installer still decides what it may overwrite by reading `owner`, so a repository-owned file standing in `policies/` is **preserved and then reported**, never silently corrected. *Why constrain these two at all: the split exists so that an agent reading a directory listing can tell AEP's law from local convention. A directory that admits either owner communicates nothing, and the change would be a rename.*
+**A protocol-owned artifact** defines AEP itself. It is installed verbatim from the release, MAY be replaced or migrated by an upgrade, and MUST NOT be edited in a repository.
+
+**A repository-owned artifact** describes this repository. It evolves with the repository, and an upgrade MUST preserve it unless an explicit migration applies. A protocol upgrade MUST NEVER silently overwrite repository-owned governance.
+
+**The directory rule is not the whole guard, because a directory is a set and a release ships a list.** A release therefore carries an **exact manifest**: every path the payload installs, generated from the payload rather than maintained beside it. Two checks rest on it, and neither is available to a declaration:
+
+- **a file inside a protocol-owned directory that the manifest does not name fails validation by name** (§31). Under a declared field the same file simply claimed to be the repository's and was believed;
+- **an upgrade establishes provenance by comparing content against the manifest**: a protocol-owned artifact that differs from what this release ships is reported (§30). This is what catches an artifact edited in place, and it is the comparison an upgrade already makes.
+
+*Why a manifest rather than a field on each file: a declaration is a per-file claim checked against nothing, and it is trivially wrong — a file copied from `policies/` into `rules/` carries the wrong owner and is believed. The manifest is the list the installer and the upgrade already act on, so the guard and the mechanism cannot disagree.*
+
+*What is given up: a reader opening one artifact can no longer see whose it is from the file itself. That is answered instead by the bootstrap, which every session loads and which states the rule in one table — one read for the whole tree rather than one line per file.*
+
+`policies/` and `rules/` remain the sharpest case: `policies/` holds only what the release ships and `rules/` holds only what the repository writes, and the release ships nothing into `rules/` beyond seeds it hands over on arrival (§7.1). A repository file standing in `policies/` is **preserved and then reported**, never silently corrected. *Why constrain these two at all: the split exists so that an agent reading a directory listing can tell AEP's law from local convention. A directory that admits either owner communicates nothing, and the change would be a rename.*
 
 ### 7.1 Seeds
 
 A **seed** is a repository-owned artifact the release ships as a **starting
-point**. It is installed as `owner: repository`, written **once**, and never
-reconsidered by any later run (§31).
+point**. It lands in a repository-owned directory, is written **once**, and is
+never reconsidered by any later run (§30). It is not on the manifest: the
+manifest names what an upgrade replaces, and a seed is precisely what an upgrade
+must not touch.
 
 Seeds exist because some artifacts are necessarily repository-specific — how work
 lands, how a tool is invoked here — and a repository starting from nothing writes
@@ -208,55 +221,47 @@ repository from the moment it lands, and free to diverge.
 
 **Exactly one seed targets the repository root rather than `.aep/`: the entrypoint** (§6). The harness loads it by name, so it cannot live inside the tree. Being outside `.aep/`, it carries **no frontmatter** — it is the repository's own file from the moment it is written, and an implementation MUST NOT install it as though it were an AEP artifact. Like every seed it is written only where absent: an entrypoint that already exists may carry instructions predating AEP, and overwriting it would destroy them.
 
-Repository variation enters a protocol-owned artifact only where that artifact names an extension point. Variation with nowhere to enter is a **declared deviation**: allowed, recorded in the repository's own rules with its reason and the release it was declared under, and reported by every `update` run until the protocol grows the point or the repository conforms. The escape hatch is load-bearing — without a loud one, fixed protocol text pressures repositories to fork silently, which is worse.
+Repository variation enters a protocol-owned artifact only where that artifact names an extension point. Variation with nowhere to enter is a **declared deviation**: allowed, recorded in the repository's own rules with its reason and the release it was declared under, and reported by every `update` run until the protocol grows the point or the repository conforms. The mechanism rests on the concept of ownership, not on a field, and is unchanged by ownership becoming a lookup. The escape hatch is load-bearing — without a loud one, fixed protocol text pressures repositories to fork silently, which is worse.
 
 ## 8. Frontmatter contract
 
-Every Markdown artifact under `.aep/` MUST carry YAML frontmatter delimited by `---`:
+Every Markdown artifact under `.aep/` MUST carry YAML frontmatter delimited by `---`. **For most artifacts it is one field:**
 
 ```yaml
 ---
-aep: 2.0.0
-owner: protocol | repository
-date: YYYY-MM-DD
-kind: agent | context | spec | prototype | research | reference | policy | rule | skill | ticket | protocol | mode
-mode: [specify, plan, refine, implement, research, prototype, review, test]
-paths:
-  - path/to/*.example.{md,txt}
-status: draft | accepted | implemented | open | resolved | obsolete
-blocked-by: [<ticket-id>, ...]
-part-of: <effort>
 use-when: "when you need to do something"
 ---
 ```
 
-Field contract:
+The whole contract is four fields, and two of them are legal only on an effort's own artifacts:
 
 | Field | Required | Contract |
 | --- | --- | --- |
-| `aep` | **yes** | The release in which this artifact's content **last changed** — one meaning, both owners. A release that does not change a file MUST NOT restamp it, so most artifacts in a current tree legitimately declare an older release; that is the field carrying information rather than repeating `protocol.md`. A stamp **ahead** of the release being built names a release that does not exist and is illegal. **`protocol.md` is the exception** and always declares the current release (§6). |
-| `owner` | **yes** | Exactly `protocol` or `repository`. No other value is legal. Under `policies/` it MUST be `protocol`; under `rules/` it MUST be `repository` (§7). |
-| `date` | **yes** | The date that content last changed, as `YYYY-MM-DD`. No other format is legal. Same question as `aep`, and it MUST be maintained by the same mechanism — two fields answering one question by two mechanisms is one field that drifts. |
-| `kind` | situational | One of the listed values. Omitted only where the directory makes it redundant. |
-| `mode` | situational | A YAML **array** of mode names (§14). Applicability, never state. |
-| `paths` | optional | Glob patterns for which repository paths make the artifact applicable. |
-| `status` | situational | Required on an effort `spec.md` (`draft`/`accepted`/`implemented`) and on a local ticket (`open`/`resolved`/`obsolete`). Illegal elsewhere. |
+| `use-when` | **required on policies, rules, references, and contexts**; optional elsewhere | One sentence describing **when to load this**. Checked mechanically, below. |
+| `paths` | optional | A YAML array of glob patterns for which repository paths make the artifact applicable. |
+| `status` | situational | Required on an effort `spec.md` (`draft`/`accepted`/`implemented`) and on a ticket (`open`/`resolved`/`obsolete`). Illegal elsewhere. |
 | `blocked-by` | optional | Ticket identifiers this ticket waits on. Tickets only. |
-| `part-of` | optional | The effort a ticket belongs to. Tickets only. |
-| `use-when` | **required on policies, rules, references, and contexts**; optional elsewhere | One sentence describing **when to load this**. |
-| `report` | **required on every skill**; illegal elsewhere, including on a skill note | Exactly `full` or `short` — the form of the report that skill's turn takes (§16.2). A note carries none: it is reached from inside a run rather than invoked, so it opens no report. |
 
-**`aep` and `date` MUST be computed, never typed.** An implementation that distributes a payload MUST determine, per artifact, whether its content changed since the last release, and stamp only those that did. It MUST be able to detect **an artifact whose content changed without its stamp changing** — the defect a scheme that restamps everything every release cannot see, because under it a stale stamp and a current one are the same value.
+No other field is legal on a protocol-owned artifact, and an implementation MUST reject one that carries a retired field by name (§31). A repository's own rules and contexts were written under an older contract and an upgrade never edits them, so a retired field is **tolerated outside the manifest** and rejected on it — failing a tree for carrying exactly what AEP handed it and then refused to touch would be a defect in the check, not in the tree.
 
-*Why this is normative rather than tooling advice: a stamp maintained by hand is a claim nobody verifies, and a field that says the same thing on every artifact distinguishes nothing. Making it computed is what turns it from ceremony into an answer.*
+*Why the contract is this small: every field it lost was answering a question something else already answers, and a field that repeats an answer is a second copy that drifts. §32 records each one and where its answer went.*
 
-Three contracts are stated separately because they are the ones that fail:
+**`paths` stays and is not the same case as the fields that went.** It is a glob, so it answers *does this apply to the file I am about to edit* exactly, where prose can only approximate. It is on two artifacts and costs nothing.
 
-**`use-when` describes a trigger, never a topic.** "Working with database schema or migrations" is a trigger. "Database documentation" is a topic, satisfies every mechanical check, and is the one failure this shape can still produce. A policy, rule, reference, or context without a real `use-when` cannot participate in progressive discovery and is therefore either loaded always or never — both defeat the mechanism.
+### 8.1 `use-when` is checked mechanically
 
-**`mode` is applicability, not state.** `mode: [implement, review]` says *this artifact is relevant while implementing or reviewing*. It does NOT say the agent is in that mode. The agent's current mode is set by the skill it is running (§15).
+`use-when` is the whole of progressive discovery (§23) resting on one field, so the field is checked rather than trusted. **Four checks, each a hard failure naming the file:**
 
-An implementation MUST validate this contract and MUST reject malformed artifacts where practical (§32).
+1. **It names an occasion.** It begins with a gerund, or contains `when`, `while`, `before`, or `after`.
+2. **It is not a bare noun phrase.**
+3. **It does not restate the artifact's own heading**, which is how a topic gets written by accident.
+4. **It is within a stated length bound**, because a `use-when` that runs to three lines is a summary rather than a trigger.
+
+**`use-when` describes a trigger, never a topic.** "Working with database schema or migrations" is a trigger. "Database documentation" is a topic. A policy, rule, reference, or context without a real `use-when` cannot participate in progressive discovery and is therefore either loaded always or never — both defeat the mechanism.
+
+*Why proxies rather than an honest admission: a trigger can satisfy all four checks and still name the wrong occasion, so the checks cannot be complete. They catch the common instance, which is worth more than catching none — and the admission narrows to what they do not cover rather than disappearing.*
+
+An implementation MUST validate this contract and MUST reject malformed artifacts where practical (§31).
 
 ## 9. Wiki links
 
@@ -294,9 +299,9 @@ The hierarchy is:
 policies  →  rules  →  effort rules  →  ticket constraints
 ```
 
-A lower level MUST NOT silently violate a higher one. A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one; where a repository must genuinely differ, that is a declared deviation (§7). A conflict the hierarchy cannot resolve is **surfaced to the human**, never resolved by an agent picking a side.
+A lower level MUST NOT silently violate a higher one. A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one; where a repository must genuinely differ, that is a declared deviation (§7). That judgement holds against the release the rule was written under, and an upgrade rechecks it against the release being installed (§30). A conflict the hierarchy cannot resolve is **surfaced to the human**, never resolved by an agent picking a side.
 
-Every policy and every rule MUST declare `use-when`. **Rigidity is authority, not loading**: a policy is selected by its trigger exactly as any other conditional artifact is, and no conforming instruction loads the policy set because it exists (§24). An agent discovers, determines relevance, loads what applies, and executes.
+Every policy and every rule MUST declare `use-when`. **Rigidity is authority, not loading**: a policy is selected by its trigger exactly as any other conditional artifact is, and no conforming instruction loads the policy set because it exists (§23). An agent discovers, determines relevance, loads what applies, and executes.
 
 A policy or rule states a checkable imperative and carries its one-line reason. The reason is a floor, not an opening argument: a defended requirement invites re-evaluation instead of application, and an unreasoned one is misapplied at exactly the edges the reason would have caught.
 
@@ -380,7 +385,7 @@ Evidence records what was discovered while resolving uncertainty, so that discov
 
 Evidence is scoped to an effort and lives at `.aep/efforts/<effort>/evidence/`. There is no repository-wide evidence directory, because evidence exists to inform one change; knowledge that outlives its effort **graduates** into a context, a rule, or a reference, and the evidence file stays where it is as the record of how it was learned.
 
-**Grill is not evidence** (§17). It is a reasoning mechanism, and its conclusions land in a spec, a rule, a context, or an evidence file.
+**Grill is not evidence** (§16). It is a reasoning mechanism, and its conclusions land in a spec, a rule, a context, or an evidence file.
 
 ### 13.1 Research
 
@@ -398,43 +403,27 @@ Prototype implementation is **disposable by default**, and prototype code MUST N
 
 Prototypes MAY be used during specify, plan, or implement, whenever technical uncertainty justifies the cost.
 
-## 14. Modes
+## 14. Efforts, specs, and tasks
 
-A mode describes **how to think during an activity** — priorities and tradeoffs, not steps. A mode that gives up nothing is not a mode.
-
-The canonical modes are exactly eight:
-
-| Mode | Objective |
-| --- | --- |
-| `specify` | establish what is changing and why, before how |
-| `plan` | turn a settled what into a technical approach |
-| `refine` | attack a specification until ambiguity and tradeoffs are resolved |
-| `implement` | build production software against an approved plan |
-| `research` | establish facts from primary sources |
-| `prototype` | learn quickly by building something disposable |
-| `review` | evaluate work skeptically, assuming defects exist |
-| `test` | establish that behaviour holds, and that its absence would be caught |
-
-A mode file SHOULD state its objective, mindset, relevant inputs, expected outputs, constraints, and the capabilities and references it typically reaches for.
-
-**Modes are not workflow stages.** The spine is skills (§16, §18). A mode is entered *by* a skill, an agent, or an adapter. The `mode:` field on any other artifact is an applicability signal (§8).
-
-## 15. Efforts, specs, and tasks
-
-### 15.1 Effort
+### 14.1 Effort
 
 An **effort** is the central unit of engineering change. It answers: *what change are we making?* One effort describes one coherent change, and its durable definition is `spec.md`.
 
 ```
 .aep/efforts/<effort>/
 ├── spec.md
+├── plan.md                           where the approach is not obvious
 ├── evidence/{research,prototypes}/   optional
-└── tickets/                          optional, local only
+└── tickets/                          the effort's tasks
 ```
 
-`evidence/` and `tickets/` are optional and MUST NOT be created empty.
+`plan.md`, `evidence/`, and `tickets/` MUST NOT be created empty.
 
-### 15.2 Spec
+**An effort is opened once, and the same way whatever its size**: the tracker issue is created from `spec.md`, the directory is renamed from its `xxxx-<slug>` placeholder to `<number>-<slug>` **before the first commit** so the rename never enters history, a branch is created, the artifacts land as one `docs` commit, and a **draft** pull request is opened. A one-line fix and a fifteen-ticket feature produce the same three objects; only `plan.md` differs, and it is absent on the small one.
+
+**Opening publishes, so it is the one moment an implementation asks.** It proposes the whole set with exact strings, and a refusal leaves the effort local and unopened rather than sliding to whatever the agent is permitted to do unasked (§2).
+
+### 14.2 Spec
 
 `spec.md` describes **a change**. It is NOT a task list, NOT a task execution log, and NOT merely a product requirements document.
 
@@ -452,13 +441,15 @@ Minimum structure:
 
 Optional from the start: `# Assumptions`, `# Open Questions`, `# Risks`.
 
-After planning, **the same file** gains: `# Architecture`, `# Components`, `# Interfaces`, `# Data Model`, `# Technical Approach`, `# Integration`, `# Migration`, `# Testing Strategy`, `# Operational Considerations`, `# Technical Risks`.
+**`spec.md` holds no HOW.** The technical approach lives beside it in **`plan.md`**: `# Architecture`, `# Components`, `# Interfaces`, `# Data Model`, `# Technical Approach`, `# Integration`, `# Migration`, `# Testing Strategy`, `# Operational Considerations`, `# Technical Risks`.
 
-**There is no `plan.md`.** A conforming implementation MUST NOT create one. The same `spec.md` evolves from WHAT/WHY to WHAT/WHY/HOW, because a plan in a second file is a second answer to "what are we building" and the two diverge on the first surprise.
+*Why two files rather than one that grows: the spec is the issue body, read by everyone who touches the effort, and the plan is read by whoever builds it. Folding the approach into the spec made every reader of the change pay for the design, and it made the one artifact a human approves change shape halfway through. The risk two files carry — a second answer to "what are we building" — is answered by the hierarchy: `spec.md` is the source of truth, `plan.md` serves it, and a plan that cannot satisfy a requirement stops on the return-to-plan invariant (§22) rather than quietly restating the requirement.*
+
+**A plan is written where the approach is not obvious, and skipped where it is.** An effort with no `plan.md` is not an incomplete effort.
 
 A spec declares `status:` — `draft`, `accepted`, or `implemented`.
 
-### 15.3 Tasks
+### 14.3 Tasks
 
 Tasks are a **map of the work** required to implement an effort. They are derived from `spec.md` and map to its requirements, acceptance criteria, and technical components.
 
@@ -468,38 +459,44 @@ Tasks **reference** the specification rather than copying large portions of it. 
 
 **Tasks are not the source of truth.** The hierarchy is `spec → tasks → implementation`. A task that conflicts with the spec means: **stop, surface the conflict, and do not silently modify the architecture.**
 
-### 15.4 Ticketing
+### 14.4 Ticketing
 
-AEP MUST NOT require a local ticket system. Tickets may live in GitHub Issues, Jira, Linear, Plane, or any external system, and the effort references them.
+**An effort's tasks are files in this repository**, at `.aep/efforts/<effort>/tickets/`. A ticket declares `status` and MAY declare `blocked-by`, and nothing else: the effort it belongs to is the directory it sits in.
 
-If local tickets are used they live at `.aep/efforts/<effort>/tickets/`, declare `status`, and MAY declare `blocked-by` and `part-of`.
+**A ticket is never an object in a tracker**, and the dependency graph never leaves the repository. *Why: the graph is read on every scheduling pass (§19.2), and a graph held in a tracker has to be fetched, paginated, and interpreted before a frontier can be computed. Local, it is a field a script reads. The tracker gains nothing by holding it, because nobody schedules by hand.*
 
-AEP MUST NOT duplicate an external ticket system for protocol completeness. A local mirror of an external ticket is exactly the hidden database §2 forbids.
+**Exactly two tracker objects exist per effort** — one issue, whose body is `spec.md`, and one pull request, carrying the approach, the tickets, and the run's memory. An implementation MUST NOT create a third, per ticket or otherwise. *Why one issue rather than one per ticket: an effort is what a human agreed to, and it is the unit they review and merge. Fifteen issues for one change is fifteen things to close and one thing nobody can see the shape of.*
 
-**Where tasks live in an external system, that task MUST be attributable to its effort by a query the system answers natively.** Listing every open issue and judging from prose does not satisfy this. *Why: the frontier is computed from declared edges (§20.2), and an implementation that cannot ask which issues belong to an effort has no graph to read — so the prohibition on inferring independence has nothing behind it.*
+**Where the repository has a tracker, both objects are REQUIRED**, and each MUST link to the effort in both directions: the effort directory is named for the issue number, and both bodies name the effort's path. An implementation finding a tracker and an effort short of either object MUST open what is missing and report it. *Why this is stated rather than implied: having no tracker is a posture with its own procedure below, and an implied requirement makes that posture reachable by not asking — an implementation that never looked lands in the smaller shape with nothing to contradict it.*
 
-Exactly one fact is required: **which effort the task belongs to.** `status` MUST NOT be carried separately, because the issue's own state already carries it and a second copy disagrees with the first as soon as the issue is closed outside the tool. A dependency edge MUST NOT be carried as set membership, because a marker that must be withdrawn when the gate clears is wrong precisely when it matters.
+**Where the repository has no tracker, the effort is a branch and merging it is the human's.** No issue, no pull request, and no tracker call is made. The effort's number comes from a local counter (§14.1), and the run's durable record is the repository: the commits on the effort branch say which tasks landed, the ticked criteria in the ticket files say what is verified, and `spec.md`'s `status` says whether the effort closed. The close is the close of §21 with its tracker half absent — `spec.md` is stamped `implemented` and the run stops, there being no draft to mark ready and no label to move. **A conforming implementation MUST NOT merge**, with a tracker or without.
 
-**A conforming implementation MUST NOT create a label for a fact the tracker already models.** Where a first-class feature of the system answers the fact — a milestone, an epic, a parent, a dependency — that feature answers it. What is native differs per system, so it is established per system and never assumed; the resolution is recorded in the repository's reference for that tool (§11) rather than rederived per session.
+*Why the absence needs a procedure of its own: every step that closes an effort is written against a pull request, so a repository without one loses not a projection but the run's memory. It has one only because tasks are files here — the ticks are already in the repository, and the pull request was projecting them rather than storing them.*
 
-None of this is mirroring: the fact is held by the tracker in the tracker's own mechanism, and nothing about the task is written into `.aep/`.
+**The tracker is read and never mirrored into `.aep/`.** A local copy of a tracker object is exactly the hidden database §2 forbids, and it disagrees with the original the moment one is written and the other is not. The direction that is permitted is the reverse: a label projects what a file says, and the file wins when they disagree.
 
-## 16. Skills
+**A conforming implementation MUST NOT create a label for a fact the tracker already models.** Where a first-class feature answers the fact — a milestone, an epic, a parent, a dependency — that feature answers it. What is native differs per system, so it is established per system and never assumed; the resolution is recorded in the repository's reference for that tool (§11) rather than rederived per session.
 
-Skills are reusable capabilities — the executable interface through which agents perform protocol operations. The canonical skill is `.aep/skills/<name>.md`; a runtime's copy is an adapter (§29).
+## 15. Skills
 
-Every skill MUST carry the frontmatter contract (§8). **A skill that enters a mode MUST declare it** in `mode:`, and SHOULD enter the mode matching the operation it performs — `[[skills/specify]]` enters `[[modes/specify]]`. Exactly two skills enter no mode and therefore declare none: `help`, which explains the protocol, and `handoff`, which records session state. Both are named here rather than left to judgement, so the verification suite can require a declared mode of every other skill.
+Skills are reusable capabilities — the executable interface through which agents perform protocol operations. The canonical skill is `.aep/skills/<name>.md`; a runtime's copy is an adapter (§28).
+
+**A skill's frontmatter is `use-when` and nothing else** (§8). The working posture a skill takes — what it optimises for, and **what it gives up** — is stated in the skill's own text, where the agent running it reads it, rather than named by a field pointing at a separate artifact. A posture that gives up nothing is not a posture, and a skill that states none has not thought about the question.
 
 **A skill MUST NOT become governance.** It operates under `[[rules]]` and consumes contexts, references, evidence, efforts, and modes. Where a skill and a rule would say the same thing, the rule is the one that exists and the skill links to it.
 
 A skill MAY invoke another skill without collapsing their responsibilities.
 
-The conforming skill set is exactly eighteen:
+The conforming skill set is exactly seventeen:
 
-**Spine (7)** — `specify`, `refine`, `plan`, `tasks`, `implement`, `review`, `commit`
+**Spine (6)** — `specify`, `refine`, `plan`, `tasks`, `implement`, `review`
 **Adaptive (3)** — `research`, `prototype`, `survey`
 **Lifecycle (5)** — `install`, `update`, `prune`, `handoff`, `help`
 **Sub-skills (3)** — `tdd`, `domain`, `prose`
+
+**Four of them are commands a human types** — `specify`, `plan`, `tasks`, `implement` — and the rest are reached from inside a run. `refine`, `research`, and `review` are **stages**: a skill runs one where its own procedure calls for it, inside the same invocation, and opens no report of its own (§15.2). `prototype`, `survey`, and `prune` are capabilities, reached when uncertainty or the codebase warrants one.
+
+*Why the distinction is normative rather than a matter of taste: a stage a human has to type is an interruption at the point where the run knows most and the human knows least. The whole spine exists to move the human's attention to the idea and off the execution.*
 
 | Skill | Purpose |
 | --- | --- |
@@ -509,7 +506,6 @@ The conforming skill set is exactly eighteen:
 | `tasks` | derive executable work from the spec |
 | `implement` | implement task(s), with sub-agents and worktrees where useful |
 | `review` | review implementation against the effort and applicable rules |
-| `commit` | commit a change that resolves task(s) |
 | `research` | research a topic for an effort |
 | `prototype` | prototype an idea for an effort; may be promoted explicitly |
 | `survey` | survey a codebase for opportunities; produces a report that feeds `specify` |
@@ -524,7 +520,7 @@ The conforming skill set is exactly eighteen:
 
 `tdd`, `domain`, and `prose` are sub-skills: reached from inside another skill rather than started on their own.
 
-### 16.1 Skill depth
+### 15.1 Skill depth
 
 A skill's own file states what it does **on every invocation**. Knowledge needed only when the run takes a particular branch lives beside it, at `.aep/skills/<skill>/<note>.md`, and is reached by an ordinary link from the skill that owns it.
 
@@ -532,16 +528,15 @@ The split exists because the two have different costs. The skill file is paid fo
 
 A note:
 
-- **MUST carry the frontmatter contract (§8)**, with `kind: skill` and a `use-when` naming **the branch it is for**, not its topic — it is selected on exactly the terms every other conditionally-loaded artifact is;
+- **MUST carry the frontmatter contract (§8)**, with a `use-when` naming **the branch it is for**, not its topic — it is selected on exactly the terms every other conditionally-loaded artifact is;
 - **MUST be reachable from its own skill**, which is what makes it a branch of that skill rather than a loose file. A note nothing links to is unreachable, and unreachable is indistinguishable from deleted;
-- **MUST NOT govern** (§16) and MUST NOT restate a rule. Depth is procedure — how to do the thing well once you are doing it;
-- **MAY omit `mode:`.** The skill that reaches it has already entered the mode.
+- **MUST NOT govern** (§15) and MUST NOT restate a rule. Depth is procedure — how to do the thing well once you are doing it.
 
-A note is **not** a skill. It is not one of the eighteen, it is not invoked, and no runtime adapter (§29) exposes it — the only way in is through the skill that owns it.
+A note is **not** a skill. It is not one of the seventeen, it is not invoked, and no runtime adapter (§28) exposes it — the only way in is through the skill that owns it.
 
-**A repository MAY add its own note beside a shipped skill**, declaring `owner: repository`. Ownership is read off the field rather than the path (§7), so an upgrade preserves it exactly as it preserves any other repository-owned file. This is the extension point that keeps *this is how we prototype here* out of a protocol-owned file, and a repository-owned note is reached from a repository-owned rule or context — because the shipped skill cannot link to a file that does not exist in every installation.
+**A repository MAY add its own note beside a shipped skill.** Ownership is a lookup on the path (§7), and a note the release does not ship is not on the manifest, so an upgrade preserves it exactly as it preserves any other repository-owned file. This is the extension point that keeps *this is how we prototype here* out of a protocol-owned file, and a repository-owned note is reached from a repository-owned rule or context — because the shipped skill cannot link to a file that does not exist in every installation.
 
-### 16.2 What the human reads
+### 15.2 What the human reads
 
 Everything an agent writes for a human is governed here. **Who reads a text decides whether it is governed: a human reads it, it is governed; a protocol agent reads it, it is exempt** — and exempt means written *for that reader* instead, never written carelessly. Session output, a commit message, a pull request title or body, a comment or docstring in source, what a script prints to a person, and a repository's own documentation are governed. Prose inside `.aep/` artifacts, a brief written for a sub-agent, and data a script writes into an artifact an agent reads are not.
 
@@ -549,7 +544,7 @@ Everything an agent writes for a human is governed here. **Who reads a text deci
 
 **How a governed text reads** is fixed for all of it and stated in exactly one shipped artifact, which also carries the prohibitions a script can check. **What shape it takes** is fixed for the turn report, which the rest of this section defines.
 
-Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` and `commit` from `implement`'s close-out, or any sub-skill — is a stage of that run and opens no report of its own.
+Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` from `implement`'s close-out, `refine` or `research` from `specify`, or any sub-skill — is a stage of that run and opens no report of its own.
 
 The opening report carries four slots in order — **standing**, the state the skill establishes on entry, verified; **classification and routing**, what the request was judged to be and which skill is therefore running; **assumptions in force**, held apart from what was checked; and **the stages ahead**. The closing block carries three — **state**, **next**, and **what is unsettled together with how to settle it** — and a turn that stops early carries them too, because that is where the third is worth the most.
 
@@ -557,13 +552,13 @@ The opening report carries four slots in order — **standing**, the state the s
 
 **The standing slot is filled with what the skill already verifies, never with a new check.** Most skills read no position, and requiring one of them would buy uniformity with a behavioural change nobody asked for. A skill with nothing to verify states that it has nothing to verify.
 
-Every skill declares `report:` (§8), assigned once at authoring time by one test — *does this skill write to the repository, dispatch a sub-agent, or decide on the human's behalf?* The form is **never** selected during a run, so the shape is known before the turn starts. The two forms differ in the **stage markers**: a full-form skill lists every stage and marks each as it is crossed; a short-form skill names one stage and emits none. Both carry all seven slots.
+**There is one form, and every turn takes it.** No field selects a shape, because a field that has to be read before the shape is known is a field answering a question the contract can answer for every turn at once. A skill lists its stages and marks each as it is crossed.
 
 **Stage names are read from the skill's own procedure and MUST NOT be declared separately** — a second list of stages is a second statement of what the procedure already says, and the two diverge on the first edit to either. An implementation MUST be able to extract them mechanically from every full-form skill, and a skill whose procedure yields none is a failure rather than an exemption: a rule that skips what it cannot handle passes by not looking.
 
-The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§20), which is not human-facing and is unaffected.
+The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§19), which is not human-facing and is unaffected.
 
-## 17. Grill
+## 16. Grill
 
 Grill is structured adversarial discussion, used when uncertainty is **product ambiguity, requirement ambiguity, tradeoff ambiguity, architectural disagreement, or a missing decision** — the classes that reading code and running experiments cannot settle.
 
@@ -571,7 +566,7 @@ Grill is a mechanism, not an artifact type. There is **no `grill/` directory**, 
 
 Grill is delivered by `[[skills/refine]]`, and any skill MAY grill when it hits one of those uncertainty classes.
 
-## 18. Agents
+## 17. Agents
 
 An agent definition describes a **role**: name, purpose, responsibilities, capabilities, constraints, expected inputs, and expected outputs.
 
@@ -582,23 +577,23 @@ Agents live at `.aep/agents/<name>.md` and carry the frontmatter contract.
 - **Human authority is never delegated downward.** A sub-agent has no surface on which to ask a human, and no agent's message is another agent's consent. A child that reaches a decision it may not make **records it and stops**; the orchestrator raises it.
 - **The orchestrator is the only integrator.** A child works in isolation and returns a result; merging is the parent's.
 
-## 19. Worktrees
+## 18. Worktrees
 
 Worktrees provide isolated execution environments, used for implementation, parallel implementation, experiments, prototypes, repository-modifying research, and sub-agent work.
 
 Worktrees are **infrastructure and never knowledge storage**. Permanent knowledge returns to rules, contexts, evidence, efforts, specs, or repository source. Worktree state MUST NOT be treated as protocol state, and `.aep/worktrees/` is gitignored.
 
-## 20. Parallelism
+## 19. Parallelism
 
-### 20.1 The unit is a whole task
+### 19.1 The unit is a whole task
 
 **A task MUST NEVER be split across sub-agents.** One child builds one whole task against that task's own acceptance criteria, or no child is dispatched. There is no mechanism for dividing a single task into portions worked concurrently, and a conforming implementation MUST NOT provide one.
 
 *Why: a task divided into portions has to be divided by something — file ownership, layer, guesswork — and none of those is a promise the task graph made. The portions must then be integrated by a parent holding partial work from several contexts, where one child failing means nothing lands at all. A whole task is the smallest unit that already has acceptance criteria, already has a branch, and already fails alone.*
 
-A task too large for one child is **too large**: it returns to `tasks` (§15.3) and is split into real tasks with real acceptance criteria — never divided at dispatch time.
+A task too large for one child is **too large**: it returns to `tasks` (§14.3) and is split into real tasks with real acceptance criteria — never divided at dispatch time.
 
-### 20.2 Independence is read, never inferred
+### 19.2 Independence is read, never inferred
 
 Parallelism MUST be based on **explicit independence declared in the task graph**.
 
@@ -618,7 +613,7 @@ An implementation MUST NOT infer independence from a guess about which files wil
 
 Sub-agents MAY receive separate worktrees. Parallelism MUST NOT compromise rules, the specification, repository integrity, or acceptance criteria.
 
-## 21. Position
+## 20. Position
 
 Position is lightweight operational state, per-clone and never committed. `.aep/position/marker.json`:
 
@@ -640,39 +635,42 @@ Position MAY additionally record **untracked** operational facts — state not r
 
 # Part IV — Operation
 
-## 22. The workflow spine
+## 21. The workflow spine
 
 ```
-/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+/specify → /plan? → /tasks → /implement
 ```
 
-`refine` and `plan` are conditional: `refine` when ambiguity or tradeoffs remain, `plan` when technical planning is needed. `research`, `prototype`, `grill`, and `survey` are **supporting capabilities, never lifecycle stages.**
+**Four commands, and nothing else a human types.** `plan` is conditional: it runs where the approach is not obvious, and a bug fix skips it. Everything else the protocol does is reached from inside one of the four.
 
-| Stage | Establishes | Writes |
-| --- | --- | --- |
-| `specify` | WHAT and WHY | `spec.md` |
-| `refine` | ambiguity resolved | the same `spec.md` |
-| `plan` | HOW | the same `spec.md` |
-| `tasks` | executable work | tickets, local or external |
-| `implement` | working code | repository source |
-| `review` | it satisfies the change | findings |
-| `commit` | it lands | a commit |
+| Stage | Establishes | Writes | Reached |
+| --- | --- | --- | --- |
+| `specify` | WHAT and WHY | `spec.md` | typed |
+| `refine` | ambiguity resolved | the same `spec.md` | from `specify` or `plan` |
+| `research` | a fact established from primary sources | `evidence/research/` | from `specify` or `plan` |
+| `plan` | HOW | `plan.md` | typed, when the approach is not obvious |
+| `tasks` | executable work | tickets under the effort | typed |
+| `implement` | working code, committed | repository source | typed |
+| `review` | the diff satisfies the ticket | findings | from `implement`, per ticket |
+| `converge` | the effort satisfies the spec | further tickets, or completion | from `implement`, when the tickets run out |
 
-**`/specify`** inspects the repository and position, loads the index, identifies applicable rules and relevant contexts, understands the request, identifies uncertainty, resolves what is material, and writes `spec.md`. Uncertainty routes by kind: factual → research, technical → prototype, requirement or product → grill.
+`prototype`, `survey`, and `prune` are **capabilities, never lifecycle stages**, reached when uncertainty or the codebase warrants one.
 
-**`/refine`** reads the spec, enters refine mode, and attacks it: ambiguous requirements, missing constraints, weak acceptance criteria, unresolved tradeoffs. It MAY repeat, and MUST NOT silently expand product scope.
+**`/specify`** inspects the repository and position, loads the index, identifies applicable rules and relevant contexts, understands the request, and **resolves what is material inside the same invocation** — factual uncertainty by `research`, product uncertainty or an unresolved tradeoff by `refine`, technical uncertainty by `prototype`. It writes `spec.md` and opens the effort: one issue, one branch, one draft pull request (§14.1). A turn that ends by naming a command has renamed the uncertainty rather than resolved it.
 
-**`/plan`** adds technical detail to the same spec. It MUST NOT create `plan.md` (§15.2) and MUST NOT silently expand product scope — technical discovery that exposes a product-level change **stops and surfaces it**.
+**`/plan`** establishes the technical approach as `plan.md`, beside the spec it plans. It MUST NOT silently expand product scope — technical discovery that exposes a product-level change **stops and surfaces it**.
 
-**`/tasks`** converts the planned effort into executable work that derives from the spec, maps to acceptance criteria, exposes dependencies, is bounded, and does not redefine architecture.
+**`/tasks`** converts the planned effort into tickets that derive from the spec, map to acceptance criteria, expose dependencies as `blocked-by`, are bounded, and do not redefine architecture. Every ticket traces to a requirement or an acceptance criterion, and an implementation MUST check it (§14.4).
 
-**`/implement`** loads the task, applicable rules, relevant contexts, and required references; inspects the code; builds; uses TDD where rules require it; and verifies acceptance criteria. It stays bounded by the effort and MUST NOT silently redesign it.
+**`/implement`** takes **the effort, not one wave**. It computes the frontier from the tickets' declared edges, builds what is ready, reviews and commits each, and schedules again — until converge finds no gap or a trip-wire fires. **An exhausted ticket list is not the end of the run**: tickets exhausted and the spec satisfied are different claims, and only the second ends it.
 
-**`/review`** verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security requirements, and documentation requirements. Where the runtime supports sub-agents, `/review` MUST use **two independent passes** — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings before the effort is review-complete. Review is not *does it compile*; it is *does the implementation satisfy the defined change*.
+**`review`** is a stage of `implement`, run per ticket. It verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security, and documentation. Where the runtime supports sub-agents it MUST use **two independent passes** — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings. Review is not *does it compile*; it is *does the implementation satisfy the defined change*.
 
-**`/commit`** creates the repository change after successful review. An agent MUST NOT commit work that has failed review, and MUST NEVER push or publish (§2).
+**`converge`** is the effort's termination condition and runs when no unresolved ticket remains. It asks whether the spec is satisfied, and it **appends tickets rather than editing the spec or the plan**: work that was not built becomes further tickets, and an approach that cannot satisfy a requirement stops on the return-to-plan invariant (§22). It runs at most twice; a second round finding a gap the first round created is a signal about the plan, not an invitation to a third.
 
-## 23. The return-to-plan invariant
+**An agent MUST NOT commit work that has failed review**, and MUST NEVER merge, publish, or push a tag (§2). What it MAY push is fixed by the repository's own rule, not by this specification.
+
+## 22. The return-to-plan invariant
 
 If evidence discovered during `/implement` or `/review` invalidates the technical plan, the agent MUST NOT silently modify the architecture. Instead:
 
@@ -682,13 +680,12 @@ stop → record evidence → return to /plan → update spec.md → update tasks
 
 This is what keeps implementation from becoming an uncontrolled design process, and it is the invariant most often violated by an agent that is *nearly* done.
 
-## 24. Applicability-first loading
+## 23. Applicability-first loading
 
 Before reading an artifact, an agent determines whether it is relevant, combining:
 
 - `use-when` — the trigger the artifact declares
 - `paths` — the repository paths it applies to
-- `mode` — the ways of working it is relevant to
 - `[[...]]` links — explicit relationships from what is already loaded
 - the current repository path, effort, and task
 
@@ -701,7 +698,7 @@ repository state → index → current effort → applicable rules
 
 A conforming instruction MUST NOT direct an agent to load all rules, all contexts, all references, all efforts, or all skills before a task.
 
-## 25. Evidence before guessing
+## 24. Evidence before guessing
 
 When uncertainty is material, an agent MUST NOT silently guess. It uses the cheapest reliable mechanism:
 
@@ -711,13 +708,13 @@ known fact → repository inspection → existing context/evidence → research 
 
 Expensive investigation for trivial uncertainty is itself a defect: the ladder is climbed only as far as the uncertainty warrants.
 
-## 26. Determinism
+## 25. Determinism
 
 Determinism does NOT mean forcing every task through an identical process. It comes from explicit artifacts, explicit ownership, explicit applicability, explicit acceptance criteria, explicit dependencies, repository authority, and reproducible procedures.
 
 **An agent MUST NOT invent protocol state where an artifact already defines it.** Where a script can compute an answer, the script computes it and the agent quotes the output; judgement states its inputs and its one question.
 
-## 27. Derived indexes
+## 26. Derived indexes
 
 `.aep/index.md` is a derived discovery index over the AEP filesystem, listing artifacts with the applicability fields an agent selects on, so that discovery does not require reading every file.
 
@@ -729,13 +726,13 @@ The index:
 
 A generated index cannot disagree with its directory, which is the whole reason it is generated: a file added without frontmatter cannot appear in one, so the obligation to audit a hand-written index for missing rows never arises.
 
-The index carries the fields relevance is decided on — `use-when`, `mode`, `paths`, `owner` — and **no summaries**: a summary would be a second statement of what an artifact says, and it would drift first.
+The index carries the fields relevance is decided on — `use-when` and `paths` — and **no summaries**: a summary would be a second statement of what an artifact says, and it would drift first. It does not carry ownership, because ownership is the directory the row is already filed under (§7).
 
-**The index lists skills, not skill notes (§16.1).** A note is reached from the skill that owns it, and listing it as though it were separately invocable would advertise an entry point that does not exist.
+**The index lists skills, not skill notes (§15.1).** A note is reached from the skill that owns it, and listing it as though it were separately invocable would advertise an entry point that does not exist.
 
-**Where a repository keeps local tickets (§15.4), the index MUST carry a section for them**, listing each with its effort, `status`, and `blocked-by` — the fields that answer *what can be worked right now*, which is a cross-effort question. **Where there are none the section MUST be absent entirely**, rather than present and empty: a repository whose work lives in an external tracker would otherwise read as a repository with no work.
+**Where any effort has tickets (§14.4), the index MUST carry a section for them**, listing each with its effort, `status`, and `blocked-by` — the fields that answer *what can be worked right now*, which is a cross-effort question. **Where there are none the section MUST be absent entirely**, rather than present and empty: a repository between efforts would otherwise read as one with work it cannot find.
 
-## 28. Separation of concerns
+## 27. Separation of concerns
 
 | Primitive | Is | Is not |
 | --- | --- | --- |
@@ -748,7 +745,6 @@ The index carries the fields relevance is decided on — `use-when`, `mode`, `pa
 | Task | executable work derived from a spec | the source of truth |
 | Skill | a reusable capability | governance |
 | Agent | a defined role | unbounded authority |
-| Mode | a way of working | a workflow stage |
 | Worktree | an isolated execution environment | knowledge storage |
 | Position | lightweight operational state | a source of truth |
 
@@ -758,7 +754,7 @@ A primitive MUST NOT be used as a substitute for another.
 
 # Part V — Distribution
 
-## 29. Runtime adapters
+## 28. Runtime adapters
 
 A runtime MAY expose AEP through its native mechanism — commands, skills, prompts, plugins, extensions, CLI commands, or instruction files. These are **adapters**.
 
@@ -776,11 +772,11 @@ An adapter MUST NOT:
 
 Concretely, a runtime skill wrapper carries only what the runtime needs to route — its own frontmatter and a pointer — and the body it executes is the canonical `.aep/skills/<name>.md`. A wrapper that restates the skill is a second home (§6).
 
-**An adapter wraps the eighteen skills and nothing else.** Skill notes (§16.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§18); where it has no such location, the agents do not reach it and the adapter says nothing about them.
+**An adapter wraps the seventeen skills and nothing else.** Skill notes (§15.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§17); where it has no such location, the agents do not reach it and the adapter says nothing about them.
 
 Where a runtime's frontmatter schema and AEP's contract (§8) collide, the runtime's schema wins **in the adapter file only**, and AEP's fields move under whatever free-form map that runtime reserves. The canonical artifact keeps AEP's contract unchanged. Where a runtime reserves no such map for a kind of artifact, AEP's fields are **omitted rather than smuggled in** — a runtime that silently absorbs an unknown key turns a typo into behaviour nobody can see.
 
-### 29.1 Targets and shapes
+### 28.1 Targets and shapes
 
 AEP renders for more than one runtime, so a **target** is a declaration rather than a program: where each wrapper lands, what name the runtime knows it by, which frontmatter that runtime's schema admits, and how a wrapper behaves when the canonical file is absent. One renderer walks the payload for every target. *Why declarations rather than a renderer per runtime: the pointer contract would otherwise be stated once per runtime, and a stale adapter is mechanically detectable while three wordings of one rule drifting apart is not.*
 
@@ -790,7 +786,7 @@ A target renders one or more **shapes**, distinguished only by what a wrapper do
 
 | Shape | Ships | On absence |
 | --- | --- | --- |
-| `repository` | written into a repository by an install (§30) | says AEP is not installed here, and stops |
+| `repository` | written into a repository by an install (§29) | says AEP is not installed here, and stops |
 | distribution shapes | travel outside a repository — a plugin, or a directory a runtime is pointed at | reach the payload they shipped beside, so `/install` works before `.aep/` exists |
 
 A distribution shape's reach MUST be **derived from where the wrapper sits**, never written out, so moving a wrapper moves its reach with it.
@@ -799,45 +795,58 @@ A distribution shape's reach MUST be **derived from where the wrapper sits**, ne
 
 Every path a wrapper names MUST exist in an installed tree. *This is the requirement that a moved artifact breaks silently: the wrapper still reads well, and the agent it sends is simply reading nothing.*
 
-## 30. Installation
+## 29. Installation
 
 Installing AEP into a repository creates `.aep/` and the protocol-owned payload. Installation:
 
 1. creates the canonical layout (§5) and `.aep/.gitignore`,
-2. installs protocol-owned artifacts — `protocol.md`, `rules/`, `modes/`, `skills/`, `agents/`, `templates/`, `scripts/` — verbatim,
+2. installs protocol-owned artifacts — `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`, `scripts/` — verbatim, every one of them named by the manifest (§7),
 3. installs the seeds (§7.1) whose detectors match, as repository-owned starting points,
-4. initializes position (§21),
-5. generates the index (§27),
-6. optionally installs runtime adapters (§29),
+4. initializes position (§20),
+5. generates the index (§26),
+6. optionally installs runtime adapters (§28),
 7. writes the repository's entrypoint from the entrypoint seed (§7.1) where it has none, and otherwise leaves it alone — either way it **points at** `protocol.md` and never restates it (§6),
 8. **reports what was assumed on the repository's behalf** — every seed installed, so a human can correct it.
 
-**Installation MUST preserve existing repository-owned artifacts**, and it MUST decide by each existing file's declared `owner` rather than by its path. A repository is entitled to a rule whose filename matches a shipped one, and overwriting it on the strength of the path is exactly the silent overwrite §7 forbids.
+**Installation MUST preserve existing repository-owned artifacts**, and it decides by the manifest: a path the release does not ship belongs to the repository, whatever the file contains and whether or not it has frontmatter at all (§7).
 
-An install over an existing `.aep/` MUST refuse unless it was explicitly invoked as an upgrade (§31).
+Where a file **does** stand at a path the manifest names, the install writes it — the path is the protocol's — but MUST NOT do so silently where the content differs: somebody edited a shipped artifact, or wrote their own where one lands, and either way they are told rather than finding out later.
 
-## 31. Upgrade
+An install over an existing `.aep/` MUST refuse unless it was explicitly invoked as an upgrade (§30).
+
+## 30. Upgrade
 
 An upgrade:
 
-1. identifies protocol-owned artifacts by their declared `owner`,
+1. identifies protocol-owned artifacts by the manifest the release carries (§7),
 2. replaces them with the release's versions,
 3. **preserves repository-owned artifacts**, including every seed (§7.1),
 4. **never re-seeds.** A starting point the repository has since corrected is its own file; a newer release's version of it is not an improvement to be applied. Where a seed has changed materially the upgrade reports it and stops,
 5. reports protocol-owned artifacts present in the repository but no longer shipped — **retired, never deleted**: deciding a file is obsolete is a human's call,
 6. **applies the release's declared moves**, described below,
 7. detects compatibility problems and declared deviations (§7),
-8. **never silently overwrites repository-owned governance.**
+8. **reconciles rules against the policies the crossed releases changed**, described below,
+9. **never silently overwrites repository-owned governance.**
 
 **A move is not a retirement.** Where a release relocates a protocol-owned artifact, the old path is not merely unshipped — its content now lives elsewhere, and leaving the file in place would govern the repository with two copies of one text, both of which resolve. So a release **declares its moves**, as source, destination, and the release that made the move, and an upgrade:
 
 - removes a protocol-owned artifact standing at a declared source, and reports it;
 - **preserves a repository-owned artifact standing there**, reporting the collision instead — the repository wrote its own file under a name the protocol has since vacated, which is legal and is a human's to resolve;
-- rewrites links to a vacated source inside **repository-owned** artifacts, and reports every file it touched. This is the one circumstance in which an upgrade writes into a repository-owned file, and it MUST be confined to the declared targets: a link is rewritten only where the source path is now vacant, only the link's target changes, no anchor is ever constructed, and a link inside a fenced block is left alone — it is syntax being shown rather than a reference being made, which is why link validation ignores it too (§9). A file so repaired has its `date` updated, because `date` is the last-modified date and nothing checks it — a repair that leaves it behind leaves a false claim about freshness in a file the repository owns. *Why the repair is made at all rather than reported: it has exactly one correct answer, and leaving it undone breaks every repository's tree on upgrade day.*
+- rewrites links to a vacated source inside **repository-owned** artifacts, and reports every file it touched. This is the one circumstance in which an upgrade writes into a repository-owned file, and it MUST be confined to the declared targets: a link is rewritten only where the source path is now vacant, only the link's target changes, no anchor is ever constructed, and a link inside a fenced block is left alone — it is syntax being shown rather than a reference being made, which is why link validation ignores it too (§9). *Why the repair is made at all rather than reported: it has exactly one correct answer, and leaving it undone breaks every repository's tree on upgrade day.*
 
-**A move MUST apply only to a tree that predates it**, compared against the release the tree declared on arrival (§6). A tree declaring nothing predates everything, since unknown is not current and the move only ever removes a protocol-owned file whose content exists at the target. *Why the bound is required rather than merely tidy: the source path is vacant afterwards, and a repository is entitled to write its own artifact there (§30). Without the bound that artifact is reported as a collision on every upgrade it ever runs.*
+**A move MUST apply only to a tree that predates it**, compared against the release the tree declared on arrival (§6). A tree declaring nothing predates everything, since unknown is not current and the move only ever removes a protocol-owned file whose content exists at the target. *Why the bound is required rather than merely tidy: the source path is vacant afterwards, and a repository is entitled to write its own artifact there (§29). Without the bound that artifact is reported as a collision on every upgrade it ever runs.*
 
 A declared move MAY be dropped from a release once no supported tree predates it.
+
+**A rule is legal against the release it was written under, and an upgrade is where that is rechecked.** A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one (§10) — a judgement made against one release, which a later release can invalidate without touching the rule. An upgrade therefore MUST, for every rule citing a policy whose text changed between the declared release and the running one:
+
+- **compute the candidates rather than judge them.** The rule's own citations select it, so the same tree raises the same list;
+- classify each as **restating** law the release changed, **contradicting** it, or **tightening a policy the release did not touch** — and write nothing for the third;
+- rewrite a restatement to cite the policy, and rewrite a contradiction to the new law or record it as a declared deviation (§7) where the repository means to differ;
+- **show every edit as exact before-and-after strings, as one set, before the first is made, and write nothing at all on a refusal.** This is a write into governance the repository owns, and it passes the gate a tracker write passes;
+- **never delete a rule.** A contradiction the repository means to keep becomes a deviation that says so.
+
+*Why an upgrade and not validation: a rule and the policy under it can only disagree across a release boundary, and validation runs against a single release and sees two files that agree. The upgrade is the one step standing on both sides of one.*
 
 **Some releases require something of the reader that no upgrade can do for them** — most often a change to a repository-owned artifact, which an upgrade correctly refuses to touch. A release therefore MAY **declare notices**, each carrying the release it applies from and one statement of what to check and why.
 
@@ -847,9 +856,22 @@ A notice is an instruction, never a changelog entry, and **a release with nothin
 
 *Why this is a declaration rather than a document: a changelog is not payload, so a repository running an upgrade has never received one, and shipping the whole history into every installation to deliver two lines is a poor trade for a filter that already exists.*
 
-A repository declares its installed release through the `aep` field on `protocol.md`. A runtime MAY compare that against the running release and say so when they differ; a repository that declares nothing is *unknown*, never *stale*.
+A repository declares its installed release through the `version:` field on `protocol.md`, the one artifact that declares a release at all (§6). A runtime MAY compare that against the running release and say so when they differ; a repository that declares nothing is *unknown*, never *stale*.
 
-### 31.1 Migration from 1.x
+### 30.1 Recognising which layout a tree is in
+
+An upgrade meets trees written under more than one contract, so it **classifies by content before it replaces anything**. Two mechanisms, and the older one exists only for as long as trees written under it do:
+
+| The tree carries | Classified by |
+| --- | --- |
+| an `owner:` field on its artifacts | **that field**, which is what it was for |
+| no `owner:` field | **the manifest** (§7), which is the list this release ships |
+
+The `owner:` branch reads ownership off the tree it is replacing, writes the new layout without the field, and carries across what the shrinking contract left behind — a `spec.md` holding `# Architecture` splits into `spec.md` and `plan.md` (§14.2), and every retired field is dropped rather than converted, because §32 records that each one's answer already lives somewhere else.
+
+**The removal condition is stated rather than left to judgement: the branch goes when no repository the maintainer knows of still declares the older layout.** A compatibility branch with no stated end is one nobody ever removes, and it is read on every upgrade forever.
+
+### 30.2 Migration from 1.x
 
 A 1.x repository — `.claude/protocol.md`, `policies/`, `decisions/`, `designs/`, `tickets/`, and a `map.md` in every directory — cannot be upgraded, because the steps above replace files in place and 1.x has no file 2.0 replaces. It is **migrated**: 2.0 is installed fresh, and the repository's own knowledge is carried across into the shape 2.0 gives it.
 
@@ -867,7 +889,7 @@ Migration is defined by five rules.
 
 **2. Nothing is deleted, and nothing lands unreviewed.** The 1.x tree stays where it is until a human removes it, and every artifact is reported with its outcome and where it landed. One exception is mandatory rather than advisory: **1.x governance that a runtime auto-loads MUST NOT be left auto-loading**, because a repository running both layers at once is governed by two documents that disagree and has no way to notice. Those files are moved, not left.
 
-**3. Every derivable field is derived; only what cannot be derived is proposed.** A conversion that asks a human to retype what the migration could compute is a conversion that will not be finished. `date` comes from the file's own history, `kind` from where it lands, `mode` from the 1.x stage it declared, `status` from the defined state mapping, and `paths` carries unchanged.
+**3. Every derivable field is derived; only what cannot be derived is proposed.** A conversion that asks a human to retype what the migration could compute is a conversion that will not be finished. `status` comes from the defined state mapping, and `paths` carries unchanged. A field the current contract does not have is not derived at all — it is dropped, and §32 records where its answer went.
 
 `use-when` is the exception, and the only one: 1.x selected knowledge by stage and path, so most artifacts have no trigger to convert, and a trigger is exactly the field §8 forbids an implementation to guess at. The migration proposes one from the artifact's content, **marks it unconfirmed, and lists every proposal in its report.**
 
@@ -877,9 +899,9 @@ Migration is defined by five rules.
 
 The mapping itself — every 1.x directory, every field, what each becomes and what is dropped — belongs to `[[skills/update]]`, not here: it is the procedure for one release boundary, and this specification defines the shape it arrives at.
 
-## 32. Verification
+## 31. Verification
 
-### 32.1 The distribution
+### 31.1 The distribution
 
 Everything the protocol ships lives under one directory in the repository that builds it:
 
@@ -888,19 +910,21 @@ specs.md                  this specification — normative, never shipped
 AGENTS.md                 the entrypoint, pointing at .aep/protocol.md
 src/
 ├── protocol.md           installed as .aep/protocol.md
-├── rules/ modes/ skills/ agents/ templates/   the protocol-owned payload
+├── policies/ skills/ agents/ templates/   the protocol-owned payload
 ├── seed/                 repository-owned starting points (§7.1)
 ├── scripts/              the payload's scripts, plus install and verify
 ├── gitignore             installed as .aep/.gitignore
-└── adapters/<runtime>/   runtime adapters, one directory per committed target (§29.1)
+└── adapters/<runtime>/   runtime adapters, one directory per committed target (§28.1)
 .aep/                     the building repository's own installation
 ```
 
 **`src/` is source; `.aep/` is output.** In the repository that builds AEP, `.aep/` is produced by running the installer on `src/`, and editing it changes nothing that ships.
 
-Two consequences are normative. **This specification is never installed** — it defines the protocol and is not part of it, which is why no shipped artifact may cite it (§32.3). And **`.aep/.gitignore` ships as a file rather than being generated by a script**, so what per-clone means is a reviewable artifact rather than a string in a program.
+**The manifest is generated from `src/`, never maintained beside it** (§7). It ships to installed trees inside the payload's own contract module, which is what lets an installed tree answer *is this file the protocol's* without the release being present.
 
-### 32.2 The suite
+Two consequences are normative. **This specification is never installed** — it defines the protocol and is not part of it, which is why no shipped artifact may cite it (§31.3). And **`.aep/.gitignore` ships as a file rather than being generated by a script**, so what per-clone means is a reviewable artifact rather than a string in a program.
+
+### 31.2 The suite
 
 The protocol repository MUST ship a verification suite that asserts the **shipped public surfaces** — `src/skills/`, `src/agents/`, `src/scripts/`, and the rest of the distribution — against this specification. It is the fidelity floor: every mechanically checkable requirement here has an assertion, and a change that adds a checkable claim without an assertion is untested by construction.
 
@@ -908,40 +932,44 @@ The suite MUST also prove **its own failure path fires** before any result it re
 
 The suite MUST assert at least:
 
-- the frontmatter contract (§8) on every payload artifact — required fields present, `owner` in its two legal values, `date` well-formed, `mode` an array of legal modes, `kind` a legal value, `status` legal and only where permitted;
-- `aep` on every payload artifact and seed is **exactly the release being built**, `protocol.md` included (§8). *A stamp ahead of the release names something that does not exist, and a stamp behind it makes a shipped artifact look like one an installation is missing — both break the single comparison an upgrade makes (§7).*
-- `use-when` present on every policy, rule, reference, and context;
-- the shipped policy set is at most five, each declaring `kind: policy`, `owner: protocol`, and a `use-when`; `rules/` ships nothing, and an install leaves it holding only repository-owned files (§10);
-- every artifact under `policies/` declares `owner: protocol` and every artifact under `rules/` declares `owner: repository`, each demonstrated by a tree that fails validation (§7);
-- every declared move (§31) names a destination the release ships and a source it does not;
-- an upgrade from a release predating a move removes the protocol-owned source, rewrites the links that pointed at it inside repository-owned artifacts, updates the `date` of each file it repairs, preserves a repository-owned file standing at the source path, and reports all three; and an upgrade of a tree that already declares the release applies no move at all (§31);
+- the frontmatter contract (SS8) on every payload artifact — `use-when` where required, `paths` an array where present, `status` legal and only where permitted, `blocked-by` on tickets only, and **no retired field on any path the manifest names**;
+- the four `use-when` checks (SS8.1), each demonstrated by a `use-when` that fails it;
+- **the manifest matches the payload**: every path it names ships, every shipped path is named, and a file standing inside a protocol-owned directory that the manifest does not name fails validation by name (SS7);
+- `protocol.md` states the ownership rule as a table naming every protocol-owned and every repository-owned directory, and it is the only artifact declaring a release (SS6);
+- the shipped policy set is at most five, each with a `use-when`; `policies/` ships only what the manifest names, and an install leaves `rules/` holding only repository-owned files (SS10);
+- every declared move (SS30) names a destination the release ships and a source it does not;
+- an upgrade from a release predating a move removes the protocol-owned source, rewrites the links that pointed at it inside repository-owned artifacts, preserves a repository-owned file standing at the source path, and reports all three; and an upgrade of a tree that already declares the release applies no move at all (SS30);
 - a dry run previews the same repairs a real run would perform — a preview that understates the change is worse than none;
-- every `[[...]]` link resolves (§9);
-- the skill set is exactly the eighteen of §16, each declaring a legal mode except `help` and `handoff`, which MUST declare none;
+- every `[[...]]` link resolves (SS9);
+- the skill set is exactly the seventeen of SS15, and each states a posture with something it gives up;
+- **the four typed commands are the four of SS21**, and every other skill is reached from inside a run rather than named as a command in its own heading;
 - `help` links every shipped skill but itself — the one artifact whose job is answering *what do I reach for* is the one place a new skill must not go missing, and it is reachable from no other;
-- every skill note (§16.1) sits under a directory named for a real skill, declares `kind: skill` and a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
-- the mode set is exactly the eight of §14;
-- a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (§12.1);
-- the index lists a nested context by its full wiki-link and the Contexts section is **not** flat-listed, so the nested form cannot be dropped from discovery by a later change (§27);
-- nothing in the distribution derives applicability from a context's directory name (§12.1);
+- every skill note (SS15.1) sits under a directory named for a real skill, carries a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
+- a context is accepted at `contexts/<area>.md` and at `contexts/<project>/<area>.md`, and **rejected deeper**, with the failure naming the legal forms — checked at all three depths, because a guard proven only on the rejection can still reject what it should accept (SS12.1);
+- the index lists a nested context by its full wiki-link and the Contexts section is **not** flat-listed, so the nested form cannot be dropped from discovery by a later change (SS26);
+- nothing in the distribution derives applicability from a context's directory name (SS12.1);
 - the context template gives both shapes and the rule for choosing between them;
-- the report contract (§16.2) is stated in exactly one shipped artifact — its slots, their order, the turn as the unit, the nested-entry rule, the no-empty-slot rule, the early-stop requirement, and the two forms distinguished by their stage markers — and no skill carries a second copy of it;
-- every skill declares a legal `report:`, no skill note declares one, and the full-form skills are exactly those the §16.2 test selects;
-- **stage names extract mechanically from every full-form skill**, non-empty, with every numbered step of its procedure named — a skill matching no known shape fails rather than being skipped;
+- the report contract (SS15.2) is stated in exactly one shipped artifact — its slots, their order, the turn as the unit, the nested-entry rule, the no-empty-slot rule, and the early-stop requirement — and no skill carries a second copy of it;
+- **stage names extract mechanically from every skill**, non-empty, with every numbered step of its procedure named — a skill matching no known shape fails rather than being skipped;
 - no shipped surface stating the report contract names a terminal, a colour, a display size, or a runtime;
-- `protocol.md` exists and is within its size budget (§6);
-- the forbidden structures are absent — no `decisions/`, `tools/`, `grill/`, or `plan.md` (§5, §15.2, §17);
-- every seed declares `owner: repository`, targets a repository-owned directory, and states that it is a starting point — except the entrypoint seed, which targets the root and carries no frontmatter (§7.1);
-- the index gains a tickets section exactly when local tickets exist, and lacks one when they do not (§27);
-- every committed runtime adapter is **current** — regenerating it from the payload reproduces the committed files byte-for-byte — and every wrapper is a pointer rather than a copy (§29);
-- **for every target and every shape it renders**, and not for one runtime: the wrapper set covers each shipped skill, and each shipped agent where that target wraps agents; a target that renders nothing fails rather than passing vacuously; every published name matches the target's declared prefix and, for a skill, equals the directory holding it; the frontmatter keys are exactly what that runtime's schema admits, compared as a set; and **every path any wrapper names resolves in an installed tree**, checked in prose and in frontmatter alike (§29.1);
-- a distribution shape's reach resolves onto a payload file that exists, and a shape declaring none carries none (§29.1);
-- an install writes each adapter it was asked for into the directory that runtime reads, names each in its report, refuses an unknown runtime **before writing anything**, and warns where two requested targets are read by one runtime (§30);
-- an **install fixture**: installing into a temporary repository produces a tree that passes every check above, regenerating the index over it is byte-identical (§27), an upgrade preserves a repository-owned file standing where a shipped one would land, an upgrade replaces a protocol-owned file that was edited locally, and an upgrade does not re-seed a corrected starting point (§31).
+- `protocol.md` exists and is within its size budget (SS6);
+- the forbidden structures are absent — no `decisions/`, `tools/`, `grill/`, or `modes/` (SS5, SS16);
+- **every ticket traces to a requirement or an acceptance criterion of its own effort**, and a ticket citing a number no requirement carries fails by name (SS14.4);
+- **the effort opening is one issue, one branch, one draft pull request**, in an order that could run, with the rename preceding the first commit; the ask happens once and a refusal stops it (SS14.1);
+- **converge is stated as the effort's termination condition**, appends rather than edits, and is bounded (SS21);
+- every seed targets a repository-owned directory and states that it is a starting point — except the entrypoint seed, which targets the root and carries no frontmatter (SS7.1);
+- the index gains a tickets section exactly when tickets exist, and lacks one when they do not (SS26);
+- every committed runtime adapter is **current** — regenerating it from the payload reproduces the committed files byte-for-byte — and every wrapper is a pointer rather than a copy (SS28);
+- **for every target and every shape it renders**, and not for one runtime: the wrapper set covers each shipped skill, and each shipped agent where that target wraps agents; a target that renders nothing fails rather than passing vacuously; every published name matches the target's declared prefix and, for a skill, equals the directory holding it; the frontmatter keys are exactly what that runtime's schema admits, compared as a set; and **every path any wrapper names resolves in an installed tree**, checked in prose and in frontmatter alike (SS28.1);
+- a distribution shape's reach resolves onto a payload file that exists, and a shape declaring none carries none (SS28.1);
+- an install writes each adapter it was asked for into the directory that runtime reads, names each in its report, refuses an unknown runtime **before writing anything**, and warns where two requested targets are read by one runtime (SS29);
+- an **install fixture**: installing into a temporary repository produces a tree that passes every check above, regenerating the index over it is byte-identical (SS26), an upgrade preserves a repository-owned file standing where a shipped one would land, an upgrade replaces a protocol-owned file that was edited locally, and an upgrade does not re-seed a corrected starting point (SS30).
+
+**Every section reference this specification makes MUST resolve to a section that exists.** It is the cheapest check in the suite and it guards the failure this document is most prone to: a section renumbered by an edit somewhere else, leaving every citation of it pointing at the wrong text while still reading correctly.
 
 Scripts MUST be JavaScript, executable by a bare Node runtime with **no dependencies and no package manifest required**, and named so that a consuming repository's `package.json` cannot change how they are parsed.
 
-### 32.3 What shipped text may cite
+### 31.3 What shipped text may cite
 
 **A shipped artifact may cite only what resolves where it is read.** Files under `src/` are read inside whatever repository AEP is installed in, so a citation of this specification, of a section number, or of a record that exists only in the building repository is worse than a dead link there — it is indistinguishable from a reference to something of theirs.
 
@@ -949,30 +977,54 @@ Where a citation was carrying a reason the surrounding prose does not state, **s
 
 A link to an external project — upstream provenance, a specification, a vendor's documentation — is exempt: it resolves everywhere, and it is not navigation within the tree.
 
-### 32.4 Scope
+### 31.4 Scope
 
 Verification covers what ships. It does NOT audit the protocol repository's own installed `.aep/` as though it were a shipped surface — that tree is an installation, checked by the same tools any repository uses.
 
-## 33. What 2.0 removes
+## 32. What each release removes
 
-Named explicitly, because a retired concept that is merely unmentioned grows back:
+Named explicitly, because a retired concept that is merely unmentioned grows back.
+
+### 32.1 What 3.0 removes
+
+Nothing here loses a function. **Each row moves to where the answer already was**, which is why it could go:
+
+| Removed | Where its answer lives now |
+| --- | --- |
+| **Modes** as a primitive, `modes/`, and `mode:` | the posture is stated in the skill that takes it (§15); applicability is `use-when` and `paths` (§8) |
+| `owner:` | ownership is the directory, stated once in the bootstrap and carried as a manifest (§7) |
+| `aep:` and `date:` on every artifact | `protocol.md`'s `version:` for the release (§6); git for when a file last changed; the manifest comparison for an artifact edited without being restamped |
+| `kind:` | the directory, and the heading the artifact already carries |
+| `report:` | one report shape for every turn (§15.2) |
+| `part-of` | the path `efforts/<effort>/tickets/`, which already says it |
+| `commit` as a skill | committing is a step of `implement`, per ticket (§21) |
+| **Tickets in an external tracker** | tickets are files under the effort; the tracker holds one issue and one pull request (§14.4) |
+| **`refine`, `research`, and `review` as commands** | stages, run from inside the skill whose procedure calls for one (§15) |
+| Evidence, Tasks, Worktrees, and Position as **primitives** | parts of an effort, and mechanisms specified where used (§3) |
+
+Two rows reverse a 2.x decision rather than retiring an idea, and both are recorded as reversals:
+
+- **`plan.md` returns** (§14.2). 2.0 removed it so that one file would answer *what are we building*; 3.0 reinstates it because the spec became the issue body, and a design folded into the thing a human approves changes shape after they approve it. The hazard 2.0 named is real and is answered by hierarchy instead: the spec is the source of truth and the plan serves it.
+- **The primitive count falls rather than grows.** Every earlier release added one; this is the first to state the set as a count so that the next addition has to argue against a number.
+
+### 32.2 What 2.0 removed
 
 | Removed | Replaced by |
 | --- | --- |
-| `.claude/` as canonical state | `.aep/`, with `.claude/` demoted to an adapter (§29) |
+| `.claude/` as canonical state | `.aep/`, with `.claude/` demoted to an adapter (§28) |
 | Policies, as a repository derived them | policies as **protocol law** (§10), and rules as the repository's own |
-| `decisions/` (ADRs) | the effort's `spec.md` and its evidence (§15.2) |
+| `decisions/` (ADRs) | the effort's `spec.md` and its evidence (§14.2) |
 | `tools/` | references, widened beyond CLIs (§11) |
-| The stage→dependency table | applicability metadata on each artifact (§24) |
+| The stage→dependency table | applicability metadata on each artifact (§23) |
 | The boot tier and its budget | one cheap bootstrap, `protocol.md` (§6) |
-| Discussions as an artifact kind | grill as a mechanism (§17) |
-| Mandatory local tickets | optional local, or external (§15.4) |
-| `plan.md` | the same `spec.md`, extended (§15.2) |
+| Discussions as an artifact kind | grill as a mechanism (§16) |
+| Mandatory local tickets | optional local, or external — **narrowed in 3.0** to local only (§14.4) |
+| `plan.md` | the same `spec.md`, extended — **reversed in 3.0** (§32.1) |
 | Per-repository derived policies | repository-owned rules, references, contexts (§7) |
 
-Each row is also a conversion target: where an existing repository holds the removed thing, §31.1 says what becomes of it. **Removed from the protocol does not mean discarded from a repository** — only the rows whose replacement this release *ships* are dropped, and the rest are converted or reported.
+Each row below is also a conversion target: where an existing repository holds the removed thing, §30.2 says what becomes of it. **Removed from the protocol does not mean discarded from a repository** — only the rows whose replacement this release *ships* are dropped, and the rest are converted or reported.
 
-### 33.1 The policy row, reversed in 2.2
+### 32.3 The policy row, reversed in 2.2
 
 The word `policy` returned in 2.2, and it returned **inverted**. This is recorded rather than quietly restored, because a row that changes meaning without saying so is worse than one that was never written.
 
@@ -982,19 +1034,19 @@ The word `policy` returned in 2.2, and it returned **inverted**. This is recorde
 | Editable in a repository | yes, that was the point | **never** |
 | Replaced by an upgrade | no | yes, verbatim |
 
-What 2.0 retired was **a second governance layer the repository owned**, sitting beside rules the repository also owned — two homes for one kind of knowledge. That is still retired, and §33's row for it still stands.
+What 2.0 retired was **a second governance layer the repository owned**, sitting beside rules the repository also owned — two homes for one kind of knowledge. That is still retired, and §32's row for it still stands.
 
 What 2.2 introduced is the **other** distinction: 2.0's `rules/` already held two layers, protocol-owned and repository-owned, separated only by a field inside each file. Naming them apart is what the directory now does. The hierarchy in §10 is unchanged in substance — it was already `protocol rules → repository rules`.
 
-The practical consequence is a migration hazard, not a philosophical one: **a 1.x `policies/<concern>.md` converts to a repository rule, never to a policy** (§31.1). The names collide and the meanings are opposite.
+The practical consequence is a migration hazard, not a philosophical one: **a 1.x `policies/<concern>.md` converts to a repository rule, never to a policy** (§30.2). The names collide and the meanings are opposite.
 
-## 34. Relationship to prior work
+## 33. Relationship to prior work
 
 AEP takes the **specify → plan → tasks → implement** spine from [Spec Kit](https://github.com/github/spec-kit) and the **composable skill** shape from [mattpocock/skills](https://github.com/mattpocock/skills). It improves on both in three specific ways, and the claim is narrow enough to check: applicability metadata on every artifact so knowledge loads by relevance rather than by stage; a declared ownership boundary so a protocol upgrade cannot eat repository knowledge; and evidence bound to the effort that motivated it, so investigation survives the conversation.
 
 AEP MUST NOT depend on either, MUST NOT require either installed, and MUST NOT define itself as an extension of either. They are engineering references, not architectural dependencies.
 
-**Nothing in AEP 2.0 is vendored.** Every shipped file was written for this protocol, so no upstream licence condition reaches it and the distribution carries no third-party notice. That is a statement about the current release, not a permanent one: **the moment text is copied in from another project, its licence binds** — the copy carries its attribution in the file, and whatever notice the licence requires ships beside it. Asserting an obligation that does not exist misstates a licence exactly as omitting a required one does, which is why this is stated in both directions.
+**Nothing in AEP is vendored.** Every shipped file was written for this protocol, so no upstream licence condition reaches it and the distribution carries no third-party notice. That is a statement about the current release, not a permanent one: **the moment text is copied in from another project, its licence binds** — the copy carries its attribution in the file, and whatever notice the licence requires ships beside it. Asserting an obligation that does not exist misstates a licence exactly as omitting a required one does, which is why this is stated in both directions.
 
 AEP supports adapting external skills into `.aep/skills/`, and MUST NOT assume any particular skill collection. AEP provides the environment in which skills operate.
 
@@ -1002,7 +1054,7 @@ AEP supports adapting external skills into `.aep/skills/`, and MUST NOT assume a
 
 # Part VI — Conformance
 
-## 35. Invariants
+## 34. Invariants
 
 A conforming implementation preserves all of the following:
 
@@ -1011,7 +1063,7 @@ A conforming implementation preserves all of the following:
 3. Runtime adapters are not AEP state and never hold a drifting copy of it.
 4. Governance is policies and rules, and nothing else governs. A policy is AEP's and is never edited in a repository; a rule is the repository's and is never overwritten by an upgrade.
 5. A policy outranks a rule. A rule may tighten a policy and may never soften, contradict, or opt out of one.
-6. `policies/` holds only `owner: protocol` and `rules/` only `owner: repository`; a repository never authors a policy, and a misplaced file is preserved and reported rather than silently corrected.
+6. Ownership is the directory a file sits in, stated once in the bootstrap and carried as a generated manifest; nothing declares it and nothing infers it from contents. A repository never authors a policy, and a misplaced file is preserved and reported rather than silently corrected.
 7. Policies are selected by their trigger like every other conditional artifact; rigidity is authority, not loading.
 8. References provide procedural knowledge and never govern.
 9. Contexts orient and never instruct.
@@ -1022,17 +1074,17 @@ A conforming implementation preserves all of the following:
 14. Agents execute bounded work and gain no authority beyond their role.
 15. Skills provide capabilities and never become governance.
 16. A skill note is depth reached from its own skill: never invoked, never adapted, never governance.
-17. Modes describe ways of working; `mode:` expresses applicability, not state.
+17. A skill states the posture it takes and what that posture gives up; no artifact and no field carries a posture on a skill's behalf.
 18. Worktrees isolate execution and store no knowledge.
 19. Position is operational state, never a source of truth.
 20. Research is optional. Prototyping is optional. Refinement and grill are optional.
-21. No `plan.md` exists.
+21. `spec.md` holds WHAT and WHY and `plan.md` holds HOW; the spec is the source of truth and the plan serves it.
 22. No `decisions/` database exists.
-23. No `tools/` or mandatory `grill/` directory exists.
-24. No mandatory local ticketing system exists; local tickets, if used, live under the effort, and external tickets stay external.
-25. Every Markdown artifact under `.aep/` satisfies the frontmatter contract (§8).
-26. `owner` is exactly `protocol` or `repository`; `date` is `YYYY-MM-DD`; `mode` is an array of the eight legal modes; `kind` and `status` use only defined values.
-27. `use-when` is present on every policy, rule, reference, and context, and states a trigger rather than a topic.
+23. No `tools/`, `grill/`, or `modes/` directory exists.
+24. An effort's tickets are files under that effort, and a ticket is never a tracker object; exactly one issue and one pull request exist per effort.
+25. Every Markdown artifact under `.aep/` satisfies the frontmatter contract (§8), which is `use-when`, `paths`, `status`, and `blocked-by` and nothing else.
+26. `status` and `blocked-by` appear only on an effort's own artifacts, and `paths` is an array where present.
+27. `use-when` is present on every policy, rule, reference, and context, states a trigger rather than a topic, and is checked by four mechanical checks (§8.1).
 28. `[[...]]` is the canonical relationship syntax, and every link resolves.
 29. Indexes are derived, generated, never hand-edited, and regenerable byte-identically.
 30. Repository state is authoritative over every AEP artifact.
@@ -1040,7 +1092,7 @@ A conforming implementation preserves all of the following:
 32. Evidence that invalidates the plan returns work to planning rather than silently redesigning the effort.
 33. Protocol-owned artifacts are installed verbatim and never edited in a repository; variation enters through a named extension point or is a declared deviation.
 34. An upgrade preserves repository-owned artifacts, decides ownership by the declared field rather than by path, and never silently overwrites repository-owned governance.
-35. An upgrade applies the release's declared moves, and only to a tree that predates them: it removes a protocol-owned artifact at a vacated source, preserves and reports a repository-owned one standing there, repairs links to vacated sources inside repository-owned artifacts and updates their `date`, and reports every removal, repair, and collision (§31).
+35. An upgrade applies the release's declared moves, and only to a tree that predates them: it removes a protocol-owned artifact at a vacated source, preserves and reports a repository-owned one standing there, repairs links to vacated sources inside repository-owned artifacts and updates their `date`, and reports every removal, repair, and collision (§30).
 36. Migration from 1.x converts everything 2.x has a representation for — including repository content held inside framework-owned files — drops only what this release ships a replacement for, deletes nothing, derives every derivable field and proposes the one that is not, stops on a structure 2.x narrowed, and leaves a tree that validates. A 1.x policy converts to a repository rule, never to a policy.
 37. Seeds install once, only where detected, and are never re-seeded; each states that it is a starting point rather than a description.
 38. A task is never split across sub-agents; independence is read off declared edges, never inferred.
@@ -1050,11 +1102,17 @@ A conforming implementation preserves all of the following:
 42. Shipped text cites only what resolves where it is read.
 43. An agent never pushes, never publishes, and never silently decides architecture.
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
-45. An external task is attributable to its effort by a query its tracker answers natively, and no label is created for a fact the tracker already models.
+45. The frontier is computed from the tickets' own declared edges without consulting a tracker, and no label is created for a fact the tracker already models.
 46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
-47. `aep` and `date` record when an artifact's content last changed, are computed rather than typed, and an artifact whose content changed without its stamp changing is detected.
+47. `protocol.md`'s `version:` is the single release of record, and an artifact edited without being restamped is detected by comparing content against the manifest rather than by a field.
 48. Every turn opens with one report and closes with one block, in one shape defined in exactly one place; a nested skill entry is a stage rather than a second report; no slot is omitted; and a skill's stage names are read from its own procedure rather than declared a second time.
 49. A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md` and no deeper; the directory names it while `paths:` scopes it; and nothing derives applicability from a directory name.
+50. Four commands are typed and no others; every remaining skill is reached from inside a run.
+51. An effort opens as one issue, one branch, and one draft pull request, in that order, with the directory renamed before the first commit; the opening asks once, and a refusal stops it rather than degrading to something quieter.
+52. Every ticket traces to a requirement or an acceptance criterion of its own effort.
+53. An invocation of `implement` takes the effort rather than one wave, and the run ends when converge finds no gap — never merely because the tickets ran out.
+54. Converge appends tickets and never edits the spec or the plan; an approach that cannot satisfy a requirement stops on the return-to-plan invariant.
+55. The run's durable memory is the pull request, so a resumed run reconstructs its position from what was written rather than from what it remembers.
 
 ---
 

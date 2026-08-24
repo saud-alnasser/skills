@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [plan]
-report: full
 use-when: "a spec is settled and the technical approach is not yet decided"
 ---
 
@@ -14,7 +8,12 @@ Extends the **same** `spec.md` with the technical approach. Run it when the
 change is large enough, or unfamiliar enough, that starting to build would mean
 deciding architecture by accident.
 
-**Enters `[[modes/plan]]`.** Read it and hold its tradeoffs.
+**Posture.** Design against the codebase that exists rather than the one you
+would prefer, and read the seams you intend to cut before proposing where to
+cut them. A plan that would work in a clean repository and not in this one is
+not a plan. **What this gives up** is optionality: finishing means committing
+to an approach and writing down why the alternatives lost, which is
+uncomfortable precisely when it matters most.
 
 ## Procedure
 
@@ -70,7 +69,9 @@ The same `spec.md`, gaining whichever of these apply:
 
 ## Constraints
 
-- **NEVER create `plan.md`.** `[[policies/execution]]` has the reason.
+- **The plan never restates the spec.** Requirements, acceptance criteria, and
+  scope live in `spec.md` and are referenced from here
+  (`[[policies/execution]]`).
 - **Planning MUST NOT silently expand product scope.** Technical discovery that
   exposes a product-level change **stops and surfaces it** — then `spec.md`'s
   WHAT is updated deliberately, not absorbed into the HOW.

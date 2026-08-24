@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: spec
 status: implemented
 ---
 
@@ -69,7 +65,7 @@ changes.
    **The unit is the turn, not the skill entry.** One thing the human typed
    produces exactly one opening report and exactly one closing block, emitted by
    the outermost skill. A skill entered from inside another — `[[skills/review]]`
-   and `[[skills/commit]]` from `[[skills/implement]]`'s close-out,
+   and ``skills/commit`` from `[[skills/implement]]`'s close-out,
    `[[skills/tdd]]` and `[[skills/domain]]` as sub-skills — is announced as a
    **stage of the run it is inside**, and opens no report of its own. Everything
    those skills produce is unaffected; only the preamble is not repeated. *Why:

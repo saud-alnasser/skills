@@ -1,9 +1,4 @@
 ---
-aep: 2.1.1
-owner: repository
-date: 2026-08-16
-kind: reference
-mode: [implement, test, review]
 use-when: "checking, regenerating, or installing this repository's own output"
 ---
 
@@ -22,12 +17,19 @@ Node with ESM support, and `git` on the path. Nothing else.
 node src/scripts/verify.mjs                    # the whole suite — run before every commit
 node src/scripts/verify.mjs --verbose          # every passing assertion, not just failures
 node src/scripts/verify.mjs --section links    # one section
+node src/scripts/manifest.mjs                  # regenerate the shipped-path manifest
+node src/scripts/manifest.mjs --check          # exit 1 when it is stale
 node src/scripts/adapters.mjs                  # regenerate every committed adapter
 node src/scripts/adapters.mjs --target opencode # one of them
 node src/scripts/install.mjs --into <dir>      # install a distribution into a repository
 node .aep/scripts/index.mjs                    # regenerate .aep/index.md
 node .aep/scripts/validate.mjs                 # check an installed tree
+node .aep/scripts/frontier.mjs <effort>        # what can start now, and what waits on what
 ```
+
+`frontier.mjs` exits 0 while work remains, 1 when nothing is unresolved, and 2
+when the effort or its tickets cannot be read. The third is deliberate: an
+unreadable graph must not look like a finished one.
 
 ## Expected output
 
@@ -44,12 +46,14 @@ print it should not be trusted**, however green the rest looks.
 After changing anything under `src/`, the sequence is:
 
 ```sh
-node src/scripts/adapters.mjs && node src/scripts/verify.mjs
+node src/scripts/manifest.mjs && node src/scripts/adapters.mjs && node src/scripts/verify.mjs
 ```
 
-Regenerating the adapter first, because the suite asserts the committed adapter
-is current and will otherwise fail on a file the command you are about to run
-would have fixed.
+Regenerating first, because the suite asserts both the manifest and the committed
+adapter are current and will otherwise fail on a file the command you are about to
+run would have fixed. The manifest goes first: it decides what the installer
+treats as the protocol's, so anything generated against a stale one is generated
+from the wrong set.
 
 To re-dogfood this repository's own `.aep/` after a payload change:
 
@@ -66,6 +70,10 @@ are replaced.
 - A `links` failure names the file and the exact unresolved target. Search for
   where the concept moved; **never create a file to satisfy a link**.
 - An `adapter … is current` failure means `adapters.mjs` was not re-run.
+- A `protocol-files manifest matches the payload` failure means a file entered or
+  left the payload without `manifest.mjs` being re-run. Until it is, the
+  installer treats the new file as the repository's and preserves it rather than
+  shipping it.
 - An `install fixture` failure quotes the fixture's own `validate.mjs` output,
   which is where the real diagnosis is.
 - A section that reports `ABORT` threw before its assertions ran — the remaining

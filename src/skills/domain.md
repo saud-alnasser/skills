@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [specify, refine]
-report: short
 use-when: "the words the problem is described in are doing the damage — a fuzzy term, or one word meaning three things"
 ---
 

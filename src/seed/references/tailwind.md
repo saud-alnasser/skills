@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, prototype]
 use-when: "styling with Tailwind here, or explaining why a class produced no style"
 ---
 

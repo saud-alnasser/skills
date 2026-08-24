@@ -1,10 +1,5 @@
 ---
-aep: 2.6.0
-owner: repository
-date: 2026-08-19
-kind: ticket
 status: resolved
-part-of: readable-output
 ---
 
 # feat(skills): the catalogue ships as `prose`, the eighteenth skill

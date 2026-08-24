@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "recording what an investigation established"
 ---
 
@@ -11,10 +8,7 @@ Copy to `efforts/<effort>/evidence/research/<question-slug>.md`.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: research
+
 ---
 
 # Question

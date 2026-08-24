@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [specify, plan, implement, review]
 use-when: "reading or writing GitHub issues, pull requests, or checks for this repository"
 ---
 
@@ -28,48 +23,53 @@ gh repo view --json nameWithOwner,defaultBranchRef
 Reading is always allowed. `[[policies/authority]]` still applies: read another
 repository freely, write to none.
 
-## Tasks as issues
+## An effort here: one issue, one pull request
 
-Where this repository keeps AEP tasks in GitHub Issues rather than under the
-effort, **GitHub already models everything a task needs.** Nothing is invented on
-top of it and no label is created for a fact the tracker carries itself.
+**AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
+tickets stay in the repository under `efforts/<effort>/tickets/`, and so does the
+dependency graph.
 
 | The fact | Carried by | Never |
 | --- | --- | --- |
-| which effort this task belongs to | **one issue for the effort, tasks as its sub-issues** | a label, where the hierarchy serves |
-| what gates this task | **issue dependencies** — `blocked by` | a `blocked-by-<n>` label |
-| open, resolved, obsolete | the issue's **state** and close reason | a status label |
-| bug, feature, chore | the issue's **type** | a type label, where types are enabled |
+| what the effort is, and its acceptance criteria | **the issue body**, which is `spec.md` | a second copy under `.aep/` |
+| the approach, the tickets, and the run's memory | **the pull request body** | one pull request per ticket |
+| what gates a ticket | **`blocked-by` in the ticket file** | an issue dependency, a `blocked-by-<n>` label |
+| draft, accepted, implemented | **`spec.md`'s `status:`**, projected onto a label | a label that is the source of truth |
 
-**The effort is an issue, and its tasks are that issue's sub-issues.** The effort
-gets a real home in the tracker — a body, a thread, a progress count — and the
-shape matches how the set is created anyway: root first, then children.
+*Why the graph never comes here: it is read on every scheduling pass. Local, it
+is a field a script reads; here, it is a paginated fetch to interpret before a
+frontier can be computed, and nobody schedules by hand anyway.*
 
 ```sh
-gh issue create --title "<effort>" --body-file <file>          # the effort
+gh issue create --title "<effort>" --body-file efforts/<effort>/spec.md
+gh pr create --draft --title "<effort>" --body-file <file>
+gh issue edit <number> --body-file efforts/<effort>/spec.md   # the spec changed
+gh pr edit <number> --body-file <file>                        # tickets, run log
+gh pr ready <number>                                          # converge found no gap
 
-gh issue create --title "<type(scope): summary>" --body-file <file> \
-  --parent <effort-number> --blocked-by <number> --type <name>
-
-gh issue edit <number> --add-blocked-by <number>
-gh issue edit <number> --add-sub-issue <number>
-gh issue edit <number> --add-label <name>
-
-gh issue close <number> --reason completed     # resolved
-gh issue close <number> --reason "not planned" # obsolete
+gh issue close <number> --reason "not planned"   # abandoned
+gh pr close <number>                             # with it, both labelled flag: wontfix
 ```
 
-**A milestone is the alternative**, and it is worth taking where the repository
-already runs efforts as milestones. It filters server-side (`--milestone`), which
-the hierarchy does not — but it has no `gh` command to create one, milestones
-usually already mean releases here, and an effort is not a release. Sub-issues
-cap at **100 per parent and eight levels deep**; past that, the effort was too
-big before the tracker said so.
+**Creating an issue or a pull request publishes.** It lands in other people's
+workspace, so the whole set is written out first with exact strings, shown, and
+approved before anything is created (`[[rules/version-control]]`). `/specify`
+asks once, at the opening step, and a refusal leaves the effort local.
 
-**Creating an issue publishes.** It lands in other people's workspace, so it is
-gated exactly as opening a pull request is: write the whole set first — issues,
-and anything the resolution needs created alongside them — show it, get it
-approved, and only then create. Root first, then children, then the links.
+## Sub-issues, and why they are not used
+
+GitHub models a task hierarchy well: `--parent`, `--blocked-by`,
+`gh issue edit --add-sub-issue`, and a `subIssuesSummary` progress count. **This
+repository does not use it**, and the reason is not that it is missing anything.
+
+An effort is what a human agreed to and the unit they review and merge. Fifteen
+issues for one change is fifteen things to close and one thing nobody can see the
+shape of, and the dependency graph would then live where a scheduling pass has to
+fetch it. Sub-issues also cap at **100 per parent and eight levels deep** — past
+that the effort was too big before the tracker said so.
+
+Milestones are the other alternative, and they are declined for a nearer reason:
+they usually already mean releases here, and an effort is not a release.
 
 ## What the body does, and does not do
 
@@ -92,36 +92,30 @@ with `--blocked-by` or `--add-blocked-by`, where the query can see it.
 
 ## Finding the effort, and the frontier
 
-This is the query the task graph is read from, rather than listing every open
-issue and judging from prose:
+**The frontier is computed locally, and this tracker is not consulted for it:**
 
 ```sh
-gh issue list --state open --limit 200 \
-  --json number,title,state,blockedBy,parent \
-  --jq '[.[] | select(.parent.number == <effort-number>)]'
+node .aep/scripts/frontier.mjs <effort>
 ```
 
-`blockedBy` comes back as the issues gating each one, so **the frontier is
-computed, not guessed**: the open issues whose `blockedBy` is empty or entirely
-closed. `[[policies/execution]]` requires exactly that — independence read off
-declared edges rather than inferred from which files a task looks like it
-touches.
+The tickets and their `blocked-by` edges are files in this repository, so
+scheduling reads them directly. `[[policies/execution]]` requires independence
+read off declared edges rather than inferred, and a field in a file is the
+cheapest declaration there is.
 
-**Raise `--limit` deliberately.** There is no server-side filter for a parent, so
-`--jq` narrows a page that `gh` has already truncated — the default is 30. A
-truncated page filters to a short list that looks like a complete answer, and the
-tasks it dropped read as *not in this effort* rather than as *not fetched*. Where
-the repository carries more open issues than one page, filter on a milestone
-instead, which the server applies before truncating.
-
-The parent's own view is the cheaper read when the edges are not needed:
+What is read from GitHub is the effort's own two objects:
 
 ```sh
-gh issue view <effort-number> --json subIssues,subIssuesSummary
+gh issue view <effort-number> --json number,title,body,state,labels
+gh pr view <pr-number> --json number,title,body,state,isDraft,files
 ```
 
-Other fields `--json` accepts here: `labels`, `milestone`, `issueType`,
-`stateReason`, `blocking`.
+Other fields `--json` accepts on an issue here: `milestone`, `issueType`,
+`stateReason`, `blockedBy`, `blocking`, `subIssues`, `subIssuesSummary` — none of
+which AEP writes.
+
+Record the effort's issue and pull request numbers where the effort is defined,
+so neither has to be found by search.
 
 ## Labels, where a label is actually the answer
 
@@ -139,13 +133,32 @@ gh label create <name> --description <text> --color <hex>
 casing, its prefixing. A tracker labelled `area/api` and `type: bug` does not
 want `aep:effort/x` beside them. Read the list before naming anything.
 
-## Gaps in `gh`
+**Creating one is reported, with the reason.** A label that appears here with no
+explanation is one nobody can tell from a mistake.
 
-- **There is no `--parent` filter on `gh issue list`.** The `parent` field comes
-  back in `--json` and is narrowed with `--jq`, which filters client-side, after
-  truncation — see the limit warning above. `parent-issue:` exists, but it is a
-  **Projects** filter and not an issue-search qualifier, so `--search` does not
-  reach it either.
+### The five families, and which of them re-sync
+
+`[[policies/execution]]` decides this; what belongs here is the vocabulary *this
+tracker* uses for each, so no later session has to work it out again.
+
+| Family | Set from | Maintained |
+| --- | --- | --- |
+| `status:` | `spec.md`'s `status:`, and where the run has reached | **derived** — re-synced on every write |
+| `type:` | what the spec describes | **derived** |
+| `size:` | the diff, when the pull request goes ready | **derived**, against the thresholds in each `size:` label's own description |
+| `priority:` | the human, once, when the effort opens | **initial** — never updated by an agent |
+| `flag:` | a fact: the diff, the trip-wire, a diagnosis | **derived**, except `discussion` and `wontfix`, which invite a person and are initial |
+
+```sh
+gh issue edit <number> --add-label "status: ready" --remove-label "status: backlog"
+gh pr edit <number> --add-label "size: m"
+gh pr diff <number> --name-only        # what the size and the flags are computed from
+```
+
+**The file wins when a label disagrees with it.** Correct the label; never edit
+`spec.md` to match a label somebody moved by hand.
+
+## Gaps in `gh`
 
 - **There is no `gh milestone` command.** Milestones are filtered and assigned by
   `--milestone`, but creating one goes through the API:
@@ -154,11 +167,11 @@ want `aep:effort/x` beside them. Read the list before naming anything.
   gh api repos/{owner}/{repo}/milestones -f title="<effort>" -f description="<text>"
   ```
 
-  This is the reason the hierarchy is the default and the milestone the
-  alternative: creating a parent issue is `gh issue create`, and creating a
-  milestone is a drop to the REST API.
+- **There is no `--parent` filter on `gh issue list`.** Irrelevant while AEP
+  creates no sub-issues, and recorded because it is the first thing anybody
+  reaching for the hierarchy runs into.
 
-## AEP tasks in this tracker
+## AEP in this tracker
 
 **Draft — this table is the part to correct.** It records what carries each fact
 *here*, so no later session has to work it out again. Confirm it once, then it is
@@ -166,13 +179,10 @@ read rather than rederived.
 
 | Fact | Carried by | Kind |
 | --- | --- | --- |
-| effort membership | one issue per effort; tasks are its sub-issues | native |
-| the gating edge | issue dependencies | native |
-| status | open / closed, with close reason | native |
-| — | no AEP label is required on GitHub | — |
-
-Record the effort issue's number where the effort is defined, so the query above
-has its `<effort-number>` without a search.
+| what the effort is | one issue per effort, body `spec.md` | native |
+| what it will land as | one draft pull request per effort | native |
+| which tickets exist, and what gates each | files under `efforts/<effort>/tickets/` | **not in this tracker** |
+| the effort's state | `spec.md`'s `status:`, projected onto a `status:` label | projection |
 
 ## Referencing a task from a commit
 
@@ -190,8 +200,10 @@ issue nobody merged.
 
 ## Pull requests
 
-Opening or merging a pull request is the **human's**, never an agent's
-(`[[rules/version-control]]`). Prepare the body; do not submit it.
+**Merging is the human's, never an agent's** (`[[rules/version-control]]`, which
+also states what the runner may push and open here). `/specify` opens the
+effort's draft after asking once; converge marks it ready when the effort is
+done. Nothing merges it but a person.
 
 ## Failure handling
 

@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test]
 use-when: "running this repository's Vitest suite, or one test from it"
 ---
 

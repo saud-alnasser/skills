@@ -1,9 +1,4 @@
 ---
-aep: 2.7.0
-owner: protocol
-date: 2026-08-19
-kind: skill
-report: short
 use-when: "the question is about AEP itself — what to reach for, and when"
 ---
 
@@ -27,7 +22,6 @@ that first; everything else loads when its `use-when` fires.
 | evidence | what has been discovered — research and prototypes |
 | efforts | what change is being made; `spec.md` is its truth |
 | tasks | executable work derived from the spec |
-| `[[modes]]` | how to think during an activity |
 | `[[agents]]` | who does work, in what role |
 | worktrees | isolated execution; never knowledge |
 | position | lightweight operational state; never truth |
@@ -35,18 +29,23 @@ that first; everything else loads when its `use-when` fires.
 ## The spine
 
 ```
-/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+/specify → /plan? → /tasks → /implement
 ```
 
-`refine` when ambiguity remains. `plan` when the approach is not obvious.
-Everything else is a capability, not a stage.
+`plan` when the approach is not obvious. Everything else is a capability rather
+than a stage.
+
+**Four commands, and grilling, research, and review are not among them** — they
+are stages the four run. `[[skills/refine]]`, `[[skills/research]]`, and
+`[[skills/review]]` are still here to be read, and reaching for one directly is
+reaching for depth rather than typing a command.
 
 **Pick the smallest process that produces a reliable result.**
 
 ```
-simple:   /specify → /tasks → /implement → /review → /commit
+simple:   /specify → /tasks → /implement
 complex:  /specify → research → prototype → /plan → /tasks
-          → parallel /implement → /review → /commit
+          → parallel /implement
 ```
 
 ## What to reach for
@@ -59,7 +58,6 @@ complex:  /specify → research → prototype → /plan → /tasks
 | turn an accepted spec into work | `[[skills/tasks]]` |
 | build a task | `[[skills/implement]]` |
 | judge finished work | `[[skills/review]]` |
-| land it | `[[skills/commit]]` |
 | establish an external fact | `[[skills/research]]` |
 | answer *can this work* | `[[skills/prototype]]` |
 | find where the codebase is costing you | `[[skills/survey]]` |
@@ -68,7 +66,7 @@ complex:  /specify → research → prototype → /plan → /tasks
 | make text read as though a person wrote it | `[[skills/prose]]` |
 | join a repository to AEP | `[[skills/install]]` |
 | move to a newer AEP release, or bring a 1.x repository forward | `[[skills/update]]` |
-| resolve a merge conflict | `[[skills/commit/conflicts]]` |
+| resolve a merge conflict | `[[skills/implement/conflicts]]` |
 | diagnose a bug whose cause is unknown | `[[skills/implement/diagnosing]]` |
 | clear out stale AEP artifacts | `[[skills/prune]]` |
 | carry work into a fresh session | `[[skills/handoff]]` |
@@ -78,13 +76,17 @@ branch sits beside it as `skills/<skill>/<note>.md` and is read only when the
 skill sends you there — so *what a good test asserts* or *how to prototype a UI*
 costs nothing on the runs that never ask.
 
+An effort is two files: **`spec.md` is what and why, `plan.md` is how.** Neither
+restates the other, and `plan.md` is written only where the approach is not
+obvious.
+
 ## Things people expect and will not find
 
-- **No `plan.md`.** Planning extends the same `spec.md`.
 - **No decisions directory.** The reasoning lives in the spec that made the
   change, beside the evidence that informed it.
-- **No mandatory tickets.** Local tickets are optional; external trackers stay
-  external and are never mirrored.
+- **No tickets in the tracker.** Tasks are files under the effort, so the
+  dependency graph stays machine-readable. The tracker carries the effort: one
+  issue, one pull request, no third object.
 - **No synchronization command.** Nothing reconciles the whole tree on a
   schedule. Verification happens where a statement is about to be relied on, and
   drift is fixed where it is found.

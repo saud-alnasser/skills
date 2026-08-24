@@ -1,8 +1,4 @@
 ---
-aep: 2.7.0
-owner: protocol
-date: 2026-08-19
-kind: policy
 use-when: "an effort is in progress — deriving tasks, dispatching, implementing, or reviewing"
 ---
 
@@ -24,14 +20,23 @@ the architecture to make the task work.
 *Why: a task that quietly wins over the spec means the delivered system is
 defined by whichever artifact was edited last, and nobody agreed to that one.*
 
-## One spec file
+## One claim, one place
 
-The effort has exactly one durable definition, and it is `spec.md`.
+An effort is defined by `spec.md`, what is changing and why, and by `plan.md`,
+how it will be built. **Two files, and no claim in both.**
 
-- **NEVER create `plan.md`.** Planning extends the same file with Architecture,
-  Components, Interfaces, Data Model, Technical Approach, Integration, Migration,
-  Testing Strategy, Operational Considerations, Technical Risks.
-- Tasks reference the spec; they MUST NOT copy large portions of it.
+- **A requirement, an acceptance criterion, or a scope boundary lives in
+  `spec.md` and is referenced from anywhere else.** A plan restating one creates
+  a second place it can change, and the two diverge on the first surprise.
+- **Tasks reference the spec; they MUST NOT copy large portions of it.** Every
+  task traces to a requirement in `spec.md`, and `[[skills/tasks]]` fails where
+  one traces to nothing: that check is what keeps the files honest, rather than
+  a rule against having two of them.
+
+*Why the check and not the ban: forbidding `plan.md` kept one claim in one file
+by keeping everything in one file, which also meant a reviewer agreeing to the
+problem had to read the approach to find it. The duplication was the thing worth
+preventing, and it is preventable directly.*
 
 ## Return to plan
 
@@ -45,6 +50,20 @@ stop → record evidence → [[skills/plan]] → update spec.md → update tasks
 **Never** patch the architecture in place and carry on. *Why: this is the moment
 implementation becomes an uncontrolled design process, and it always arrives when
 the work is nearly done and stopping is most expensive.*
+
+This is one of the **three conditions that may stop a run and reach the human**,
+and the only three:
+
+1. evidence invalidates the technical plan, above;
+2. the work touches a public contract or data at rest, whose blast radius is
+   outside this repository and not recoverable by amending a commit;
+3. a task contradicts `spec.md`, which means the tasks were cut wrong.
+
+Everything else a run notices is **recorded and carried to the close, never
+raised mid-run**. *Why a fixed set: a run exists so that a human intervenes at
+the idea rather than at the implementation, and every condition added here moves
+one decision back out of the run. These three are the ones where continuing is
+worse than stopping.*
 
 ## Scope stays where it was put
 
@@ -108,40 +127,135 @@ declaration is not making one.
 Parallelism MUST NOT compromise governance, the specification, repository
 integrity, or acceptance criteria.
 
-## Where the tasks are not in this repository
+## What reaches the tracker, and what does not
 
-Tasks may live in an external tracker, and **AEP never mirrors one into `.aep/`**
-— a local copy of an external ticket is exactly the hidden database this protocol
-does without. So the facts the tree would otherwise have held are held **by the
-tracker**, in a form the tracker can answer.
+**Exactly two objects per effort: one issue and one pull request.** AEP creates
+no other tracker object — not per ticket, not per wave, not per review.
 
-**An external task MUST be attributable to its effort by a query the tracker
-answers natively** — never by listing every open issue and judging from prose.
+| Lives in the tracker | Lives in the repository |
+| --- | --- |
+| the issue, whose body is `spec.md` | `spec.md` and `plan.md` themselves |
+| the pull request, carrying the approach, the tickets, and the run log | the tickets, under `efforts/<effort>/tickets/` |
+| labels, as a projection of what those files say | the dependency graph, as `blocked-by` |
 
-*Why: the frontier above is computed from declared edges. An agent that cannot
-ask which issues belong to this effort has no graph to read, so the rule against
-inferring independence stands with nothing behind it — and the cheapest way to
-satisfy it becomes working serially and saying nothing.*
+**A ticket is never a tracker object, and the dependency graph never leaves the
+repository.** *Why: the graph is read on every scheduling pass, and a graph
+living in a tracker is one an agent has to fetch, paginate, and interpret before
+it can compute a frontier. Local, it is a field in a file that a script reads.
+The tracker gains nothing from holding it: nobody schedules by hand.*
 
-**Exactly one fact is required: which effort the task belongs to.** Two others
-are deliberately excluded, and both exclusions are load-bearing:
+*Why one issue rather than one per ticket: an effort is what a human agreed to,
+and it is the unit they review and merge. Fifteen issues for one change is
+fifteen things to close and one thing nobody can see the shape of.*
 
-- **`status` is not carried separately.** The issue's own state already says open
-  or resolved. A second copy disagrees with the first the moment somebody closes
-  an issue from the tracker's own interface.
-- **A dependency edge is not carried as set membership.** Belonging to a group
-  and waiting on another task are different claims. A `blocked-by-42` marker has
-  to be removed by somebody when 42 closes, and nothing in the tracker knows to
-  do it — so it is wrong exactly when it matters.
+**Where the repository has a tracker, both objects are required**, and each links
+to the effort in both directions: the effort directory is named for the issue
+number, and both bodies name the effort's path. A run finding a tracker and an
+effort short of either object **opens what is missing and says so**.
 
-**What the tracker already models, the tracker carries.** Where a first-class
-feature answers the fact, that feature answers it, and nothing is created beside
-it. What is native differs per tracker, so it is established per tracker and
-never assumed.
+*Why this is stated rather than left implied: having no tracker is a real posture
+with its own procedure below, and an implied requirement makes that posture
+reachable by not asking. A run that never looked would land in the smaller shape
+with nothing to contradict it, and the effort would be half of what the protocol
+describes.*
 
-**None of this is mirroring.** The fact stays in the tracker, expressed in the
-tracker's own mechanism, read by the same people and tools that already read it.
-Nothing about the task is written into `.aep/`.
+### Where there is no tracker
+
+**The effort is a branch, and merging it is the human's.** No issue, no pull
+request, no tracker call at all. The number comes from a local counter, and the
+run's durable record is the repository:
+
+| Read | To recover |
+| --- | --- |
+| commits on the effort branch | which tickets landed |
+| ticked criteria in the ticket files | what is verified, and what verified it |
+| `spec.md`'s `status:` | whether the effort closed |
+
+The close is the same close with its second half absent: `spec.md` is stamped
+`implemented` and the run stops there, because there is no draft to mark ready
+and no labels to move. **The runner never merges — with a tracker or without.**
+
+*Why this needs saying: every step that closes an effort was written against a
+pull request, so a repository without one was not losing a projection, it was
+losing the run's memory. It has one only because tickets are local files — the
+ticks are in the repository already, and were being projected rather than
+stored.*
+
+**The tracker is read, and never mirrored into `.aep/`** — a local copy of a
+tracker object is exactly the hidden database this protocol does without, and it
+disagrees with the original the moment one is written and the other is not.
+
+**A tracker write to shared data is proposed before it happens**, with exact
+strings rather than a summary, because it lands in other people's workspace.
+
+## Labels are markings, never state
+
+**`spec.md` and `plan.md` are what the effort is. A label is a projection of
+them onto the tracker**, so that somebody scanning a list sees what the files
+say without opening either. **Where a label and the file disagree, the file
+wins** (`[[policies/authority]]`) and the label is corrected — never the
+reverse, and never by editing the file to match a label somebody changed.
+
+A repository with no tracker has nothing to project onto, and what it does
+instead is above.
+
+### Derived, and initial
+
+Every label AEP sets is one or the other, and the two are maintained
+differently. **Getting this backwards is how an agent overwrites a human.**
+
+| | Set | Then |
+| --- | --- | --- |
+| **derived** | from a file or a diff | **re-synced on every write** to the issue or the pull request |
+| **initial** | once, when the effort is opened | **never updated by an agent**, and a human's change to one is never overwritten |
+
+**Derived:** `status:` from the spec's state, `type:` from what the spec
+describes, `size:` from the diff, and every flag a fact establishes.
+
+**Initial:** `priority:`, and any flag that invites another person to act.
+
+*Why the split rather than one rule: a derived label restates something the
+repository already says, so re-syncing it can only correct drift. An initial
+label states a judgement the agent is not the authority on, and re-syncing that
+overwrites the human who is.*
+
+### What projects onto what
+
+`status:` is the family AEP requires, because it is what the effort's own state
+projects onto. A repository whose vocabulary differs records the mapping in its
+forge `[[references]]` rather than adding a second vocabulary beside its own.
+
+| The effort | Issue | Pull request |
+| --- | --- | --- |
+| the spec is being drafted | `status: backlog` | `status: backlog` |
+| the spec is accepted and the tickets are cut | `status: ready` | `status: ready` |
+| the runner is working | `status: in progress` | `status: in progress` |
+| converge found no gap, and the spec is stamped `implemented` | `status: in review` | `status: in review` |
+| merged | closed by the pull request | `status: done` |
+
+**`size:` is computed from the diff** when the pull request goes ready for
+review, against the thresholds the repository's own label descriptions state. A
+size label whose thresholds live somewhere else is one nobody can check.
+
+**A flag with no fact behind it is not set.** `breaking changes` comes from the
+public-contract trip-wire, `dependencies` and `release` from the diff,
+`discussion` while the spec carries open questions, `triage` on a fresh draft,
+`confirmed`, `unconfirmed`, and `cant reproduce` from a diagnosis, and `wontfix`
+when an effort is abandoned.
+
+### The vocabulary is the repository's
+
+**AEP sets every family — `status:`, `type:`, `size:`, `priority:`, `flag:` —
+using labels that already exist here.** It reads the list before naming
+anything, and a new label matches the separator, the casing, and the prefixing
+already in use.
+
+**Creating a label is reported, with the reason.** A label that appears in a
+tracker with no explanation is one nobody can tell from a mistake.
+
+**No label AEP sets names AEP.** A tracker is read by people who never installed
+it, and a vocabulary that advertises its tooling has stopped describing the
+work.
 
 ## Claiming, before dispatching
 
@@ -207,9 +321,26 @@ question may not be left unreadable.*
 A child returns one of four outcomes — **done, failed, stopped, waiting** — plus
 a path to what it produced and a compressed summary. Never a pasted diff.
 
+**What a child returns is capped**, and the cap is on the return rather than on
+the work: a child may read a thousand files and must hand back something whose
+size does not depend on how many. *Why: an orchestrator running a whole effort
+grows by one return per task, so an uncapped return makes the orchestrator's
+context a function of the work inside every task rather than of the number of
+them — and it degrades silently, which is the failure that writes a confident
+close over work it has forgotten.*
+
 The orchestrator **reconciles what the child claims against what it actually
 changed** before anything lands. A manifest that cannot be trusted still reads as
 a check that happened.
+
+**Each child is integrated as it returns, one at a time.** Not the batch at the
+end: a conflict then arrives as one pile with no task to name it, and what gets
+untangled is whichever child happened to be second. Integrated per task, a
+conflict surfaces at that task's integration and is named against that task.
+
+**The orchestrator is the only integrator.** A child works in its own worktree
+and never merges into the shared branch, because two children integrating
+themselves produce a conflict neither of them can see.
 
 Because the unit is a whole task, one child failing costs exactly that task: its
 siblings land, and it returns to the frontier.
@@ -250,3 +381,133 @@ rather than each child's summary concatenated.
 
 That account is text a human reads, so `[[policies/reporting]]` governs how it is
 written.
+
+## The run's memory is the pull request
+
+**The session is disposable. Nothing the run needs lives only in its context.**
+
+A run over a whole effort outlives the session that started it. It will cross a
+compaction boundary, and it may be killed and re-invoked. Neither stops it,
+because everything it needs is written down as it goes.
+
+### Where each thing lives
+
+| What | Where it is durable |
+| --- | --- |
+| which tickets are done | commits on the effort branch |
+| which criteria of a ticket are verified, and what verified each | **ticked checkboxes in the pull request body**, inline |
+| the ledger, the converge round, review attempts per ticket, items recorded but not acted on, anything a child raised that was not a trip-wire | a **collapsed run log section** of the pull request |
+
+**The orchestrator writes the run log as the run proceeds**, not at the end. A
+record written at the end is a record that does not exist for the failure it was
+meant to survive.
+
+**A failed write to the run log is a defect to report**, named and surfaced. It
+is never a silent continue: a run that carried on after losing its memory is a
+run that will later write a confident close over work nobody can find.
+
+### Ticking a criterion
+
+**A criterion's checkbox is ticked by `[[agents/reviewer-correctness]]`**, which
+already judges each requirement and each acceptance criterion against the diff.
+It is ticked **at the moment it is verified**, carrying inline what verified it.
+
+**The agent that wrote the code never ticks its own criteria.** *Why: a tick is
+the claim that somebody checked, and a claim checked by its own author is the
+thing the whole review axis exists to not be. It is also what makes resumption
+safe — a resumed run trusts a tick without re-deriving it.*
+
+### Resuming
+
+A resumed run reconstructs its position from the pull request, the issue, and
+the repository, **and from nothing else.** It **re-verifies nothing already
+ticked, and trusts nothing that is not.**
+
+**The tracker is read. It is never mirrored into `.aep/`.** A local copy of the
+run log is exactly the hidden database this protocol does without, and it
+disagrees with the original the moment one is written and the other is not.
+
+### Compaction
+
+**Auto-compaction is harmless and the run does not stop for it.** The summary
+loses whatever it loses; the run continues correctly because the pull request
+holds what it needs.
+
+***No AEP mechanism may depend on triggering compaction.*** An agent cannot
+invoke it. It is a command the human types, or a harness behaviour firing on its
+own schedule and choosing its own survivors, so a design that waits for it is
+waiting on something it does not control.
+
+## Converge decides when the effort is done
+
+**An exhausted ticket list and a satisfied spec are different claims.** Tickets
+are a map of the work, drawn before the work was done, and a map that runs out
+is not the territory being covered. So when no unresolved ticket remains the run
+**converges**: it assesses the codebase against `spec.md` and `plan.md`, and
+where the spec is unmet it appends the remaining work as tickets and carries on.
+
+**The effort is complete when a converge round finds no gap.** Not when the
+tickets run out.
+
+### Not built, or does not work
+
+Converge separates two findings that look identical from inside one diff:
+
+| What converge found | What it does |
+| --- | --- |
+| **work that was not built** | appends tickets, and the run continues |
+| **an approach that cannot satisfy a requirement** | stops on the return-to-plan trip-wire, above |
+
+**Converge never builds around the second.** A gap that keeps reappearing
+because the design cannot close it is the plan being wrong, and appending a
+ticket against it buys another round of the same failure while looking like
+progress. *Why this line matters more than it reads: autonomy below the plan is
+what a run is for, and converge is the one stage positioned to quietly acquire
+autonomy above it. `[[policies/engineering]]`'s prohibition on silently deciding
+architecture is what it would be evading.*
+
+### It appends. It never edits
+
+**Converge MUST NOT edit `spec.md` or `plan.md`.** It writes tickets, and one
+field of one file: `status` on `spec.md`, at the close, when the round found no
+gap.
+
+*Why: converge is the last thing running before the work is handed over, and it
+is the only stage with both the whole diff in view and nobody reviewing it. A
+converge that could edit the spec would be able to close every gap it found by
+narrowing what the spec asked for, and the run would end green having quietly
+agreed with itself. A spec that turns out to be wrong is a return-to-plan event,
+which reaches the human.*
+
+*Why `status` is nonetheless converge's to write: it is the only field that
+states a fact about the work rather than a requirement of it, so writing it
+cannot narrow the ask — the failure the paragraph above is about. Converge is
+also the only stage that ever holds the answer, since whether every criterion is
+met is not visible from any single diff. Withheld, the judgement is made and
+discarded, and the three artifacts that read `implemented` read a value nothing
+sets.*
+
+### Two rounds
+
+**Converge runs at most twice per effort.** Converge, build the gap, converge
+again. Past that the remaining gaps are named at the close and in the tracker,
+and the run ends rather than grinding.
+
+*Why two, and why not configurable: a third round finding new gaps means the plan
+was wrong rather than the work incomplete, and that is the return-to-plan
+trip-wire rather than more rounds. A configurable cap is a number nobody can set
+correctly until a run has already gone wrong.*
+
+### The two judgements a single diff cannot support
+
+Both are asked once the effort is whole, because neither is visible from one
+ticket:
+
+- **Is the effort implemented?** Every acceptance criterion in `spec.md` met —
+  not every ticket closed. A ticket can be resolved against a criterion nobody
+  checked.
+- **Did the change move a boundary, retire a concept, or falsify a
+  `[[contexts]]` or a `[[references]]`?** Read the effort's diff entire, which no
+  single ticket ever saw. **What it falsified is corrected in this effort**, so
+  the change and the thing it contradicts never land apart. A concept nobody had
+  named is a finding to report, never a licence to name it here.

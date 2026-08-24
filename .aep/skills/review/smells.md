@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "the Standards axis finds a design problem this repository documents no standard for"
 ---
 

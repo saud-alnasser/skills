@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "a prototype's question is what something should look like, and the answer is variants a human flips between"
 ---
 

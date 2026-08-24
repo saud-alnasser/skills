@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test, prototype]
 use-when: "a tool version here does not match what this repository pins, or its tasks need running"
 ---
 

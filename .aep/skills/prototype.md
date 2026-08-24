@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [prototype]
-report: full
 use-when: "a technical or design question will not settle on paper and needs building to answer"
 ---
 
@@ -13,7 +7,11 @@ use-when: "a technical or design question will not settle on paper and needs bui
 Builds the smallest disposable thing that settles a question, records the answer,
 and throws the code away. A **capability, never a stage**.
 
-**Enters `[[modes/prototype]]`.** Read it and hold its tradeoffs.
+**Posture.** Learn fast and assume uncertainty. Optimise for the speed of the
+experiment and for nothing else: no error handling you do not need in order to
+see the answer, no abstraction, no tests beyond what proves the point.
+**What this gives up** is maintainability, and the code itself — a prototype
+exists to produce an answer and is deleted once it has.
 
 ## When this is the right instrument
 
@@ -51,7 +49,7 @@ Result, Conclusion, and the disposition of the code.
 
 - **Prototype code MUST NOT become production code.** Promotion is an explicit
   decision recorded in the effort's `spec.md`, and what is promoted is
-  **rewritten** under `[[modes/implement]]` with the tests and handling a
+  **rewritten** under `[[skills/implement]]` with the tests and handling a
   prototype deliberately skipped. *Why: the value was the answer; keeping the
   code converts a learning tool into a liability that nobody remembers is one.*
 - **Record the answer even when it is "no"** — especially then. A rejected

@@ -32,13 +32,12 @@ const GENERATED_NOTICE =
 
 /** Top-level sections, in the order an agent discovers them. */
 const SECTIONS = [
-  { dir: 'policies', title: 'Policies', columns: ['Load when', 'Modes', 'Paths'] },
-  { dir: 'rules', title: 'Rules', columns: ['Load when', 'Modes', 'Paths'] },
+  { dir: 'policies', title: 'Policies', columns: ['Load when', 'Paths'] },
+  { dir: 'rules', title: 'Rules', columns: ['Load when', 'Paths'] },
   { dir: 'contexts', title: 'Contexts', columns: ['Load when', 'Paths'] },
-  { dir: 'references', title: 'References', columns: ['Load when', 'Modes'] },
-  { dir: 'modes', title: 'Modes', columns: ['Load when'] },
-  { dir: 'skills', title: 'Skills', columns: ['Load when', 'Modes'], flat: true },
-  { dir: 'agents', title: 'Agents', columns: ['Load when', 'Modes'] },
+  { dir: 'references', title: 'References', columns: ['Load when'] },
+  { dir: 'skills', title: 'Skills', columns: ['Load when'], flat: true },
+  { dir: 'agents', title: 'Agents', columns: ['Load when'] },
   { dir: 'templates', title: 'Templates', columns: ['Load when'] },
 ];
 
@@ -75,8 +74,7 @@ function collect(root, dir, { flat = false } = {}) {
  * They are indexed together rather than under their efforts because the question
  * a ticket index answers is cross-effort, *what can be worked right now*, and
  * that is read off `status` and `blocked-by`, not off which effort a ticket
- * belongs to. Returns an empty list where a repository keeps its tasks in an
- * external tracker, which is the common case.
+ * belongs to. Empty until an effort has had its tasks cut.
  */
 function collectTickets(root) {
   const effortsDir = path.join(root, 'efforts');
@@ -132,30 +130,19 @@ function collectEfforts(root) {
 }
 
 function render(root) {
-  const protocol = readArtifact(path.join(root, 'protocol.md'));
   const sections = SECTIONS.map((section) => ({
     ...section,
     rows: collect(root, section.dir, { flat: section.flat }),
   }));
   const efforts = collectEfforts(root);
 
-  // The index's own date is the newest an indexed artifact declares, which keeps
-  // regeneration byte-identical for an unchanged tree.
-  const dates = sections
-    .flatMap((section) => section.rows)
-    .map((row) => row.fields.date)
-    .concat(protocol.fields.date)
-    .filter((value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value))
-    .sort();
-  const newest = dates.length > 0 ? dates[dates.length - 1] : '1970-01-01';
-
+  // No frontmatter at all. The index is derived, so both fields it used to
+  // carry were answers to questions nothing asks of it: ownership is a lookup
+  // now, and the release is `protocol.md`'s to declare. Writing them anyway put
+  // retired fields into every tree AEP generates, which an upgrade then reports
+  // as written under an older contract -- true of the file, and nothing the
+  // repository could act on, since the next run of this script rewrites it.
   const out = [];
-  out.push('---');
-  out.push(`aep: ${protocol.fields.aep ?? 'unknown'}`);
-  out.push('owner: repository');
-  out.push(`date: ${newest}`);
-  out.push('---');
-  out.push('');
   out.push(GENERATED_NOTICE);
   out.push('');
   out.push('# AEP index');
@@ -180,7 +167,6 @@ function render(root) {
     for (const row of section.rows) {
       const values = section.columns.map((column) => {
         if (column === 'Load when') return cell(row.fields['use-when']);
-        if (column === 'Modes') return cell(row.fields.mode);
         if (column === 'Paths') return cell(row.fields.paths);
         return EM_DASH;
       });
@@ -208,15 +194,15 @@ function render(root) {
     }
   }
 
-  // Only where local tickets exist. A repository using an external tracker gets
-  // no section at all rather than an empty one. An empty table would read as
-  // "no work", when the truth is "the work is not indexed here".
+  // Only where tickets exist. A repository whose efforts have not been cut into
+  // tasks gets no section at all rather than an empty one: an empty table reads
+  // as "no work", when the truth is "no effort has been decomposed yet".
   const tickets = collectTickets(root);
   if (tickets.length > 0) {
     out.push('');
     out.push('## Tickets');
     out.push('');
-    out.push('Local tickets only. Where an external tracker holds the work, it is not mirrored here.');
+    out.push('Every task of every effort. The tracker carries the effort, never its tasks.');
     out.push('');
     out.push('| Ticket | Effort | Status | Blocked by |');
     out.push('| --- | --- | --- | --- |');

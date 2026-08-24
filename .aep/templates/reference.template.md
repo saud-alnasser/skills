@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "recording how a tool is actually operated in this repository"
 ---
 
@@ -12,11 +9,6 @@ they describe *this* repository's usage, never an ecosystem in the abstract.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: reference
-mode: [<modes this is relevant to>]
 use-when: "<when an agent needs this tool>"
 ---
 

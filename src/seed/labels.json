@@ -1,0 +1,179 @@
+{
+  "$comment": [
+    "A starting point, not a description of what this repository already has.",
+    "install offers this set only where the tracker carries nothing but its own",
+    "defaults. A repository with labels of its own keeps them, and AEP maps onto",
+    "what is there rather than adding a second vocabulary beside it.",
+    "Every description states the trigger that puts the label on, because a",
+    "description that restates the name tells a reader nothing they did not have,",
+    "and size: in particular is unusable without its thresholds written down.",
+    "No label here names AEP. A tracker is read by people who never installed it."
+  ],
+  "families": {
+    "status": {
+      "why": "where the effort stands, projected from spec.md's status: field. Derived: re-synced on every write, and the file wins when they disagree.",
+      "labels": [
+        {
+          "name": "status: backlog",
+          "color": "e4e669",
+          "description": "Specified but not yet accepted. Set while the spec is still a draft."
+        },
+        {
+          "name": "status: ready",
+          "color": "0e8a16",
+          "description": "Accepted and cut into tickets. Nothing is blocking a start."
+        },
+        {
+          "name": "status: in progress",
+          "color": "1d76db",
+          "description": "Work has started. Set when the first ticket is taken."
+        },
+        {
+          "name": "status: in review",
+          "color": "5319e7",
+          "description": "Converge found no gap and the pull request is ready for a human."
+        },
+        {
+          "name": "status: done",
+          "color": "0e8a16",
+          "description": "Merged. Set on the pull request; the issue closes with it."
+        }
+      ]
+    },
+    "type": {
+      "why": "what kind of change this is, read from what the spec describes. Derived.",
+      "labels": [
+        {
+          "name": "type: feature",
+          "color": "a2eeef",
+          "description": "Adds behaviour that did not exist. Use when the spec states a new capability."
+        },
+        {
+          "name": "type: bug",
+          "color": "d73a4a",
+          "description": "Restores behaviour that was specified and is not happening."
+        },
+        {
+          "name": "type: refactor",
+          "color": "fbca04",
+          "description": "Changes structure with no change in behaviour. Use when no acceptance criterion is about output."
+        },
+        {
+          "name": "type: docs",
+          "color": "0075ca",
+          "description": "Changes what is written rather than what runs."
+        },
+        {
+          "name": "type: chore",
+          "color": "cfd3d7",
+          "description": "Maintenance with no product effect: tooling, configuration, housekeeping."
+        }
+      ]
+    },
+    "size": {
+      "why": "how much diff a reviewer is being asked to read, computed from the diff when the pull request goes ready. Derived. The thresholds live in the descriptions, so the label can be recomputed by anyone without a second document.",
+      "labels": [
+        {
+          "name": "size: xs",
+          "color": "c2e0c6",
+          "description": "Under 10 changed lines."
+        },
+        {
+          "name": "size: s",
+          "color": "c2e0c6",
+          "description": "10 to 99 changed lines."
+        },
+        {
+          "name": "size: m",
+          "color": "fef2c0",
+          "description": "100 to 499 changed lines."
+        },
+        {
+          "name": "size: l",
+          "color": "f9d0c4",
+          "description": "500 to 999 changed lines."
+        },
+        {
+          "name": "size: xl",
+          "color": "e99695",
+          "description": "1000 changed lines or more. Consider whether this is one effort."
+        }
+      ]
+    },
+    "priority": {
+      "why": "how soon this matters. Initial: set once when the effort is opened, from the human's answer, and never revised by an agent. A human's change to one is never overwritten.",
+      "labels": [
+        {
+          "name": "priority: critical",
+          "color": "b60205",
+          "description": "Work stops elsewhere until this lands."
+        },
+        {
+          "name": "priority: high",
+          "color": "d93f0b",
+          "description": "Wanted in the current cycle."
+        },
+        {
+          "name": "priority: medium",
+          "color": "fbca04",
+          "description": "Wanted, with no date attached."
+        },
+        {
+          "name": "priority: low",
+          "color": "0e8a16",
+          "description": "Worth doing when nothing above it is waiting."
+        }
+      ]
+    },
+    "flag": {
+      "why": "a fact that changes how someone reads the effort. Each is set only where a fact establishes it, and a flag with no fact behind it is not set. The two that invite another person to act, discussion and wontfix, are initial rather than derived.",
+      "labels": [
+        {
+          "name": "flag: breaking changes",
+          "color": "b60205",
+          "description": "Changes a public contract or data at rest. Set when the trip-wire fires."
+        },
+        {
+          "name": "flag: dependencies",
+          "color": "0366d6",
+          "description": "Changes a dependency manifest or a lockfile."
+        },
+        {
+          "name": "flag: release",
+          "color": "1d76db",
+          "description": "Changes what a release publishes: version, changelog, or packaging."
+        },
+        {
+          "name": "flag: discussion",
+          "color": "d876e3",
+          "description": "The spec still carries open questions. Set to invite an answer."
+        },
+        {
+          "name": "flag: triage",
+          "color": "e4e669",
+          "description": "A fresh draft nobody has judged yet."
+        },
+        {
+          "name": "flag: confirmed",
+          "color": "0e8a16",
+          "description": "Reproduced, or otherwise established as real."
+        },
+        {
+          "name": "flag: unconfirmed",
+          "color": "fef2c0",
+          "description": "Reported and not yet reproduced."
+        },
+        {
+          "name": "flag: cant reproduce",
+          "color": "cfd3d7",
+          "description": "Attempted and not reproduced. Says what was tried."
+        },
+        {
+          "name": "flag: wontfix",
+          "color": "ffffff",
+          "description": "Abandoned deliberately. Set on both objects when an effort is dropped."
+        }
+      ]
+    }
+  }
+}

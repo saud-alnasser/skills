@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "the plan must put alternative approaches on the table and the first idea is the only one anyone has produced"
 ---
 

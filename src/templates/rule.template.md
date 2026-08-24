@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "adding a rule this repository discovered about how work must be done here"
 ---
 
@@ -26,11 +23,6 @@ template there is: a constraint you need that AEP does not impose is a rule.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: rule
-mode: [<modes this is relevant to>]     # omit if it applies regardless
 paths:                                   # omit if it is not path-scoped
   - src/<area>/**
 use-when: "<the trigger that makes this applicable>"

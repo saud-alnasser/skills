@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: policy
 use-when: "writing code, or about to state anything about this repository you have not verified"
 ---
 
@@ -63,6 +59,12 @@ exists, put the options on the table — each named, with what it buys, what it
 costs, what it risks, and what it means for maintenance — recommend one, and let
 the human choose. **An alternative left unmentioned is a decision made silently.**
 
+**A converge round is not a way around this.** Converge closes gaps below the
+plan and raises anything above it (`[[policies/execution]]`). A requirement the
+approach cannot satisfy is the plan being wrong, and a ticket appended against it
+is this prohibition being evaded one round at a time — which reads as progress,
+because a ticket got written.
+
 ## Publishing
 
 Never push, never publish, never open a pull request unasked
@@ -106,7 +108,7 @@ Those are the only two kinds.
   decision is an architecture chosen by whoever ran the search.*
 - **Prototype code is disposable.** It MUST NOT automatically become production
   code; promotion is an explicit decision recorded in `spec.md`, and what is
-  promoted is rewritten under `[[modes/implement]]`.
+  promoted is rewritten under `[[skills/implement]]`.
 - **Grill is not evidence.** It is a mechanism; its conclusions land in the spec,
   a policy, a rule, a context, or an evidence file. There is no `grill/`
   directory.

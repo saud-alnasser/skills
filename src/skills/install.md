@@ -1,10 +1,4 @@
 ---
-aep: 2.7.0
-owner: protocol
-date: 2026-08-19
-kind: skill
-mode: [implement]
-report: full
 use-when: "a repository has no .aep/ directory and should start running AEP"
 ---
 
@@ -38,10 +32,12 @@ whichever runtime adapters the repository asks for.
    node <distribution>/scripts/install.mjs --into <repository>
    ```
 
-   It writes `protocol.md`, `rules/`, `modes/`, `skills/`, `agents/`,
-   `templates/`, `scripts/`, and `.aep/.gitignore` — all `owner: protocol`,
-   verbatim. It **refuses to overwrite any `owner: repository` file** and reports
-   what it skipped.
+   It writes `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`,
+   `scripts/`, and `.aep/.gitignore` verbatim — everything the release ships,
+   which it knows by exact path. It **writes nothing outside that set**, so
+   `rules/`, `contexts/`, `references/`, and `efforts/` are yours and stay
+   untouched, and it reports anything of yours found standing where the protocol
+   ships.
 
    It then seeds the repository-owned starting points, **each only where the
    evidence is there**:
@@ -85,20 +81,27 @@ whichever runtime adapters the repository asks for.
 
 5. **Generate the index**: `node .aep/scripts/index.mjs`.
 
-6. **Check the entrypoint.** The installer writes `AGENTS.md` at the repository
-   root from the entrypoint seed **only where there is none** — an entrypoint
-   that already exists is the repository's, and may carry instructions predating
-   AEP.
+6. **Check the entrypoints.** The installer writes two kinds, and neither
+   overwrites anything:
 
-   - **Written fresh:** replace its first line with what this repository actually
-     is. The rest already points where it should.
-   - **Already there:** add a *Start here* section pointing at
-     `.aep/protocol.md`, and change nothing else. `[[templates/agents.template]]`
-     has the shape, and the same shape covers a second runtime's entrypoint —
-     `CLAUDE.md` or its equivalent — which is one line pointing at `AGENTS.md`.
+   | | Written | Where one already exists |
+   | --- | --- | --- |
+   | **`AGENTS.md`**, the canonical entry | from the entrypoint seed, only where there is none | left exactly as it is |
+   | **one per targeted runtime** that reads something else — `CLAUDE.md` for Claude Code | as a pointer to `AGENTS.md`, and nothing else | the pointer is appended and the rest is untouched |
 
-   **Never restate protocol.md's content there.** A summary in the entrypoint is
-   a second home, and it is the copy that drifts (`[[policies/artifacts]]`).
+   **Which file a runtime reads is the installer's to know**, from the same
+   target table that decides where its wrappers land. A runtime that reads
+   `AGENTS.md` gets no second file: a pointer from a file to itself is a loop.
+
+   **What is left for you** is the one thing the installer cannot write:
+   `AGENTS.md`'s first line, which says what this repository actually is.
+   Replace it. The rest already points where it should.
+
+   **A pointer names `AGENTS.md` and nothing under `.aep/`.** Two files naming
+   the bootstrap is two files to change the day the entry moves, and the runtime
+   loads the stale one first. **Never restate `protocol.md`'s content in any of
+   them** — a summary in an entrypoint is a second home, and it is the copy that
+   drifts (`[[policies/artifacts]]`).
 
 7. **Offer a runtime adapter.** Ask first — files outside `.aep/` belong to the
    repository. `--adapters <names>` takes a comma-separated list and writes
@@ -125,15 +128,43 @@ whichever runtime adapters the repository asks for.
    the repository across users. Pick by which of those the repository needs, and
    say which was picked.
 
-8. **Validate**, and report the output:
+8. **Offer the label vocabulary — only where the tracker has none of its own.**
+
+   **Where the repository has no tracker, skip this step and say it was
+   skipped.** Labels project a file onto a tracker, and a projection with no
+   surface is not a smaller offer, it is no offer: seeding a vocabulary nobody
+   can apply leaves a repository carrying a list it will read as work owed
+   (`[[policies/execution]]`). Nothing else about the install changes.
+
+   Otherwise read the list first (`[[references]]` for this forge). What you find
+   decides which of two things happens, and they are not the same offer:
+
+   | The tracker carries | Do |
+   | --- | --- |
+   | only its own defaults | offer the seeded set, and say that accepting it **removes the defaults** |
+   | labels of its own | create **only what is missing**, named in that repository's style — its separator, its casing, its prefixing |
+
+   **Show the exact strings before creating anything**, names and descriptions
+   both, and create nothing on a refusal. It lands in other people's workspace
+   (`[[policies/authority]]`).
+
+   **A description states the trigger that puts the label on.** The seeded set is
+   written that way, and a `size:` label in particular is unusable without its
+   thresholds in its own description — nobody can check or recompute a label
+   whose rule lives in another document.
+
+   **Nothing created here names AEP** (`[[policies/execution]]`). A tracker is
+   read by people who never installed it.
+
+9. **Validate**, and report the output:
 
    ```
    node .aep/scripts/validate.mjs
    ```
 
-9. **Name what still needs a human**: which seeds were installed and remain
-   unverified, what `contexts/` lacks, and which rules this repository will want
-   to add that AEP cannot know about.
+10. **Name what still needs a human**: which seeds were installed and remain
+    unverified, `AGENTS.md`'s first line, what `contexts/` lacks, and which rules
+    this repository will want to add that AEP cannot know about.
 
 ## Constraints
 

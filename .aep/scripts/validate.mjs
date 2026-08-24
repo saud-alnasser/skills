@@ -10,27 +10,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  DIRECTORY_OWNERS,
+  PROTOCOL_DIRS,
   FORBIDDEN_DIRS,
-  KINDS,
-  MODES,
-  OWNERS,
-  REPORT_FORMS,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
-  isIsoDate,
   isNonEmptyString,
   readArtifact,
   resolveAepRoot,
   toPosix,
   walk,
   wikiLinks,
+  isProtocolPath,
+  RETIRED_FIELDS,
+  useWhenProblems,
 } from './contract.mjs';
 
 const PROTOCOL_BUDGET_BYTES = 8192;
 
 const failures = [];
+const skippedEfforts = [];
 let checked = 0;
 
 function fail(where, message) {
@@ -50,66 +49,46 @@ function checkArtifact(root, file) {
   const artifact = readArtifact(file);
   checked += 1;
 
+  // Ownership is a fact about location, so a protocol directory holds exactly
+  // what the protocol ships. A file here the manifest does not name is either
+  // something a release retired and nobody pruned, or something the repository
+  // wrote where it may not, and both are defects that hide until an upgrade
+  // walks past them.
+  //
+  // This is what the `owner:` field used to say per artifact. It says it once,
+  // for every directory, and it catches the case the field never could: a file
+  // that simply omits the declaration.
+  if (PROTOCOL_DIRS.includes(topDir) && !isProtocolPath(rel)) {
+    fail(rel, `${topDir}/ holds only what the protocol ships, and this release ships ` +
+      'no such file. Repository-owned governance belongs under rules/, orientation ' +
+      'under contexts/, and tool operation under references/');
+  }
+
   if (!artifact.hasFrontmatter) {
-    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ must declare aep, owner, date');
+    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ declares at least a use-when');
     return;
   }
   for (const error of artifact.errors) fail(rel, `frontmatter ${error}`);
 
   const { fields } = artifact;
 
-  // Required on every artifact.
-  if (!isNonEmptyString(fields.aep)) fail(rel, 'missing required field: aep');
-  if (!isNonEmptyString(fields.owner)) fail(rel, 'missing required field: owner');
-  else if (!OWNERS.includes(fields.owner)) {
-    fail(rel, `owner is "${fields.owner}", must be one of: ${OWNERS.join(', ')}`);
-  } else if (DIRECTORY_OWNERS[topDir] && fields.owner !== DIRECTORY_OWNERS[topDir]) {
-    // The two governance directories admit one owner each. A policy is AEP's law
-    // and a rule is the repository's, so the misplacement is the defect. An
-    // upgrade preserves such a file rather than overwriting it, and this is what
-    // says so afterwards.
-    const belongs = fields.owner === 'protocol' ? 'policies/' : 'rules/';
-    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]}, and this declares ` +
-      `owner: ${fields.owner}, which belongs under ${belongs}`);
+  // The retired fields. Ownership is a fact about location, the release is named
+  // once in the bootstrap, and the rest were read by nothing.
+  //
+  // Rejected on a path the protocol ships, and tolerated everywhere else. A
+  // repository's own rules and contexts were written under the old contract and
+  // an upgrade never edits them, so failing them would fail a tree for carrying
+  // exactly what AEP handed it and then refused to touch.
+  const retired = RETIRED_FIELDS.filter((field) => fields[field] !== undefined);
+  if (retired.length > 0 && isProtocolPath(rel)) {
+    fail(rel, `carries retired frontmatter: ${retired.join(', ')}. ` +
+      'Ownership is decided by location, the release is named once in protocol.md, ' +
+      'and the rest are read by nothing');
   }
-  if (!isNonEmptyString(fields.date)) fail(rel, 'missing required field: date');
-  else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}", must be a real YYYY-MM-DD`);
 
   // Situational fields, when present.
-  if (fields.kind !== undefined && !KINDS.includes(fields.kind)) {
-    fail(rel, `kind is "${fields.kind}", must be one of: ${KINDS.join(', ')}`);
-  }
-  if (fields.mode !== undefined) {
-    if (!Array.isArray(fields.mode)) {
-      fail(rel, 'mode must be a YAML array, e.g. mode: [implement, review]');
-    } else {
-      for (const mode of fields.mode) {
-        if (!MODES.includes(mode)) {
-          fail(rel, `mode "${mode}" is not one of: ${MODES.join(', ')}`);
-        }
-      }
-    }
-  }
   if (fields.paths !== undefined && !Array.isArray(fields.paths)) {
     fail(rel, 'paths must be a YAML array');
-  }
-
-  // `report` says which form a skill's turn report takes. It is forbidden on a
-  // note beside a skill: a note is reached from inside a run rather than
-  // invoked, so declaring a form would claim something untrue about it.
-  const isSkill = /^skills\/[^/]+\.md$/.test(rel);
-  if (isSkill) {
-    if (fields.report === undefined) {
-      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')}. ` +
-        'Without it, what this skill tells the human has no defined shape');
-    } else if (!REPORT_FORMS.includes(fields.report)) {
-      fail(rel, `report is "${fields.report}", must be one of: ${REPORT_FORMS.join(', ')}`);
-    }
-  } else if (fields.report !== undefined) {
-    const note = /^skills\/[^/]+\/.+\.md$/.test(rel);
-    fail(rel, note
-      ? 'report is legal only on a skill. A note is reached from one and opens no report of its own'
-      : 'report is legal only on a skill');
   }
 
   // A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md`,
@@ -130,6 +109,19 @@ function checkArtifact(root, file) {
     fail(rel, `${topDir}/ requires use-when. Without it this artifact can never be selected`);
   }
 
+  // And wherever one is present it must be a trigger. This is the whole of
+  // applicability-first loading resting on one field, so the field is checked
+  // rather than trusted.
+  if (fields['use-when'] !== undefined) {
+    const heading = (artifact.body.match(/^#\s+(.+)$/m) ?? [])[1] ?? '';
+    const problems = useWhenProblems(fields['use-when'], {
+      heading,
+      name: path.basename(rel, '.md'),
+      directory: topDir,
+    });
+    for (const problem of problems) fail(rel, `use-when ${problem}`);
+  }
+
   // `status`, `blocked-by`, `part-of` are legal only where they mean something.
   const isSpec = /^efforts\/[^/]+\/spec\.md$/.test(rel);
   const isTicket = /^efforts\/[^/]+\/tickets\//.test(rel);
@@ -144,10 +136,8 @@ function checkArtifact(root, file) {
   } else if (isSpec) {
     fail(rel, 'an effort spec.md must declare status');
   }
-  for (const field of ['blocked-by', 'part-of']) {
-    if (fields[field] !== undefined && !isTicket) {
-      fail(rel, `${field} is legal only on a local ticket`);
-    }
+  if (fields['blocked-by'] !== undefined && !isTicket) {
+    fail(rel, 'blocked-by is legal only on a local ticket');
   }
 
   // Links.
@@ -158,10 +148,142 @@ function checkArtifact(root, file) {
   }
 }
 
+/**
+ * The numbers a spec actually defines, under one of its numbered headings.
+ *
+ * Requirements and acceptance criteria are top-level ordered lists whose
+ * numbering runs on across subheadings, so the section is read from its heading
+ * to the next one at the same level. Reading them is what makes a citation
+ * checkable rather than merely present.
+ */
+function numbersUnder(specBody, heading) {
+  const start = specBody.search(new RegExp(String.raw`^#\s+${heading}\s*$`, 'm'));
+  if (start < 0) return new Set();
+  const rest = specBody.slice(start);
+  const end = rest.slice(1).search(/^#\s+/m);
+  const section = end < 0 ? rest : rest.slice(0, end + 1);
+  const numbers = new Set();
+  for (const match of section.matchAll(/^(\d+)\.\s/gm)) numbers.add(Number(match[1]));
+  return numbers;
+}
+
+/** Every `Requirement N` / `Criterion N` a ticket cites, in order of appearance. */
+function citations(ticketBody) {
+  const start = ticketBody.search(/^##\s+Acceptance Criteria\s*$/m);
+  if (start < 0) return [];
+  const rest = ticketBody.slice(start);
+  const end = rest.slice(1).search(/^##\s+/m);
+  const section = end < 0 ? rest : rest.slice(0, end + 1);
+  return [...section.matchAll(/\b(requirement|criterion|criteria)\s+(\d+)/gi)].map((match) => ({
+    kind: match[1].toLowerCase() === 'requirement' ? 'requirement' : 'criterion',
+    number: Number(match[2]),
+  }));
+}
+
+/**
+ * A ticket whose criteria trace to no requirement in the spec is an error.
+ *
+ * This is what replaces the rule that kept the change and its architecture in
+ * one file. Two files can drift apart; a citation that has to resolve cannot
+ * drift quietly.
+ *
+ * A citation is checked against what the spec numbers rather than merely for
+ * being present, because a renumbered spec leaves behind references that still
+ * look like references. `obsolete` is skipped: the whole point of that status is
+ * that the spec moved on without the ticket.
+ */
+function checkTraceability(root) {
+  const effortsDir = path.join(root, 'efforts');
+  if (!fs.existsSync(effortsDir)) return;
+
+  for (const entry of fs.readdirSync(effortsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const ticketsDir = path.join(effortsDir, entry.name, 'tickets');
+    const specFile = path.join(effortsDir, entry.name, 'spec.md');
+    if (!fs.existsSync(ticketsDir) || !fs.existsSync(specFile)) continue;
+
+    const spec = readArtifact(specFile);
+
+    // A landed effort is left exactly as it is. Its spec and its tickets are the
+    // record of what was reviewed, and this check exists to stop a live effort's
+    // two files from drifting apart, which is a risk only while it is being
+    // built. Requirement 48 of aep-3 states the same principle for migration.
+    if (spec.fields.status === 'implemented') {
+      // The stamp is the close's, and the close comes after a converge round
+      // found no gap, so unresolved work under an implemented spec is a stamp
+      // made ahead of the work. Only this direction is checkable: every ticket
+      // being resolved does not mean the effort is done, because converge may
+      // still append.
+      const early = walk(ticketsDir)
+        .filter((file) => file.endsWith('.md'))
+        .filter((file) => readArtifact(file).fields.status === 'open')
+        .map((file) => toPosix(root, file));
+      if (early.length > 0) {
+        fail(`efforts/${entry.name}/spec.md`,
+          `is "implemented" while ${early.join(', ')} is still open. The stamp is ` +
+          'written when a converge round finds no gap, never ahead of the work');
+      }
+      skippedEfforts.push(entry.name);
+      continue;
+    }
+
+    const requirements = numbersUnder(spec.body, 'Requirements');
+    const criteria = numbersUnder(spec.body, 'Acceptance Criteria');
+    const tickets = walk(ticketsDir).filter((file) => file.endsWith('.md'));
+
+    if (requirements.size === 0 && criteria.size === 0) {
+      if (tickets.length > 0) {
+        fail(`efforts/${entry.name}/spec.md`,
+          `numbers no requirements and no acceptance criteria, so none of its ` +
+          `${tickets.length} ticket(s) can trace to one. Number them, or the tickets ` +
+          'are the only definition of the change');
+      }
+      continue;
+    }
+
+    for (const file of tickets) {
+      const rel = toPosix(root, file);
+      const ticket = readArtifact(file);
+      if (ticket.fields.status === 'obsolete') continue;
+
+      // The status is the claim the work is done and the ticks are its evidence,
+      // so an open box under a resolved ticket is the claim with the evidence
+      // removed. Exempt above: an obsolete ticket, and every ticket under an
+      // implemented effort, which is the record of what was reviewed.
+      if (ticket.fields.status === 'resolved') {
+        const open = (ticket.body.match(/^\s*- \[ \]/gm) ?? []).length;
+        if (open > 0) {
+          fail(rel, `is "resolved" with ${open} acceptance criterion/criteria unticked. ` +
+            'A criterion is ticked when it is verified; one that cannot be met parks the ' +
+            'ticket unresolved or marks it obsolete');
+        }
+      }
+
+      const cited = citations(ticket.body);
+      if (cited.length === 0) {
+        fail(rel, 'its acceptance criteria cite no requirement or criterion of ' +
+          `efforts/${entry.name}/spec.md. A ticket that traces to nothing is either ` +
+          'scope nobody asked for, or a requirement the spec is missing');
+        continue;
+      }
+
+      const defined = (kind) => (kind === 'requirement' ? requirements : criteria);
+      if (!cited.some(({ kind, number }) => defined(kind).has(number))) {
+        const dangling = cited.map(({ kind, number }) => `${kind} ${number}`).join(', ');
+        fail(rel, `cites ${dangling}, and the spec numbers none of them. Either the ` +
+          'spec was renumbered under the ticket, or the ticket was written against a ' +
+          'spec that no longer says this');
+      }
+    }
+  }
+}
+
 function checkStructure(root) {
   for (const forbidden of FORBIDDEN_DIRS) {
     if (fs.existsSync(path.join(root, forbidden))) {
-      fail(`${forbidden}/`, 'this directory was retired and must not exist. See protocol.md');
+      fail(`${forbidden}/`, 'this directory was retired and must not exist. What it ' +
+        'held has moved or was dropped, and the notices for the release that retired ' +
+        'it say which. Move anything of yours out of it, then delete it');
     }
   }
 
@@ -192,9 +314,6 @@ function checkStructure(root) {
     for (const entry of fs.readdirSync(effortsDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       const effort = path.join(effortsDir, entry.name);
-      if (fs.existsSync(path.join(effort, 'plan.md'))) {
-        fail(`efforts/${entry.name}/plan.md`, 'plan.md must not exist. Planning extends spec.md');
-      }
       if (!fs.existsSync(path.join(effort, 'spec.md'))) {
         fail(`efforts/${entry.name}/`, 'an effort must have a spec.md');
       }
@@ -220,6 +339,7 @@ function main() {
   }
 
   checkStructure(root);
+  checkTraceability(root);
 
   const artifacts = walk(root, { skip: ['position', 'worktrees'] })
     .filter((file) => file.endsWith('.md') && path.basename(file) !== 'index.md');
@@ -234,8 +354,17 @@ function main() {
   if (failures.length === 0) {
     if (!quiet) {
       process.stdout.write(`${checked} artifacts checked, no failures\n`);
+      if (skippedEfforts.length > 0) {
+        process.stdout.write(
+          `Traceability not checked for ${skippedEfforts.length} implemented effort(s): ` +
+          `${skippedEfforts.join(', ')}. A landed effort is the record of what was reviewed.
+`,
+        );
+      }
       process.stdout.write(
-        'Not checked mechanically: whether each use-when states a trigger rather than a topic.\n',
+        'Not checked mechanically: whether a use-when shaped like a trigger names the right\n' +
+        'occasion. The checks reject a topic; they cannot tell a correct trigger from a\n' +
+        'plausible wrong one.\n',
       );
     }
     return;

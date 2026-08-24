@@ -1,9 +1,4 @@
 ---
-aep: 2.6.0
-owner: repository
-date: 2026-08-18
-kind: reference
-mode: [implement, review]
 use-when: "running AEP through T3 Code, or explaining why a skill is or is not offered there"
 ---
 

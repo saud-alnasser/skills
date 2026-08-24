@@ -1,10 +1,5 @@
 ---
-aep: 2.4.0
-owner: repository
-date: 2026-08-17
-kind: ticket
 status: resolved
-part-of: context-namespacing
 ---
 
 # feat(validate): a context sits one project directory deep, no more

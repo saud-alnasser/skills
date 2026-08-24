@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: policy
 use-when: "two sources disagree, or the work reaches a repository other than this one"
 ---
 
@@ -56,6 +52,17 @@ contradict it, or opt out of it.
 A repository that genuinely must differ from a policy records a **declared
 deviation** (`[[policies/artifacts]]`), with its reason and the release it was
 declared under. It does not resolve the conflict in passing.
+
+**A rule is legal against the release it was written under, and an upgrade is
+where that is rechecked.** Law moves and the rule does not, so a tightening
+written under one release can be a contradiction under the next. Where a crossed
+release changes a policy a rule cites, `[[skills/update]]` reconciles the two:
+the rule is rewritten to the new law, or the difference becomes a deviation that
+says so.
+
+*Why there and not here: validation runs against a single release and sees two
+files that agree. The disagreement exists only across a release boundary, and the
+upgrade is the one step standing on both sides of one.*
 
 ## When the order does not settle it
 

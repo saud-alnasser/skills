@@ -1,10 +1,5 @@
 ---
-aep: 2.2.0
-owner: repository
-date: 2026-08-17
-kind: ticket
 status: resolved
-part-of: tracker-labels
 ---
 
 # docs(references): the forge references carry verified operations

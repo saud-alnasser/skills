@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, review]
 use-when: "reproducing this project's Vercel build locally, or reading its deployment configuration"
 ---
 

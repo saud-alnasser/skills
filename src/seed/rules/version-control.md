@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: rule
-mode: [implement, review]
 use-when: "committing, branching, or preparing work to land"
 ---
 
@@ -38,7 +33,7 @@ Conventional Commits — `type(scope): summary`.
   diff already lists the files.
 - Never `--no-verify`; never bypass signing. A failing hook is a finding, not an
   obstacle.
-- **Committing is part of finishing.** `[[skills/commit]]` runs when work is
+- **Committing is part of finishing.** `[[skills/implement]]` lands work when it is
   reviewed and ready; it does not wait to be asked. What waits to be asked is
   everything in the right-hand column above.
 

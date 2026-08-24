@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, plan, review]
 use-when: "reading or changing this repository's Kubernetes manifests, charts, or overlays"
 ---
 

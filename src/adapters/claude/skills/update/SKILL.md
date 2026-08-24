@@ -1,6 +1,6 @@
 ---
 name: update
-description: Move a repository to the running release. Use when the running AEP release differs from the one this repository declares, protocol files look wrong, or the repository still carries a 1.x layout.
+description: Move a repository to the running release. Use when the running AEP release differs from the one this repository declares, protocol files look wrong, or the repository still carries a 1.x or 2.x layout.
 metadata:
   aep: adapter
   canonical: .aep/skills/update.md

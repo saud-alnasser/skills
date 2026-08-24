@@ -1,7 +1,4 @@
 ---
-aep: 2.5.0
-owner: protocol
-date: 2026-08-17
 use-when: "adding orientation for an area of this repository"
 ---
 
@@ -18,10 +15,6 @@ one project has a single context and no name to fight over, flat is right.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: context
 paths:                                   # omit if the area is not path-shaped
   - src/<area>/**
 use-when: "<the trigger — working on X, changing Y>"

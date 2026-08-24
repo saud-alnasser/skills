@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [review]
-report: full
 use-when: "the .aep/ tree has accumulated stale, contradicted, or orphaned artifacts"
 ---
 
@@ -14,7 +8,10 @@ Finds AEP artifacts that have gone stale, contradict the repository, or point
 nowhere — and removes or repairs them. Deleting knowledge is destructive, so
 this skill proposes and the human disposes.
 
-**Enters `[[modes/review]]`.**
+**Posture.** Skeptical of the tree rather than of a diff: assume some of what
+is written here stopped being true and nobody noticed. **What this gives up**
+is the safety of leaving things alone — every proposal here is a proposal to
+delete, and the human disposes.
 
 ## Procedure
 

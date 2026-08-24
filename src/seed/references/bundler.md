@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test]
 use-when: "installing gems or running this Ruby project's commands"
 ---
 

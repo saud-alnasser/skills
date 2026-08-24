@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: agent
-mode: [implement]
 use-when: "a whole task is ready to build and the declared edges leave it gating none of the others"
 ---
 
@@ -18,8 +13,10 @@ member gates.
 
 ## You are bound by
 
-`[[policies/execution]]` — read it first; nothing here repeats it. Your posture is
-`[[modes/implement]]`; hold its tradeoffs as yours.
+`[[policies/execution]]` — read it first; nothing here repeats it. Your posture
+is correctness over exploration: the decisions were made before you were
+dispatched, so execute them and report when one turns out to be wrong. An
+improvement you notice that is not in your task is raised, not taken.
 
 ## Inputs
 

@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "defining a new agent role that a skill will dispatch"
 ---
 
@@ -14,11 +11,6 @@ dispatches is a file that will drift unnoticed.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: agent
-mode: [<the one mode this role works in>]
 use-when: "<when a skill should dispatch this role>"
 ---
 
@@ -31,8 +23,8 @@ description from, so it must stand alone.
 
 ## You are bound by
 
-`[[policies/execution]]` — read it first; repeat none of it here. Your posture is
-`[[modes/<mode>]]`; hold its tradeoffs as yours.
+`[[policies/execution]]` — read it first; repeat none of it here. Your posture
+is <the stance this role holds>, and it gives up <what that stance costs>.
 
 ## Inputs
 What the brief provides — as paths, never pasted content. Everything else you

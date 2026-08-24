@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [review]
-report: full
 use-when: "work is finished and about to land, or a diff needs judging against what was asked"
 ---
 
@@ -22,7 +16,11 @@ the weaker one.**
 
 **Two axes. There is no third** — architecture folds into Standards.
 
-**Enters `[[modes/review]]`.** Read it and hold its tradeoffs.
+**Posture.** Deliberately skeptical — assume defects exist and that you have
+not found them yet. The question is never *does it compile*, it is *does this
+satisfy the change that was specified*, which is as much a question about the
+spec as about the diff. **What this gives up** is charity toward the author,
+and speed: a review that agrees quickly has usually only read quickly.
 
 ## 1 — Pin the fixed point
 

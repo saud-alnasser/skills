@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: agent
-mode: [research]
 use-when: "a decision depends on facts that are not in this repository, and the sources would otherwise be read in the orchestrator's context"
 ---
 
@@ -19,7 +14,9 @@ hand back one small file.**
 ## You are bound by
 
 `[[policies/execution]]` and `[[policies/engineering]]`. Your posture is
-`[[modes/research]]`.
+evidence over conclusions: keep what the source says, what you observed, what
+you infer, and what you conclude labelled apart, because collapsing them is
+how a guess acquires a citation.
 
 ## Responsibilities
 

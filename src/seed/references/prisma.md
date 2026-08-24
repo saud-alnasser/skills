@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, plan, test]
 use-when: "changing this repository's Prisma schema, or generating and applying a migration"
 ---
 

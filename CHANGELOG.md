@@ -1,5 +1,157 @@
 # Changelog
 
+## 3.0.0
+
+Ownership stops being something an artifact claims about itself, frontmatter
+shrinks to what decides whether to load a file, and `modes/` folds into the
+skills that entered it.
+
+### Changed
+
+- **Ownership is a lookup, not a declaration.** `scripts/contract.mjs` carries
+  the directory table and a generated manifest of the exact paths a release
+  ships. The installer consults it to decide what it may write and what it must
+  preserve, and the validator uses it to name a file standing in a protocol
+  directory that this release does not ship. Nothing reads `owner:` any more,
+  and the case the field could never catch, a file that simply omits it, is now
+  the same case as any other.
+
+- **Frontmatter is `use-when`, and `paths` where applicability follows the
+  repository.** Seven fields are gone: `aep`, `date`, `kind`, `mode`, `report`,
+  `owner`, and `part-of`. `kind` restated the directory, `date` was a freshness
+  claim nothing checked, `report` chose between two shapes the reporting policy
+  now fixes at one, `part-of` restated the effort directory a ticket is filed
+  under, and the release is named once, in the bootstrap's `version:`, instead of
+  on every shipped file.
+
+  A tree you own is not edited by the upgrade, so your own rules and contexts
+  keep whatever they carry. Validation rejects a retired field only on a path
+  the protocol ships.
+
+- **`use-when` is checked rather than trusted.** Four mechanical checks, since
+  discovery now rests on this one field: it states an occasion rather than a
+  topic, it is not a restatement of the heading, it is not the file or directory
+  name, and it stays inside a word bound measured from the shipped corpus.
+
+- **`modes/` is gone.** A mode stated a posture, its mindset and what that
+  mindset gives up, and every one of those now sits inside the skill that used
+  to enter it, read at the moment it applies rather than fetched. Delete
+  `.aep/modes/`: the validator fails a tree that still has it. If you wrote a
+  mode of your own, its content belongs in your own skill or rule.
+
+### Added
+
+- **`scripts/frontier.mjs`**, shipped and installed. It reads an effort's
+  tickets and prints what is ready, what is blocked and on what, and what is
+  parked. Exit 0 while work remains, 1 when nothing is unresolved, 2 when the
+  graph cannot be read, so an unreadable effort never looks like a finished one.
+
+- **`scripts/manifest.mjs`**, build-only. It regenerates the shipped-path
+  manifest from the payload, and the suite fails when the committed one is
+  stale. A stale manifest fails open: a new file would be treated as the
+  repository's and never installed.
+
+- **Two skills are gone, and one note moved.** `/commit` is no longer a command:
+  landing a task is part of finishing it, so the mechanics run inline at the end
+  of `/implement`, and the two judgements `/commit` made about a whole effort,
+  whether the effort is implemented and whether the change falsified a context or
+  a reference, are made once the effort has no unresolved task left.
+  `skills/tasks/labels.md` is gone with its ladder and its approval gate; what
+  replaces it asks which of your labels describe an effort rather than which
+  label carries a grouping fact. `skills/commit/conflicts.md` is now
+  `skills/implement/conflicts.md`, beside the skill that reads it.
+
+- **One invocation runs the effort, not the wave.** `/implement` reads the
+  frontier, builds every task on it, and reads it again, until nothing is
+  unresolved. It stops on exactly three conditions and there is no fourth: a task
+  that cannot be built as specified, a criterion the plan cannot satisfy, and a
+  change that would widen the effort's scope. Everything else it decides and
+  records.
+
+- **An effort is one issue and one pull request.** The tracker carries the effort,
+  not the tasks: tasks are files under `efforts/<effort>/tickets/` in the
+  repository, and the pull request body is the run's durable memory, rewritten as
+  the run proceeds so that a session that dies is resumed from it.
+
+- **`plan.md` is back.** `spec.md` holds what is changing and why, `plan.md` holds
+  how. 2.0 folded them into one file, and the fold made every reader of a change
+  pay for its design. An effort whose approach is obvious still needs no plan.
+
+- **A status is not written without the evidence it claims.** Two gates, one per
+  level. The run that closes an effort stamps `spec.md` to `status: implemented`
+  before it readies the pull request, which is the answer it just gave recorded
+  in the file that asked for it; `/tasks`, `/prune`, and the validator all read
+  that value and until now nothing set it. And a task cannot be `resolved` while
+  one of its acceptance criteria is unticked, because the status is the claim
+  that the work is done and the ticks are the evidence for it. Validation fails
+  both by name.
+
+  A criterion that cannot be met parks the task unresolved or marks it
+  `obsolete`; ticking it is not one of the ways out. Efforts you have already
+  landed are exempt from both checks: a merged effort is the record of what was
+  reviewed, and this release does not rewrite it.
+
+- **Having no tracker is a posture with a procedure, not the absence of one.**
+  Every step that closes an effort was written against a pull request, so a
+  repository without one was not losing a projection, it was losing the run's
+  memory. It now has a stated shape: the effort is a branch, `/specify` makes no
+  tracker call and a local counter supplies the number, the run's record is the
+  commits and the ticked criteria in the ticket files, and the close stamps
+  `spec.md` and stops there. **The human merges.** The runner never does, with a
+  tracker or without.
+
+  The other half is that **where a tracker exists, the issue and the pull request
+  are required**, and each links to the effort in both directions: the effort
+  directory is named for the issue number, both bodies name the effort's path.
+  A run that finds one missing opens it and says so. Until now nothing said the
+  two objects were required, which made the smaller shape reachable by not
+  asking.
+
+  Nothing shipped now reaches for a tracker before establishing there is one:
+  `/install` skips the label offer and says it skipped it, the 2.x reshape runs
+  its tree half and says the tracker half did not apply, and the correctness
+  reviewer ticks a box that is in the pull request or in the ticket file
+  depending on which posture the repository is in.
+
+- **An upgrade reconciles your rules against the law that changed under them.**
+  A rule may tighten a policy and may never contradict one, and that judgement
+  was made against the release the rule was written under. `/update` now reads
+  every rule citing a policy the crossed releases changed and classifies it:
+  a restatement of changed law is rewritten to cite the policy, a contradiction
+  is rewritten to the new law or recorded as a declared deviation, and a rule
+  tightening a policy the release did not touch is left byte-identical.
+
+  The candidates are computed from the rule's own citations rather than judged,
+  so the same tree raises the same list. **Every edit is shown as exact
+  before-and-after strings, as one set, before the first is made, and a refusal
+  writes nothing**, the gate a tracker write passes, because it is the same act.
+  A rule is never deleted. This release is its own instance: 3.0 gives the runner
+  permission to push the effort branch, and a repository whose `version-control`
+  rule still reads "never push" carries a rule the protocol now contradicts.
+
+### Upgrading
+
+- **Two mechanisms classify a tree, and the older one has a stated end.** `/update`
+  reads the layout before the version, because a version field is a claim and the
+  files are a fact. A tree carrying `owner:` on its artifacts was written under
+  the contract where that field decided ownership, and is classified by it; a tree
+  without one is classified by the manifest this release ships. The `owner:`
+  branch goes when no repository the maintainer knows of still carries that
+  layout, which is written in `skills/update.md` rather than left to judgement.
+
+- **The upgrade names what it will not convert, and converts nothing on its own.**
+  An artifact still carrying a retired field, and an effort still in flight whose
+  `spec.md` holds a `# Architecture` section, are both reported and left. Dropping
+  a field decides its content is really answered elsewhere, and splitting a spec
+  decides what is WHAT and what is HOW: those are judgements, and a script that
+  made them silently would have edited a file you own to do it. `/update` makes
+  them with you.
+
+- **An effort that has already landed is left alone.** Its spec is not split, and
+  its issues and pull request are not reshaped. They are the record of what was
+  built and reviewed, and rewriting them to match a layout the work was never done
+  under loses the record and gains nothing.
+
 ## 2.7.0
 
 What an agent writes for a human becomes governance, and an orchestrator owes one

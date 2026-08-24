@@ -1,7 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
 use-when: "adding a capability this repository wants alongside the shipped skills"
 ---
 
@@ -11,12 +8,6 @@ Copy to `skills/<name>.md`. A skill the repository adds is `owner: repository`.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: skill
-mode: [<the mode this skill enters>]
-report: <full where this writes, dispatches, or decides on the human's behalf; short otherwise>
 use-when: "<the situation that calls for this capability>"
 ---
 
@@ -24,7 +15,9 @@ use-when: "<the situation that calls for this capability>"
 
 One or two lines: what this produces, and when it is the right thing to reach for.
 
-**Enters `[[modes/<mode>]]`.** Read it and hold its tradeoffs.
+**Posture.** How to think while running this, and **what this gives up** to
+think that way. Two sentences, in your own words: a skill that names no
+tradeoff is one nobody can tell they are running badly.
 
 ## Procedure
 Numbered steps, in order. Each one an action, not a principle.
@@ -51,10 +44,6 @@ Knowledge needed only when a run takes a particular branch goes in
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: skill
 use-when: "<the branch this is for — not its topic>"
 ---
 

@@ -1,8 +1,4 @@
 ---
-aep: 2.7.0
-owner: protocol
-date: 2026-08-19
-kind: policy
 use-when: "about to write anything a human will read — session output, a commit message, a pull request, a code comment, a README — or a turn's opening or closing block does not take the shape it should"
 ---
 
@@ -76,8 +72,8 @@ would have told them the run went somewhere they did not intend.*
 **One thing the human asked for produces one opening report and one closing
 block**, emitted by the outermost skill.
 
-A skill entered from inside another — `[[skills/review]]` and `[[skills/commit]]`
-from `[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
+A skill entered from inside another — `[[skills/review]]` from
+`[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
 and `[[skills/prose]]` as sub-skills — is a **stage of the run it is inside**. It
 opens no report of its own. Everything it produces is unaffected; only the
 preamble is not repeated.
@@ -85,89 +81,116 @@ preamble is not repeated.
 *Why: one request can enter four skills, and four preambles for one request is
 ceremony — and ceremony is skipped, which makes this policy advisory in fact.*
 
-## The opening report
+## The turn report
 
-Four slots, in this order:
+**Four slots, one line each**, and a ledger between them:
 
 | Slot | States |
 | --- | --- |
-| **Standing** | the state this skill establishes on entry, verified |
-| **Request** | what kind of request this was judged to be, which skill is therefore running, and why |
-| **Assuming** | what is being proceeded on without verification, held apart from what was checked |
-| **Stages** | the steps this run will cross, named |
+| **Position** | the state this skill establishes on entry, verified |
+| **Assuming** | what is being proceeded on without verification |
+| **State** | where the work now stands |
+| **Next** | the near next step, and what would clear a stop |
+
+The first two open the turn and the last two close it, with everything the run
+produced in between:
+
+```
+Position   ...
+Assuming   ...
+
+  the work: findings, diffs, graphs, whatever the skill produces
+  the ledger
+
+State      ...
+Next       ...
+```
+
+**One line each is the whole constraint.** A slot that will not fit in a line is
+a slot carrying the work rather than framing it, and the work goes between them
+where nothing shortens it.
+
+*Why four and not seven: a run over a whole effort emits this once and a ledger
+line per ticket, so every line spent on the frame is paid against the thing the
+human is actually reading. Three of the old slots restated what the ledger and
+the skill's own output already said.*
 
 **A slot with nothing to put in it says so.** It is never dropped, and the report
 is never three slots long.
 
-*Why: silence is indistinguishable from a check that never ran — and a slot that
-may be omitted is where uniformity leaks away, because the human stops reading
-by position and starts reading by label.*
+*Why: silence is indistinguishable from a check that never ran, and a slot that
+may be omitted is where uniformity leaks away, because the human stops reading by
+position and starts reading by label.*
 
-### `Standing` is filled with what the skill already verifies
+### `Position` is filled with what the skill already verifies
 
 **Never with a new check.** Each skill puts in it whatever state it establishes
 on entry anyway:
 
-| Skill | Standing holds |
+| Skill | Position holds |
 | --- | --- |
 | `[[skills/implement]]` | the position marker against `HEAD` and the working tree |
 | `[[skills/review]]` | the pinned merge-base, and that the subject is non-empty |
-| `[[skills/commit]]` | that the stages ran — position, tests, review outcomes |
 | a skill that reads no repository state | *nothing to verify*, said plainly |
 
 *Why the slot is fixed but its content is not: making every skill read the
 position would buy uniformity with a behavioural change nobody asked for, and
 most skills have no position to read.*
 
-## The closing block
+### `Next` carries what would clear a stop
 
-Three slots, in this order:
+**A turn that stops early closes with the same four slots**, and names in `Next`
+what would clear it. An empty frontier, a refused permission, a request that
+routes elsewhere, a conflict surfaced rather than resolved: each ends the turn,
+and each is a stop the reader can act on only if it says what to do.
 
-| Slot | States |
-| --- | --- |
-| **State** | where the work now stands |
-| **Next** | the near next step, as a suggestion |
-| **Unsettled** | what should be settled before continuing, and how to settle each |
+*Why in `Next` rather than a slot of its own: a stop with nothing to act on is
+the failure, and putting the remedy anywhere but the slot the reader looks at for
+what happens next is how it gets missed.*
 
-**It is a lantern, not a map.** The near objects only — the step after this one,
-not the route to the end.
+## The ledger
 
-**A turn that stops early closes with the same three slots.** An empty frontier,
-a refused permission, a request that routes elsewhere, a conflict surfaced rather
-than resolved: each ends the turn, and each is where `Unsettled` is worth the
-most.
+**One line per unit of work, marked as it is crossed.** Each carries the unit,
+how many of its acceptance criteria are verified, and the commit it landed as:
 
-*Why: a run that stopped because something is unsettled, and then closed
-silently, has failed at the one thing the block exists for.*
+```
+[x] 04 modes-folded        4/4   4b207bf
+[x] 05 skills-cut          6/6   9c1e2aa
+[ ] 10 runner-loop         0/7
+```
 
-## Two forms, and the form belongs to the skill
+A run that crosses one unit emits one line. A run that crosses ten emits ten, and
+still four slots.
 
-**Every skill declares `report: full | short`.** The declaration is made once,
-when the skill is authored, by one test:
+### It is written for two readers at once
 
-> Does this skill write to the repository, dispatch a sub-agent, or decide on the
-> human's behalf?
+The human reads it as progress. **The run that wrote it re-reads its own lines to
+recover where it is**, which is what lets a long run survive a session boundary
+without a separate record of state.
 
-Yes to any of them is `full`. **The form is never selected during a run**, so the
-human knows which shape they will get before it starts.
+So it is governed twice over, and both at the same time: it reads as a person
+wrote it, **and** its labels, columns, and order are stable enough to be parsed
+by the run that emitted them. Where the two pull against each other, stability
+wins on the structure and the prose wins inside a cell.
 
-| Form | Difference |
-| --- | --- |
-| **full** | `Stages` lists every stage, and each is marked as it is crossed |
-| **short** | `Stages` names one stage, and no stage markers are emitted |
+**This is the one narrowing of the exemption above.** Text a protocol agent reads
+is otherwise exempt from how governed text reads, because it is written for that
+reader instead. The ledger has two readers, so it forfeits the exemption without
+losing the stability the machine reader needs.
 
-Both forms carry all four opening slots and all three closing ones. **Short is
-not a shorter list of slots** — the difference is the markers, because the
-preamble is paid once per turn and a marker is paid per stage.
+*Why not two artifacts: a ledger for the human and a state file for the run
+disagree the moment one is written and the other is not, and the disagreement is
+invisible until a resumed run acts on the stale one.*
 
-### Stage names come from the skill's own procedure
+### It is emitted in the turn and kept in the run log
 
-They are read off the steps the skill already declares, and **never declared a
-second time**. A stage in the run that the opening report did not name is a
-defect in one of the two.
+The copy in the turn report is what the human reads now. The durable copy lives
+in the pull request's collapsed run log, written as each line is crossed rather
+than at the close (`[[policies/execution]]`), which is the copy a resumed run
+reads.
 
-*Why: a separate list of stages is a second statement of what the procedure
-already says, and the two diverge on the first edit to either.*
+**Same lines, same order, same columns.** Not a summary of one in the other: two
+renderings of one ledger diverge, and the run reads whichever it finds.
 
 ## What this policy is not
 

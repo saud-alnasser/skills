@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "recording what a prototype answered, before deleting the code"
 ---
 
@@ -14,10 +11,7 @@ falsifier confirms whatever you were hoping for.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: prototype
+
 ---
 
 # Hypothesis

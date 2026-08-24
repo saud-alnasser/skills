@@ -1,10 +1,4 @@
 ---
-aep: 2.7.0
-owner: protocol
-date: 2026-08-19
-kind: skill
-mode: [specify, plan, refine, implement, research, prototype, review, test]
-report: full
 use-when: "about to emit text a human will read, or editing text that reads as though nobody wrote it"
 ---
 
