@@ -1,5 +1,5 @@
 ---
-status: draft
+status: accepted
 ---
 
 # Problem
@@ -68,6 +68,8 @@ guarantee, and the run says which it is.
   from a tidiness question into a collision.
 - `specs.md` amended in the same change, assertions in `verify.mjs`, and the
   seeded version-control and t3 Code references stating their halves.
+- One correction travelling with this because planning found it: `[[skills/plan]]`
+  contradicts `specs.md` about where the technical approach is written.
 
 # Requirements
 
@@ -92,6 +94,13 @@ guarantee, and the run says which it is.
    under `efforts/<other>/`, and no ticket of another effort taken. Reading is
    unrestricted. Source outside `.aep/efforts/` is untouched by this rule, since
    changing it is what the effort exists to do.
+
+   **There are no exemptions**, including for a skill whose subject is the whole
+   tree. A `prune` or `survey` run that would remove or edit another effort's
+   artifact stops, names it, and belongs on an unscoped checkout, which is where
+   a tree-wide subject belongs anyway. *Why no exemption list: an exemption is a
+   second mechanism deciding how strong the first one is, and it is the copy that
+   goes wrong.*
 6. **A named effort outside the scope set stops on a dirty tree and switches on a
    clean one.** Clean means the run checks out the named effort's branch and
    proceeds; dirty means it ends the turn naming the scope, the named effort, and
@@ -119,6 +128,12 @@ guarantee, and the run says which it is.
     the seeds**, in the same change. `specs.md`'s description of position as
     "per-clone" is corrected to per working tree, which is what gitignored state
     actually is.
+12. **`[[skills/plan]]` stops contradicting the specification it implements.** It
+    says it "extends the same `spec.md`" and writes the approach "into
+    `spec.md`", while `specs.md:443` puts the approach in `plan.md` beside it and
+    `[[templates/plan.template]]` already says so. Carried here rather than left
+    for a separate effort whose whole content would be three sentences, and
+    stated as a requirement so it is reviewed rather than found in the diff.
 
 # Acceptance Criteria
 
@@ -157,6 +172,8 @@ guarantee, and the run says which it is.
 11. `node src/scripts/verify.mjs` passes, and every assertion added has been seen
     to fail against a tree with the guard's subject removed
     (`[[rules/authoring]]`).
+12. `skills/plan.md` names `plan.md` as what it writes, no longer says it extends
+    `spec.md`, and the suite fails if that sentence returns.
 
 # Constraints
 
@@ -213,14 +230,6 @@ guarantee, and the run says which it is.
 - The default branch is discoverable per repository. Content resolution is stated
   against it, so a repository where it cannot be determined falls back to name
   matching and then to unscoped.
-
-# Open Questions
-
-- Whether `prune` and `survey`, whose subject is the whole tree rather than one
-  effort, are confined by requirement 5 or exempt from it. Stopping a `prune` that
-  would remove another effort's stale artifact is defensible, and so is exempting
-  it. The answer decides whether the guard is about the path or about the run's
-  subject. **Settle before `/tasks`.**
 
 # Risks
 
