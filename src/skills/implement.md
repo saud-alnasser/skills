@@ -2,10 +2,12 @@
 use-when: "a task exists and is ready to build"
 ---
 
-# /implement — build the task
+# /implement — carry the effort to a finished stack
 
-Builds tasks that already exist. It reads **the task, not the conversation**, so
-context can be cleared between any two.
+Builds tickets that already exist, wave after wave, until the effort is done.
+It reads **the ticket, not the conversation**, so context can be cleared between
+any two — and it is written on the assumption that it will be, because a run
+over a whole effort outlives the session that started it.
 
 **`/implement` builds what was planned, or it stops. It never redesigns.**
 
@@ -37,36 +39,45 @@ A marker match licenses skipping the drift read and **nothing else**. Any
 statement you are about to rely on is still checked against the source
 (`[[policies/authority]]`), and anything found stale is fixed where it is found.
 
-## 1 — Take the work
+## 1 — Take the effort
 
 ```
-frontier = tasks open, unblocked, unclaimed
+node .aep/scripts/frontier.mjs <effort>
 ```
+
+**The unit of an invocation is the effort, not the wave.** The run schedules from
+the frontier, builds it, and schedules again, until converge finds no gap or a
+trip-wire fires. **An exhausted ticket list is not the end of the run** — tickets
+exhausted and the spec satisfied are different claims, and only the second one
+ends it.
 
 | The invocation | The unit |
 | --- | --- |
-| **named a task** | that task, alone. Never joined by others — taking a second is choosing work you were not given |
-| **named nothing** | the **set**: every frontier task that no `blocked-by` edge orders against the others |
+| **named a ticket** | that ticket, alone, and the run ends there. Taking a second is choosing work you were not given |
+| **named an effort, or nothing** | the whole effort, wave after wave |
 
-Computing a set from declared edges is reading a declaration, not writing one.
-**The set is exactly what the edges permit — never widened, never reordered.** A
-task that *looks* independent is not a member unless the edges say so.
+**The frontier is read, never judged.** `frontier.mjs` prints what is ready, what
+is blocked and on what, and what is parked; the run quotes it rather than holding
+the graph. A ticket that *looks* independent is not in the wave unless the edges
+say so.
 
-Where the tasks live is this repository's business — an external tracker, or
-`efforts/<effort>/tickets/`. Read `[[references]]` rather than assuming.
+**When the frontier is empty and unresolved tickets remain, the blocking work is
+what to build.** An edge names a ticket, that ticket is somewhere, and finding it
+is reading the graph rather than inventing work. An empty frontier is reported as
+the end of the run **only when nothing unresolved remains at all**, which is
+`frontier.mjs` exiting 1.
 
-**In an external tracker the frontier comes from the recorded query**, which that
+Where the tickets live is this repository's business — an external tracker, or
+`efforts/<effort>/tickets/`. Read `[[references]]` rather than assuming. **In an
+external tracker the frontier comes from the recorded query**, which that
 tracker's `[[references]]` holds along with what carries the effort. Read the
-edges off what the query returns — never by opening every issue and judging from
+edges off what the query returns, never by opening every issue and judging from
 its prose, which is inference wearing a reading's clothes.
 
-If the frontier is empty, **say so rather than inventing work.** If everything
-left is blocked, name what blocks it. If the invocation carried a *request*
-rather than a task, go to `[[skills/specify]]` — do not hand back a command for
-the human to type.
-
-A task already done, or no longer needed, is marked `obsolete` **with a one-line
-reason**. Stop there; do not manufacture work to fill it.
+If the invocation carried a *request* rather than an effort, go to
+`[[skills/specify]]` — do not hand back a command for the human to type. A ticket
+already done, or no longer needed, is marked `obsolete` **with a one-line
+reason**; that satisfies the edges that named it, and the run continues.
 
 ## 2 — Claim it
 
@@ -75,24 +86,30 @@ the first read of source, and long before the first edit. A claim made after the
 first edit is a report of a race already lost.
 
 ```
-<task-id>-<slug>            17-assignment-and-claim
+effort branch      <effort>                     aep-3
+ticket branch      <ticket-id>-<slug>           17-assignment-and-claim
 ```
+
+The effort branch is created once and every wave lands on it. **Children in a
+wave branch from the effort branch's current tip, and the next wave branches from
+the new tip** — so each wave sees everything the waves before it landed, and no
+child is working against a tree three tickets stale.
 
 Check both sides before creating — a local branch of that name, and the remote
 (fetch first, or the answer is stale). **A claim held elsewhere is never taken:**
-not renamed around, not branched from, not force-created over. Report which task,
-which branch, and where the claim was seen, then move to the next.
+not renamed around, not branched from, not force-created over. Report which
+ticket, which branch, and where the claim was seen, then move to the next.
 
 Where the repository has its own branch convention, that one wins
 (`[[rules/version-control]]`).
 
-**Dispatching a set: create every branch first, then dispatch.** The parent holds
-the whole set before any of it is worked. State the plan — which tasks, which
-role, which branches — before creating anything. Stated, not gated.
+**Dispatching a wave: create every branch first, then dispatch.** The parent
+holds the whole wave before any of it is worked. State the plan — which tickets,
+which role, which branches — before creating anything. Stated, not gated.
 
-## 3 — Build
+## 3 — Build the wave
 
-1. **Read the task and the effort's `spec.md`.** Where they conflict: **stop,
+1. **Read the ticket and the effort's `spec.md`.** Where they conflict: **stop,
    surface it, build nothing** (`[[policies/execution]]`).
 2. Load applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]` — by `use-when` and `paths`, never everything.
@@ -101,34 +118,44 @@ role, which branches — before creating anything. Stated, not gated.
 
    | Situation | Do this |
    | --- | --- |
-   | one task | build it here |
-   | a set of tasks, no edges between them | dispatch `[[agents/implementer]]` — **one child per whole task**, one worktree each. `[[skills/implement/dispatch]]` is how to write the brief |
-   | a set of one | build it here; a child would spend a whole context on work you are already positioned to do |
+   | a wave of two or more | dispatch `[[agents/implementer]]` — **one child per whole ticket**, one worktree each. `[[skills/implement/dispatch]]` is how to write the brief |
+   | a wave of one | build it here; a child would spend a whole context on work you are already positioned to do |
    | rules require test-first, or a bug needs pinning | `[[skills/tdd]]` |
-   | the task is a bug and the cause is not known | `[[skills/implement/diagnosing]]` — build the signal before the theory |
+   | the ticket is a bug and the cause is not known | `[[skills/implement/diagnosing]]` — build the signal before the theory |
    | technical uncertainty survives | `[[skills/prototype]]`, in a worktree |
 
-   **A task is never split across sub-agents** (`[[policies/execution]]`). A task
-   too large for one child is too large — it goes back to `[[skills/tasks]]`.
+   **A ticket is never split across sub-agents** (`[[policies/execution]]`). A
+   ticket too large for one child is too large — it goes back to
+   `[[skills/tasks]]`.
 
 5. **Build**, matching the surrounding code — idiom, naming, comment density.
 6. **Verify each acceptance criterion explicitly**, one at a time, and **quote
    what you ran and what it printed**. "It should work" is not verification.
 
-## 4 — Close out
+## 4 — Integrate, review, land, repeat
 
-**A run that dispatched children reconciles before it reviews.**
+**Integrate each child as it returns**, one at a time, into the effort branch.
+Not all of them at the end: a conflict then arrives as one pile with no ticket to
+name it, and the second child's work is what gets untangled by whoever is least
+able to. Integrated per ticket, **a conflict surfaces at that ticket's
+integration and is named against that ticket**.
+`[[skills/implement/conflicts]]` has the discipline.
+
 `[[policies/execution]]` holds what the orchestrator owes once the last child
-returns, under `## What the orchestrator owns once the last child returns`, and
-that is where to read it.
+returns, under `## What the orchestrator owns once the last child returns`.
 
-`[[skills/review]]`, apply the fixes, then land it — **without prompting.**
+Then `[[skills/review]]`, apply the fixes, and land it — **without prompting.**
 Landing reviewed work is part of finishing, which is why there is no separate
 command to type: by the time the work is reviewed there is nobody left to ask.
 
 Review runs **as a stage of this turn** and opens no report of its own
-(`[[policies/reporting]]`). Everything it produces still reaches the human;
-only the preamble is not repeated.
+(`[[policies/reporting]]`). Everything it produces still reaches the human; only
+the preamble is not repeated.
+
+**A review that rejects twice parks the ticket.** Two fix attempts, then record
+it unresolved with what the review said, **leave its dependents alone**, and
+carry on with the tickets that do not need it. A third attempt is a loop that
+looks like work, and converge sees the gap regardless.
 
 ### Landing it
 
@@ -138,9 +165,8 @@ finding still open is a blocker, never a silent pass.** A stage that did not run
 is named and the run stops there, saying what would clear it: a refusal the
 reader cannot act on is a wall rather than a check.
 
-1. **Mark the task resolved, and the effort `implemented` where this was its
-   last criterion** — before staging. Both are tracked, so moving them after the
-   commit leaves the tree dirty the moment it lands. Only the status field moves.
+1. **Mark the ticket resolved** before staging. It is tracked, so moving it after
+   the commit leaves the tree dirty the moment the commit lands.
 2. **Regenerate the index** — `node .aep/scripts/index.mjs`. Here rather than
    earlier, because this is the last point at which the tree is known complete
    and an index regenerated before the final edit is already stale. **Never
@@ -150,11 +176,14 @@ reader cannot act on is a wall rather than a check.
    `CONTRIBUTING.md`, and any pull request template. Where the repository
    demonstrates a convention, follow it silently; `[[rules/version-control]]`
    supplies the default only where the repository is silent, **including which
-   form the task reference takes**. Say what capability changed and why, and
+   form the ticket reference takes**. Say what capability changed and why, and
    **never give a file-by-file account** — the diff already lists the files.
-4. **Commit.** Where landing means resolving a merge or rebase conflict,
-   `[[skills/implement/conflicts]]` has the discipline: a conflict is two intents,
-   and recovering both is the work.
+4. **Commit — one commit per ticket, with no exception for a ticket that
+   produced no diff.** A ticket that verifies something is already true lands an
+   **empty commit** whose message carries what was checked and what it printed.
+   The evidence is then in the history a bisect reads, and the ledger line looks
+   like every other one. A ticket that quietly lands nothing is a ticket nobody
+   can tell was done.
 5. **Stamp the marker** — `node .aep/scripts/position.mjs stamp`. Last, once the
    commit exists, because a commit cannot contain its own hash. **An amend
    produces a new commit, so an amend re-stamps.**
@@ -162,40 +191,77 @@ reader cannot act on is a wall rather than a check.
 Further changes amend that commit. Never push, never publish
 (`[[rules/version-control]]`).
 
-## 5 — When the effort has no unresolved task left
+**Then schedule again.** Back to step 1, against the tip this wave just made.
 
-Two judgements that a single task's diff cannot support, so they are asked once
+## 5 — When the effort has no unresolved ticket left
+
+Two judgements that a single ticket's diff cannot support, so they are asked once
 the effort is whole rather than at each commit.
 
 - **Is the effort implemented?** Every acceptance criterion in `spec.md` met, not
   every ticket closed. A ticket can be resolved against a criterion nobody
   checked.
 - **Did the change move a boundary, retire a concept, or falsify a `[[contexts]]`
-  or a `[[references]]`?** Read the effort's diff entire, which no single task
+  or a `[[references]]`?** Read the effort's diff entire, which no single ticket
   ever saw. **What it falsified is corrected in this effort**, so the change and
   the thing it contradicts never land apart. A concept nobody had named is a
   finding to report, never a licence to name it here.
 
+## What may stop the run
+
+**Exactly three conditions reach the human before the effort is finished.**
+Everything else the run notices is recorded and carried to the close.
+
+| Trip-wire | Why it is worth an interruption |
+| --- | --- |
+| **evidence invalidates the technical plan** | continuing means designing while implementing, and the cost compounds with every ticket built on it |
+| **the work touches a public contract or data at rest** | the blast radius is outside this repository, and it is not recoverable by amending a commit |
+| **a ticket contradicts `spec.md`** | the tickets were cut wrong (`[[policies/execution]]`), and a run that builds the wrong thing ten times is worse than one interruption |
+
+**There is no fourth.** A review that rejected once and passed after the fix does
+not stop the run. A ticket parked after two rejections does not stop the run. A
+finding, a surprise, an improvement noticed in passing: recorded, carried to the
+close, and **never a reason to come and ask.**
+
+*Why exactly three: the point of the loop is that the human intervenes at the
+idea, not at the implementation. Every condition added here is a decision moved
+back out of the run, and the three that stay are the ones where continuing is
+worse than stopping.*
+
 ## Constraints
 
-- **Stay bounded by the task.** An improvement you notice is **raised, not
+- **Stay bounded by the ticket.** An improvement you notice is **raised, not
   taken.** The diff stays about one thing.
 - **Return to plan** the moment evidence invalidates the approach: stop, record
-  the evidence, `[[skills/plan]]`, update `spec.md`, update tasks, continue.
-  Pushing through is how implementation becomes design — and it always arrives
-  when stopping feels most expensive.
+  the evidence, `[[skills/plan]]`, update `spec.md`, update the tickets,
+  continue. Pushing through is how implementation becomes design — and it always
+  arrives when stopping feels most expensive.
+- **The orchestrator is the only integrator.** A child works in its own
+  worktree and never merges into the effort branch; two children integrating
+  themselves produce a conflict neither can see.
 - Never push, never publish (`[[rules/version-control]]`).
 - Prototype code is never promoted as-is. Rewrite what survives.
 
 ## Resuming after losing context
 
-Read the branch you are standing on: it names the task, the task says what done
-looks like, and the diff since the branch point says how far you got. **A
-detached HEAD names no branch and holds no claim** — do not guess the task from
-the diff; claim one properly or hand back.
+**The session is disposable, and the run is written for that.** A run over a
+whole effort may cross a compaction or a session boundary, and neither stops it:
+what the run needs is on disk, never only in its head.
+
+Reconstruct from the durable record and from nothing else. The effort branch
+names the effort and its commits name the tickets already landed;
+`frontier.mjs` says what is left and what blocks it; each ticket says what done
+looks like. **A detached HEAD names no branch and holds no claim** — do not
+guess the ticket from the diff; claim one properly or hand back.
+
+*No part of this may depend on triggering compaction.* An agent cannot invoke
+it. It is a command the human types, or a harness firing on its own schedule and
+choosing its own survivors, so a design that waits for it waits on something it
+does not control.
 
 ## Done when
 
-Every acceptance criterion has been checked and the check was shown, the tests
-the rules require pass, nothing outside the task changed, and the task's status
-reflects reality.
+Every acceptance criterion of every ticket has been checked and the check was
+shown, each ticket landed as one commit on the effort branch, the tests the
+rules require pass, nothing outside the effort changed, and every ticket's
+status reflects reality. A parked ticket is named, with what parked it.

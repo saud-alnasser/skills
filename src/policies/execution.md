@@ -51,6 +51,20 @@ stop → record evidence → [[skills/plan]] → update spec.md → update tasks
 implementation becomes an uncontrolled design process, and it always arrives when
 the work is nearly done and stopping is most expensive.*
 
+This is one of the **three conditions that may stop a run and reach the human**,
+and the only three:
+
+1. evidence invalidates the technical plan, above;
+2. the work touches a public contract or data at rest, whose blast radius is
+   outside this repository and not recoverable by amending a commit;
+3. a task contradicts `spec.md`, which means the tasks were cut wrong.
+
+Everything else a run notices is **recorded and carried to the close, never
+raised mid-run**. *Why a fixed set: a run exists so that a human intervenes at
+the idea rather than at the implementation, and every condition added here moves
+one decision back out of the run. These three are the ones where continuing is
+worse than stopping.*
+
 ## Scope stays where it was put
 
 - `[[skills/plan]]` and `[[skills/refine]]` MUST NOT silently expand product
@@ -212,9 +226,26 @@ question may not be left unreadable.*
 A child returns one of four outcomes — **done, failed, stopped, waiting** — plus
 a path to what it produced and a compressed summary. Never a pasted diff.
 
+**What a child returns is capped**, and the cap is on the return rather than on
+the work: a child may read a thousand files and must hand back something whose
+size does not depend on how many. *Why: an orchestrator running a whole effort
+grows by one return per task, so an uncapped return makes the orchestrator's
+context a function of the work inside every task rather than of the number of
+them — and it degrades silently, which is the failure that writes a confident
+close over work it has forgotten.*
+
 The orchestrator **reconciles what the child claims against what it actually
 changed** before anything lands. A manifest that cannot be trusted still reads as
 a check that happened.
+
+**Each child is integrated as it returns, one at a time.** Not the batch at the
+end: a conflict then arrives as one pile with no task to name it, and what gets
+untangled is whichever child happened to be second. Integrated per task, a
+conflict surfaces at that task's integration and is named against that task.
+
+**The orchestrator is the only integrator.** A child works in its own worktree
+and never merges into the shared branch, because two children integrating
+themselves produce a conflict neither of them can see.
 
 Because the unit is a whole task, one child failing costs exactly that task: its
 siblings land, and it returns to the frontier.

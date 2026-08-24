@@ -688,11 +688,90 @@ section('skills', () => {
   assert('the runner reads the conflict note where landing hits one', () =>
     runner.includes('skills/implement/conflicts'));
 
+  // The loop. Each of these is a sentence whose absence leaves a runner that
+  // still reads as one, which is why they are pinned individually rather than by
+  // one check for the word "loop".
+  assert('the unit of an invocation is the effort rather than the wave', () =>
+    /The unit of an invocation is the effort, not the wave/.test(runner));
+  assert('an exhausted ticket list does not end the run', () =>
+    /An exhausted ticket list is not the end of the run/.test(runner));
+  assert('the runner schedules from the computed frontier rather than its own graph', () =>
+    /frontier\.mjs/.test(runner) && /quotes it rather than holding\s+the graph/.test(runner));
+  assert('an empty frontier with work left means building what blocks it', () =>
+    /the blocking work is\s+what to build/.test(runner));
+  assert('an empty frontier ends the run only when nothing unresolved remains', () =>
+    /only when nothing unresolved remains/.test(runner));
+  assert('the runner returns to scheduling after each wave lands', () =>
+    /Then schedule again/.test(runner));
+
+  // Wave-based integration, and the two halves that make it work: where a child
+  // branches from, and who merges. Dropping either produces a run that still
+  // finishes, with conflicts nobody can attribute.
+  assert('a wave branches from the effort branch tip and the next from the new tip', () =>
+    /branch from the effort branch's current tip/.test(runner) &&
+    /next wave branches from\s+the new tip/.test(runner));
+  assert('the orchestrator integrates each child as it returns', () =>
+    /Integrate each child as it returns/.test(runner) &&
+    /Not all of them at the end/.test(runner));
+  assert('a conflict is named against the ticket whose integration raised it', () =>
+    /named against that ticket/.test(runner));
+  assert('the orchestrator is the only integrator', () =>
+    /The orchestrator is the only integrator/.test(runner));
+
+  // One commit per ticket, including the ticket with nothing to commit. This is
+  // the one an implementation quietly skips, because an empty commit feels like
+  // noise right up until a bisect needs it.
+  assert('each ticket lands as one commit with no exception for an empty diff', () =>
+    /one commit per ticket, with no exception/i.test(runner));
+  assert('a ticket with no diff lands an empty commit carrying what was checked', () =>
+    /\*\*empty commit\*\* whose message carries what was checked/.test(runner));
+
+  // The review cap, and what it does not do. A cap that stopped the run would
+  // be a fourth trip-wire wearing a limit's clothes.
+  assert('a review that rejects twice parks the ticket', () =>
+    /rejects twice parks the ticket/.test(runner) &&
+    /Two fix attempts/.test(runner));
+  assert('parking leaves the dependents alone and the run continues', () =>
+    /leave its dependents alone/.test(runner) &&
+    /carry on with the tickets that do not need it/.test(runner));
+  assert('a parked ticket does not stop the run, and neither does one rejection', () =>
+    /A review that rejected once and passed after the fix does\s+not stop the run/.test(runner) &&
+    /A ticket parked after two rejections does not stop the run/.test(runner));
+
+  // The trip-wire set. Counted from the table rather than matched as prose: a
+  // fourth row is exactly how this grows, and a regex for three names passes
+  // while a fourth sits beside them.
+  assert('exactly three conditions may stop the run', () => {
+    const table = /## What may stop the run([\s\S]*?)(?=\n## |$)/.exec(runner);
+    if (!table) throw new Error('the run names no stopping conditions at all');
+    const rows = [...table[1].matchAll(/^\| \*\*(.+?)\*\* \|/gm)].map((m) => m[1]);
+    if (rows.length !== 3) {
+      throw new Error(`${rows.length} trip-wires: ${rows.join(' / ')}`);
+    }
+    return true;
+  });
+  assert('the run says there is no fourth trip-wire', () =>
+    /\*\*There is no fourth\.\*\*/.test(runner));
+  assert('the three trip-wires are the plan, the public contract, and the contradiction', () =>
+    /evidence invalidates the technical plan/.test(runner) &&
+    /touches a public contract or data at rest/.test(runner) &&
+    /contradicts `spec\.md`/.test(runner));
+
+  // The session boundary. A runner that assumed its own context survives is one
+  // that writes a confident close over work it has forgotten.
+  assert('the run treats its own session as disposable', () =>
+    /The session is disposable/.test(runner));
+  assert('the run reconstructs from the durable record and nothing else', () =>
+    /from the durable record and from nothing else/.test(runner));
+  assert('nothing in the run depends on triggering compaction', () =>
+    /may depend on triggering compaction/.test(runner) &&
+    /An agent cannot invoke\s+it/.test(runner));
+
   // The two judgements a single task's diff cannot support. Each named
   // separately: one assertion over both passes while either is missing, and the
   // second is the one that quietly goes, because it is the expensive one.
   assert('the effort-level judgement asks whether the effort is implemented', () =>
-    /has no unresolved task left/.test(runner) && /Is the effort implemented/.test(runner));
+    /has no unresolved ticket left/.test(runner) && /Is the effort implemented/.test(runner));
   assert('the effort-level judgement asks what the change falsified', () =>
     /falsif/i.test(runner) && /corrected in this effort/.test(runner));
 
@@ -886,6 +965,30 @@ section('policies', () => {
     /traces to nothing/.test(execution) && /skills\/tasks/.test(execution));
   assert('policies/execution says why the check replaced the ban', () =>
     /Why the check and not the ban/.test(execution));
+
+  // The loop's half of the policy. The cap is what keeps an orchestrator running
+  // a whole effort from growing with the work inside each task rather than with
+  // the number of them, and it degrades silently when it is missing.
+  assert('policies/execution caps what a child returns', () =>
+    /What a child returns is capped/.test(execution) &&
+    /the cap is on the return rather than on\s+the work/.test(execution));
+  assert('policies/execution integrates each child as it returns', () =>
+    /integrated as it returns, one at a time/.test(execution) &&
+    /Not the batch at the\s+end/.test(execution));
+  assert('policies/execution makes the orchestrator the only integrator', () =>
+    /The orchestrator is the only integrator/.test(execution));
+
+  // Counted, not matched. A fourth condition is exactly how this grows, and a
+  // regex naming three passes with a fourth sitting beside them.
+  assert('policies/execution names exactly three conditions that may stop a run', () => {
+    const block = /three conditions that may stop a run([\s\S]*?)(?=\n## )/.exec(execution);
+    if (!block) throw new Error('the policy names no stopping conditions');
+    const items = [...block[1].matchAll(/^\d+\. /gm)];
+    if (items.length !== 3) throw new Error(`${items.length} conditions listed`);
+    return true;
+  });
+  assert('policies/execution records everything else rather than raising it', () =>
+    /recorded and carried to the close, never\s+raised mid-run/.test(execution));
 
   assert('policies/execution forbids splitting one task across children', () =>
     /never split across sub-agents/i.test(execution));
