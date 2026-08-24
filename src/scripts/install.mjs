@@ -1,11 +1,15 @@
 // Installs the protocol-owned payload into a repository's `.aep/`.
 //
 // The one rule that shapes every branch here: an upgrade may replace what the
-// protocol owns and must never touch what the repository owns. So nothing is
-// overwritten on the strength of its path. Each existing target is read and its
-// declared `owner` decides, because a repository is entitled to add a rule whose
-// filename happens to match a shipped one, and losing it would be exactly the
-// silent overwrite the ownership rule forbids.
+// protocol owns and must never touch what the repository owns. Ownership is a
+// fact about location, so a target is overwritten exactly when the manifest in
+// `contract.mjs` names it and preserved otherwise. That manifest is generated
+// from the payload, so it cannot disagree with what is being copied.
+//
+// The consequence worth stating: a repository file cannot stand at a path the
+// protocol ships. It is not silently overwritten so much as impossible to have,
+// because `validate.mjs` fails on a file in a protocol directory that the
+// manifest does not name.
 //
 // Seeds are the same principle from the other side: shipped as repository-owned
 // starting points, written once, and never reconsidered by any later run.
@@ -16,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { readArtifact, walk } from './contract.mjs';
+import { readArtifact, walk, toPosix, isProtocolPath } from './contract.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
@@ -31,7 +35,7 @@ import {
 } from './payload.mjs';
 
 const report = {
-  written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [],
+  written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [], edited: [],
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
 };
 
@@ -42,19 +46,26 @@ function distributionRoot() {
 
 /**
  * True when an existing target must not be overwritten.
- * A file the repository declared as its own is protected. Anything else,
- * including a file with no frontmatter at all, is the protocol's to replace.
+ * A path the manifest does not name belongs to the repository, whatever it
+ * contains and whether or not it has frontmatter at all.
  */
-function repositoryOwned(target) {
+function repositoryOwned(aep, target) {
   if (!fs.existsSync(target)) return false;
-  if (!target.endsWith('.md')) return false;
-  return readArtifact(target).fields.owner === 'repository';
+  return !isProtocolPath(toPosix(aep, target));
 }
 
-function copyFile(source, target, dryRun) {
-  if (repositoryOwned(target)) {
+function copyFile(source, target, aep, dryRun) {
+  if (repositoryOwned(aep, target)) {
     report.preserved.push(target);
     return;
+  }
+  // The protection the `owner:` field used to give, recovered from content.
+  // A path the protocol ships is the protocol's whatever stands there, so this
+  // does not refuse the write. It refuses to make it silently, which is the
+  // half that mattered: somebody edited a shipped file, or wrote their own
+  // where one lands, and either way they are told rather than finding out later.
+  if (fs.existsSync(target) && fs.readFileSync(target, 'utf8') !== fs.readFileSync(source, 'utf8')) {
+    report.edited.push(target);
   }
   if (!dryRun) {
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -63,25 +74,25 @@ function copyFile(source, target, dryRun) {
   report.written.push(target);
 }
 
-function copyDir(sourceDir, targetDir, dryRun) {
+function copyDir(sourceDir, targetDir, aep, dryRun) {
   if (!fs.existsSync(sourceDir)) return;
   const shipped = new Set();
   for (const source of walk(sourceDir)) {
     const relative = path.relative(sourceDir, source);
     shipped.add(relative.split(path.sep).join('/'));
-    copyFile(source, path.join(targetDir, relative), dryRun);
+    copyFile(source, path.join(targetDir, relative), aep, dryRun);
   }
 
-  // A protocol-owned file present in the repository but no longer shipped was
-  // retired by a release. It is reported, never deleted: deciding a file is
-  // obsolete is /prune's job and the human's call.
+  // A file left in a protocol directory that this release does not ship is
+  // either one a release retired or one the repository put somewhere it may not.
+  // The manifest names what ships now and so cannot tell them apart, and neither
+  // is deleted here: deciding a file is obsolete is /prune's job and the human's
+  // call, and a misplaced repository file is /validate's to name.
   if (fs.existsSync(targetDir)) {
     for (const existing of walk(targetDir)) {
       const relative = path.relative(targetDir, existing).split(path.sep).join('/');
       if (shipped.has(relative)) continue;
-      if (existing.endsWith('.md') && readArtifact(existing).fields.owner === 'protocol') {
-        report.retired.push(existing);
-      }
+      report.retired.push(existing);
     }
   }
 }
@@ -367,13 +378,13 @@ function main() {
   }
 
   for (const file of PAYLOAD_FILES) {
-    copyFile(path.join(from, file), path.join(aep, file), dryRun);
+    copyFile(path.join(from, file), path.join(aep, file), aep, dryRun);
   }
   for (const dir of PAYLOAD_DIRS) {
-    copyDir(path.join(from, dir), path.join(aep, dir), dryRun);
+    copyDir(path.join(from, dir), path.join(aep, dir), aep, dryRun);
   }
   for (const script of PAYLOAD_SCRIPTS) {
-    copyFile(path.join(from, 'scripts', script), path.join(aep, 'scripts', script), dryRun);
+    copyFile(path.join(from, 'scripts', script), path.join(aep, 'scripts', script), aep, dryRun);
   }
 
   for (const dir of [...REPOSITORY_DIRS, ...PER_CLONE_DIRS]) {
@@ -422,6 +433,7 @@ function main() {
   process.stdout.write(`  ${report.created.length} directories created\n`);
   list(`runtime adapter${report.adapters.length === 1 ? '' : 's'} installed`,
     report.adapters, (entry) => entry);
+  list('locally edited and replaced, recover from version control if wanted', report.edited);
   list('repository-owned starting points seeded, review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);

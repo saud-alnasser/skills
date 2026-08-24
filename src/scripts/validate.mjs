@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  DIRECTORY_OWNERS,
+  PROTOCOL_DIRS,
   FORBIDDEN_DIRS,
   KINDS,
   MODES,
@@ -26,6 +26,7 @@ import {
   toPosix,
   walk,
   wikiLinks,
+  isProtocolPath,
 } from './contract.mjs';
 
 const PROTOCOL_BUDGET_BYTES = 8192;
@@ -50,6 +51,21 @@ function checkArtifact(root, file) {
   const artifact = readArtifact(file);
   checked += 1;
 
+  // Ownership is a fact about location, so a protocol directory holds exactly
+  // what the protocol ships. A file here the manifest does not name is either
+  // something a release retired and nobody pruned, or something the repository
+  // wrote where it may not, and both are defects that hide until an upgrade
+  // walks past them.
+  //
+  // This is what the `owner:` field used to say per artifact. It says it once,
+  // for every directory, and it catches the case the field never could: a file
+  // that simply omits the declaration.
+  if (PROTOCOL_DIRS.includes(topDir) && !isProtocolPath(rel)) {
+    fail(rel, `${topDir}/ holds only what the protocol ships, and this release ships ` +
+      'no such file. Repository-owned governance belongs under rules/, orientation ' +
+      'under contexts/, and tool operation under references/');
+  }
+
   if (!artifact.hasFrontmatter) {
     fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ must declare aep, owner, date');
     return;
@@ -63,14 +79,6 @@ function checkArtifact(root, file) {
   if (!isNonEmptyString(fields.owner)) fail(rel, 'missing required field: owner');
   else if (!OWNERS.includes(fields.owner)) {
     fail(rel, `owner is "${fields.owner}", must be one of: ${OWNERS.join(', ')}`);
-  } else if (DIRECTORY_OWNERS[topDir] && fields.owner !== DIRECTORY_OWNERS[topDir]) {
-    // The two governance directories admit one owner each. A policy is AEP's law
-    // and a rule is the repository's, so the misplacement is the defect. An
-    // upgrade preserves such a file rather than overwriting it, and this is what
-    // says so afterwards.
-    const belongs = fields.owner === 'protocol' ? 'policies/' : 'rules/';
-    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]}, and this declares ` +
-      `owner: ${fields.owner}, which belongs under ${belongs}`);
   }
   if (!isNonEmptyString(fields.date)) fail(rel, 'missing required field: date');
   else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}", must be a real YYYY-MM-DD`);

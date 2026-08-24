@@ -67,6 +67,23 @@ expose, because under a sweep a stale stamp and a current one are the same value
 `verify.mjs` compares every shipped artifact against the baseline, so an edit
 that never got released fails the suite by name.
 
+## Regenerate the manifest whenever a file enters or leaves the payload
+
+```
+node src/scripts/manifest.mjs
+```
+
+`scripts/contract.mjs` carries the exact list of paths the payload ships, and
+that list is **generated from the payload** rather than maintained beside it. It
+is what the installer consults to decide whether a target is the protocol's, and
+what the validator consults to name a file standing in a protocol directory that
+this release does not ship.
+
+**A stale manifest fails open, which is why the suite asserts it.** A file added
+to the payload and missing from the manifest is treated as the repository's, so
+the installer preserves whatever stands there instead of shipping the new one,
+and nothing about that looks wrong until somebody notices the file never arrived.
+
 ## Regenerate the adapter whenever a skill or agent changes
 
 ```

@@ -125,6 +125,7 @@ export const BUILD_ONLY_SCRIPTS = [
   'payload.mjs',
   'adapters.mjs',
   'install.mjs',
+  'manifest.mjs',
   'release.mjs',
   'verify.mjs',
 ];
@@ -149,8 +150,12 @@ export const GITIGNORE_SOURCE = 'gitignore';
  * `rules/` is one of them: governance the protocol defines ships as policies,
  * and `rules/` holds what this repository decides for itself. It arrives empty
  * apart from the version-control seed.
+ *
+ * Re-exported from `contract.mjs` rather than restated. The same list decides
+ * what an upgrade preserves and what the validator will not police, and two
+ * copies of it would disagree on the first directory either version gains.
  */
-export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
+export { REPOSITORY_DIRS } from './contract.mjs';
 
 /** Directories that are per-clone and gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];

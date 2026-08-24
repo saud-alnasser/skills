@@ -30,6 +30,7 @@ import {
   MODES,
   OWNERS,
   SKILLS,
+  PROTOCOL_FILES,
   isIsoDate,
   isNonEmptyString,
   readArtifact,
@@ -38,6 +39,7 @@ import {
   walk,
   wikiLinks,
 } from './contract.mjs';
+import { render as renderManifest, shippedPaths } from './manifest.mjs';
 import { renderAdapter, TARGETS } from './adapters.mjs';
 import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
@@ -223,6 +225,29 @@ function installFixture() {
 
 section('manifest', () => {
   assert('specs.md declares a version', isNonEmptyString(specVersion));
+
+  // Ownership is a fact about location, and the exact list is what tells a
+  // shipped file from a stray standing beside it. It is generated, so the only
+  // way it can be wrong is by being stale, and stale is what this catches.
+  assert('the protocol-files manifest matches the payload. Run scripts/manifest.mjs', () => {
+    const contract = path.join(SRC, 'scripts', 'contract.mjs');
+    const current = fs.readFileSync(contract, 'utf8');
+    if (renderManifest(current, shippedPaths(SRC)) !== current) {
+      throw new Error('scripts/contract.mjs names a different set of paths than the payload ships');
+    }
+    return true;
+  });
+
+  // Every path in it must exist, which a stale-check alone does not prove: a
+  // generator run against a tree missing a file writes a manifest that agrees
+  // with itself and names nothing.
+  assert('every path the manifest names exists in the distribution', () => {
+    const missing = PROTOCOL_FILES
+      .filter((rel) => rel !== '.gitignore')
+      .filter((rel) => !fs.existsSync(path.join(SRC, ...rel.split('/'))));
+    if (missing.length > 0) throw new Error(missing.join(', '));
+    return true;
+  });
 
   // The specification and the payload cannot disagree about which primitives
   // exist, so the one that was added last is read back out of the table rather
@@ -1877,33 +1902,48 @@ section('install fixture', () => {
     return true;
   });
 
+  // Returns what the installer printed, because two assertions below check that
+  // a replacement was reported rather than only that it happened.
   const update = () =>
-    execFileSync(
+    String(execFileSync(
       process.execPath,
       [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir, '--update'],
-      { stdio: 'ignore' },
-    );
+      { encoding: 'utf8' },
+    ));
 
-  // A repository-owned file standing where a shipped one lands is preserved by
-  // the installer and then failed by the validator: the two governance
-  // directories admit one owner each, so the misplacement is a defect to report
-  // rather than one for an upgrade to correct on the repository's behalf. Both
-  // halves are asserted, because either alone is the wrong behaviour.
-  assert('an upgrade preserves a repository-owned file standing in policies/', () => {
+  // Ownership is a fact about location, so a file standing at a path the payload
+  // ships is the protocol's whatever it declares. An upgrade replaces it, and
+  // the protection the `owner:` field used to give is recovered from content:
+  // the replacement is reported rather than made silently. Both halves are
+  // asserted, because replacing without reporting is the silent loss the old
+  // check existed to prevent.
+  assert('an upgrade replaces a file standing at a shipped path, and says so', () => {
     const intruder = path.join(aep, 'policies', 'engineering.md');
-    fs.writeFileSync(
-      intruder,
-      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-16', 'kind: policy',
-        'use-when: "a repository-owned file stands where a shipped one would land"',
-        '---', '', '# Local', ''].join('\n'),
-      'utf8',
-    );
+    fs.writeFileSync(intruder, '# Local\n', 'utf8');
+    const output = update();
+    const replaced = fs.readFileSync(intruder, 'utf8') === readSrc('policies', 'engineering.md');
+    if (!replaced) throw new Error('the shipped file was not restored');
+    if (!/locally edited and replaced/.test(output)) {
+      throw new Error('the replacement was not reported');
+    }
+    if (!/policies\/engineering\.md/.test(output)) {
+      throw new Error(`the report did not name the file: ${output}`);
+    }
+    return true;
+  });
+
+  // The case the field never could catch: a repository file under a name the
+  // protocol does not ship. The installer preserves it, because the manifest
+  // does not name it, and the validator says it is in the wrong directory.
+  assert('an upgrade preserves a repository file at a name the protocol does not ship', () => {
+    const intruder = path.join(aep, 'policies', 'local-invention.md');
+    fs.writeFileSync(intruder, '# Local\n', 'utf8');
     update();
-    return readArtifact(intruder).fields.owner === 'repository';
+    return fs.existsSync(intruder) && fs.readFileSync(intruder, 'utf8') === '# Local\n';
   });
 
   assert('validate then rejects it, rather than the upgrade correcting it', () => {
-    const intruder = path.join(aep, 'policies', 'engineering.md');
+    const intruder = path.join(aep, 'policies', 'local-invention.md');
     let failed = false;
     let output = '';
     try {
@@ -1913,10 +1953,10 @@ section('install fixture', () => {
       failed = true;
       output = String(error.stderr ?? '');
     }
-    // Restore the shipped file before anything downstream reads this tree.
-    fs.copyFileSync(path.join(SRC, 'policies', 'engineering.md'), intruder);
-    if (!failed) throw new Error('validate passed on a repository-owned file in policies/');
-    if (!/policies\/ holds only owner: protocol/.test(output)) {
+    // Restore the tree before anything downstream reads it.
+    fs.rmSync(intruder);
+    if (!failed) throw new Error('validate passed on a repository file inside policies/');
+    if (!/policies\/ holds only what the protocol ships/.test(output)) {
       throw new Error(`failed for some other reason: ${output}`);
     }
     return true;

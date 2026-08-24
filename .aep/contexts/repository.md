@@ -30,7 +30,7 @@ survive an upgrade like anyone else's.
 | `src/protocol.md` | the bootstrap, installed as `.aep/protocol.md` |
 | `src/policies/` `src/modes/` `src/skills/` `src/agents/` `src/templates/` | the protocol-owned payload |
 | `src/seed/` | repository-owned starting points, installed where detected |
-| `src/scripts/` | the scripts `.aep/` gets, plus install, adapters, and verify |
+| `src/scripts/` | the scripts `.aep/` gets, plus install, adapters, manifest, release, and verify |
 | `src/adapters/<runtime>/` | the committed runtime adapters — generated, never hand-edited. A tree is committed only where that directory is itself what a user registers |
 | `specs.md` | the normative specification. It is not shipped |
 
