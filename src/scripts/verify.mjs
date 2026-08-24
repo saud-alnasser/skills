@@ -1741,6 +1741,51 @@ section('the effort opens', () => {
       && /projecting them, never storing them/.test(runner);
   });
 
+  // Asked of every skill at once rather than file by file. install's label
+  // offer and the 2.x reshape both opened with a tracker call and neither was
+  // in the relevant areas of the ticket that gave the tracker-less posture a
+  // procedure: each step is correct for the repository it was written for,
+  // which is the gap a per-ticket check cannot see. The phrases are the
+  // instructions to read or write a tracker, not the word "tracker", which
+  // every one of these files has a reason to use.
+  const TRACKER_CALLS = [
+    'create the issue',
+    'open a draft pull request',
+    'Offer the label vocabulary',
+    'from the tracker rather than from',
+    'Move the issue and the pull request',
+    "A criterion's checkbox",
+  ];
+  assert('no skill or agent instructs a tracker call without naming the case where there is none', () => {
+    const reaching = ['skills', 'agents'].flatMap((dir) => walk(path.join(SRC, dir)))
+      .filter((file) => file.endsWith('.md'))
+      .map((file) => [toPosix(SRC, file), fs.readFileSync(file, 'utf8')])
+      .filter(([, text]) => TRACKER_CALLS.some((call) => text.includes(call)))
+      .filter(([, text]) => !text.includes('no tracker'))
+      .map(([rel]) => rel);
+    if (reaching.length > 0) throw new Error(reaching.join(', '));
+    return true;
+  });
+
+  // The two the sweep found. A projection with no surface is not a smaller
+  // offer, and a seeded vocabulary nobody can apply reads as work owed.
+  //
+  // Line endings and wrapping are stripped first: these read prose that wraps
+  // at 80 columns, and a CRLF checkout would fail them for a reason unrelated
+  // to what they assert.
+  const oneLine = (text) =>
+    text.split(String.fromCharCode(13)).join('').split(/\s+/).join(' ');
+  assert('install skips the label offer where there is no tracker', () => {
+    const install = oneLine(readSrc('skills', 'install.md'));
+    return /\*\*Where the repository has no tracker, skip this step and say it was skipped\.\*\*/
+      .test(install) && /not a smaller offer, it is no offer/.test(install);
+  });
+  assert('the 2.x reshape still runs its tree half without a tracker', () => {
+    const twoX = oneLine(headingBlock(readSrc('skills', 'update.md'), 'Coming from 2.x'));
+    return /\*\*Where the repository has no tracker there is nothing to reshape\*\*/.test(twoX)
+      && /the tree half of this migration still runs in full/.test(twoX);
+  });
+
   // The sub-issue resolution this repository never adopted. It is recorded as a
   // declined option rather than deleted, because the next reader will find the
   // feature and wonder why it is unused.

@@ -43,10 +43,14 @@ somebody else is already making.
 
 ## You tick the criteria, and only you
 
-**A criterion's checkbox in the pull request is yours to tick, at the moment you
-verify it**, carrying inline what verified it — the command and what it printed,
-or the case you traced. Not at the end of the review: a run killed mid-review
-keeps every tick you had already made and loses only the rest.
+**A criterion's checkbox is yours to tick, at the moment you
+verify it**, carrying inline what verified it — the command and what it printed, or the case
+you traced. Not at the end of the review: a run killed mid-review keeps every
+tick you had already made and loses only the rest.
+
+**The box is in the pull request, or in the ticket file where the repository has
+no tracker** (`[[policies/execution]]`). Which one it is changes nothing about
+whose tick it is or when it is made.
 
 **Never tick a criterion for code you wrote.** You did not write this diff, which
 is the whole reason the tick is yours: a claim that somebody checked, made by the

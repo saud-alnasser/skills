@@ -107,6 +107,12 @@ skills that entered it.
   two objects were required, which made the smaller shape reachable by not
   asking.
 
+  Nothing shipped now reaches for a tracker before establishing there is one:
+  `/install` skips the label offer and says it skipped it, the 2.x reshape runs
+  its tree half and says the tracker half did not apply, and the correctness
+  reviewer ticks a box that is in the pull request or in the ticket file
+  depending on which posture the repository is in.
+
 - **An upgrade reconciles your rules against the law that changed under them.**
   A rule may tighten a policy and may never contradict one, and that judgement
   was made against the release the rule was written under. `/update` now reads

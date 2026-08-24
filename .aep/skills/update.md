@@ -177,6 +177,10 @@ still a split — an effort in 3 has a plan, and an empty one is honest.
 
 ### The tracker
 
+**Where the repository has no tracker there is nothing to reshape**, and the
+tree half of this migration still runs in full. Say the section was skipped and
+why; a 2.x tree without a forge lost nothing in 2.x and loses nothing here.
+
 **An effort that has landed is a record.** Its issues, its pull request, and
 every comment on it are what happened and what was reviewed. They are never
 reshaped — not for consistency, not to make an old effort look like the current

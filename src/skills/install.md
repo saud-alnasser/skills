@@ -129,8 +129,15 @@ whichever runtime adapters the repository asks for.
    say which was picked.
 
 8. **Offer the label vocabulary — only where the tracker has none of its own.**
-   Read the list first (`[[references]]` for this forge). What you find decides
-   which of two things happens, and they are not the same offer:
+
+   **Where the repository has no tracker, skip this step and say it was
+   skipped.** Labels project a file onto a tracker, and a projection with no
+   surface is not a smaller offer, it is no offer: seeding a vocabulary nobody
+   can apply leaves a repository carrying a list it will read as work owed
+   (`[[policies/execution]]`). Nothing else about the install changes.
+
+   Otherwise read the list first (`[[references]]` for this forge). What you find
+   decides which of two things happens, and they are not the same offer:
 
    | The tracker carries | Do |
    | --- | --- |

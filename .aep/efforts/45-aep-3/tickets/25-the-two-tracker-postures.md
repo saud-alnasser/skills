@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 ---
 
 # feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's
@@ -28,8 +28,8 @@ because it also loses the two objects, the run log's home, and what resume reads
       is no pull request, and every one of those sources already exists.
 - [x] `[[policies/execution]]`'s no-tracker sentence no longer claims the
       projection is all that is lost.
-- [ ] This repository's `aep-3` carries both objects, linked to
-      `.aep/efforts/aep-3/`, with every tracker write shown before it is made.
+- [x] This repository's effort carries both objects, linked to
+      `.aep/efforts/45-aep-3/`, with every tracker write shown before it is made.
 - [x] The suite asserts both postures, and fires with the right name when either
       is broken.
 
@@ -93,9 +93,21 @@ Four fire-checks against the payload, each confirmed to have removed its subject
 
 Two more against `specs.md`: the REQUIRED clause, and the tracker-less procedure.
 
-**Parked, not resolved.** The last criterion asks this repository to carry the
-two objects for `aep-3`, and opening a public issue and pushing a branch is a
-write to shared data: it is proposed with exact strings and asked, and nothing is
-written on a refusal (`[[policies/execution]]`). The strings are in the report to
-the human. The ticket resolves when they exist, and ticking it before then would
-be the claim with its evidence removed.
+**The last criterion was parked and is now met.** Opening a public issue and
+pushing a branch is a write to shared data, so every string was shown first and
+approved before anything was written (`[[policies/execution]]`). Issue 45 carries
+`spec.md` with its 51 criteria as checkboxes; pull request 46 carries the
+approach, the 25 tickets, and `Closes #45`; the effort directory renamed to
+`45-aep-3` on the human's answer, and both bodies name that path.
+
+**Two facts about this repository that the requirement did not anticipate, both
+recorded rather than smoothed over.** Requirement 4 renames the directory before
+the first commit so the rename never enters history; this effort predates its own
+issue by twenty-seven commits, so the rename is a commit like any other. And the
+branch keeps the name `aep-3` it was pushed under rather than following the
+directory: renaming a pushed branch to match a directory is a cost the
+requirement never asked for, and the branch is the name the merge is read under.
+
+**The first issue this repository has ever opened.** Forty-four pull requests,
+thirty-eight of them merged, and no issue until now: the half-shape requirement
+63 exists to close was not hypothetical here.

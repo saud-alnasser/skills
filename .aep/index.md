@@ -90,7 +90,7 @@ Start at [[protocol]].
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
-| 45-aep-3 | accepted | [[efforts/45-aep-3/spec]] | 0 | 0 | 25 |
+| 45-aep-3 | accepted | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -130,7 +130,8 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/45-aep-3/tickets/22-spec-stamped-implemented]] feat(implement): the close stamps the spec it just satisfied | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/23-criteria-ticked-before-resolved]] feat(implement): a ticket cannot be resolved with a criterion left unticked | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | 45-aep-3 | resolved | — |
-| [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | open | — |
+| [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/26-no-unconditional-tracker-call]] fix(protocol): nothing shipped reaches for a tracker before establishing there is one | 45-aep-3 | resolved | — |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
