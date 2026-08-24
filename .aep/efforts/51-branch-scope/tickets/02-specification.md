@@ -1,5 +1,5 @@
 ---
-status: open
+status: resolved
 ---
 
 # docs(specs): the specification says what a run is scoped by
@@ -14,19 +14,19 @@ gitignored state is per working tree, not per clone.
 
 ## Acceptance Criteria
 
-- [ ] `specs.md` defines the claim as the efforts a branch's own commits touch,
+- [x] `specs.md` defines the claim as the efforts a branch's own commits touch,
       the working set as what the tree touches now, and confinement as the second
       measured against the first (requirement 11).
-- [ ] It states that an empty claim is unscoped and permits any effort, and that a
+- [x] It states that an empty claim is unscoped and permits any effort, and that a
       run needing one effort from a larger set stops rather than choosing
       (requirement 11).
-- [ ] It states that the isolation in force is detected and reported and that a
+- [x] It states that the isolation in force is detected and reported and that a
       conforming implementation MUST NOT require worktrees or create the
       runtime's own (requirement 11).
-- [ ] It states that a ticket branch MUST be unique across efforts, leaving the
+- [x] It states that a ticket branch MUST be unique across efforts, leaving the
       mechanism to the repository (requirement 11).
-- [ ] Section 20 no longer calls position per-clone (requirement 11).
-- [ ] The numbered invariant list at the end gains the entry, in the style of the
+- [x] Section 20 no longer calls position per-clone (requirement 11).
+- [x] The numbered invariant list at the end gains the entry, in the style of the
       ones around it (requirement 11).
 
 ## Relevant areas
