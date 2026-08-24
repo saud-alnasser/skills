@@ -165,6 +165,13 @@ reader cannot act on is a wall rather than a check.
 
 1. **Mark the ticket resolved** before staging. It is tracked, so moving it after
    the commit leaves the tree dirty the moment the commit lands.
+
+   **Every criterion is ticked, or the ticket is not resolved.** `resolved` is
+   the claim the work is done and the ticks are the evidence for it, so a box
+   left open is that claim with its evidence removed, and `validate.mjs` fails
+   the ticket by name. **The way out is never to tick it**: a criterion that
+   cannot be met parks the ticket unresolved with what the review said, or marks
+   it `obsolete` where the spec moved on.
 2. **Regenerate the index** — `node .aep/scripts/index.mjs`. Here rather than
    earlier, because this is the last point at which the tree is known complete
    and an index regenerated before the final edit is already stale. **Never

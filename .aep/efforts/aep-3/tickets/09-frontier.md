@@ -11,11 +11,21 @@ blocked-by: [01]
 
 ## Acceptance Criteria
 
-- [ ] Requirement 21 / criterion 13: given an effort whose only open tickets are blocked, the output names what blocks them, so the runner can build the blocking work rather than reporting an empty frontier.
-- [ ] The three output lines take the documented shape, and the exit codes distinguish work remaining, nothing unresolved, and an unreadable effort.
-- [ ] It joins `PAYLOAD_SCRIPTS` and lands in an installed tree.
-- [ ] It is dependency-free ESM run by a bare Node runtime, matching every other script here.
-- [ ] The suite asserts the output shape against a fixture effort, and the guard is broken deliberately once.
+- [x] Requirement 21 / criterion 13: given an effort whose only open tickets are blocked, the output names what blocks them, so the runner can build the blocking work rather than reporting an empty frontier.
+
+      *Verified:* `an unblocked ticket is ready, and its blockers are named` asserts against a fixture effort whose open tickets are blocked.
+- [x] The three output lines take the documented shape, and the exit codes distinguish work remaining, nothing unresolved, and an unreadable effort.
+
+      *Verified:* `nothing unresolved exits 1, which is how a loop knows to stop` and `an unreadable effort exits 2 rather than reporting an empty frontier`; the ready/blocked/summary lines are asserted against the fixture.
+- [x] It joins `PAYLOAD_SCRIPTS` and lands in an installed tree.
+
+      *Verified:* `frontier.mjs` is in `PAYLOAD_SCRIPTS` and stands at `.aep/scripts/frontier.mjs` in this tree.
+- [x] It is dependency-free ESM run by a bare Node runtime, matching every other script here.
+
+      *Verified:* the suite asserts no shipped script declares a third-party dependency and that every script is `.mjs`; `frontier.mjs` is covered by both.
+- [x] The suite asserts the output shape against a fixture effort, and the guard is broken deliberately once.
+
+      *Verified:* the frontier section runs the script against a fixture effort. Fire-checked when it was built.
 
 ## Relevant areas
 

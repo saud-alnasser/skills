@@ -11,13 +11,27 @@ blocked-by: [01]
 
 ## Acceptance Criteria
 
-- [ ] Requirement 60 / criterion 43: a `use-when` reading `"Database documentation"` fails by name; one reading `"changing anything under src/"` passes; one repeating its own file’s heading fails.
-- [ ] The four checks are each a hard failure: names an occasion, is not a bare noun phrase, does not restate the heading, and is within the stated length bound.
-- [ ] Requirement 59 / criterion 39: `release.mjs` sets the version of record with one write to the bootstrap and performs no per-artifact stamping. Hashes it produces for unchanged content are identical to those the 2.x tree produced.
-- [ ] `index.mjs` renders no Modes column and computes no `date` for the index itself.
-- [ ] `contract.mjs` no longer exports `KINDS`, `MODES`, `REPORT_FORMS`, or `MODELESS_SKILLS`, and every consumer of them in `validate.mjs` and `verify.mjs` is rewritten in the same change.
-- [ ] The suite’s `frontmatter` and `stamps` sections assert the above, and each new guard is broken deliberately once.
-- [ ] The admission line at the end of a run narrows to what the four proxies do not cover rather than disappearing.
+- [x] Requirement 60 / criterion 43: a `use-when` reading `"Database documentation"` fails by name; one reading `"changing anything under src/"` passes; one repeating its own file’s heading fails.
+
+      *Verified:* `use-when rejects a topic: "Database documentation"`, `use-when accepts a trigger: "changing anything under src/"`, and `use-when rejects one that restates its own heading` all assert in the frontmatter section.
+- [x] The four checks are each a hard failure: names an occasion, is not a bare noun phrase, does not restate the heading, and is within the stated length bound.
+
+      *Verified:* four checks, each its own guard, plus `the use-when bounds admit every trigger the payload ships` — so the length bound is calibrated against the payload rather than guessed.
+- [x] Requirement 59 / criterion 39: `release.mjs` sets the version of record with one write to the bootstrap and performs no per-artifact stamping. Hashes it produces for unchanged content are identical to those the 2.x tree produced.
+
+      *Verified:* `release.mjs stamps no artifact but the bootstrap`, and `stamping an artifact does not change its own hash`. See the correction on ticket 03's last criterion for what the causal clause gets wrong.
+- [x] `index.mjs` renders no Modes column and computes no `date` for the index itself.
+
+      *Verified:* `index.mjs` contains no Modes column and computes no date; ticket 17 removed the index's frontmatter entirely.
+- [x] `contract.mjs` no longer exports `KINDS`, `MODES`, `REPORT_FORMS`, or `MODELESS_SKILLS`, and every consumer of them in `validate.mjs` and `verify.mjs` is rewritten in the same change.
+
+      *Verified:* none of `KINDS`, `MODES`, `REPORT_FORMS`, or `MODELESS_SKILLS` appears in the distribution, and both consumers were rewritten in that change rather than after it.
+- [x] The suite’s `frontmatter` and `stamps` sections assert the above, and each new guard is broken deliberately once.
+
+      *Verified:* the `frontmatter` and `stamps` sections carry the guards, fire-checked when built.
+- [x] The admission line at the end of a run narrows to what the four proxies do not cover rather than disappearing.
+
+      *Verified:* `validate.mjs` still closes with the admission, narrowed to what the proxies do not cover: it cannot tell a correct trigger from a plausible wrong one.
 
 ## Relevant areas
 

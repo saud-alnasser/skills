@@ -246,6 +246,19 @@ function checkTraceability(root) {
       const ticket = readArtifact(file);
       if (ticket.fields.status === 'obsolete') continue;
 
+      // The status is the claim the work is done and the ticks are its evidence,
+      // so an open box under a resolved ticket is the claim with the evidence
+      // removed. Exempt above: an obsolete ticket, and every ticket under an
+      // implemented effort, which is the record of what was reviewed.
+      if (ticket.fields.status === 'resolved') {
+        const open = (ticket.body.match(/^\s*- \[ \]/gm) ?? []).length;
+        if (open > 0) {
+          fail(rel, `is "resolved" with ${open} acceptance criterion/criteria unticked. ` +
+            'A criterion is ticked when it is verified; one that cannot be met parks the ' +
+            'ticket unresolved or marks it obsolete');
+        }
+      }
+
       const cited = citations(ticket.body);
       if (cited.length === 0) {
         fail(rel, 'its acceptance criteria cite no requirement or criterion of ' +

@@ -16,11 +16,21 @@ blocked-by: [02]
       hash `MOVES` now carries; `rewriteMovedLinks` decides by location; and the
       move and notice gating reads `version:` with a fallback to `aep:`.
 
-- [ ] Requirement 55 / criterion 38: a skill’s frontmatter is `use-when` and nothing else. No artifact under the payload carries any removed field, and the bootstrap is the only file naming a release.
-- [ ] Criterion 44: the ticket template’s example frontmatter is `status` and `blocked-by`, and nothing else.
-- [ ] `paths` survives on the artifacts that carry it.
-- [ ] `validate.mjs` now rejects a removed field rather than ignoring it, and the guard is broken deliberately once.
-- [ ] Criterion 39 still holds after the strip: content hashes are unchanged, because the hash already stripped `aep:` and `date:`.
+- [x] Requirement 55 / criterion 38: a skill’s frontmatter is `use-when` and nothing else. No artifact under the payload carries any removed field, and the bootstrap is the only file naming a release.
+
+      *Verified:* no artifact under the payload carries a retired field — `validate.mjs` fails one that does, on a protocol path — and `src/protocol.md` is the only Markdown file in the distribution naming a release.
+- [x] Criterion 44: the ticket template’s example frontmatter is `status` and `blocked-by`, and nothing else.
+
+      *Verified:* `the ticket template shows status and blocked-by, and nothing else`.
+- [x] `paths` survives on the artifacts that carry it.
+
+      *Verified:* `paths` survives on `policies/artifacts.md` and on the context and rule templates.
+- [x] `validate.mjs` now rejects a removed field rather than ignoring it, and the guard is broken deliberately once.
+
+      *Verified:* `validate.mjs` fails a retired field on a protocol path and tolerates it elsewhere, which is what keeps an upgrade from failing a tree for carrying what AEP handed it.
+- [x] Criterion 39 still holds after the strip: content hashes are unchanged, because the hash already stripped `aep:` and `date:`.
+
+      *Verified with a correction.* What holds is that identical content hashes identically: the hashing function did not change, and `stamping an artifact does not change its own hash` is green. **The stated reason is wrong for four of the six fields.** `contentHash` strips `aep:`, `version:`, and `date:` only, so removing `kind`, `mode`, `report`, `owner`, and `part-of` did move those files' hashes — deliberately, and `release.mjs` restamped them. Criterion 39 of the spec carries the same inaccurate clause and is a finding rather than a gap.
 
 ## Relevant areas
 

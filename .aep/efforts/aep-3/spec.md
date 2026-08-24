@@ -388,6 +388,13 @@ trimmed to look smaller than it is.
 26. A criterion is ticked **at the moment it is verified**, carrying inline what
     verified it.
 
+    **A ticket is not `resolved` while one of its criteria is unticked.** The
+    status is the claim that the work is done and the ticks are the evidence for
+    it, so a resolved ticket with an open box is the claim with its evidence
+    removed. A criterion that cannot be met leaves the ticket parked unresolved
+    under requirement 24, or marks it `obsolete` where the spec moved on. Neither
+    is ticking it.
+
 27. A resumed run reconstructs its position from the pull request, the issue, and
     the repository, and from nothing else.
 
@@ -821,6 +828,11 @@ trimmed to look smaller than it is.
 47. An effort whose converge round found no gap carries `status: implemented` in
     `spec.md` before its pull request is marked ready. A spec at `implemented`
     with an unresolved ticket under it fails validation by name.
+
+48. A ticket at `status: resolved` with an unticked criterion fails validation by
+    name. An `obsolete` ticket is exempt, and so is every ticket under an effort
+    whose spec is `implemented`, because a landed effort is the record of what
+    was reviewed.
 
 # Constraints
 

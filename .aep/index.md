@@ -90,7 +90,7 @@ Start at [[protocol]].
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
-| aep-3 | accepted | [[efforts/aep-3/spec]] | 0 | 0 | 22 |
+| aep-3 | accepted | [[efforts/aep-3/spec]] | 0 | 0 | 23 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -127,7 +127,8 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/aep-3/tickets/19-version-control]] chore(rules): this repository states what the runner may push | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | aep-3 | resolved | 08, 11, 12, 13, 17, 18, 19 |
 | [[efforts/aep-3/tickets/21-tickets-are-local]] fix(protocol): the payload stops offering a tracker as a home for tickets | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/22-spec-stamped-implemented]] feat(implement): the close stamps the spec it just satisfied | aep-3 | open | — |
+| [[efforts/aep-3/tickets/22-spec-stamped-implemented]] feat(implement): the close stamps the spec it just satisfied | aep-3 | resolved | — |
+| [[efforts/aep-3/tickets/23-criteria-ticked-before-resolved]] feat(implement): a ticket cannot be resolved with a criterion left unticked | aep-3 | open | — |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |

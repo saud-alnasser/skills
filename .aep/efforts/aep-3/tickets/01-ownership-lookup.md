@@ -10,12 +10,24 @@ Ownership stops being a frontmatter claim and becomes a lookup. `contract.mjs` c
 
 ## Acceptance Criteria
 
-- [ ] Requirement 56: `contract.mjs` exports `PROTOCOL_DIRS`, `REPOSITORY_DIRS`, and a generated `PROTOCOL_FILES` of exact shipped paths, and the generation runs as part of building the payload rather than beside it.
-- [ ] Requirement 57 / criterion 41: placing a repository-authored `.md` inside a protocol-owned directory fails `validate.mjs` by name, and the message says where the file belongs.
-- [ ] Criterion 42: an upgrade into a fixture preserves every repository-owned artifact and replaces every protocol-owned one, with no artifact declaring which it is.
-- [ ] `install.mjs`’s `repositoryOwned()` and `copyDir()`’s retirement check no longer read any frontmatter field.
-- [ ] `contract.mjs` no longer exports `DIRECTORY_OWNERS`, and `validate.mjs`'s use of it is replaced by the stray-file check rather than deleted.
-- [ ] The `manifest` section of the suite asserts the table and the manifest agree with the payload, and the guard is broken deliberately once and watched to fail with the right name.
+- [x] Requirement 56: `contract.mjs` exports `PROTOCOL_DIRS`, `REPOSITORY_DIRS`, and a generated `PROTOCOL_FILES` of exact shipped paths, and the generation runs as part of building the payload rather than beside it.
+
+      *Verified:* `contract.mjs` exports `PROTOCOL_DIRS`, `REPOSITORY_DIRS`, and the generated `PROTOCOL_FILES` block that `manifest.mjs` writes. The payload's own directory list ships as `PAYLOAD_DIRS` in `payload.mjs`, which is the name this criterion meant. Generation is gated rather than manual: the suite fails on a stale block (`the protocol-files manifest matches the payload`).
+- [x] Requirement 57 / criterion 41: placing a repository-authored `.md` inside a protocol-owned directory fails `validate.mjs` by name, and the message says where the file belongs.
+
+      *Verified:* `validate.mjs` fails a file under a `PROTOCOL_DIRS` directory that the manifest does not name, and the message says where it belongs — rules/, contexts/, or references/. Exercised by the installer fixture, which asserts the diagnosis text.
+- [x] Criterion 42: an upgrade into a fixture preserves every repository-owned artifact and replaces every protocol-owned one, with no artifact declaring which it is.
+
+      *Verified:* the upgrade fixture asserts all three arms — a shipped path replaced, a repository name preserved, and a locally edited protocol file replaced whatever it declares it owns.
+- [x] `install.mjs`’s `repositoryOwned()` and `copyDir()`’s retirement check no longer read any frontmatter field.
+
+      *Verified:* `repositoryOwned()` is gone; ownership is `isProtocolPath()` against the manifest, and the suite asserts `install.mjs reads no frontmatter field the payload is removing`.
+- [x] `contract.mjs` no longer exports `DIRECTORY_OWNERS`, and `validate.mjs`'s use of it is replaced by the stray-file check rather than deleted.
+
+      *Verified:* `DIRECTORY_OWNERS` appears nowhere in the distribution, and `validate.mjs`'s use of it is the stray-file check above rather than a deletion.
+- [x] The `manifest` section of the suite asserts the table and the manifest agree with the payload, and the guard is broken deliberately once and watched to fail with the right name.
+
+      *Verified:* the manifest section asserts the block matches the payload and that every path it names exists. Fire-checked when it was built.
 
 ## Relevant areas
 

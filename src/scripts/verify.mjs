@@ -847,6 +847,19 @@ section('skills', () => {
   assert('the orchestrator is the only integrator', () =>
     /The orchestrator is the only integrator/.test(runner));
 
+  // Ticket 23. `resolved` is a claim and the ticks are its evidence, so the
+  // gate has to sit where the status is written rather than in a policy the
+  // runner reads once. The two ways out matter as much as the gate: without
+  // them the cheapest way to satisfy it is to tick an unverified box.
+  assert('the runner gates resolved on every criterion being ticked', () =>
+    /\*\*Every criterion is ticked, or the ticket is not resolved\.\*\*/.test(runner));
+  assert('the gate names the two ways out, and neither is ticking it', () =>
+    /\*\*The way out is never to tick it\*\*/.test(runner) &&
+    /parks the ticket unresolved/.test(runner) &&
+    /marks\s+it `obsolete` where the spec moved on/.test(runner));
+  assert('the gate says what enforces it, so it is not advice', () =>
+    /`validate\.mjs` fails\s+the ticket by name/.test(runner));
+
   // One commit per ticket, including the ticket with nothing to commit. This is
   // the one an implementation quietly skips, because an empty commit feels like
   // noise right up until a bisect needs it.
@@ -3766,7 +3779,9 @@ section('traceability', () => {
   // would read exactly like checking it and passing, so the summary says so.
   assert('an implemented effort is skipped, and the summary names what did not fire', () => {
     // Every ticket resolved, because an implemented effort with open work under
-    // it is its own failure now and would mask the skip this asserts.
+    // it is its own failure now and would mask the skip this asserts. Their
+    // criteria stay unticked on purpose: a landed effort is exempt from the tick
+    // check too, and this is where that exemption is exercised.
     ticket('01-cites.md', ['Requirement 2 holds, checked by reading it.'], 'resolved');
     ticket('06-silent.md', ['Something is true, and it comes from nowhere.'], 'resolved');
     spec('implemented');
@@ -3779,6 +3794,40 @@ section('traceability', () => {
       throw new Error(`the skip was silent: ${out}`);
     }
     return true;
+  });
+
+  // Ticket 23. The status is the claim and the ticks are the evidence, so the
+  // three arms are: resolved with an open box fails, obsolete is exempt because
+  // the spec moved on, and a landed effort is exempt because its tickets are
+  // the record of what was reviewed rather than a claim being made now.
+  assert('a resolved ticket with an unticked criterion fails, and the count is named', () => {
+    ticket('07-claimed.md', ['Requirement 1 holds.', 'Requirement 2 holds.'], 'resolved');
+    const { err, code } = run();
+    fs.rmSync(path.join(tickets, '07-claimed.md'));
+    if (code === 0) throw new Error('a resolved ticket passed with two boxes open');
+    if (!/07-claimed\.md: is "resolved" with 2 acceptance criterion\/criteria unticked/.test(err)) {
+      throw new Error(`wrong diagnosis: ${err}`);
+    }
+    return true;
+  });
+
+  assert('a resolved ticket whose criteria are ticked passes', () => {
+    fs.writeFileSync(
+      path.join(tickets, '08-ticked.md'),
+      ['---', 'status: resolved', '---', '', '# t', '', '## Acceptance Criteria', '',
+        '- [x] Requirement 1 holds, checked by reading it.', '', '## Relevant areas', 'somewhere', ''].join('\n'),
+      'utf8',
+    );
+    const { code } = run();
+    fs.rmSync(path.join(tickets, '08-ticked.md'));
+    return code === 0;
+  });
+
+  assert('an obsolete ticket with an open criterion is exempt, since the spec moved on', () => {
+    ticket('09-dropped.md', ['Something nobody asked for.'], 'obsolete');
+    const { code } = run();
+    fs.rmSync(path.join(tickets, '09-dropped.md'));
+    return code === 0;
   });
 
   // Ticket 22, the other direction. Every ticket resolved does not mean the
