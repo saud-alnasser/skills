@@ -140,8 +140,8 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/51-branch-scope/tickets/04-skills-entry]] feat(skills): a skill that names an effort resolves its scope on entry | 51-branch-scope | resolved | 01, 03 |
 | [[efforts/51-branch-scope/tickets/05-plan-skill-correction]] fix(skills): the plan skill stops contradicting the specification | 51-branch-scope | resolved | 04 |
 | [[efforts/51-branch-scope/tickets/06-seeds]] feat(seed): the seeded rules and references state their halves | 51-branch-scope | resolved | 03 |
-| [[efforts/51-branch-scope/tickets/07-verify]] test(verify): every claim this effort adds is asserted, and each was seen to fail | 51-branch-scope | open | 01, 02, 03, 04, 05, 06 |
-| [[efforts/51-branch-scope/tickets/08-regenerate]] chore(dist): the adapter is regenerated and this repository reinstalls its own tree | 51-branch-scope | open | 07 |
+| [[efforts/51-branch-scope/tickets/07-verify]] test(verify): every claim this effort adds is asserted, and each was seen to fail | 51-branch-scope | resolved | 01, 02, 03, 04, 05, 06 |
+| [[efforts/51-branch-scope/tickets/08-regenerate]] chore(dist): release 3.1.0, and this repository reinstalls its own tree | 51-branch-scope | open | 07 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
