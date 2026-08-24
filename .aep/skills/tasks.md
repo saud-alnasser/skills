@@ -15,8 +15,12 @@ reviews it.
 
 ## Procedure
 
-1. **Read the spec.** The effort's `spec.md` — requirements, acceptance criteria, and the
-   technical sections if `[[skills/plan]]` ran.
+1. **Read the scope, then the spec.** `node .aep/scripts/scope.mjs read`, quoted:
+   it names the effort whose `spec.md` this reads, and a non-empty claim confines
+   the run to the efforts it names (`[[policies/execution]]`). The claim and the
+   isolation go in `Position`, beside that spec's `status:`
+   (`[[policies/reporting]]`). Read it whole — requirements, acceptance criteria,
+   and the technical sections if `[[skills/plan]]` ran.
 2. **Tasks live under `efforts/<effort>/tickets/`, and there is nowhere to
    look.** Not per repository, not per convention: a task is a file, its
    `blocked-by` is an edge a script reads, and the frontier is computed from the

@@ -2608,16 +2608,24 @@ section('release', () => {
     return true;
   });
 
-  // The entry for this release, up to the previous one. Scoped, because every
-  // subject below is discussed somewhere in the file's history and a search of
-  // the whole document would pass on a release that said nothing.
-  const entry = () => {
-    const from = changelog.indexOf(`## ${specVersion}`);
+  // One release's entry, up to the next heading. Scoped, because every subject
+  // below is discussed somewhere in the file's history and a search of the whole
+  // document would pass on a release that said nothing.
+  const entry = (version = specVersion) => {
+    const from = changelog.indexOf(`## ${version}`);
     if (from < 0) return '';
     const rest = changelog.slice(from);
     const next = rest.slice(1).search(/^## \d/m);
     return next < 0 ? rest : rest.slice(0, next + 1);
   };
+
+  // The release those removals belong to. `RETIRED_FIELDS` and `RETIRED_DIRS`
+  // describe what 3.0 stopped accepting, so the entry that must name them is
+  // 3.0.0's and not whichever release was cut most recently. Bound to the
+  // newest entry, these four asked every later release to repeat a removal it
+  // did not make, which is a suite that fails on the next release for being
+  // correct.
+  const REMOVALS = '3.0.0';
 
   // What an upgrading repository cannot find out by reading its own tree: every
   // field and directory that stopped being legal, every command that stopped
@@ -2625,19 +2633,19 @@ section('release', () => {
   // under. A release that removes something and does not say so is one every
   // repository discovers through a validation failure.
   assert('the changelog names every retired field', () =>
-    RETIRED_FIELDS.every((field) => new RegExp(`\`${field}\``).test(entry())));
+    RETIRED_FIELDS.every((field) => new RegExp(`\`${field}\``).test(entry(REMOVALS))));
   assert('the changelog names every directory this release stopped shipping', () =>
-    RETIRED_DIRS.every(({ dir }) => entry().includes(`\`${dir}/\``)));
+    RETIRED_DIRS.every(({ dir }) => entry(REMOVALS).includes(`\`${dir}/\``)));
   assert('the changelog names the commands this release removed', () =>
-    /Two skills are gone/.test(entry())
-    && entry().includes('`/commit`')
-    && entry().includes('skills/tasks/labels.md'));
+    /Two skills are gone/.test(entry(REMOVALS))
+    && entry(REMOVALS).includes('`/commit`')
+    && entry(REMOVALS).includes('skills/tasks/labels.md'));
   assert('the changelog names both ways a tree is classified', () =>
-    /Two mechanisms classify a tree/.test(entry())
-    && /carrying `owner:`/.test(entry())
-    && /classified by the manifest/.test(entry()));
+    /Two mechanisms classify a tree/.test(entry(REMOVALS))
+    && /carrying `owner:`/.test(entry(REMOVALS))
+    && /classified by the manifest/.test(entry(REMOVALS)));
   assert('the changelog states when the older classifier goes', () =>
-    /no repository the maintainer knows of/.test(entry()));
+    /no repository the maintainer knows of/.test(entry(REMOVALS)));
 
   assert('a licence ships', () => fs.existsSync(path.join(REPO, 'LICENSE')));
 

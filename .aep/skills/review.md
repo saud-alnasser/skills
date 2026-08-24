@@ -24,6 +24,12 @@ and speed: a review that agrees quickly has usually only read quickly.
 
 ## 1 — Pin the fixed point
 
+**Scope first** — `node .aep/scripts/scope.mjs read`, quoted. A non-empty claim
+confines the run to the efforts it names (`[[policies/execution]]`), and it is
+what row 4 of the next step resolves to. The claim and the isolation go in the
+`Position` of the turn this is a stage of, beside the pinned merge-base and the
+non-empty subject below (`[[policies/reporting]]`).
+
 Everything downstream is a function of one ref. Take what the caller supplied — a
 SHA, a branch, a tag, `main` — or ask.
 
@@ -47,7 +53,7 @@ In order, stopping at the first that answers:
 1. the task the caller is holding
 2. task references in the commit messages
 3. a path the human passed
-4. the effort's `spec.md` matching the branch
+4. the effort's `spec.md`, for the claim read at step 1
 
 If none answers, **ask**. If there is genuinely no spec, the Correctness axis
 reports **no spec available** for the requirements half and says so.

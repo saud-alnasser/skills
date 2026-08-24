@@ -65,6 +65,7 @@ export const PROTOCOL_FILES = [
   'scripts/frontier.mjs',
   'scripts/index.mjs',
   'scripts/position.mjs',
+  'scripts/scope.mjs',
   'scripts/validate.mjs',
   'skills/domain.md',
   'skills/handoff.md',

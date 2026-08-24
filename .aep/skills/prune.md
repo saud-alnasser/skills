@@ -15,7 +15,14 @@ delete, and the human disposes.
 
 ## Procedure
 
-1. **Start from what is mechanically broken.** `node .aep/scripts/validate.mjs`.
+1. **Read the scope, then start from what is mechanically broken.**
+   `node .aep/scripts/scope.mjs read`, quoted, then
+   `node .aep/scripts/validate.mjs`. A non-empty claim confines this run like any
+   other, and a subject that is the whole tree buys no exemption
+   (`[[policies/execution]]`): reaching another effort's artifact stops the run
+   and names it, and a tree-wide sweep belongs on an unscoped checkout. The claim
+   and the isolation go in `Position`, beside what `validate.mjs` printed
+   (`[[policies/reporting]]`).
 2. **Sweep for the five staleness classes:**
 
    | Class | Test | Default disposition |
