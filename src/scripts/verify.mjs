@@ -25,12 +25,13 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  KINDS,
-  MODELESS_SKILLS,
   MODES,
   OWNERS,
   SKILLS,
   PROTOCOL_FILES,
+  useWhenProblems,
+  USE_WHEN_MAX_WORDS,
+  USE_WHEN_MIN_WORDS,
   isIsoDate,
   isNonEmptyString,
   readArtifact,
@@ -366,7 +367,7 @@ section('stamps', () => {
   assert('the release baseline exists. Run scripts/release.mjs to create it', () =>
     Object.keys(stamps).length > 0);
 
-  for (const file of shipped) {
+  for (const file of payloadArtifacts()) {
     const rel = toPosix(SRC, file);
     const hash = contentHash(fs.readFileSync(file, 'utf8'));
     assert(`${rel} is stamped for its current content. Run scripts/release.mjs <version>`, () => {
@@ -420,9 +421,6 @@ section('frontmatter', () => {
     assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
-    if (artifact.fields.kind !== undefined) {
-      assert(`${rel} declares a legal kind`, KINDS.includes(artifact.fields.kind));
-    }
     if (artifact.fields.mode !== undefined) {
       assert(`${rel} mode is an array of legal modes`, () =>
         Array.isArray(artifact.fields.mode) &&
@@ -431,6 +429,62 @@ section('frontmatter', () => {
     assert(`${rel} declares no status (payload artifacts are not specs or tickets)`,
       artifact.fields.status === undefined);
   }
+
+  // `use-when` is the whole of applicability-first loading, so every shipped
+  // trigger is put through the same checks a consuming repository's will be.
+  for (const file of payloadArtifacts()) {
+    const rel = toPosix(SRC, file);
+    const artifact = readArtifact(file);
+    if (artifact.fields['use-when'] === undefined) continue;
+    assert(`${rel} use-when reads as a trigger`, () => {
+      const heading = (artifact.body.match(/^#\s+(.+)$/m) ?? [])[1] ?? '';
+      const problems = useWhenProblems(artifact.fields['use-when'], {
+        heading,
+        name: path.basename(rel, '.md'),
+        directory: rel.split('/')[0],
+      });
+      if (problems.length > 0) throw new Error(problems.join('; '));
+      return true;
+    });
+  }
+
+  // The two cases the specification names, pinned by name. A checker that
+  // accepts the topic or rejects the trigger has stopped doing its job, and
+  // neither shows up as a failure anywhere else.
+  assert('use-when rejects a topic: "Database documentation"', () =>
+    useWhenProblems('Database documentation', {}).length > 0);
+  assert('use-when accepts a trigger: "changing anything under src/"', () =>
+    useWhenProblems('changing anything under src/', {}).length === 0);
+  assert('use-when rejects a one-word noun that ends like a verb', () =>
+    useWhenProblems('policies', {}).length > 0);
+  assert('use-when rejects one that restates its own heading', () =>
+    useWhenProblems('the effort is in progress', { heading: 'The effort is in progress' }).length > 0);
+  assert('use-when accepts the same words when they are not the heading', () =>
+    useWhenProblems('the effort is in progress', {}).length === 0);
+
+  // The bounds came from the corpus rather than from taste, so they are asserted
+  // against it: a bound tightened past the longest real trigger fails good work.
+  assert('the use-when bounds admit every trigger the payload ships', () => {
+    const lengths = payloadArtifacts()
+      .map((file) => readArtifact(file).fields['use-when'])
+      .filter((value) => typeof value === 'string')
+      .map((value) => value.trim().split(/\s+/).length);
+    const longest = Math.max(...lengths);
+    const shortest = Math.min(...lengths);
+    if (longest > USE_WHEN_MAX_WORDS) throw new Error(`longest is ${longest}, over the bound`);
+    if (shortest < USE_WHEN_MIN_WORDS) throw new Error(`shortest is ${shortest}, under the floor`);
+    return true;
+  });
+
+  // The release no longer writes itself into every artifact. The bootstrap is
+  // the one file that names it, so the pass that stamped the rest is gone.
+  assert('release.mjs stamps no artifact but the bootstrap', () => {
+    const text = fs.readFileSync(path.join(SRC, 'scripts', 'release.mjs'), 'utf8');
+    if (/setField\(text, 'aep', version\)/.test(text)) {
+      throw new Error('the per-artifact stamping pass is still there');
+    }
+    return true;
+  });
 
   assert('owner has exactly two legal values', () =>
     OWNERS.length === 2 && OWNERS.includes('protocol') && OWNERS.includes('repository'));
@@ -493,16 +547,8 @@ section('skills', () => {
       continue;
     }
     const artifact = readArtifact(file);
-    assert(`skills/${name} declares kind: skill`, artifact.fields.kind === 'skill');
     assert(`skills/${name} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
 
-    if (MODELESS_SKILLS.includes(name)) {
-      assert(`skills/${name} declares no mode (specs.md names it modeless)`,
-        artifact.fields.mode === undefined);
-    } else {
-      assert(`skills/${name} declares at least one mode`, () =>
-        Array.isArray(artifact.fields.mode) && artifact.fields.mode.length > 0);
-    }
   }
 
   // The discovery surface. `protocol.md` gives `help` one job, answering *what do
@@ -1085,7 +1131,7 @@ section('contexts', () => {
     const file = path.join(contextsDir, ...rel.split('/'));
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, '---\naep: 0.0.0\nowner: repository\n' +
-      'date: 2026-01-01\nkind: context\nuse-when: "a fixture probe"\n---\n\n# Probe\n' + extra);
+      'date: 2026-01-01\nkind: context\nuse-when: "a fixture is being probed and validate must accept it"\n---\n\n# Probe\n' + extra);
     return file;
   };
   /** Runs the fixture's own validate.mjs. Returns null on success, stderr on failure. */
@@ -2306,6 +2352,96 @@ section('install fixture', () => {
 // cannot fail reads exactly like a check that passed. This proves the harness
 // distinguishes the two before any result above is trusted.
 
+// --- the frontier is computed, not judged --------------------------------------
+// Scheduling is a graph the tickets already declare. An orchestrator that reads
+// them and decides independence for itself is inferring what was written down,
+// so the answer is computed here and its shape is pinned.
+
+section('frontier', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-frontier-'));
+  const aep = path.join(dir, '.aep');
+  const tickets = path.join(aep, 'efforts', 'probe', 'tickets');
+  fs.mkdirSync(tickets, { recursive: true });
+  fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+
+  const ticket = (name, status, blockedBy) => fs.writeFileSync(
+    path.join(tickets, name),
+    ['---', `status: ${status}`, ...(blockedBy ? [`blocked-by: [${blockedBy}]`] : []), '---', '', '# t', '']
+      .join('\n'),
+    'utf8',
+  );
+
+  const run = (...extra) => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'frontier.mjs'), 'probe', '--root', aep, ...extra],
+      { encoding: 'utf8' },
+    );
+    return { out: result.stdout, err: result.stderr, code: result.status };
+  };
+
+  ticket('01-first.md', 'resolved');
+  ticket('02-second.md', 'open');
+  ticket('03-third.md', 'open', '02');
+  ticket('04-fourth.md', 'open', '02, 03');
+
+  assert('an unblocked ticket is ready, and its blockers are named', () => {
+    const { out, code } = run();
+    if (code !== 0) throw new Error(`exit ${code}, expected 0 while work remains`);
+    if (!/^ready {4}02 second$/m.test(out)) throw new Error(`no ready line for 02: ${out}`);
+    if (!/^blocked {2}03 third by 02$/m.test(out)) throw new Error(`no blocked line for 03: ${out}`);
+    if (!/^blocked {2}04 fourth by 02,03$/m.test(out)) throw new Error(`04 names the wrong gates: ${out}`);
+    return true;
+  });
+
+  assert('a resolved ticket gates nothing and appears nowhere', () => !/01 first/.test(run().out));
+
+  assert('parking belongs to the caller, echoed rather than decided', () => {
+    const { out } = run('--parked', '02');
+    if (!/^parked {3}02 second$/m.test(out)) throw new Error(`02 was not echoed as parked: ${out}`);
+    if (/^ready/m.test(out)) throw new Error('parking 02 left something ready');
+    return true;
+  });
+
+  assert('an obsolete ticket satisfies an edge, since nobody will do it', () => {
+    ticket('02-second.md', 'obsolete');
+    const ready = /^ready {4}03 third$/m.test(run().out);
+    ticket('02-second.md', 'open');
+    return ready;
+  });
+
+  assert('nothing unresolved exits 1, which is how a loop knows to stop', () => {
+    for (const name of ['02-second.md', '03-third.md', '04-fourth.md']) ticket(name, 'resolved');
+    const { out, code } = run();
+    if (code !== 1) throw new Error(`exit ${code}, expected 1`);
+    if (out.trim() !== '') throw new Error(`printed something: ${out}`);
+    for (const name of ['02-second.md', '03-third.md', '04-fourth.md']) ticket(name, 'open');
+    ticket('03-third.md', 'open', '02');
+    ticket('04-fourth.md', 'open', '02, 03');
+    return true;
+  });
+
+  assert('an edge naming no ticket is an error, never a satisfied gate', () => {
+    ticket('05-dangling.md', 'open', '99');
+    const { err, code } = run();
+    fs.rmSync(path.join(tickets, '05-dangling.md'));
+    if (code !== 2) throw new Error(`exit ${code}, expected 2`);
+    if (!/no ticket has that id/.test(err)) throw new Error(`wrong diagnosis: ${err}`);
+    return true;
+  });
+
+  assert('an unreadable effort exits 2 rather than reporting an empty frontier', () => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'frontier.mjs'), 'nosuch', '--root', aep],
+      { encoding: 'utf8' },
+    );
+    return result.status === 2 && /no tickets directory/.test(result.stderr);
+  });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 section('the guard fires', () => {
   const before = failures.length;
   assert('a deliberately false assertion is recorded as a failure', false, { silent: true });
@@ -2332,6 +2468,6 @@ if (failures.length > 0) {
 }
 
 process.stdout.write('\nnot checked mechanically, and deliberately so:\n');
-process.stdout.write('  - whether each use-when states a trigger rather than a topic\n');
+process.stdout.write('  - whether a use-when shaped like a trigger names the right occasion\n');
 process.stdout.write('  - whether each mode genuinely gives something up\n');
 process.stdout.write("  - whether a skill's procedure produces what it claims\n");

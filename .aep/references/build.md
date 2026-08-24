@@ -29,7 +29,12 @@ node src/scripts/adapters.mjs --target opencode # one of them
 node src/scripts/install.mjs --into <dir>      # install a distribution into a repository
 node .aep/scripts/index.mjs                    # regenerate .aep/index.md
 node .aep/scripts/validate.mjs                 # check an installed tree
+node .aep/scripts/frontier.mjs <effort>        # what can start now, and what waits on what
 ```
+
+`frontier.mjs` exits 0 while work remains, 1 when nothing is unresolved, and 2
+when the effort or its tickets cannot be read. The third is deliberate: an
+unreadable graph must not look like a finished one.
 
 ## Expected output
 

@@ -3,7 +3,7 @@ aep: 2.7.0
 owner: repository
 date: 2026-08-24
 kind: ticket
-status: open
+status: resolved
 part-of: aep-3
 blocked-by: [01]
 ---
@@ -33,5 +33,20 @@ blocked-by: [01]
 The payload still carries every removed field at this point. Validation must accept the new shape and must not yet require it, or ticket 03 has no tree to run in.
 
 ## Notes
+
+Boundary corrected during implementation: `MODES` moved to ticket 04, because
+its only consumers are the `modes` section and the mode-entry assertion, and both
+exist because `modes/` exists. An export dies with its consumers, which is the
+same correction ticket 01 made one layer up.
+
+Two checks were wrong when first written and were fixed against the corpus rather
+than against intuition. The occasion test looked for a gerund or a `when` and
+failed thirty-five of the sixty-eight triggers here, every one of them correct:
+the dominant idiom is a state clause. And the length bound was set at twenty-five
+words when the longest legitimate trigger runs to thirty-seven. Both numbers now
+come from the corpus. The four checks are: has a predicate and is not too short,
+is not the heading, is not the file or directory name, and is within the bound.
+`Is not a bare noun phrase` is not a fifth check, it is what the first catches,
+and it is not reported as though it were.
 
 The suite moves in the same pass as whatever this ticket asserts, never at the end (`[[rules/authoring]]`). Write the guard, then break the thing deliberately and watch it fail with the right name.

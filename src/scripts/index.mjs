@@ -32,13 +32,13 @@ const GENERATED_NOTICE =
 
 /** Top-level sections, in the order an agent discovers them. */
 const SECTIONS = [
-  { dir: 'policies', title: 'Policies', columns: ['Load when', 'Modes', 'Paths'] },
-  { dir: 'rules', title: 'Rules', columns: ['Load when', 'Modes', 'Paths'] },
+  { dir: 'policies', title: 'Policies', columns: ['Load when', 'Paths'] },
+  { dir: 'rules', title: 'Rules', columns: ['Load when', 'Paths'] },
   { dir: 'contexts', title: 'Contexts', columns: ['Load when', 'Paths'] },
-  { dir: 'references', title: 'References', columns: ['Load when', 'Modes'] },
+  { dir: 'references', title: 'References', columns: ['Load when'] },
   { dir: 'modes', title: 'Modes', columns: ['Load when'] },
-  { dir: 'skills', title: 'Skills', columns: ['Load when', 'Modes'], flat: true },
-  { dir: 'agents', title: 'Agents', columns: ['Load when', 'Modes'] },
+  { dir: 'skills', title: 'Skills', columns: ['Load when'], flat: true },
+  { dir: 'agents', title: 'Agents', columns: ['Load when'] },
   { dir: 'templates', title: 'Templates', columns: ['Load when'] },
 ];
 
@@ -139,21 +139,13 @@ function render(root) {
   }));
   const efforts = collectEfforts(root);
 
-  // The index's own date is the newest an indexed artifact declares, which keeps
-  // regeneration byte-identical for an unchanged tree.
-  const dates = sections
-    .flatMap((section) => section.rows)
-    .map((row) => row.fields.date)
-    .concat(protocol.fields.date)
-    .filter((value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value))
-    .sort();
-  const newest = dates.length > 0 ? dates[dates.length - 1] : '1970-01-01';
-
+  // The index carries the release the bootstrap declares and nothing else. Its
+  // own `date` used to be the newest any artifact declared, which was a field
+  // computed from a field that no longer exists on the artifacts it read.
   const out = [];
   out.push('---');
-  out.push(`aep: ${protocol.fields.aep ?? 'unknown'}`);
+  out.push(`aep: ${protocol.fields.aep ?? protocol.fields.version ?? 'unknown'}`);
   out.push('owner: repository');
-  out.push(`date: ${newest}`);
   out.push('---');
   out.push('');
   out.push(GENERATED_NOTICE);
@@ -180,7 +172,6 @@ function render(root) {
     for (const row of section.rows) {
       const values = section.columns.map((column) => {
         if (column === 'Load when') return cell(row.fields['use-when']);
-        if (column === 'Modes') return cell(row.fields.mode);
         if (column === 'Paths') return cell(row.fields.paths);
         return EM_DASH;
       });

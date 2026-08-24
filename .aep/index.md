@@ -127,14 +127,14 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | Ticket | Effort | Status | Blocked by |
 | --- | --- | --- | --- |
 | [[efforts/aep-3/tickets/01-ownership-lookup]] feat(protocol): ownership is looked up rather than declared | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | aep-3 | open | 01 |
+| [[efforts/aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/03-frontmatter-stripped]] refactor(protocol): every artifact drops the six fields nothing reads | aep-3 | open | 02 |
 | [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | open | 04, 05, 06 |
 | [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | open | 07 |
-| [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | open | 01 |
+| [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | aep-3 | open | 09 |
 | [[efforts/aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | aep-3 | open | 10 |
 | [[efforts/aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | aep-3 | open | 10 |

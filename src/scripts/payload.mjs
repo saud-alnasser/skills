@@ -112,6 +112,7 @@ export const NOTICES = [
 /** Scripts installed to `.aep/scripts/`, available to every configured repository. */
 export const PAYLOAD_SCRIPTS = [
   'contract.mjs',
+  'frontier.mjs',
   'index.mjs',
   'validate.mjs',
   'position.mjs',

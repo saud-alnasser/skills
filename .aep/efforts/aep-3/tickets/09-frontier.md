@@ -3,7 +3,7 @@ aep: 2.7.0
 owner: repository
 date: 2026-08-24
 kind: ticket
-status: open
+status: resolved
 part-of: aep-3
 blocked-by: [01]
 ---
@@ -31,5 +31,16 @@ blocked-by: [01]
 It computes and prints. It never writes, never claims a ticket, and never decides that a ticket is parked — it reports what the ticket already says.
 
 ## Notes
+
+`parked` has no source in a ticket, and requirement 54 leaves a ticket carrying
+only `status` and `blocked-by`. Parking is run state that the runner holds in the
+run log, so the script takes it as `--parked` and echoes it back, deciding
+nothing. That satisfies both this ticket's constraint and requirement 54.
+
+One semantic worth stating: `obsolete` satisfies an edge. A task nobody is going
+to do gates nothing, and leaving it as a gate is how an effort stalls on work it
+already decided against. An edge naming a ticket that does not exist is an error
+rather than a satisfied gate, because silently releasing work whose dependency
+nobody wrote is the worse failure.
 
 The suite moves in the same pass as whatever this ticket asserts, never at the end (`[[rules/authoring]]`). Write the guard, then break the thing deliberately and watch it fail with the right name.

@@ -94,29 +94,23 @@ function main() {
   const unchanged = [];
   const next = {};
 
+  // The baseline still records what each artifact hashed to, because that is what
+  // catches an edit that never shipped. What is gone is writing the release back
+  // into every artifact: `aep:` and `date:` said on sixty-nine files what the
+  // bootstrap says once, and the hash never covered them anyway, so removing the
+  // lines moves no hash and loses no detection.
   for (const file of shippedArtifacts()) {
     const rel = toPosix(SRC, file);
-    const text = fs.readFileSync(file, 'utf8');
-    const hash = contentHash(text);
+    const hash = contentHash(fs.readFileSync(file, 'utf8'));
     next[rel] = hash;
-
-    // protocol.md always declares the release: it is the tree's version marker,
-    // read by install.mjs to decide which moves and notices apply and by
-    // index.mjs to stamp the index. Left at its last-changed release, a tree
-    // that had not touched the bootstrap would report itself as an old one.
-    const isBootstrap = file === bootstrap;
-    if (!isBootstrap && stamps[rel] === hash) {
-      unchanged.push(rel);
-      continue;
-    }
-
-    let updated = setField(text, 'aep', version);
-    // A bootstrap whose content did not move keeps its date: the stamp is being
-    // carried for the tree's sake, and the file did not change.
-    if (stamps[rel] !== hash) updated = setField(updated, 'date', today);
-    if (!dryRun && updated !== text) fs.writeFileSync(file, updated, 'utf8');
     (stamps[rel] === hash ? unchanged : changed).push(rel);
   }
+
+  // The bootstrap is the tree's version marker, read by install.mjs to decide
+  // which moves and notices apply. It is the one write.
+  const bootstrapText = fs.readFileSync(bootstrap, 'utf8');
+  const stamped = setField(setField(bootstrapText, 'version', version), 'date', today);
+  if (!dryRun && stamped !== bootstrapText) fs.writeFileSync(bootstrap, stamped, 'utf8');
 
   const orphans = Object.keys(stamps).filter((rel) => !(rel in next));
   writeStamps(next, dryRun);
@@ -138,9 +132,9 @@ function main() {
   }
 
   process.stdout.write(`${dryRun ? 'would release' : 'released'} ${version}\n`);
-  process.stdout.write(`  ${changed.length} artifacts changed and restamped\n`);
+  process.stdout.write(`  ${changed.length} artifacts changed since the last release\n`);
   for (const rel of changed) process.stdout.write(`      ${rel}\n`);
-  process.stdout.write(`  ${unchanged.length} unchanged, keeping their stamps\n`);
+  process.stdout.write(`  ${unchanged.length} unchanged\n`);
   if (orphans.length > 0) {
     process.stdout.write(`  ${orphans.length} dropped from the manifest, no longer shipped:\n`);
     for (const rel of orphans) process.stdout.write(`      ${rel}\n`);
