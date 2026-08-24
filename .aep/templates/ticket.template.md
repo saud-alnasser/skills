@@ -4,8 +4,10 @@ use-when: "writing a local task under efforts/<effort>/tickets/"
 
 # Template — local task
 
-Copy to `efforts/<effort>/tickets/<NN>-<slug>.md`, but **only where this
-repository has no external tracker.** AEP never mirrors an external system.
+Copy to `efforts/<effort>/tickets/<NN>-<slug>.md`. **Every task is a file
+here**, whatever tracker the repository uses: the tracker carries the effort,
+and a task's `blocked-by` is an edge a script reads rather than prose somebody
+maintains.
 
 A task is **a whole unit of work with its own acceptance criteria** — that is
 also the unit a sub-agent may be given, and the reason a task is never split

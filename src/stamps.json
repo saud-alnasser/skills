@@ -8,7 +8,7 @@
   "policies/engineering.md": "5ddcd3cbb5557d4108ac97942fc7248a5d81dfc754289de1cc047ea9f45e2744",
   "policies/execution.md": "4cc81dee78a2adfd7ca8ca7747aa6fb0580509cba34c23dff9433a6e31fa6c84",
   "policies/reporting.md": "f81fac196d9d7f0eb62596d373443573abd3622ff89d6b65f7dbcb76fec77457",
-  "protocol.md": "e94d4e1d83d7f1e8e8d0a9e29e8c8a6f51f6748ceec5c6498170bb945ab01c82",
+  "protocol.md": "31780fb53a433187e3e1c1512656c19bc44f87a1a7b93200756daf020c46b38c",
   "seed/AGENTS.md": "d7a48974c073da46e0e85bc5bee486185a46e8acefcfa81f65fd4f7e35e72e31",
   "seed/contexts/repository.md": "2087152ffc869bbbc73adca9fcaa768ab868060f7c7e87b74f6f57d80d56d49c",
   "seed/references/astro.md": "19464b40d3adf01fd14ab9ac70bdef8a11fae95e87abd2ac4d499918f3dd09fd",
@@ -79,7 +79,7 @@
   "seed/rules/version-control.md": "8367c69f1895bddb671904a144413eeac0e693e24a23891f57a11fdee3d92914",
   "skills/domain.md": "7040ef4d018155c3222acfa61613b644637587eb3aa8a3d98ba78171f849238c",
   "skills/handoff.md": "bdac2a09c45d37c44e9671ead9b0a3fd913f464de7761739c6562678d5a899aa",
-  "skills/help.md": "54bae9df81c601c265dd4fb4a160cac489b7bb4771a939f3d717a9440e44bd99",
+  "skills/help.md": "98531a51345a08480e28186a29d7c832e0e07a5bdf5c36aab799a66c61464ba9",
   "skills/implement.md": "94f2853a1b4dc563d10c414df684b1bd0f66114d4e3bcf3738662def01fd548e",
   "skills/implement/conflicts.md": "8cf3b204f1076434538dcf560e01c725664a7ae14d92fcaaaaca52b63ef4c814",
   "skills/implement/diagnosing.md": "70128ee021028967f496581fe4aee2031dbeae210dce50fb272297cde8c821a0",
@@ -101,7 +101,7 @@
   "skills/specify/out-of-scope.md": "822b287c96449665aae500027efab99dbf340fb238941d965e28a341e63541bb",
   "skills/survey.md": "583d68483014e2e7b9c139fa6016822be903513653962f3bbe31a4b2b107e1a4",
   "skills/survey/report.md": "8bc7f79ea118846dbf9b50eac0f0fb2784646f6bef6ff6d146e8ebb8a9800344",
-  "skills/tasks.md": "c014141f6f43198a60db2a679d3ba631ce75a672cbd541548b5024f3355e74b6",
+  "skills/tasks.md": "7de42e660d66a3577a09bc2e6732409f7bb60617cc81dd3ade0dc8ce2aea92c1",
   "skills/tdd.md": "57d6b6658707d760cc1369ec02b86ccc9608b660d3e661670481a987a80b0a8f",
   "skills/tdd/mocking.md": "75b44413d7fe2c6bbc49aaa9b3c33b10a7a0c2466a80d7fb3b135279e7e4324a",
   "skills/tdd/tests.md": "77bc7a5919ae63d681b4fc324b2ba7cab07390875d930f922f491a7cef59ad90",
@@ -118,5 +118,5 @@
   "templates/rule.template.md": "3604877131553742a909de26413864cd437deace2345f345d0f4037ef6fd3839",
   "templates/skill.template.md": "453dba6da33917b173a04561b0d3f67ec19a9adb1c7db1408d1e4fddb1fd9c4f",
   "templates/spec.template.md": "ef93014bc8a866214120cec7ce80555682f48fe37a39a7e5bcead7d2980072e4",
-  "templates/ticket.template.md": "42f6eb9edc690fd1774a3c82d09e287cf9fd2cb7408d7145c383fd3908ff12df"
+  "templates/ticket.template.md": "84f5f3843869656c16fd2d8a9005d497908cacdd53b3ca024aa2ce6a8b78eeb6"
 }

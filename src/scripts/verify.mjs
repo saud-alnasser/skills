@@ -2451,6 +2451,40 @@ section('release', () => {
     process.stdout.write(`        vendored: ${vendored.map((f) => toPosix(SRC, f)).join(', ')}\n`);
   }
 
+  // Requirement 5, asked of the whole payload rather than file by file. Six
+  // artifacts offered a tracker as a second home for tickets, and not one of
+  // them was in the relevant areas of the ticket that made tickets local: each
+  // was individually consistent with the release it was written for, which is
+  // the shape of gap a per-ticket check cannot see.
+  //
+  // The phrases are the ones that offer the choice, not the word "tracker",
+  // which every artifact here has a legitimate reason to use: the tracker still
+  // carries the effort.
+  const OFFERS_A_SECOND_HOME = [
+    'external tracker',
+    "or in this repository's tracker",
+    'Local tickets are optional',
+    'Local tickets only',
+  ];
+  assert('no shipped artifact offers a tracker as a place tickets may live', () => {
+    const offering = payloadArtifacts()
+      .filter((file) => fs.existsSync(file))
+      .map((file) => [toPosix(SRC, file), fs.readFileSync(file, 'utf8')])
+      // The notices are the exception, and have to be: a notice describes what a
+      // past release asked for, and 2.3.0 asked for exactly this. Saying it is
+      // over means naming it.
+      .filter(([rel]) => rel !== 'scripts/payload.mjs')
+      .filter(([, text]) => OFFERS_A_SECOND_HOME.some((phrase) => text.includes(phrase)))
+      .map(([rel]) => rel);
+    if (offering.length > 0) throw new Error(offering.join(', '));
+    return true;
+  });
+  assert("the bootstrap names an effort's parts without a second home for its tasks", () => {
+    const bootstrap = readSrc('protocol.md');
+    return /tasks as tickets under `tickets\/`/.test(bootstrap)
+      && /`plan\.md`/.test(bootstrap);
+  });
+
   // The fold's own guard. A citation of a directory nothing ships resolves to
   // nothing, and the link checker would catch it in a shipped artifact, but not
   // in a comment, a script message, or a template placeholder. This covers the
@@ -3067,14 +3101,22 @@ section('install fixture', () => {
     NOTICES.every((notice) => release(notice.since) !== null && isNonEmptyString(notice.check)));
 
   // Pinned on the file it names and the reason it exists, not on the word
-  // "tracker", which appears four times in this notice, so a looser test passes
-  // on a notice that has lost its actual subject.
+  // "tracker", which appears several times in this notice, so a looser test
+  // passes on a notice that has lost its actual subject.
+  //
   // Pinned to 2.3.0, the release that actually changed those references, not to
   // whichever release is being built. Tied to specVersion it demanded that every
   // future release re-declare a notice about a change it did not make.
+  //
+  // 3.0.0 reversed what 2.3.0 asked for, and the notice had to say so rather
+  // than being deleted: a 2.x tree crossing into 3 is shown every notice between
+  // the two, so a tree upgrading today would otherwise be told to record a query
+  // that nothing reads, by this release, on its way past.
   assert('the release that changed the tracker references declares a notice for it', () =>
     NOTICES.some((notice) => notice.since === '2.3.0' &&
-      /references\/github\.md/.test(notice.check) && /re-seed/.test(notice.check)));
+      /references\/github\.md/.test(notice.check)
+      && /nothing reads that query any more/.test(notice.check)
+      && /never edits a reference you own/.test(notice.check)));
 
   assert('skills/update acts on a notice rather than printing it', () => {
     const update = readSrc('skills', 'update.md');

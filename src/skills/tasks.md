@@ -17,18 +17,16 @@ reviews it.
 
 1. **Read the spec.** The effort's `spec.md` — requirements, acceptance criteria, and the
    technical sections if `[[skills/plan]]` ran.
-2. **Find where tasks live.** Ask the repository, in this order: an existing
-   `efforts/<effort>/tickets/` directory; a `[[references]]` describing the
-   forge or tracker in use; the human. **Never create a local ticket system in a
-   repository that already has one** — `[[policies/execution]]` and the
-   protocol both forbid mirroring an external tracker.
+2. **Tasks live under `efforts/<effort>/tickets/`, and there is nowhere to
+   look.** Not per repository, not per convention: a task is a file, its
+   `blocked-by` is an edge a script reads, and the frontier is computed from the
+   directory rather than queried (`[[policies/execution]]`).
 
-   **Where the answer is an external tracker, read that tracker's
-   `[[references]]` before writing anything.** The effort has to be findable
-   there, and what carries it is the tracker's own to answer — settled once and
-   recorded, then read rather than rederived. Where the reference is silent, the
-   tool's own help is the authority, and the answer is written back into the
-   reference so the next session reads it instead of deciding it again.
+   **The tracker carries the effort, never its tasks** — one issue and one pull
+   request, and no third object. A dependency graph in a tracker is a graph
+   nothing can read back: it lives in prose, in a checklist, or in whatever that
+   forge calls a relationship this quarter, and every run that needs it asks the
+   network for an answer the repository already had.
 3. **Decompose by acceptance criterion**, not by file or by layer. A task that
    maps to no criterion is either scope nobody asked for or a criterion the spec
    is missing — resolve which before writing it.

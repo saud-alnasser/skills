@@ -130,11 +130,13 @@ export const NOTICES = [
   {
     since: '2.3.0',
     check:
-      'Tasks in an external tracker: your reference for that tracker, references/github.md, ' +
-      'references/gitlab.md, or your own, now records what carries an effort and the query ' +
-      'that finds its open work. An upgrade never re-seeds a reference you have corrected, so ' +
-      'this release cannot add that section for you. The next /tasks run in a tracker-backed ' +
-      'repository writes it; add it by hand if you would rather not wait.',
+      'Tasks are files under efforts/<effort>/tickets/ and are never in a tracker. If 2.3.0 ' +
+      'had you record a query in references/github.md, references/gitlab.md, or your own ' +
+      'reference for finding an effort\'s open work, nothing reads that query any more: the ' +
+      'frontier is computed from the ticket files, which is what keeps blocked-by machine- ' +
+      'readable. What the tracker still carries is the effort itself, one issue and one pull ' +
+      'request, and the part of that section naming what carries an effort is still right. ' +
+      'An upgrade never edits a reference you own, so this is yours to trim.',
   },
 ];
 

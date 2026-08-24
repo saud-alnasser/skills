@@ -84,8 +84,9 @@ obvious.
 
 - **No decisions directory.** The reasoning lives in the spec that made the
   change, beside the evidence that informed it.
-- **No mandatory tickets.** Local tickets are optional; external trackers stay
-  external and are never mirrored.
+- **No tickets in the tracker.** Tasks are files under the effort, so the
+  dependency graph stays machine-readable. The tracker carries the effort: one
+  issue, one pull request, no third object.
 - **No synchronization command.** Nothing reconciles the whole tree on a
   schedule. Verification happens where a statement is about to be relied on, and
   drift is fixed where it is found.

@@ -74,8 +74,7 @@ function collect(root, dir, { flat = false } = {}) {
  * They are indexed together rather than under their efforts because the question
  * a ticket index answers is cross-effort, *what can be worked right now*, and
  * that is read off `status` and `blocked-by`, not off which effort a ticket
- * belongs to. Returns an empty list where a repository keeps its tasks in an
- * external tracker, which is the common case.
+ * belongs to. Empty until an effort has had its tasks cut.
  */
 function collectTickets(root) {
   const effortsDir = path.join(root, 'efforts');
@@ -195,15 +194,15 @@ function render(root) {
     }
   }
 
-  // Only where local tickets exist. A repository using an external tracker gets
-  // no section at all rather than an empty one. An empty table would read as
-  // "no work", when the truth is "the work is not indexed here".
+  // Only where tickets exist. A repository whose efforts have not been cut into
+  // tasks gets no section at all rather than an empty one: an empty table reads
+  // as "no work", when the truth is "no effort has been decomposed yet".
   const tickets = collectTickets(root);
   if (tickets.length > 0) {
     out.push('');
     out.push('## Tickets');
     out.push('');
-    out.push('Local tickets only. Where an external tracker holds the work, it is not mirrored here.');
+    out.push('Every task of every effort. The tracker carries the effort, never its tasks.');
     out.push('');
     out.push('| Ticket | Effort | Status | Blocked by |');
     out.push('| --- | --- | --- | --- |');

@@ -29,8 +29,8 @@ to it.
 | **Agents** | who performs work, in what role | `agents/` |
 | **Skills** | reusable capabilities | `skills/` |
 
-An effort holds its own parts: `spec.md`, the `evidence/` behind it, and its
-tasks as tickets — local under `tickets/`, or in this repository's tracker.
+An effort holds its own parts: `spec.md`, `plan.md` where the approach is not
+obvious, the `evidence/` behind it, and its tasks as tickets under `tickets/`.
 Worktrees and the position marker are mechanisms, described where used.
 
 Never substitute one for another. A requirement is governance, not a reference.
