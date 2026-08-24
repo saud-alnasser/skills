@@ -92,7 +92,7 @@ Start at [[protocol]].
 | --- | --- | --- | --- | --- | --- |
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
 | 47-post-merge-labels | — | **missing** | 0 | 0 | 0 |
-| 51-branch-scope | draft | [[efforts/51-branch-scope/spec]] | 0 | 0 | 0 |
+| 51-branch-scope | draft | [[efforts/51-branch-scope/spec]] | 1 | 0 | 0 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
