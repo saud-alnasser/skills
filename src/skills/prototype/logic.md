@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "a prototype's question is about business logic, state transitions, or data shape, and it needs to be driven by hand"
 ---
 

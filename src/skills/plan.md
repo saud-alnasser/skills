@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [plan]
-report: full
 use-when: "a spec is settled and the technical approach is not yet decided"
 ---
 

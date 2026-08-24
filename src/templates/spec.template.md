@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "writing or extending an effort's spec.md"
 ---
 
@@ -18,10 +15,6 @@ considered-and-empty; an absent one reads as not yet reached, which is the truth
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: spec
 status: draft            # draft → accepted → implemented
 ---
 

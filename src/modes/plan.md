@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: mode
-mode: [plan]
 use-when: "turning a settled specification into a technical approach"
 ---
 

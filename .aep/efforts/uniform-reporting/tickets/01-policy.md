@@ -1,10 +1,5 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: ticket
 status: resolved
-part-of: uniform-reporting
 ---
 
 # feat(policies): what a turn tells the human becomes governance

@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: policy
 use-when: "writing code, or about to state anything about this repository you have not verified"
 ---
 

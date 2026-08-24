@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [research]
-report: full
 use-when: "a decision turns on a fact that is not in this repository"
 ---
 

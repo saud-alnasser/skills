@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [implement]
-report: full
 use-when: "reviewed work is ready to land as a commit"
 ---
 

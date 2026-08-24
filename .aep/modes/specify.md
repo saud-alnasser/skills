@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: mode
-mode: [specify]
 use-when: "establishing what a change is and why, before any decision about how"
 ---
 

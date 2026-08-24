@@ -1,9 +1,4 @@
 ---
-aep: 2.1.1
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, review]
 use-when: "running any git operation here — reading state, branching, staging, committing, or working with worktrees"
 ---
 

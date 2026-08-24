@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: policy
 use-when: "two sources disagree, or the work reaches a repository other than this one"
 ---
 

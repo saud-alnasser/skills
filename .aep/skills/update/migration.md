@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "the repository carries a 1.x layout — a protocol file, policies, decisions, designs, or a map.md in every directory, under the runtime's own directory rather than .aep/"
 ---
 

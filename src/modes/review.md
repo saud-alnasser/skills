@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: mode
-mode: [review]
 use-when: "evaluating finished work against what was asked and against this repository's rules"
 ---
 

@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "defining a way of working, where the eight shipped modes do not fit"
 ---
 
@@ -13,11 +10,6 @@ activity or, far more often, a skill that should have entered an existing mode.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: mode
-mode: [<name>]
 use-when: "<the activity this posture is for>"
 ---
 

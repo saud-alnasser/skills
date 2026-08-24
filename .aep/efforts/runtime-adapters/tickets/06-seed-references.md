@@ -1,10 +1,5 @@
 ---
-aep: 2.5.1
-owner: repository
-date: 2026-08-18
-kind: ticket
 status: resolved
-part-of: runtime-adapters
 ---
 
 # feat(seed): references for OpenCode and T3 Code

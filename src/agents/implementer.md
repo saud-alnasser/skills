@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: agent
-mode: [implement]
 use-when: "a whole task is ready to build and the declared edges leave it gating none of the others"
 ---
 

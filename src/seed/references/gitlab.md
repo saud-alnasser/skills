@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [specify, plan, implement, review]
 use-when: "reading or writing GitLab issues, merge requests, or pipelines for this repository"
 ---
 

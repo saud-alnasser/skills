@@ -1,9 +1,4 @@
 ---
-aep: 2.1.1
-owner: repository
-date: 2026-08-16
-kind: reference
-mode: [implement, test, review]
 use-when: "checking, regenerating, or installing this repository's own output"
 ---
 

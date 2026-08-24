@@ -1,7 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
 use-when: "adding a capability this repository wants alongside the shipped skills"
 ---
 
@@ -11,12 +8,6 @@ Copy to `skills/<name>.md`. A skill the repository adds is `owner: repository`.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: skill
-mode: [<the mode this skill enters>]
-report: <full where this writes, dispatches, or decides on the human's behalf; short otherwise>
 use-when: "<the situation that calls for this capability>"
 ---
 
@@ -51,10 +42,6 @@ Knowledge needed only when a run takes a particular branch goes in
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: skill
 use-when: "<the branch this is for — not its topic>"
 ---
 

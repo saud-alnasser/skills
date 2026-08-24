@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test, review]
 use-when: "type-checking this repository, or reading what its compiler is actually configured to enforce"
 ---
 

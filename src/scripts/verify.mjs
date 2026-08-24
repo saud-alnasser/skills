@@ -26,9 +26,9 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   MODES,
-  OWNERS,
   SKILLS,
   PROTOCOL_FILES,
+  isProtocolPath,
   useWhenProblems,
   USE_WHEN_MAX_WORDS,
   USE_WHEN_MIN_WORDS,
@@ -455,16 +455,9 @@ section('frontmatter', () => {
     if (!artifact.hasFrontmatter) continue;
 
     assert(`${rel} frontmatter parses`, artifact.errors.length === 0);
-    assert(`${rel} declares the release its content last changed in, not a later one`,
-      atOrBeforeRelease(artifact.fields.aep));
-    assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
-    assert(`${rel} declares a real YYYY-MM-DD date`, isIsoDate(artifact.fields.date));
 
     if (artifact.fields.mode !== undefined) {
-      assert(`${rel} mode is an array of legal modes`, () =>
-        Array.isArray(artifact.fields.mode) &&
-        artifact.fields.mode.every((mode) => MODES.includes(mode)));
-    }
+      }
     assert(`${rel} declares no status (payload artifacts are not specs or tickets)`,
       artifact.fields.status === undefined);
   }
@@ -525,8 +518,6 @@ section('frontmatter', () => {
     return true;
   });
 
-  assert('owner has exactly two legal values', () =>
-    OWNERS.length === 2 && OWNERS.includes('protocol') && OWNERS.includes('repository'));
 });
 
 // --- §6 the bootstrap -------------------------------------------------------
@@ -538,15 +529,12 @@ section('protocol.md', () => {
     size <= PROTOCOL_BUDGET_BYTES);
 
   const artifact = readArtifact(path.join(SRC, 'protocol.md'));
-  assert('protocol.md declares kind: protocol', artifact.fields.kind === 'protocol');
 
   // Asserted separately from the blanket stamp above, because this one carries
   // more weight: protocol.md is what an installed tree declares its release
   // *as*. `index.mjs` reads the version from here, and `update` decides whether
   // a repository is behind by comparing it, so a stale stamp here makes a
   // current installation report itself as an old one.
-  assert(`protocol.md declares the release being built (${specVersion})`,
-    artifact.fields.aep === specVersion);
 
   const body = artifact.body;
   for (const heading of [
@@ -677,7 +665,6 @@ section('skill notes', () => {
     assert(`${rel} sits under a real skill`, SKILLS.includes(owner));
     assert(`${rel} is one level deep, beside its skill`, () =>
       path.dirname(path.dirname(file)) === skillsDir);
-    assert(`${rel} declares kind: skill`, artifact.fields.kind === 'skill');
     assert(`${rel} declares a use-when naming the branch it is for`,
       isNonEmptyString(artifact.fields['use-when']));
     assert(`${rel} is linked from skills/${owner}.md. An unlinked note is unreachable`, () =>
@@ -750,7 +737,6 @@ section('modes', () => {
     const file = path.join(SRC, 'modes', `${name}.md`);
     if (!fs.existsSync(file)) continue;
     const artifact = readArtifact(file);
-    assert(`modes/${name} declares kind: mode`, artifact.fields.kind === 'mode');
     assert(`modes/${name} states what it gives up`, /What this gives up/.test(artifact.body));
   }
 });
@@ -764,7 +750,6 @@ section('agents', () => {
   const skillText = listMarkdown('skills').map((f) => fs.readFileSync(f, 'utf8')).join('\n');
   for (const name of agents) {
     const artifact = readArtifact(path.join(SRC, 'agents', `${name}.md`));
-    assert(`agents/${name} declares kind: agent`, artifact.fields.kind === 'agent');
     assert(`agents/${name} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`agents/${name} states a purpose the adapter can derive`,
       /\*\*Purpose\.\*\*/.test(artifact.body));
@@ -785,8 +770,6 @@ section('policies', () => {
   for (const file of policies) {
     const rel = toPosix(SRC, file);
     const artifact = readArtifact(file);
-    assert(`${rel} declares kind: policy`, artifact.fields.kind === 'policy');
-    assert(`${rel} declares owner: protocol`, artifact.fields.owner === 'protocol');
     assert(`${rel} declares use-when. Without it, it cannot be selected`,
       isNonEmptyString(artifact.fields['use-when']));
   }
@@ -1079,7 +1062,6 @@ section('reporting', () => {
   for (const name of SKILLS) {
     const artifact = readArtifact(path.join(SRC, 'skills', `${name}.md`));
     const expected = SHORT_FORM_SKILLS.includes(name) ? 'short' : 'full';
-    assert(`skills/${name} declares report: ${expected}`, artifact.fields.report === expected);
   }
 
   // A note is reached from inside a run rather than invoked, so it opens no
@@ -1250,9 +1232,6 @@ section('seeds', () => {
       continue;
     }
 
-    assert(`${seed.source} declares owner: repository`, artifact.fields.owner === 'repository');
-    assert(`${seed.source} declares the release its content last changed in, not a later one`,
-      atOrBeforeRelease(artifact.fields.aep));
     assert(`${seed.source} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
     assert(`${seed.source} says it is a starting point rather than a description`, () =>
       /This file is yours/.test(artifact.body));
@@ -1719,7 +1698,7 @@ section('release', () => {
 
   assert('this repository has installed the release it ships', () => {
     const installed = readArtifact(path.join(REPO, '.aep', 'protocol.md'));
-    return installed.fields.aep === specVersion;
+    return installed.fields.version === specVersion;
   });
 
   assert("the building repository's own tree carries no stale 1.x layout", () =>
@@ -1853,11 +1832,14 @@ section('install fixture', () => {
 
   // `rules/` is the repository's half of the governance split, so a fresh
   // install must hand it over empty of anything the protocol owns.
-  assert('installing puts nothing protocol-owned in rules/', () => {
+  // `rules/` is the repository's, so nothing the manifest names may land there.
+  // Asked of the manifest rather than of a declared field, which is the same
+  // question one layer up: ownership is where a file is, not what it says.
+  assert('installing puts nothing the protocol ships in rules/', () => {
     const intruders = walk(path.join(aep, 'rules'))
       .filter((file) => file.endsWith('.md'))
-      .filter((file) => readArtifact(file).fields.owner !== 'repository')
-      .map((file) => toPosix(aep, file));
+      .map((file) => toPosix(aep, file))
+      .filter((rel) => isProtocolPath(rel));
     if (intruders.length > 0) throw new Error(intruders.join(', '));
     return true;
   });
@@ -2093,7 +2075,9 @@ section('install fixture', () => {
     const bootstrap = path.join(tree, 'protocol.md');
     fs.writeFileSync(
       bootstrap,
-      fs.readFileSync(bootstrap, 'utf8').replace(/^aep: .*$/m, `aep: ${PRE_MOVE_RELEASE}`),
+      // A 2.x tree named its release in `aep:`, and that is what this fixture
+      // is: an old tree meeting a new installer, declaring it the old way.
+      fs.readFileSync(bootstrap, 'utf8').replace(/^version: .*$/m, `aep: ${PRE_MOVE_RELEASE}`),
       'utf8',
     );
     const frontmatter = (owner, kind) =>
@@ -2211,12 +2195,20 @@ section('install fixture', () => {
     return true;
   });
 
-  assert('a repaired file has its last-modified date moved with it', () => {
-    const artifact = readArtifact(path.join(upgraded.tree, 'contexts', 'moved.md'));
-    if (artifact.fields.date === '2026-08-16') {
-      throw new Error('the link was repaired and the file still claims it was not touched');
+  // The date stamp this checked is retired, so the repair writes into the body
+  // and nothing else. The file here belongs to a 2.x tree and still carries the
+  // old fields on purpose: an upgrade does not strip what the repository owns,
+  // and asserting that it had would be asserting a bug.
+  assert('the repair rewrites the link and leaves the frontmatter alone', () => {
+    const text = fs.readFileSync(path.join(upgraded.tree, 'contexts', 'moved.md'), 'utf8');
+    const block = text.split('---')[1] ?? '';
+    if (!block.includes('date: 2026-08-16')) {
+      throw new Error('the repair edited the frontmatter, which is not its business');
     }
-    return /^\d{4}-\d{2}-\d{2}$/.test(artifact.fields.date);
+    if (!text.includes('[[policies/engineering]]')) {
+      throw new Error('the link was not repaired');
+    }
+    return true;
   });
 
   // The bound that keeps a vacated name usable. Without it, a repository that

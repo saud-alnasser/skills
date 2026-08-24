@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: mode
-mode: [implement]
 use-when: "building production code against an approved plan"
 ---
 

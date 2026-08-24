@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "defining a new agent role that a skill will dispatch"
 ---
 
@@ -14,11 +11,6 @@ dispatches is a file that will drift unnoticed.
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: agent
-mode: [<the one mode this role works in>]
 use-when: "<when a skill should dispatch this role>"
 ---
 

@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "a request is being declined rather than specified, or a new request resembles one declined before"
 ---
 

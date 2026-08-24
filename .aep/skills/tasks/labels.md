@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "the effort's tasks live in an external tracker, and its work must be findable there"
 ---
 

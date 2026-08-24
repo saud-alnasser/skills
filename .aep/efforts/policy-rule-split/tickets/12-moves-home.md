@@ -1,10 +1,5 @@
 ---
-aep: 2.2.0
-owner: repository
-date: 2026-08-17
-kind: ticket
 status: resolved
-part-of: policy-rule-split
 ---
 
 # docs(scripts): payload.mjs says what it installs, and now also what it moves

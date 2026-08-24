@@ -1,10 +1,5 @@
 ---
-aep: 2.7.0
-owner: repository
-date: 2026-08-24
-kind: ticket
-status: open
-part-of: aep-3
+status: resolved
 blocked-by: [02]
 ---
 
@@ -36,6 +31,28 @@ Every `.md` under `src/` outside `src/seed/`, plus `src/templates/`. `src/script
 A mechanical pass over every shipped artifact is where a hand-edit gets reverted silently. Change frontmatter only. Any prose edit that travels with this pass is out of scope and is raised rather than taken.
 
 ## Notes
+
+The strip removed `aep:` from the bootstrap and nothing replaced it, so every
+tree looked like it declared no release and the whole install fixture failed.
+Requirement 58's `version:` had to land here rather than in ticket 07: it is not
+an independent rename, it is what keeps the bootstrap answering the question the
+strip would otherwise delete the answer to.
+
+Four retired fields survive, in fenced examples inside landed effort specs. They
+are left there deliberately. An effort's spec records what that effort decided,
+and rewriting it to match a later contract falsifies the record, which is the
+same reason requirement 48 leaves a landed effort's tracker artifacts alone.
+
+The baseline was re-cut mid-effort. `aep:` and `date:` were excluded from the
+content hash, but `kind`, `mode`, `report`, and `owner` were not, so removing
+them changed 129 hashes and left the suite with sixty-two failures. Re-cutting is
+stated in `[[rules/authoring]]` rather than done quietly: the baseline is now the
+whole of edit detection, so moving it is a deliberate act.
+
+Validation rejects a retired field on a path the protocol ships and tolerates it
+everywhere else. A repository's own rules and contexts were written under the old
+contract and an upgrade never edits them, so failing those would fail a tree for
+holding exactly what AEP gave it and then refused to touch.
 
 A return-to-plan, folded into this ticket rather than split out, and landed as
 its own commit so the design change and the mechanical pass stay separable.

@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [refine]
-report: full
 use-when: "a spec exists but reads as ambiguous, under-constrained, or too agreeable"
 ---
 

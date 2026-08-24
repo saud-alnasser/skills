@@ -10,35 +10,237 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** Values the `owner` field may take. */
-export const OWNERS = ['protocol', 'repository'];
+/**
+ * Frontmatter AEP 3 no longer carries.
+ *
+ * Rejected on a path the protocol ships and tolerated elsewhere: a repository's
+ * own artifacts were written under the old contract and an upgrade never edits
+ * them, so failing those would fail a tree for holding what AEP gave it.
+ */
+export const RETIRED_FIELDS = ['aep', 'date', 'kind', 'mode', 'report', 'owner', 'part-of'];
 
 /**
- * Directories that admit exactly one owner.
+ * Ownership, as a fact about location.
  *
- * The two governance directories, and only those. Ownership is otherwise read
- * off the declared field and never inferred from a path. But a policy is AEP's
- * law and a rule is the repository's, so a file in the wrong one is a defect to
- * report rather than a case to decide. An installer still reads the field before
- * overwriting anything; this is what makes the misplacement visible afterwards.
+ * A file under `policies/` is AEP's law and a file under `rules/` is the
+ * repository's, and the same holds for every other row: an upgrade replaces what
+ * the protocol ships and preserves everything else. Stating it once, here and in
+ * the bootstrap, is what lets sixty-nine artifacts stop declaring it.
+ *
+ * The two root files are named because no directory rule reaches them:
+ * `protocol.md` is the protocol's, and `index.md` is derived and regenerated in
+ * place.
  */
-export const DIRECTORY_OWNERS = { policies: 'protocol', rules: 'repository' };
+export const PROTOCOL_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates', 'scripts'];
+export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
+export const PROTOCOL_ROOT_FILES = ['protocol.md'];
+export const REPOSITORY_ROOT_FILES = ['index.md'];
 
-/** Values the `kind` field may take. */
-export const KINDS = [
-  'agent',
-  'context',
-  'spec',
-  'prototype',
-  'research',
-  'reference',
-  'policy',
-  'rule',
-  'skill',
-  'ticket',
-  'protocol',
-  'mode',
+// generated:protocol-files. Run `node src/scripts/manifest.mjs`
+export const PROTOCOL_FILES = [
+  '.gitignore',
+  'agents/implementer.md',
+  'agents/researcher.md',
+  'agents/reviewer-correctness.md',
+  'agents/reviewer-standards.md',
+  'modes/implement.md',
+  'modes/plan.md',
+  'modes/prototype.md',
+  'modes/refine.md',
+  'modes/research.md',
+  'modes/review.md',
+  'modes/specify.md',
+  'modes/test.md',
+  'policies/artifacts.md',
+  'policies/authority.md',
+  'policies/engineering.md',
+  'policies/execution.md',
+  'policies/reporting.md',
+  'protocol.md',
+  'scripts/contract.mjs',
+  'scripts/frontier.mjs',
+  'scripts/index.mjs',
+  'scripts/position.mjs',
+  'scripts/validate.mjs',
+  'skills/commit.md',
+  'skills/commit/conflicts.md',
+  'skills/domain.md',
+  'skills/handoff.md',
+  'skills/help.md',
+  'skills/implement.md',
+  'skills/implement/diagnosing.md',
+  'skills/implement/dispatch.md',
+  'skills/install.md',
+  'skills/plan.md',
+  'skills/plan/depth.md',
+  'skills/plan/design-it-twice.md',
+  'skills/prose.md',
+  'skills/prototype.md',
+  'skills/prototype/logic.md',
+  'skills/prototype/ui.md',
+  'skills/prune.md',
+  'skills/refine.md',
+  'skills/research.md',
+  'skills/review.md',
+  'skills/review/smells.md',
+  'skills/specify.md',
+  'skills/specify/out-of-scope.md',
+  'skills/survey.md',
+  'skills/survey/report.md',
+  'skills/tasks.md',
+  'skills/tasks/labels.md',
+  'skills/tdd.md',
+  'skills/tdd/mocking.md',
+  'skills/tdd/tests.md',
+  'skills/update.md',
+  'skills/update/migration.md',
+  'templates/agent.template.md',
+  'templates/agents.template.md',
+  'templates/context.template.md',
+  'templates/mode.template.md',
+  'templates/protocol.template.md',
+  'templates/prototype.template.md',
+  'templates/reference.template.md',
+  'templates/research.template.md',
+  'templates/rule.template.md',
+  'templates/skill.template.md',
+  'templates/spec.template.md',
+  'templates/ticket.template.md',
 ];
+// end generated:protocol-files
+
+/**
+ * True when a path under `.aep/` is one the protocol ships.
+ *
+ * The exact list rather than the directory, because the directory answers *this
+ * is a protocol area* and this answers *this is the protocol's file*. An
+ * installer needs the second before it overwrites anything, and a validator
+ * needs the difference between them to name a stray.
+ */
+export function isProtocolPath(relative) {
+  return PROTOCOL_FILES.includes(relative);
+}
+
+/** The top-level directory of a path under `.aep/`, or null for a root file. */
+export function topDirOf(relative) {
+  const parts = relative.split('/');
+  return parts.length > 1 ? parts[0] : null;
+}
+
+/**
+ * The longest a `use-when` may be, in words.
+ *
+ * Measured rather than chosen. Across the sixty-eight triggers in the corpus the
+ * longest legitimate one runs to thirty-seven words, and it earns them by listing
+ * the cases it fires on. Forty is that plus headroom, so this catches a paragraph
+ * and never a real trigger. A tighter bound picked from taste would have failed
+ * artifacts that are correct, which is the more expensive mistake: a check that
+ * rejects good work gets switched off.
+ */
+export const USE_WHEN_MAX_WORDS = 40;
+
+/**
+ * The shortest a `use-when` may be, in words.
+ *
+ * Also measured. The shortest legitimate trigger in the corpus is five words, so
+ * four is the floor. It exists because the predicate test over-accepts by design:
+ * "policies" ends in `es` and satisfies it, and a one-word noun is a topic no
+ * matter what its last two letters are. A clause is not this short.
+ */
+export const USE_WHEN_MIN_WORDS = 4;
+
+/**
+ * A predicate, roughly. Copulas, auxiliaries, and the verbs this corpus uses.
+ *
+ * The distinction that matters is clause against noun phrase: "a task exists and
+ * is ready to build" says when, and "Database documentation" says what about. A
+ * clause needs a verb and a topic has none, so verb-presence is the test.
+ *
+ * Chosen against the corpus rather than from intuition. An earlier version of
+ * this check looked for a gerund or a `when`, which is one idiom out of several,
+ * and it failed thirty-five of the sixty-eight triggers here, every one of them
+ * correct. This list leaves none of them failing.
+ */
+const PREDICATE = new RegExp(
+  '\\b(is|are|was|were|be|being|been|has|have|had|does|do|did|need|needs|exist|exists|' +
+  'differ|differs|carry|carries|reach|reaches|turn|turns|will|must|should|may|can|look|' +
+  'looks|read|reads|find|finds|get|gets|go|goes|come|comes|stop|stops|live|lives|sit|' +
+  'sits|hold|holds|say|says|want|wants|make|makes|take|takes|took|leave|leaves|stand|' +
+  'stands|run|runs|ran|fail|fails|passes|become|becomes|becomes)\\b',
+  'i',
+);
+
+/**
+ * An inflected verb, roughly: a word ending in `-ed` or `-es`.
+ *
+ * The explicit list above is present-tense heavy, which a fixture caught: "a
+ * trigger that predates the move" is a clause and the list did not know the
+ * word. Rather than chase word forms one at a time, this accepts the two endings
+ * that mark an English verb inflection, so `predates`, `vacated`, and `matches`
+ * pass without being enumerated.
+ *
+ * It over-accepts. "advanced features" would satisfy it and is a noun phrase.
+ * That direction is the right one to err in: a check that rejects correct work
+ * gets switched off, and a check that misses one topic still catches the rest.
+ */
+const INFLECTED = /\b[a-z]{3,}(ed|es)\b/i;
+const OPENS_WITH_GERUND = /^[a-z]+ing\b/i;
+
+/** Lowercased, punctuation-stripped, single-spaced. For comparing two phrasings. */
+function normalise(text) {
+  return String(text).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/**
+ * What is wrong with a `use-when`, as a list of reasons, empty when it is fine.
+ *
+ * `use-when` is the whole of applicability-first loading, and it is the one
+ * field a machine cannot fully judge: "Database documentation" satisfies every
+ * structural check and is a topic rather than a trigger, so an artifact carrying
+ * it is loaded always or never. These are proxies. Each catches a real instance
+ * of that failure; none of them catches a trigger that is well formed and wrong,
+ * which is why the summary still says what it does not check.
+ *
+ * Four reasons, each firing on something the others do not:
+ *
+ *   clause     "Database documentation" is a subject with no predicate
+ *   heading    a use-when that repeats the artifact's own title is its topic
+ *   name       "policies", "engineering": the file saying its own name back
+ *   length     past the bound it is a summary wearing a trigger's clothes
+ *
+ * "Is not a bare noun phrase" is not a fifth test. It is what the first one
+ * catches, and stating it separately would report one check as two.
+ */
+export function useWhenProblems(value, { heading = '', name = '', directory = '' } = {}) {
+  if (!isNonEmptyString(value)) return ['is missing'];
+
+  const text = String(value).trim();
+  const problems = [];
+  const words = text.split(/\s+/);
+
+  const hasPredicate = OPENS_WITH_GERUND.test(text) || PREDICATE.test(text) || INFLECTED.test(text);
+  if (!hasPredicate || words.length < USE_WHEN_MIN_WORDS) {
+    problems.push(
+      'is a topic rather than a trigger. It names a subject and never an occasion, ' +
+      'and an artifact that cannot be selected is loaded always or never',
+    );
+  }
+  if (heading && normalise(text) === normalise(heading)) {
+    problems.push('restates the artifact\'s own heading, which states its topic rather than its trigger');
+  }
+  for (const [label, candidate] of [['name', name], ['directory', directory]]) {
+    if (candidate && normalise(text) === normalise(candidate)) {
+      problems.push(`is the artifact's ${label} said back. That names it rather than saying when to load it`);
+    }
+  }
+  if (words.length > USE_WHEN_MAX_WORDS) {
+    problems.push(
+      `is ${words.length} words, over ${USE_WHEN_MAX_WORDS}. Past that it summarises the artifact ` +
+      'rather than saying when to reach for it',
+    );
+  }
+  return problems;
+}
 
 /** The eight canonical modes. `mode:` is an array drawn from these. */
 export const MODES = [
@@ -51,15 +253,6 @@ export const MODES = [
   'review',
   'test',
 ];
-
-/**
- * Values the `report` field may take, the form a skill's turn report is in.
- *
- * Declared per skill, once, when the skill is authored: `full` where it writes
- * to the repository, dispatches, or decides on the human's behalf. Never
- * selected during a run, so the human knows the shape before the run starts.
- */
-export const REPORT_FORMS = ['full', 'short'];
 
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
@@ -89,9 +282,6 @@ export const SKILLS = [
   'domain',
   'prose',
 ];
-
-/** The two skills that enter no mode and therefore declare none (specs.md §16). */
-export const MODELESS_SKILLS = ['help', 'handoff'];
 
 /** Files whose `kind` requires a `use-when`, by the directory they live in. */
 export const USE_WHEN_REQUIRED_DIRS = ['policies', 'rules', 'references', 'contexts'];

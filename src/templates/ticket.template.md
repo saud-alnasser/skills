@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "writing a local task under efforts/<effort>/tickets/"
 ---
 
@@ -16,12 +13,7 @@ across several (`[[policies/execution]]`).
 
 ```markdown
 ---
-aep: <release>
-owner: repository
-date: <YYYY-MM-DD>
-kind: ticket
 status: open             # open → resolved, or obsolete
-part-of: <effort>
 blocked-by: [<task-id>, ...]   # omit when nothing gates it
 ---
 

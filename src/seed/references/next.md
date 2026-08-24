@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, prototype, test]
 use-when: "building or running this Next.js application"
 ---
 

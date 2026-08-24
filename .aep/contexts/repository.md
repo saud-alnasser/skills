@@ -1,8 +1,4 @@
 ---
-aep: 2.1.1
-owner: repository
-date: 2026-08-16
-kind: context
 use-when: "orienting in this repository for the first time in a session, or deciding whether a change belongs in src/ or .aep/"
 ---
 
@@ -52,7 +48,7 @@ survive an upgrade like anyone else's.
 | how an installed tree is judged | `src/scripts/validate.mjs` |
 | how the shipped surfaces are judged | `src/scripts/verify.mjs` |
 | how a runtime reaches AEP | `src/scripts/adapters.mjs` |
-| how a release is cut, and what `aep:` means | `src/scripts/release.mjs` |
+| how a release is cut, and where the version of record lives | `src/scripts/release.mjs` |
 
 There is **no package manifest and no dependency**. Every script is
 dependency-free ESM run by a bare Node runtime, named `.mjs` so that a consuming

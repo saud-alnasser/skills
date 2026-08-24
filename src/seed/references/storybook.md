@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, prototype, review]
 use-when: "working on a component that has stories, or checking one in isolation"
 ---
 

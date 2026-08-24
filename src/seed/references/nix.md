@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test, prototype]
 use-when: "entering this repository's development environment, or building it through Nix"
 ---
 

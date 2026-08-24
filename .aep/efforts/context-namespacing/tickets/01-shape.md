@@ -1,10 +1,5 @@
 ---
-aep: 2.4.0
-owner: repository
-date: 2026-08-17
-kind: ticket
 status: resolved
-part-of: context-namespacing
 ---
 
 # docs(specs): a context may be namespaced by project, and the template says so

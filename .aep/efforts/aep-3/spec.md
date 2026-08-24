@@ -1,8 +1,4 @@
 ---
-aep: 2.7.0
-owner: repository
-date: 2026-08-24
-kind: spec
 status: accepted
 ---
 

@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: mode
-mode: [refine]
 use-when: "attacking a specification to expose ambiguity, weak criteria, and unresolved tradeoffs"
 ---
 

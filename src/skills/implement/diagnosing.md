@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "a task is a bug, a regression, or a slowdown whose cause is not yet known"
 ---
 

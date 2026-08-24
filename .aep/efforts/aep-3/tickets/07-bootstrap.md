@@ -1,10 +1,5 @@
 ---
-aep: 2.7.0
-owner: repository
-date: 2026-08-24
-kind: ticket
 status: open
-part-of: aep-3
 blocked-by: [04, 05, 06]
 ---
 

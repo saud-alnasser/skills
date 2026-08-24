@@ -233,7 +233,9 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
       },
     );
     if (replaced === 0) continue;
-    const stamped = after.replace(/^date:\s*\d{4}-\d{2}-\d{2}$/m, `date: ${today}`);
+    // `date:` is retired, so a repaired file carries no last-modified stamp to
+    // move. Version control records when it changed, and it cannot go stale.
+    const stamped = after;
     if (!dryRun) fs.writeFileSync(file, stamped, 'utf8');
     report.relinked.push(`${file} (${replaced})`);
   }

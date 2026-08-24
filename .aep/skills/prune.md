@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [review]
-report: full
 use-when: "the .aep/ tree has accumulated stale, contradicted, or orphaned artifacts"
 ---
 

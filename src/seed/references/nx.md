@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, test]
 use-when: "running a target across this monorepo's projects, or finding what a change affects"
 ---
 

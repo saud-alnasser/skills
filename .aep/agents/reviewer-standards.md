@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: agent
-mode: [review]
 use-when: "a diff needs judging against what this repository documents about how code is written here"
 ---
 

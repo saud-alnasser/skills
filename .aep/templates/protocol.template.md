@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "auditing what the bootstrap must contain, or porting AEP to a runtime whose entrypoint differs"
 ---
 
@@ -16,10 +13,6 @@ another runtime knows what the bootstrap is obliged to answer.
 
 ```markdown
 ---
-aep: <release>
-owner: protocol
-date: <YYYY-MM-DD>
-kind: protocol
 use-when: "at the start of every session, before anything else"
 ---
 

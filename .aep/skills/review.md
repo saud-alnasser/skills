@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [review]
-report: full
 use-when: "work is finished and about to land, or a diff needs judging against what was asked"
 ---
 

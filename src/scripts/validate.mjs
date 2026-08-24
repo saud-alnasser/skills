@@ -13,11 +13,9 @@ import {
   PROTOCOL_DIRS,
   FORBIDDEN_DIRS,
   MODES,
-  OWNERS,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
-  isIsoDate,
   isNonEmptyString,
   readArtifact,
   resolveAepRoot,
@@ -25,6 +23,7 @@ import {
   walk,
   wikiLinks,
   isProtocolPath,
+  RETIRED_FIELDS,
   useWhenProblems,
 } from './contract.mjs';
 
@@ -66,22 +65,25 @@ function checkArtifact(root, file) {
   }
 
   if (!artifact.hasFrontmatter) {
-    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ must declare aep, owner, date');
+    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ declares at least a use-when');
     return;
   }
   for (const error of artifact.errors) fail(rel, `frontmatter ${error}`);
 
   const { fields } = artifact;
 
-  // `aep`, `owner`, and `date` are on their way out: ownership is a fact about
-  // location and the release is named once in the bootstrap. They are accepted
-  // while the payload still carries them and checked for shape where present,
-  // so a tree part-way through the migration validates from either side of it.
-  if (fields.owner !== undefined && !OWNERS.includes(fields.owner)) {
-    fail(rel, `owner is "${fields.owner}", must be one of: ${OWNERS.join(', ')}`);
-  }
-  if (fields.date !== undefined && !isIsoDate(fields.date)) {
-    fail(rel, `date is "${fields.date}", must be a real YYYY-MM-DD`);
+  // The retired fields. Ownership is a fact about location, the release is named
+  // once in the bootstrap, and the rest were read by nothing.
+  //
+  // Rejected on a path the protocol ships, and tolerated everywhere else. A
+  // repository's own rules and contexts were written under the old contract and
+  // an upgrade never edits them, so failing them would fail a tree for carrying
+  // exactly what AEP handed it and then refused to touch.
+  const retired = RETIRED_FIELDS.filter((field) => fields[field] !== undefined);
+  if (retired.length > 0 && isProtocolPath(rel)) {
+    fail(rel, `carries retired frontmatter: ${retired.join(', ')}. ` +
+      'Ownership is decided by location, the release is named once in protocol.md, ' +
+      'and the rest are read by nothing');
   }
 
   // Situational fields, when present.

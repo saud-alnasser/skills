@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [specify]
-report: full
 use-when: "a change is wanted and no effort describes it yet"
 ---
 

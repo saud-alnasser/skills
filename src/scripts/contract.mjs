@@ -10,8 +10,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** Values the `owner` field may take. */
-export const OWNERS = ['protocol', 'repository'];
+/**
+ * Frontmatter AEP 3 no longer carries.
+ *
+ * Rejected on a path the protocol ships and tolerated elsewhere: a repository's
+ * own artifacts were written under the old contract and an upgrade never edits
+ * them, so failing those would fail a tree for holding what AEP gave it.
+ */
+export const RETIRED_FIELDS = ['aep', 'date', 'kind', 'mode', 'report', 'owner', 'part-of'];
 
 /**
  * Ownership, as a fact about location.

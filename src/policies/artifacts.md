@@ -1,8 +1,4 @@
 ---
-aep: 2.5.1
-owner: protocol
-date: 2026-08-17
-kind: policy
 paths:
   - .aep/**/*.md
 use-when: "about to create, change, move, or remove anything under .aep/ — whose it is, where it belongs, and what shape it takes"
@@ -120,9 +116,7 @@ Every Markdown file under `.aep/` MUST open with YAML frontmatter:
 
 ```yaml
 ---
-aep: <release>
-owner: protocol | repository
-date: <YYYY-MM-DD>
+
 ---
 ```
 

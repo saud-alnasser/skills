@@ -1,10 +1,4 @@
 ---
-aep: 2.4.0
-owner: protocol
-date: 2026-08-17
-kind: skill
-mode: [research, review]
-report: short
 use-when: "the question is where the codebase is costing you, rather than a specific change"
 ---
 

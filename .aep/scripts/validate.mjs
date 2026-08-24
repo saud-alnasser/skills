@@ -10,22 +10,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  DIRECTORY_OWNERS,
+  PROTOCOL_DIRS,
   FORBIDDEN_DIRS,
-  KINDS,
   MODES,
-  OWNERS,
-  REPORT_FORMS,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
-  isIsoDate,
   isNonEmptyString,
   readArtifact,
   resolveAepRoot,
   toPosix,
   walk,
   wikiLinks,
+  isProtocolPath,
+  RETIRED_FIELDS,
+  useWhenProblems,
 } from './contract.mjs';
 
 const PROTOCOL_BUDGET_BYTES = 8192;
@@ -50,35 +49,44 @@ function checkArtifact(root, file) {
   const artifact = readArtifact(file);
   checked += 1;
 
+  // Ownership is a fact about location, so a protocol directory holds exactly
+  // what the protocol ships. A file here the manifest does not name is either
+  // something a release retired and nobody pruned, or something the repository
+  // wrote where it may not, and both are defects that hide until an upgrade
+  // walks past them.
+  //
+  // This is what the `owner:` field used to say per artifact. It says it once,
+  // for every directory, and it catches the case the field never could: a file
+  // that simply omits the declaration.
+  if (PROTOCOL_DIRS.includes(topDir) && !isProtocolPath(rel)) {
+    fail(rel, `${topDir}/ holds only what the protocol ships, and this release ships ` +
+      'no such file. Repository-owned governance belongs under rules/, orientation ' +
+      'under contexts/, and tool operation under references/');
+  }
+
   if (!artifact.hasFrontmatter) {
-    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ must declare aep, owner, date');
+    fail(rel, 'no frontmatter. Every Markdown artifact under .aep/ declares at least a use-when');
     return;
   }
   for (const error of artifact.errors) fail(rel, `frontmatter ${error}`);
 
   const { fields } = artifact;
 
-  // Required on every artifact.
-  if (!isNonEmptyString(fields.aep)) fail(rel, 'missing required field: aep');
-  if (!isNonEmptyString(fields.owner)) fail(rel, 'missing required field: owner');
-  else if (!OWNERS.includes(fields.owner)) {
-    fail(rel, `owner is "${fields.owner}", must be one of: ${OWNERS.join(', ')}`);
-  } else if (DIRECTORY_OWNERS[topDir] && fields.owner !== DIRECTORY_OWNERS[topDir]) {
-    // The two governance directories admit one owner each. A policy is AEP's law
-    // and a rule is the repository's, so the misplacement is the defect. An
-    // upgrade preserves such a file rather than overwriting it, and this is what
-    // says so afterwards.
-    const belongs = fields.owner === 'protocol' ? 'policies/' : 'rules/';
-    fail(rel, `${topDir}/ holds only owner: ${DIRECTORY_OWNERS[topDir]}, and this declares ` +
-      `owner: ${fields.owner}, which belongs under ${belongs}`);
+  // The retired fields. Ownership is a fact about location, the release is named
+  // once in the bootstrap, and the rest were read by nothing.
+  //
+  // Rejected on a path the protocol ships, and tolerated everywhere else. A
+  // repository's own rules and contexts were written under the old contract and
+  // an upgrade never edits them, so failing them would fail a tree for carrying
+  // exactly what AEP handed it and then refused to touch.
+  const retired = RETIRED_FIELDS.filter((field) => fields[field] !== undefined);
+  if (retired.length > 0 && isProtocolPath(rel)) {
+    fail(rel, `carries retired frontmatter: ${retired.join(', ')}. ` +
+      'Ownership is decided by location, the release is named once in protocol.md, ' +
+      'and the rest are read by nothing');
   }
-  if (!isNonEmptyString(fields.date)) fail(rel, 'missing required field: date');
-  else if (!isIsoDate(fields.date)) fail(rel, `date is "${fields.date}", must be a real YYYY-MM-DD`);
 
   // Situational fields, when present.
-  if (fields.kind !== undefined && !KINDS.includes(fields.kind)) {
-    fail(rel, `kind is "${fields.kind}", must be one of: ${KINDS.join(', ')}`);
-  }
   if (fields.mode !== undefined) {
     if (!Array.isArray(fields.mode)) {
       fail(rel, 'mode must be a YAML array, e.g. mode: [implement, review]');
@@ -92,24 +100,6 @@ function checkArtifact(root, file) {
   }
   if (fields.paths !== undefined && !Array.isArray(fields.paths)) {
     fail(rel, 'paths must be a YAML array');
-  }
-
-  // `report` says which form a skill's turn report takes. It is forbidden on a
-  // note beside a skill: a note is reached from inside a run rather than
-  // invoked, so declaring a form would claim something untrue about it.
-  const isSkill = /^skills\/[^/]+\.md$/.test(rel);
-  if (isSkill) {
-    if (fields.report === undefined) {
-      fail(rel, `a skill must declare report: ${REPORT_FORMS.join(' or ')}. ` +
-        'Without it, what this skill tells the human has no defined shape');
-    } else if (!REPORT_FORMS.includes(fields.report)) {
-      fail(rel, `report is "${fields.report}", must be one of: ${REPORT_FORMS.join(', ')}`);
-    }
-  } else if (fields.report !== undefined) {
-    const note = /^skills\/[^/]+\/.+\.md$/.test(rel);
-    fail(rel, note
-      ? 'report is legal only on a skill. A note is reached from one and opens no report of its own'
-      : 'report is legal only on a skill');
   }
 
   // A context sits at `contexts/<area>.md` or `contexts/<project>/<area>.md`,
@@ -128,6 +118,19 @@ function checkArtifact(root, file) {
   // `use-when` is required where discovery depends on it.
   if (USE_WHEN_REQUIRED_DIRS.includes(topDir) && !isNonEmptyString(fields['use-when'])) {
     fail(rel, `${topDir}/ requires use-when. Without it this artifact can never be selected`);
+  }
+
+  // And wherever one is present it must be a trigger. This is the whole of
+  // applicability-first loading resting on one field, so the field is checked
+  // rather than trusted.
+  if (fields['use-when'] !== undefined) {
+    const heading = (artifact.body.match(/^#\s+(.+)$/m) ?? [])[1] ?? '';
+    const problems = useWhenProblems(fields['use-when'], {
+      heading,
+      name: path.basename(rel, '.md'),
+      directory: topDir,
+    });
+    for (const problem of problems) fail(rel, `use-when ${problem}`);
   }
 
   // `status`, `blocked-by`, `part-of` are legal only where they mean something.
@@ -235,7 +238,9 @@ function main() {
     if (!quiet) {
       process.stdout.write(`${checked} artifacts checked, no failures\n`);
       process.stdout.write(
-        'Not checked mechanically: whether each use-when states a trigger rather than a topic.\n',
+        'Not checked mechanically: whether a use-when shaped like a trigger names the right\n' +
+        'occasion. The checks reject a topic; they cannot tell a correct trigger from a\n' +
+        'plausible wrong one.\n',
       );
     }
     return;

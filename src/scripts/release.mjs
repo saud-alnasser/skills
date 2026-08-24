@@ -109,7 +109,7 @@ function main() {
   // The bootstrap is the tree's version marker, read by install.mjs to decide
   // which moves and notices apply. It is the one write.
   const bootstrapText = fs.readFileSync(bootstrap, 'utf8');
-  const stamped = setField(setField(bootstrapText, 'version', version), 'date', today);
+  const stamped = setField(bootstrapText, 'version', version);
   if (!dryRun && stamped !== bootstrapText) fs.writeFileSync(bootstrap, stamped, 'utf8');
 
   const orphans = Object.keys(stamps).filter((rel) => !(rel in next));

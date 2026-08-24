@@ -1,7 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
 use-when: "writing or extending a runtime's entrypoint, so it reaches AEP without restating it"
 ---
 

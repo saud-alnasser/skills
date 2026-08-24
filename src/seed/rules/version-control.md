@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: rule
-mode: [implement, review]
 use-when: "committing, branching, or preparing work to land"
 ---
 

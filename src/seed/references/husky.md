@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: repository
-date: 2026-08-17
-kind: reference
-mode: [implement, review]
 use-when: "a commit or push is blocked by a git hook here, or those checks should be run first"
 ---
 

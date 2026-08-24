@@ -1,9 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: agent
-mode: [research]
 use-when: "a decision depends on facts that are not in this repository, and the sources would otherwise be read in the orchestrator's context"
 ---
 

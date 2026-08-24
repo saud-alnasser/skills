@@ -1,8 +1,4 @@
 ---
-aep: 2.3.0
-owner: protocol
-date: 2026-08-17
-kind: skill
 use-when: "writing a test and deciding what it should assert, or judging whether an existing test is worth keeping"
 ---
 
