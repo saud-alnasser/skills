@@ -125,7 +125,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/13-report-shape]] feat(policies): the turn report is four slots and a ledger | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | aep-3 | resolved | 06, 07 |
-| [[efforts/aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | aep-3 | open | 14 |
+| [[efforts/aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | aep-3 | resolved | 14 |
 | [[efforts/aep-3/tickets/16-install]] feat(install): entrypoints and the label seed land on the way in | aep-3 | open | 15, 01 |
 | [[efforts/aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | aep-3 | open | 16 |
 | [[efforts/aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | aep-3 | resolved | 06 |

@@ -32,6 +32,18 @@ export const RETIRED_FIELDS = ['aep', 'date', 'kind', 'mode', 'report', 'owner',
  * place.
  */
 export const PROTOCOL_DIRS = ['policies', 'skills', 'agents', 'templates', 'scripts'];
+
+/**
+ * The repository's own entrypoint, and the only file AEP writes outside `.aep/`
+ * that a harness loads by name.
+ *
+ * Named here because two things need it and neither may guess: the seed that
+ * writes it, and every runtime target whose own entrypoint has to point at it.
+ * A runtime that reads this file needs no pointer of its own, and one that reads
+ * something else gets a pointer whose entire content is a redirect here. Which
+ * of the two a runtime is belongs in the target table, stated once.
+ */
+export const CANONICAL_ENTRYPOINT = 'AGENTS.md';
 export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
 export const PROTOCOL_ROOT_FILES = ['protocol.md'];
 export const REPOSITORY_ROOT_FILES = ['index.md'];

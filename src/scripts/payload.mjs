@@ -188,6 +188,14 @@ export const GITIGNORE_SOURCE = 'gitignore';
 export { REPOSITORY_DIRS } from './contract.mjs';
 
 /**
+ * The canonical entrypoint, re-exported for the same reason `REPOSITORY_DIRS`
+ * is: the seed that writes it and the target table that points at it both need
+ * the name, and two copies would disagree the day it changes.
+ */
+export { CANONICAL_ENTRYPOINT } from './contract.mjs';
+import { CANONICAL_ENTRYPOINT } from './contract.mjs';
+
+/**
  * The seeded label vocabulary, offered to the tracker rather than written into
  * the tree.
  *
@@ -246,7 +254,7 @@ const reference = (tool, paths, remote) => ({
  * installing repository nothing, because the detector decides.
  */
 export const SEEDS = [
-  { source: 'seed/AGENTS.md', target: 'AGENTS.md', root: true },
+  { source: 'seed/AGENTS.md', target: CANONICAL_ENTRYPOINT, root: true },
   { source: 'seed/contexts/repository.md', target: 'contexts/repository.md' },
   { source: 'seed/rules/version-control.md', target: 'rules/version-control.md' },
 

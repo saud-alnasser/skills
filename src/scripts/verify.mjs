@@ -59,6 +59,7 @@ import {
   REPOSITORY_DIRS,
   SEEDS,
   LABEL_SEED,
+  CANONICAL_ENTRYPOINT,
 } from './payload.mjs';
 
 /** `src/`, the distribution. */
@@ -3065,6 +3066,113 @@ section('install fixture', () => {
     if (!fs.existsSync(wrapper)) return false;
     const text = fs.readFileSync(wrapper, 'utf8');
     return text.includes('.aep/skills/specify.md') && !text.includes('# /specify');
+  });
+  // Ticket 16. The entrypoints are the only files AEP writes outside `.aep/`
+  // that a repository loads before anything else, and one of them may predate
+  // AEP by years. Every assertion below is about not destroying something.
+
+  // A fresh install onto a repository with no entrypoint at all. The fixture
+  // above has already run `--update --adapters claude`, so both files exist by
+  // the time this runs.
+  const canonical = path.join(dir, CANONICAL_ENTRYPOINT);
+  assert('installing writes the canonical entrypoint', () => fs.existsSync(canonical));
+  assert('the canonical entrypoint points at the bootstrap', () =>
+    fs.readFileSync(canonical, 'utf8').includes('.aep/protocol.md'));
+
+  // Asserted before anything derives a path from it. A target with no `entry`
+  // would otherwise throw inside `path.join` and abort the section, which skips
+  // every assertion below and reports as one failure rather than the right one.
+  assert('every target declares which file its runtime loads', () =>
+    Object.values(TARGETS).every((target) => isNonEmptyString(target.entry)));
+
+  const claudeEntry = path.join(dir, TARGETS.claude.entry ?? 'no-entry-declared');
+  assert('installing the claude adapter writes its runtime entrypoint', () =>
+    fs.existsSync(claudeEntry));
+  assert('a runtime entrypoint is a pointer and nothing else', () => {
+    const text = fs.readFileSync(claudeEntry, 'utf8');
+    return text.includes(CANONICAL_ENTRYPOINT) && text.length < 400;
+  });
+
+  // Criterion 37, the half that is easy to get wrong: a pointer that names the
+  // bootstrap is a second thing to change the day the canonical entry moves,
+  // and the runtime loads the stale one first.
+  assert('a runtime entrypoint names nothing under the protocol directory', () =>
+    !fs.readFileSync(claudeEntry, 'utf8').includes('.aep/'));
+
+  // A runtime that already reads the canonical entry gets no file of its own.
+  // A pointer from a file to itself is a loop, and the loop reads perfectly.
+  assert('a runtime reading the canonical entry is pointed nowhere else', () => {
+    const others = Object.entries(TARGETS)
+      .filter(([, target]) => target.entry === CANONICAL_ENTRYPOINT)
+      .map(([name]) => name);
+    if (others.length === 0) throw new Error('no target reads the canonical entrypoint');
+    return others.every((name) => TARGETS[name].entry === CANONICAL_ENTRYPOINT);
+  });
+
+  // Running again must not append a second copy. Idempotence is by content
+  // rather than by a marker, so this is what proves the check actually looks.
+  assert('a second run does not write the pointer twice', () => {
+    const before = fs.readFileSync(claudeEntry, 'utf8');
+    execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', dir, '--update', '--adapters', 'claude'],
+      { stdio: 'ignore' },
+    );
+    return fs.readFileSync(claudeEntry, 'utf8') === before;
+  });
+
+  // Criterion 36. The file the repository had before AEP existed, which may
+  // carry instructions nobody asked an installer to touch.
+  // Criterion 37, the other half: the name appears in the target table and
+  // nowhere else that decides anything. The entrypoint seed takes its target
+  // from the same constant, so a rename moves both.
+  assert('the entrypoint seed targets the canonical name', () =>
+    SEEDS.some((seed) => seed.root === true && seed.target === CANONICAL_ENTRYPOINT));
+
+  // Criterion 11. The offer is the skill's, because a script cannot propose a
+  // write and wait for an answer. Both branches are asserted: a repository with
+  // its own labels is the one where a wrong install is silent, because the set
+  // it creates looks reasonable beside what is already there.
+  const installSkill = readSrc('skills', 'install.md');
+  assert('install offers the label vocabulary only where the tracker has none', () =>
+    installSkill.includes('**Offer the label vocabulary'));
+  assert('install says accepting the seeded set removes the defaults', () =>
+    /only its own defaults \| offer the seeded set, and say that accepting it \*\*removes the defaults\*\*/
+      .test(installSkill));
+  assert('install creates only what is missing where labels already exist', () =>
+    /labels of its own \| create \*\*only what is missing\*\*/.test(installSkill));
+  assert('install shows the exact strings before creating anything', () =>
+    installSkill.includes('**Show the exact strings before creating anything**') &&
+    installSkill.includes('create nothing on a refusal'));
+  assert('install requires a description that states its trigger', () =>
+    installSkill.includes('**A description states the trigger that puts the label on.**'));
+  assert('install forbids a created label naming AEP', () =>
+    installSkill.includes('**Nothing created here names AEP**'));
+
+  // The entrypoint step, now describing what the installer does rather than
+  // what a human is asked to do by hand.
+  assert('install states which entrypoints the installer writes', () =>
+    installSkill.includes('**Check the entrypoints.**'));
+  assert('install says which file a runtime reads comes from the target table', () =>
+    /\*\*Which file a runtime reads is the installer's to know\*\*/.test(installSkill));
+  assert('install says a pointer names the canonical entry and nothing else', () =>
+    /\*\*A pointer names `AGENTS\.md` and nothing under `\.aep\/`\.\*\*/.test(installSkill));
+
+  assert('a runtime entrypoint that predates AEP keeps its content', () => {
+    const older = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-entry-'));
+    execFileSync('git', ['init', '--quiet'], { cwd: older, stdio: 'ignore' });
+    const house = '# House rules\n\nAlways run the linter before committing.\n';
+    fs.writeFileSync(path.join(older, TARGETS.claude.entry), house);
+    execFileSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'install.mjs'), '--into', older, '--adapters', 'claude'],
+      { stdio: 'ignore' },
+    );
+    const after = fs.readFileSync(path.join(older, TARGETS.claude.entry), 'utf8');
+    fs.rmSync(older, { recursive: true, force: true });
+    return after.startsWith(house.trimEnd())
+      && after.includes(CANONICAL_ENTRYPOINT)
+      && after.includes('Always run the linter before committing.');
   });
 });
 

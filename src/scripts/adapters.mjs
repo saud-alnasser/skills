@@ -30,7 +30,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readArtifact, topLevel, walk } from './contract.mjs';
+import { CANONICAL_ENTRYPOINT, readArtifact, topLevel, walk } from './contract.mjs';
 
 /**
  * From an adapter's own root back to the payload it wraps.
@@ -142,6 +142,7 @@ function describe(artifact, { isAgent }) {
 export const TARGETS = {
   claude: {
     dir: '.claude',
+    entry: 'CLAUDE.md',
     prefix: '',
     committed: 'plugin',
     shapes: ['plugin', 'repository'],
@@ -181,6 +182,7 @@ export const TARGETS = {
   // never becomes a command. Unprefixed, `/review` would silently not be AEP's.
   opencode: {
     dir: '.opencode',
+    entry: CANONICAL_ENTRYPOINT,
     prefix: 'aep-',
     committed: 'distribution',
     shapes: ['distribution', 'repository'],
@@ -232,6 +234,7 @@ export const TARGETS = {
   // severs any reach relative to itself.
   agents: {
     dir: '.agents',
+    entry: CANONICAL_ENTRYPOINT,
     prefix: 'aep-',
     committed: null,
     shapes: ['repository'],

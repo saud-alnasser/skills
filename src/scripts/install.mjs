@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { readArtifact, walk, toPosix, isProtocolPath } from './contract.mjs';
+import { CANONICAL_ENTRYPOINT, readArtifact, walk, toPosix, isProtocolPath } from './contract.mjs';
 import { contentHash } from './release.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
@@ -38,6 +38,7 @@ import {
 const report = {
   written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [], edited: [],
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
+  pointed: [],
 };
 
 /** The distribution root, `src/`, since this script lives in `src/scripts/`. */
@@ -307,6 +308,69 @@ function installSeeds(repo, from, aep, dryRun) {
   }
 }
 
+/**
+ * The paragraph a runtime entrypoint carries, and the whole of what one says.
+ *
+ * It names the canonical entrypoint and nothing under `.aep/`. A pointer that
+ * named the bootstrap directly would be a second thing to update the day the
+ * canonical entry moves, and the two would disagree in the file a runtime
+ * loads first.
+ */
+function pointerTo(canonical) {
+  return [
+    '## Start here',
+    '',
+    `Read **\`${canonical}\`** in this directory. It is this repository's entrypoint,`,
+    'and it is not specific to any one runtime.',
+  ].join('\n');
+}
+
+/**
+ * One entrypoint per targeted runtime, pointing at the canonical one.
+ *
+ * Three cases, and the third is the one worth writing down:
+ *
+ *   the runtime reads the canonical entry   nothing to write. A pointer from a
+ *                                           file to itself is a loop
+ *   its entrypoint does not exist           write the pointer, and only that
+ *   its entrypoint exists                   append the pointer and change
+ *                                           nothing else
+ *
+ * The third case is what makes this safe to run on a repository that had a
+ * `CLAUDE.md` years before AEP. That file is the repository's, it may say
+ * anything, and an installer that rewrites it destroys instructions nobody
+ * asked it to touch. Appending is the only operation available on a file whose
+ * contents are none of AEP's business.
+ */
+function installEntrypoints(repo, requested, dryRun) {
+  const pointer = pointerTo(CANONICAL_ENTRYPOINT);
+  const written = new Set();
+
+  for (const name of requested) {
+    const entry = TARGETS[name].entry;
+    if (!entry || entry === CANONICAL_ENTRYPOINT || written.has(entry)) continue;
+    written.add(entry);
+
+    const target = path.join(repo, entry);
+    const exists = fs.existsSync(target);
+    const before = exists ? fs.readFileSync(target, 'utf8') : '';
+
+    // Idempotent by content rather than by a marker: a marker is a thing to
+    // maintain, and an update that appends a second identical paragraph every
+    // run is the failure this guards.
+    if (before.includes(CANONICAL_ENTRYPOINT)) {
+      report.skipped.push(`${entry} (already points at ${CANONICAL_ENTRYPOINT})`);
+      continue;
+    }
+
+    const body = exists
+      ? `${before.replace(/\s+$/, '')}\n\n${pointer}\n`
+      : `${pointer}\n`;
+    if (!dryRun) fs.writeFileSync(target, body);
+    report.pointed.push(exists ? `${entry} (pointer added, rest untouched)` : entry);
+  }
+}
+
 function ensureDir(target, dryRun) {
   if (fs.existsSync(target)) return;
   if (!dryRun) fs.mkdirSync(target, { recursive: true });
@@ -419,6 +483,7 @@ function main() {
   }
 
   installSeeds(repo, from, aep, dryRun);
+  installEntrypoints(repo, requested, dryRun);
 
   const ignoreTarget = path.join(aep, '.gitignore');
   if (!dryRun) fs.copyFileSync(path.join(from, GITIGNORE_SOURCE), ignoreTarget);
@@ -452,6 +517,7 @@ function main() {
   list(`runtime adapter${report.adapters.length === 1 ? '' : 's'} installed`,
     report.adapters, (entry) => entry);
   list('locally edited and replaced, recover from version control if wanted', report.edited);
+  list('runtime entrypoints pointing at the canonical one', report.pointed, (entry) => entry);
   list('repository-owned starting points seeded, review each', report.seeded, (entry) => entry);
   list('seeds skipped', report.skipped, (entry) => entry);
   list('repository-owned files preserved', report.preserved);
