@@ -63,8 +63,9 @@ scopes name the surface changed (`protocol`, `configure`, `tracker`).
 
 ## How work reaches the default branch
 
-**A branch, merged by a pull request a human opens.** Not stacked changes,
-though not for want of tooling: `gt` is installed and this repository is
+**A branch, merged by a human.** The runner opens its pull request as a draft and
+marks it ready (above); the merge is the human's and only theirs. Not stacked
+changes, though not for want of tooling: `gt` is installed and this repository is
 `gt init`ed against trunk `main`. **No branch has ever been tracked in it** —
 `.git/refs/branch-metadata` does not exist and Graphite holds no pull request
 info — and every merge in the log is a flat squash from a single branch. The
