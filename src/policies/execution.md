@@ -287,6 +287,62 @@ rather than each child's summary concatenated.
 That account is text a human reads, so `[[policies/reporting]]` governs how it is
 written.
 
+## The run's memory is the pull request
+
+**The session is disposable. Nothing the run needs lives only in its context.**
+
+A run over a whole effort outlives the session that started it. It will cross a
+compaction boundary, and it may be killed and re-invoked. Neither stops it,
+because everything it needs is written down as it goes.
+
+### Where each thing lives
+
+| What | Where it is durable |
+| --- | --- |
+| which tickets are done | commits on the effort branch |
+| which criteria of a ticket are verified, and what verified each | **ticked checkboxes in the pull request body**, inline |
+| the ledger, the converge round, review attempts per ticket, items recorded but not acted on, anything a child raised that was not a trip-wire | a **collapsed run log section** of the pull request |
+
+**The orchestrator writes the run log as the run proceeds**, not at the end. A
+record written at the end is a record that does not exist for the failure it was
+meant to survive.
+
+**A failed write to the run log is a defect to report**, named and surfaced. It
+is never a silent continue: a run that carried on after losing its memory is a
+run that will later write a confident close over work nobody can find.
+
+### Ticking a criterion
+
+**A criterion's checkbox is ticked by `[[agents/reviewer-correctness]]`**, which
+already judges each requirement and each acceptance criterion against the diff.
+It is ticked **at the moment it is verified**, carrying inline what verified it.
+
+**The agent that wrote the code never ticks its own criteria.** *Why: a tick is
+the claim that somebody checked, and a claim checked by its own author is the
+thing the whole review axis exists to not be. It is also what makes resumption
+safe — a resumed run trusts a tick without re-deriving it.*
+
+### Resuming
+
+A resumed run reconstructs its position from the pull request, the issue, and
+the repository, **and from nothing else.** It **re-verifies nothing already
+ticked, and trusts nothing that is not.**
+
+**The tracker is read. It is never mirrored into `.aep/`.** A local copy of the
+run log is exactly the hidden database this protocol does without, and it
+disagrees with the original the moment one is written and the other is not.
+
+### Compaction
+
+**Auto-compaction is harmless and the run does not stop for it.** The summary
+loses whatever it loses; the run continues correctly because the pull request
+holds what it needs.
+
+***No AEP mechanism may depend on triggering compaction.*** An agent cannot
+invoke it. It is a command the human types, or a harness behaviour firing on its
+own schedule and choosing its own survivors, so a design that waits for it is
+waiting on something it does not control.
+
 ## Converge decides when the effort is done
 
 **An exhausted ticket list and a satisfied spec are different claims.** Tickets

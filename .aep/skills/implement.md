@@ -188,8 +188,14 @@ reader cannot act on is a wall rather than a check.
    commit exists, because a commit cannot contain its own hash. **An amend
    produces a new commit, so an amend re-stamps.**
 
-Further changes amend that commit. Never push, never publish
-(`[[rules/version-control]]`).
+Further changes amend that commit.
+
+6. **Write the run log**, in the pull request, before taking the next ticket.
+   The ledger line for this ticket, the converge round, how many times each
+   ticket failed review, items recorded but not acted on, and anything a child
+   raised that was not a trip-wire (`[[policies/execution]]`). **A failed write
+   is reported, never continued past** — the run has just lost its memory and
+   does not know it yet.
 
 **Then schedule again.** Back to step 1, against the tip this wave just made.
 
@@ -278,11 +284,22 @@ worse than stopping.*
 whole effort may cross a compaction or a session boundary, and neither stops it:
 what the run needs is on disk, never only in its head.
 
-Reconstruct from the durable record and from nothing else. The effort branch
-names the effort and its commits name the tickets already landed;
-`frontier.mjs` says what is left and what blocks it; each ticket says what done
-looks like. **A detached HEAD names no branch and holds no claim** — do not
-guess the ticket from the diff; claim one properly or hand back.
+Reconstruct from the durable record and from nothing else — **the pull request,
+the issue, and the repository**:
+
+| Read | To recover |
+| --- | --- |
+| commits on the effort branch | which tickets landed |
+| **ticked checkboxes in the pull request** | which criteria of the in-flight ticket are verified, and what verified each |
+| the collapsed **run log** | the ledger, the converge round, review attempts, what was recorded and not acted on |
+| `frontier.mjs` | what is left, and what blocks it |
+
+**Re-verify nothing already ticked. Trust nothing that is not.** A tick was made
+by `[[agents/reviewer-correctness]]` and never by the agent that wrote the code,
+which is what makes it safe to resume on (`[[policies/execution]]`).
+
+**A detached HEAD names no branch and holds no claim** — do not guess the ticket
+from the diff; claim one properly or hand back.
 
 *No part of this may depend on triggering compaction.* An agent cannot invoke
 it. It is a command the human types, or a harness firing on its own schedule and

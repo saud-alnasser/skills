@@ -121,7 +121,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | open | 07 |
 | [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | aep-3 | resolved | 09 |
-| [[efforts/aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | aep-3 | open | 10 |
+| [[efforts/aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/13-report-shape]] feat(policies): the turn report is four slots and a ledger | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | aep-3 | open | 06, 07 |

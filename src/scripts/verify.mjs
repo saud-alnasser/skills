@@ -1192,6 +1192,91 @@ section('policies', () => {
     /never soften it/i.test(authority));
 });
 
+// A run that outlives its session needs its memory somewhere the session does
+// not own. Every assertion here is one sentence whose absence leaves a runner
+// that reads exactly the same and forgets everything on the first kill.
+section('the run log', () => {
+  const execution = readSrc('policies', 'execution.md');
+  const reporting = readSrc('policies', 'reporting.md');
+  const runner = readSrc('skills', 'implement.md');
+  const correctness = readSrc('agents', 'reviewer-correctness.md');
+
+  assert('the policy states that the session is disposable', () =>
+    /\*\*The session is disposable\. Nothing the run needs lives only in its context\.\*\*/.test(execution));
+
+  // Where each thing is durable, asserted per row. One assertion over the table
+  // passes while any single row is missing, and the row that goes is whichever
+  // was least convenient to write.
+  for (const [what, pattern] of [
+    ['commits carry which tickets are done', /which tickets are done \| commits on the effort branch/],
+    ['the pull request body carries which criteria are verified', /ticked checkboxes in the pull request body\*\*, inline/],
+    ['the run log carries the ledger and the converge round', /the ledger, the converge round, review attempts per ticket/],
+    ['the run log carries what was recorded and not acted on', /items recorded but not acted on/],
+    ['the run log carries what a child raised short of a trip-wire', /anything a child raised that was not a trip-wire/],
+  ]) {
+    assert(what, () => pattern.test(execution));
+  }
+
+  assert('the run log is written as the run proceeds, not at the end', () =>
+    /writes the run log as the run proceeds\*\*, not at the end/.test(execution) &&
+    /before taking the next ticket/.test(runner));
+  assert('a failed write to the run log is reported rather than continued past', () =>
+    /\*\*A failed write to the run log is a defect to report\*\*/.test(execution) &&
+    /never continued past\*\*/.test(runner));
+
+  // The tick, and who owns it. Criterion 20 is the whole reason a resumed run
+  // may trust one without re-deriving it.
+  assert('the correctness reviewer ticks the criteria', () =>
+    /ticked by `\[\[agents\/reviewer-correctness\]\]`/.test(execution) &&
+    /## You tick the criteria, and only you/.test(correctness));
+  assert('a criterion is ticked at the moment it is verified, with what verified it', () =>
+    /at the moment it is verified\*\*, carrying inline what verified it/.test(execution) &&
+    /at the moment you\s+verify it\*\*, carrying inline what verified it/.test(correctness));
+  assert('the agent that wrote the code never ticks its own criteria', () =>
+    /\*\*The agent that wrote the code never ticks its own criteria\.\*\*/.test(execution) &&
+    /\*\*Never tick a criterion for code you wrote\.\*\*/.test(correctness));
+  assert('an unverifiable criterion stays unticked rather than being ticked with a caveat', () =>
+    /\*\*A criterion you could not verify stays unticked\*\*/.test(correctness));
+
+  // Resumption. Both halves: a run that re-verifies ticks is slow, and a run
+  // that trusts blanks is wrong.
+  assert('a resumed run reads the pull request, the issue, and the repository only', () =>
+    /from the pull request, the issue, and\s+the repository, \*\*and from nothing else\.\*\*/.test(execution));
+  assert('a resumed run re-verifies nothing ticked and trusts nothing unticked', () =>
+    /\*\*re-verifies nothing already\s+ticked, and trusts nothing that is not\.\*\*/.test(execution) &&
+    /\*\*Re-verify nothing already ticked\. Trust nothing that is not\.\*\*/.test(runner));
+  assert('the runner says what to read to recover each thing', () =>
+    /ticked checkboxes in the pull request\*\* \| which criteria/.test(runner) &&
+    /run log\*\* \| the ledger, the converge round/.test(runner));
+  assert('the tracker is read and never mirrored into the protocol directory', () =>
+    /\*\*The tracker is read\. It is never mirrored into `\.aep\/`\.\*\*/.test(execution));
+
+  // The ledger has two homes and must not grow two shapes.
+  assert('the ledger is emitted in the turn and kept in the run log', () =>
+    /### It is emitted in the turn and kept in the run log/.test(reporting) &&
+    /\*\*Same lines, same order, same columns\.\*\*/.test(reporting));
+
+  // Compaction. The run does not stop for it, and nothing may wait on it.
+  assert('auto-compaction is harmless and the run does not stop for it', () =>
+    /\*\*Auto-compaction is harmless and the run does not stop for it\.\*\*/.test(execution));
+  assert('the reason nothing may depend on compaction is stated, not just the rule', () =>
+    /An agent cannot\s+invoke it/.test(execution) &&
+    /waiting on something it does not control/.test(execution));
+
+  // Criterion: no AEP text instructs an agent to compact. Swept over the
+  // payload rather than the three files above, because the instruction would
+  // arrive in whichever file nobody thought to check.
+  assert('no shipped artifact instructs an agent to compact', () => {
+    const offenders = shippedArtifacts()
+      .filter((file) => file.endsWith('.md'))
+      .filter((file) => /\b(run|trigger|invoke|force|request)\s+(an?\s+)?(auto-?)?compaction\b/i
+        .test(readArtifact(file).body))
+      .map((file) => toPosix(SRC, file));
+    if (offenders.length > 0) throw new Error(`instructing it: ${offenders.join(', ')}`);
+    return true;
+  });
+});
+
 // Converge is where the run decides it is finished. It is also the one stage
 // with the whole diff in view and nobody reviewing it, so what it may not do is
 // pinned as hard as what it does.

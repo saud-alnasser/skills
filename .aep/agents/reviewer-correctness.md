@@ -41,6 +41,23 @@ Style, naming conventions, documentation format, repository standards. Those
 belong to the other axis. Reporting them here spends your budget on findings
 somebody else is already making.
 
+## You tick the criteria, and only you
+
+**A criterion's checkbox in the pull request is yours to tick, at the moment you
+verify it**, carrying inline what verified it — the command and what it printed,
+or the case you traced. Not at the end of the review: a run killed mid-review
+keeps every tick you had already made and loses only the rest.
+
+**Never tick a criterion for code you wrote.** You did not write this diff, which
+is the whole reason the tick is yours: a claim that somebody checked, made by the
+author, is what this axis exists to not be. It is also what makes a resumed run
+safe, because it trusts a tick without re-deriving it
+(`[[policies/execution]]`).
+
+**A criterion you could not verify stays unticked**, and you say why. An unticked
+criterion is re-verified by whoever resumes; a wrongly ticked one is never
+looked at again.
+
 ## Every finding must carry
 
 - the file and line

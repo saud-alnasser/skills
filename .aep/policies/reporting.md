@@ -182,6 +182,16 @@ losing the stability the machine reader needs.
 disagree the moment one is written and the other is not, and the disagreement is
 invisible until a resumed run acts on the stale one.*
 
+### It is emitted in the turn and kept in the run log
+
+The copy in the turn report is what the human reads now. The durable copy lives
+in the pull request's collapsed run log, written as each line is crossed rather
+than at the close (`[[policies/execution]]`), which is the copy a resumed run
+reads.
+
+**Same lines, same order, same columns.** Not a summary of one in the other: two
+renderings of one ledger diverge, and the run reads whichever it finds.
+
 ## What this policy is not
 
 - **Not a rendering.** It governs what is stated, in what order, and how it
