@@ -185,9 +185,6 @@ function checkStructure(root) {
     for (const entry of fs.readdirSync(effortsDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       const effort = path.join(effortsDir, entry.name);
-      if (fs.existsSync(path.join(effort, 'plan.md'))) {
-        fail(`efforts/${entry.name}/plan.md`, 'plan.md must not exist. Planning extends spec.md');
-      }
       if (!fs.existsSync(path.join(effort, 'spec.md'))) {
         fail(`efforts/${entry.name}/`, 'an effort must have a spec.md');
       }

@@ -76,9 +76,12 @@ branch sits beside it as `skills/<skill>/<note>.md` and is read only when the
 skill sends you there — so *what a good test asserts* or *how to prototype a UI*
 costs nothing on the runs that never ask.
 
+An effort is two files: **`spec.md` is what and why, `plan.md` is how.** Neither
+restates the other, and `plan.md` is written only where the approach is not
+obvious.
+
 ## Things people expect and will not find
 
-- **No `plan.md`.** Planning extends the same `spec.md`.
 - **No decisions directory.** The reasoning lives in the spec that made the
   change, beside the evidence that informed it.
 - **No mandatory tickets.** Local tickets are optional; external trackers stay

@@ -69,7 +69,9 @@ The same `spec.md`, gaining whichever of these apply:
 
 ## Constraints
 
-- **NEVER create `plan.md`.** `[[policies/execution]]` has the reason.
+- **The plan never restates the spec.** Requirements, acceptance criteria, and
+  scope live in `spec.md` and are referenced from here
+  (`[[policies/execution]]`).
 - **Planning MUST NOT silently expand product scope.** Technical discovery that
   exposes a product-level change **stops and surfaces it** — then `spec.md`'s
   WHAT is updated deliberately, not absorbed into the HOW.

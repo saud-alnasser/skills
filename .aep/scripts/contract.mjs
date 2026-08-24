@@ -87,6 +87,7 @@ export const PROTOCOL_FILES = [
   'templates/agent.template.md',
   'templates/agents.template.md',
   'templates/context.template.md',
+  'templates/plan.template.md',
   'templates/protocol.template.md',
   'templates/prototype.template.md',
   'templates/reference.template.md',

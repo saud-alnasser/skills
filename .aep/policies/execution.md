@@ -20,14 +20,23 @@ the architecture to make the task work.
 *Why: a task that quietly wins over the spec means the delivered system is
 defined by whichever artifact was edited last, and nobody agreed to that one.*
 
-## One spec file
+## One claim, one place
 
-The effort has exactly one durable definition, and it is `spec.md`.
+An effort is defined by `spec.md`, what is changing and why, and by `plan.md`,
+how it will be built. **Two files, and no claim in both.**
 
-- **NEVER create `plan.md`.** Planning extends the same file with Architecture,
-  Components, Interfaces, Data Model, Technical Approach, Integration, Migration,
-  Testing Strategy, Operational Considerations, Technical Risks.
-- Tasks reference the spec; they MUST NOT copy large portions of it.
+- **A requirement, an acceptance criterion, or a scope boundary lives in
+  `spec.md` and is referenced from anywhere else.** A plan restating one creates
+  a second place it can change, and the two diverge on the first surprise.
+- **Tasks reference the spec; they MUST NOT copy large portions of it.** Every
+  task traces to a requirement in `spec.md`, and `[[skills/tasks]]` fails where
+  one traces to nothing: that check is what keeps the files honest, rather than
+  a rule against having two of them.
+
+*Why the check and not the ban: forbidding `plan.md` kept one claim in one file
+by keeping everything in one file, which also meant a reviewer agreeing to the
+problem had to read the approach to find it. The duplication was the thing worth
+preventing, and it is preventable directly.*
 
 ## Return to plan
 

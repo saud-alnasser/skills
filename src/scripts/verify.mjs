@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SKILLS,
   FORBIDDEN_DIRS,
+  RETIRED_FIELDS,
   PROTOCOL_FILES,
   isProtocolPath,
   useWhenProblems,
@@ -616,7 +617,8 @@ section('skills', () => {
     process.stdout.write(`        not reachable from help: ${unrouted.join(', ')}\n`);
   }
 
-  assert('skills/plan forbids plan.md', /NEVER create `plan\.md`/.test(readSrc('skills', 'plan.md')));
+  assert('skills/plan forbids restating the spec', () =>
+    /never restates the spec/i.test(readSrc('skills', 'plan.md')));
 
   // Four workflow commands and the utilities. Asserted against a real render
   // rather than against the list that drives it, which would only prove the list
@@ -833,23 +835,58 @@ section('policies', () => {
 
   // What `aep:` answers. The policy said the opposite until 2.5.1, that every
   // release stamps every protocol-owned artifact, which contradicted §6, §8,
-  // release.mjs, and the stale-stamp guard above, and described an upgrade check
-  // nothing implements. Pinned so it cannot drift back, in both directions:
-  // saying the field records the last content change, and not saying the sweep.
+  // The policy governs ownership, so what it says about ownership is checked
+  // against what ships rather than against the sentence that used to be there.
+  // Both directions: it states the rule that holds, and denies the one that did.
   const artifacts = flat(readSrc('policies', 'artifacts.md'));
-  assert('policies/artifacts says aep records when content last changed', () =>
-    /the release its content last changed in/.test(artifacts));
-  assert('policies/artifacts stamps only what changed, protocol.md excepted', () =>
-    /stamps only the artifacts that actually changed/.test(artifacts) &&
-    /`protocol\.md` is the one exception/.test(artifacts));
-  assert('policies/artifacts does not claim a release sweeps every artifact', () =>
-    !/every release stamps every/.test(artifacts));
+  assert('policies/artifacts makes ownership a fact about location', () =>
+    /Ownership is a fact about location, and no artifact declares it/.test(artifacts));
+  assert('policies/artifacts no longer says the owner is read off a field', () =>
+    !/the owner is read off that field/.test(artifacts) &&
+    !/never inferred from a directory/.test(artifacts));
+  assert('policies/artifacts names the release once, in the bootstrap', () =>
+    /The release is named once/.test(artifacts) &&
+    /No artifact\s+carries a stamp of its own/.test(artifacts));
   assert('policies/artifacts establishes provenance by comparing content', () =>
     /establishes provenance by comparing content/.test(artifacts));
+  // Matched with the colon optional, because the field table writes the name
+  // bare and the prose writes it with one. Requiring the colon missed every row
+  // in the table, which is the half of this file most likely to keep a dead
+  // field: a row costs one line and reads as complete.
+  assert('policies/artifacts describes no retired frontmatter field', () => {
+    const held = RETIRED_FIELDS
+      .filter((field) => new RegExp(`\`${field}:?\``).test(artifacts));
+    if (held.length > 0) throw new Error(`still documented: ${held.join(', ')}`);
+    return true;
+  });
+
+  // Read from the contract, so the policy and the validator cannot disagree
+  // about which directories are retired.
+  assert('policies/artifacts names every retired directory the validator rejects', () => {
+    const unnamed = FORBIDDEN_DIRS.filter((dir) => !artifacts.includes(`\`${dir}`));
+    if (unnamed.length > 0) throw new Error(`not named in the policy: ${unnamed.join(', ')}`);
+    return true;
+  });
+  assert('policies/artifacts no longer forbids an effort plan file', () =>
+    !/effort's `plan\.md`/.test(artifacts));
 
   // Two statements from the absorbed rules that carry the most weight, pinned by
   // name so a rewrite of the surrounding prose cannot quietly drop them.
   const execution = readSrc('policies', 'execution.md');
+
+  // Superseded, and the reason it existed is carried by the check that replaced
+  // it. Asserting only the absence would pass on a policy that dropped the rule
+  // and said nothing, which is how a protection disappears without a trace.
+  assert('policies/execution no longer forbids plan.md', () =>
+    !/NEVER create `plan\.md`/.test(execution));
+  assert('policies/execution names both files and forbids a claim in both', () =>
+    /`spec\.md`/.test(execution) && /`plan\.md`/.test(execution) &&
+    /no claim in both/i.test(execution));
+  assert('policies/execution replaces the rule with the traceability check', () =>
+    /traces to nothing/.test(execution) && /skills\/tasks/.test(execution));
+  assert('policies/execution says why the check replaced the ban', () =>
+    /Why the check and not the ban/.test(execution));
+
   assert('policies/execution forbids splitting one task across children', () =>
     /never split across sub-agents/i.test(execution));
   assert('policies/execution requires independence to be read, not inferred', () =>
@@ -1331,9 +1368,35 @@ section('seeds', () => {
 section('templates', () => {
   const templates = listMarkdown('templates').map((file) => path.basename(file, '.md'));
   for (const expected of ['protocol', 'agents', 'agent', 'rule', 'reference', 'context', 'skill',
-    'spec', 'ticket', 'research', 'prototype']) {
+    'spec', 'plan', 'ticket', 'research', 'prototype']) {
     assert(`templates/${expected}.template.md ships`, templates.includes(`${expected}.template`));
   }
+
+  // The split. A template claiming the other does not exist is worse than a
+  // missing template: it reads as governance and contradicts what ships.
+  const specTemplate = readSrc('templates', 'spec.template.md');
+  const planTemplate = readSrc('templates', 'plan.template.md');
+  assert('the spec template does not deny the plan template', () =>
+    !/no `plan\.md`|NEVER create `plan\.md`/i.test(specTemplate));
+  assert('the spec template sends the approach to the plan template', () =>
+    specTemplate.includes('templates/plan.template'));
+  assert('the spec template still refuses an architecture section', () =>
+    /Write no `# Architecture` section here/.test(specTemplate));
+  assert('the plan template carries the approach and the alternatives that lost', () =>
+    /# Architecture/.test(planTemplate) && /alternatives that lost/.test(planTemplate));
+  assert('the plan template forbids restating the spec', () =>
+    /Never restate the spec/i.test(planTemplate));
+
+  // The frontmatter block a ticket copies, pinned as the exact pair, so a field
+  // creeping back in fails rather than passing as a superset.
+  assert('the ticket template shows status and blocked-by, and nothing else', () => {
+    const block = readSrc('templates', 'ticket.template.md').split('```markdown')[1] ?? '';
+    const fields = [...(block.split('---')[1] ?? '').matchAll(/^([a-z-]+):/gm)].map((m) => m[1]);
+    if (JSON.stringify(fields) !== JSON.stringify(['status', 'blocked-by'])) {
+      throw new Error(`shows: ${fields.join(', ')}`);
+    }
+    return true;
+  });
   for (const file of listMarkdown('templates')) {
     const rel = toPosix(SRC, file);
     const artifact = readArtifact(file);
