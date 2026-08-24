@@ -196,7 +196,7 @@ forge `[[references]]` rather than adding a second vocabulary beside its own.
 | the spec is being drafted | `status: backlog` | `status: backlog` |
 | the spec is accepted and the tickets are cut | `status: ready` | `status: ready` |
 | the runner is working | `status: in progress` | `status: in progress` |
-| converge found no gap | `status: in review` | `status: in review` |
+| converge found no gap, and the spec is stamped `implemented` | `status: in review` | `status: in review` |
 | merged | closed by the pull request | `status: done` |
 
 **`size:` is computed from the diff** when the pull request goes ready for
@@ -434,8 +434,9 @@ architecture is what it would be evading.*
 
 ### It appends. It never edits
 
-**Converge MUST NOT edit `spec.md` or `plan.md`.** It writes tickets and nothing
-else.
+**Converge MUST NOT edit `spec.md` or `plan.md`.** It writes tickets, and one
+field of one file: `status` on `spec.md`, at the close, when the round found no
+gap.
 
 *Why: converge is the last thing running before the work is handed over, and it
 is the only stage with both the whole diff in view and nobody reviewing it. A
@@ -443,6 +444,14 @@ converge that could edit the spec would be able to close every gap it found by
 narrowing what the spec asked for, and the run would end green having quietly
 agreed with itself. A spec that turns out to be wrong is a return-to-plan event,
 which reaches the human.*
+
+*Why `status` is nonetheless converge's to write: it is the only field that
+states a fact about the work rather than a requirement of it, so writing it
+cannot narrow the ask — the failure the paragraph above is about. Converge is
+also the only stage that ever holds the answer, since whether every criterion is
+met is not visible from any single diff. Withheld, the judgement is made and
+discarded, and the three artifacts that read `implemented` read a value nothing
+sets.*
 
 ### Two rounds
 

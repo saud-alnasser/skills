@@ -136,7 +136,7 @@ Situational fields:
 | Field | When | Contract |
 | --- | --- | --- |
 | `paths` | when applicability follows repository paths | glob patterns |
-| `status` | efforts and local tickets **only** | spec: `draft` `accepted` `implemented`; ticket: `open` `resolved` `obsolete` |
+| `status` | efforts and local tickets **only** | spec: `draft` `accepted` `implemented`; ticket: `open` `resolved` `obsolete`. `implemented` is written by the run that closed the effort, never by hand ahead of it (`[[policies/execution]]`) |
 | `blocked-by` | tickets only | ticket identifiers this one waits on |
 
 ### `use-when` states a trigger, never a topic

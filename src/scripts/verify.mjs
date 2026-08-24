@@ -1438,6 +1438,38 @@ section('converge', () => {
     /mark the pull\s+request ready/.test(runner) &&
     /permitted by\s+`\[\[rules\/version-control\]\]`/.test(runner));
 
+  // Ticket 22. Converge is the only stage that ever holds the answer to "is
+  // every criterion met", and before this it was the only stage forbidden to
+  // write it down. Three artifacts read `implemented`; nothing set it.
+  const artifacts = readSrc('policies', 'artifacts.md');
+  assert('the close stamps the spec before it touches the pull request', () => {
+    const closing = headingBlock(runner, 'When a round finds no gap');
+    const stamp = closing.indexOf('Stamp `spec.md` to `status: implemented`');
+    const pr = closing.indexOf('Finalise the pull request description');
+    if (stamp < 0) throw new Error('the close does not stamp the spec');
+    if (pr < 0) throw new Error('the close no longer finalises the pull request');
+    if (stamp > pr) throw new Error('the pull request is finalised before the spec is stamped');
+    return true;
+  });
+  assert('the carve-out is one field by name, in both places the prohibition is', () =>
+    /`status` on\s+`spec\.md`/.test(runner) &&
+    /never read this as permission to touch the frontmatter/i.test(runner) &&
+    /one field of one file: `status` on `spec\.md`/.test(flat(execution)));
+  assert('the carve-out says why status cannot narrow what was asked', () =>
+    /stating a fact about the\s+work rather than a requirement of it/.test(runner) &&
+    /it is the only field that\s+states a fact about the work rather than a requirement of it/.test(execution));
+  assert('the close names what reads the stamp, so skipping it is not free', () =>
+    /`\[\[skills\/tasks\]\]` skips an\s+implemented effort/.test(runner) &&
+    /`\[\[skills\/prune\]\]` tells a finished effort from an\s+abandoned one/.test(runner) &&
+    /`validate\.mjs` stops checking traceability on one/.test(runner));
+  assert('the projection table names the spec reaching implemented', () =>
+    /converge found no gap, and the spec is stamped `implemented`/.test(execution));
+  assert('the frontmatter contract says who writes implemented and when', () =>
+    /`implemented` is written by the run that closed the effort, never by hand ahead of it/
+      .test(artifacts));
+  assert('the runner names the guard against stamping ahead of the work', () =>
+    /A stamp with an unresolved ticket still under the effort fails\s+validation/.test(runner));
+
   // Converge is a stage, not a fourth thing to type, and not a fourth
   // trip-wire. Both are how it would grow.
   assert('converge is not invocable and ships no skill of its own', () =>
@@ -3733,14 +3765,32 @@ section('traceability', () => {
   // A landed effort is the record of what was reviewed. Skipping it silently
   // would read exactly like checking it and passing, so the summary says so.
   assert('an implemented effort is skipped, and the summary names what did not fire', () => {
-    ticket('06-silent.md', ['Something is true, and it comes from nowhere.']);
+    // Every ticket resolved, because an implemented effort with open work under
+    // it is its own failure now and would mask the skip this asserts.
+    ticket('01-cites.md', ['Requirement 2 holds, checked by reading it.'], 'resolved');
+    ticket('06-silent.md', ['Something is true, and it comes from nowhere.'], 'resolved');
     spec('implemented');
     const { out, code } = run();
     spec('accepted');
+    ticket('01-cites.md', ['Requirement 2 holds, checked by reading it.']);
     fs.rmSync(path.join(tickets, '06-silent.md'));
     if (code !== 0) throw new Error('an implemented effort was still checked');
     if (!/Traceability not checked for 1 implemented effort\(s\): probe/.test(out)) {
       throw new Error(`the skip was silent: ${out}`);
+    }
+    return true;
+  });
+
+  // Ticket 22, the other direction. Every ticket resolved does not mean the
+  // effort is done, because converge may still append, so only this direction
+  // is checkable: implemented with open work under it is a stamp made early.
+  assert('an implemented spec with an open ticket fails, naming the ticket', () => {
+    spec('implemented');
+    const { err, code } = run();
+    spec('accepted');
+    if (code === 0) throw new Error('an implemented spec passed with an open ticket under it');
+    if (!/probe\/spec\.md: is "implemented" while efforts\/probe\/tickets\/01-cites\.md is still open/.test(err)) {
+      throw new Error(`wrong diagnosis: ${err}`);
     }
     return true;
   });

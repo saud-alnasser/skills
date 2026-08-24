@@ -438,9 +438,21 @@ trimmed to look smaller than it is.
     `[[contexts]]` or `[[references]]`. What it falsified is corrected in the
     same effort.
 
-33. When converge finds no gap, the runner finalises the pull request
-    description, computes `size:`, moves both objects to `status: in review`, and
-    marks the pull request ready. The human reviews and merges.
+33. When converge finds no gap, the runner **stamps `spec.md` to
+    `status: implemented`**, finalises the pull request description, computes
+    `size:`, moves both objects to `status: in review`, and marks the pull
+    request ready. The human reviews and merges.
+
+    **That stamp is the one edit converge makes to `spec.md`, and requirement
+    32's judgement is what it records.** Every other part of a spec is what was
+    asked for, and a converge able to edit those closes a gap by narrowing the
+    ask. `status` is the only field stating a fact about the work rather than a
+    requirement of it, and the fact is the answer converge has just given.
+
+    Left unwritten it is a judgement made and discarded, with three readers of a
+    value nothing sets: `[[skills/tasks]]` skips an implemented effort,
+    `[[skills/prune]]` reads the status to tell a finished effort from an
+    abandoned one, and `validate.mjs` stops checking traceability on one.
 
 34. A chain of efforts built on unmerged work stacks at the effort level, one
     pull request each, in the shape the repository's rule fixes. A ticket is
@@ -805,6 +817,10 @@ trimmed to look smaller than it is.
 
 46. The verification suite exits zero and asserts each claim above against the
     specification.
+
+47. An effort whose converge round found no gap carries `status: implemented` in
+    `spec.md` before its pull request is marked ready. A spec at `implemented`
+    with an unresolved ticket under it fails validation by name.
 
 # Constraints
 

@@ -209,6 +209,20 @@ function checkTraceability(root) {
     // two files from drifting apart, which is a risk only while it is being
     // built. Requirement 48 of aep-3 states the same principle for migration.
     if (spec.fields.status === 'implemented') {
+      // The stamp is the close's, and the close comes after a converge round
+      // found no gap, so unresolved work under an implemented spec is a stamp
+      // made ahead of the work. Only this direction is checkable: every ticket
+      // being resolved does not mean the effort is done, because converge may
+      // still append.
+      const early = walk(ticketsDir)
+        .filter((file) => file.endsWith('.md'))
+        .filter((file) => readArtifact(file).fields.status === 'open')
+        .map((file) => toPosix(root, file));
+      if (early.length > 0) {
+        fail(`efforts/${entry.name}/spec.md`,
+          `is "implemented" while ${early.join(', ')} is still open. The stamp is ` +
+          'written when a converge round finds no gap, never ahead of the work');
+      }
       skippedEfforts.push(entry.name);
       continue;
     }

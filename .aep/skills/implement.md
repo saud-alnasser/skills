@@ -233,6 +233,13 @@ Read the effort's **whole diff** — which no single ticket ever saw — against
 that could edit the spec would close every gap it found by narrowing what was
 asked, and the run would end green having agreed with itself.
 
+**One field is the exception, and it is one field by name: `status` on
+`spec.md`,** written at the close below and nowhere else. Every other part of a
+spec is what was asked for; `status` is the only one stating a fact about the
+work rather than a requirement of it, and the fact is the answer converge has
+just given. **Never read this as permission to touch the frontmatter** — a
+requirement is not narrowed by recording that it was met.
+
 ### At most twice
 
 Converge, build the gap, converge again. **A third round is not run.** Name the
@@ -244,11 +251,24 @@ work incomplete, and that is the trip-wire above rather than more rounds.*
 
 ### When a round finds no gap
 
-The effort is complete. Finalise the pull request description, **compute
-`size:` from the diff** against the thresholds that repository's own `size:`
-descriptions state, move the issue and the pull request to `status: in review`,
-and **mark the pull request ready** — the run's own last act, permitted by
-`[[rules/version-control]]`. The human reviews and merges.
+The effort is complete, and the run says so in the file that asked for it
+before it says so anywhere else:
+
+1. **Stamp `spec.md` to `status: implemented`.** That is the judgement of step 1
+   above, recorded. Three things read it — `[[skills/tasks]]` skips an
+   implemented effort, `[[skills/prune]]` tells a finished effort from an
+   abandoned one by it, and `validate.mjs` stops checking traceability on one —
+   so a close that skips the stamp leaves all three reading a value nothing ever
+   set. **A stamp with an unresolved ticket still under the effort fails
+   validation**, which is the guard against stamping ahead of the work.
+2. **Finalise the pull request description**, and **compute
+   `size:` from the diff** against the thresholds that repository's own `size:`
+   descriptions state.
+3. **Move the issue and the pull request to `status: in review`**, then
+   **mark the pull request ready** — the run's own last act, permitted by
+   `[[rules/version-control]]`.
+
+The human reviews and merges.
 
 ## What may stop the run
 
