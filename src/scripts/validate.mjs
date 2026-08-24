@@ -29,6 +29,7 @@ import {
 const PROTOCOL_BUDGET_BYTES = 8192;
 
 const failures = [];
+const skippedEfforts = [];
 let checked = 0;
 
 function fail(where, message) {
@@ -135,16 +136,117 @@ function checkArtifact(root, file) {
   } else if (isSpec) {
     fail(rel, 'an effort spec.md must declare status');
   }
-  for (const field of ['blocked-by', 'part-of']) {
-    if (fields[field] !== undefined && !isTicket) {
-      fail(rel, `${field} is legal only on a local ticket`);
-    }
+  if (fields['blocked-by'] !== undefined && !isTicket) {
+    fail(rel, 'blocked-by is legal only on a local ticket');
   }
 
   // Links.
   for (const target of wikiLinks(artifact.body)) {
     if (!linkResolves(root, target)) {
       fail(rel, `[[${target}]] resolves to nothing. Repair it or report it, never invent the target`);
+    }
+  }
+}
+
+/**
+ * The numbers a spec actually defines, under one of its numbered headings.
+ *
+ * Requirements and acceptance criteria are top-level ordered lists whose
+ * numbering runs on across subheadings, so the section is read from its heading
+ * to the next one at the same level. Reading them is what makes a citation
+ * checkable rather than merely present.
+ */
+function numbersUnder(specBody, heading) {
+  const start = specBody.search(new RegExp(String.raw`^#\s+${heading}\s*$`, 'm'));
+  if (start < 0) return new Set();
+  const rest = specBody.slice(start);
+  const end = rest.slice(1).search(/^#\s+/m);
+  const section = end < 0 ? rest : rest.slice(0, end + 1);
+  const numbers = new Set();
+  for (const match of section.matchAll(/^(\d+)\.\s/gm)) numbers.add(Number(match[1]));
+  return numbers;
+}
+
+/** Every `Requirement N` / `Criterion N` a ticket cites, in order of appearance. */
+function citations(ticketBody) {
+  const start = ticketBody.search(/^##\s+Acceptance Criteria\s*$/m);
+  if (start < 0) return [];
+  const rest = ticketBody.slice(start);
+  const end = rest.slice(1).search(/^##\s+/m);
+  const section = end < 0 ? rest : rest.slice(0, end + 1);
+  return [...section.matchAll(/\b(requirement|criterion|criteria)\s+(\d+)/gi)].map((match) => ({
+    kind: match[1].toLowerCase() === 'requirement' ? 'requirement' : 'criterion',
+    number: Number(match[2]),
+  }));
+}
+
+/**
+ * A ticket whose criteria trace to no requirement in the spec is an error.
+ *
+ * This is what replaces the rule that kept the change and its architecture in
+ * one file. Two files can drift apart; a citation that has to resolve cannot
+ * drift quietly.
+ *
+ * A citation is checked against what the spec numbers rather than merely for
+ * being present, because a renumbered spec leaves behind references that still
+ * look like references. `obsolete` is skipped: the whole point of that status is
+ * that the spec moved on without the ticket.
+ */
+function checkTraceability(root) {
+  const effortsDir = path.join(root, 'efforts');
+  if (!fs.existsSync(effortsDir)) return;
+
+  for (const entry of fs.readdirSync(effortsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const ticketsDir = path.join(effortsDir, entry.name, 'tickets');
+    const specFile = path.join(effortsDir, entry.name, 'spec.md');
+    if (!fs.existsSync(ticketsDir) || !fs.existsSync(specFile)) continue;
+
+    const spec = readArtifact(specFile);
+
+    // A landed effort is left exactly as it is. Its spec and its tickets are the
+    // record of what was reviewed, and this check exists to stop a live effort's
+    // two files from drifting apart, which is a risk only while it is being
+    // built. Requirement 48 of aep-3 states the same principle for migration.
+    if (spec.fields.status === 'implemented') {
+      skippedEfforts.push(entry.name);
+      continue;
+    }
+
+    const requirements = numbersUnder(spec.body, 'Requirements');
+    const criteria = numbersUnder(spec.body, 'Acceptance Criteria');
+    const tickets = walk(ticketsDir).filter((file) => file.endsWith('.md'));
+
+    if (requirements.size === 0 && criteria.size === 0) {
+      if (tickets.length > 0) {
+        fail(`efforts/${entry.name}/spec.md`,
+          `numbers no requirements and no acceptance criteria, so none of its ` +
+          `${tickets.length} ticket(s) can trace to one. Number them, or the tickets ` +
+          'are the only definition of the change');
+      }
+      continue;
+    }
+
+    for (const file of tickets) {
+      const rel = toPosix(root, file);
+      const ticket = readArtifact(file);
+      if (ticket.fields.status === 'obsolete') continue;
+
+      const cited = citations(ticket.body);
+      if (cited.length === 0) {
+        fail(rel, 'its acceptance criteria cite no requirement or criterion of ' +
+          `efforts/${entry.name}/spec.md. A ticket that traces to nothing is either ` +
+          'scope nobody asked for, or a requirement the spec is missing');
+        continue;
+      }
+
+      const defined = (kind) => (kind === 'requirement' ? requirements : criteria);
+      if (!cited.some(({ kind, number }) => defined(kind).has(number))) {
+        const dangling = cited.map(({ kind, number }) => `${kind} ${number}`).join(', ');
+        fail(rel, `cites ${dangling}, and the spec numbers none of them. Either the ` +
+          'spec was renumbered under the ticket, or the ticket was written against a ' +
+          'spec that no longer says this');
+      }
     }
   }
 }
@@ -210,6 +312,7 @@ function main() {
   }
 
   checkStructure(root);
+  checkTraceability(root);
 
   const artifacts = walk(root, { skip: ['position', 'worktrees'] })
     .filter((file) => file.endsWith('.md') && path.basename(file) !== 'index.md');
@@ -224,6 +327,13 @@ function main() {
   if (failures.length === 0) {
     if (!quiet) {
       process.stdout.write(`${checked} artifacts checked, no failures\n`);
+      if (skippedEfforts.length > 0) {
+        process.stdout.write(
+          `Traceability not checked for ${skippedEfforts.length} implemented effort(s): ` +
+          `${skippedEfforts.join(', ')}. A landed effort is the record of what was reviewed.
+`,
+        );
+      }
       process.stdout.write(
         'Not checked mechanically: whether a use-when shaped like a trigger names the right\n' +
         'occasion. The checks reject a topic; they cannot tell a correct trigger from a\n' +

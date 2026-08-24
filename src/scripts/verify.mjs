@@ -2566,17 +2566,21 @@ section('install fixture', () => {
   assert('a local ticket produces a Tickets section in the index', () => {
     const effort = path.join(aep, 'efforts', 'sample-effort');
     fs.mkdirSync(path.join(effort, 'tickets'), { recursive: true });
+    // Numbered, and cited, because a ticket that traces to no requirement is now
+    // a validation failure. A fixture that could not pass what `/tasks` requires
+    // would not be modelling a real run.
     fs.writeFileSync(
       path.join(effort, 'spec.md'),
-      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-16', 'kind: spec',
-        'status: accepted', '---', '', '# Problem', ''].join('\n'),
+      ['---', 'status: accepted', '---', '', '# Problem', '', 'Something is missing.', '',
+        '# Requirements', '', '1. The first thing exists.', '',
+        '# Acceptance Criteria', '', '1. The first thing exists and is checkable.', ''].join('\n'),
       'utf8',
     );
     fs.writeFileSync(
       path.join(effort, 'tickets', '01-first.md'),
-      ['---', `aep: ${specVersion}`, 'owner: repository', 'date: 2026-08-16', 'kind: ticket',
-        'status: open', 'part-of: sample-effort', 'blocked-by: [02]', '---', '',
-        '# feat(sample): the first task', ''].join('\n'),
+      ['---', 'status: open', 'blocked-by: [02]', '---', '',
+        '# feat(sample): the first task', '', '## Acceptance Criteria', '',
+        '- [ ] Requirement 1 holds, checked by reading it.', ''].join('\n'),
       'utf8',
     );
     execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep], {
@@ -2723,6 +2727,137 @@ section('frontier', () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+// A ticket that traces to no requirement is an error. This is what the split of
+// spec.md from plan.md traded the one-file rule for, so it is exercised against
+// a real tree rather than asserted as prose in the skill.
+section('traceability', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-trace-'));
+  const aep = path.join(dir, '.aep');
+  const effort = path.join(aep, 'efforts', 'probe');
+  const tickets = path.join(effort, 'tickets');
+  fs.mkdirSync(tickets, { recursive: true });
+  // A stub rather than the real bootstrap: the real one links to every primitive
+  // directory, so a fixture carrying it would be testing the tree rather than
+  // this check.
+  fs.writeFileSync(
+    path.join(aep, 'protocol.md'),
+    ['---', 'version: 0.0.0', '---', '', '# AEP', 'A stub for the traceability fixture.', ''].join('\n'),
+    'utf8',
+  );
+  fs.writeFileSync(path.join(aep, 'index.md'), '# Index\n', 'utf8');
+  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+
+  const spec = (status) => fs.writeFileSync(
+    path.join(effort, 'spec.md'),
+    [`---`, `status: ${status}`, '---', '', '# Problem', 'x', '', '# Requirements',
+      '', '1. The first thing.', '2. The second thing.', '', '# Acceptance Criteria',
+      '', '1. The first thing is true.', '2. The second thing is true.', ''].join('\n'),
+    'utf8',
+  );
+
+  const ticket = (name, criteria, status = 'open') => fs.writeFileSync(
+    path.join(tickets, name),
+    ['---', `status: ${status}`, '---', '', '# t', '', '## Acceptance Criteria', '',
+      ...criteria.map((line) => `- [ ] ${line}`), '', '## Relevant areas', 'somewhere', ''].join('\n'),
+    'utf8',
+  );
+
+  const run = () => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'validate.mjs'), '--root', aep],
+      { encoding: 'utf8' },
+    );
+    return { out: result.stdout, err: result.stderr, code: result.status };
+  };
+
+  spec('accepted');
+  ticket('01-cites.md', ['Requirement 2 holds, checked by reading it.']);
+
+  assert('a fixture whose tickets all cite passes, so the arms below mean something', () => {
+    const { out, code } = run();
+    if (code !== 0) throw new Error(`exit ${code}: ${run().err}`);
+    if (!/no failures/.test(out)) throw new Error(`unexpected summary: ${out}`);
+    return true;
+  });
+
+  assert('a ticket citing nothing fails, and the failure names that ticket', () => {
+    ticket('02-silent.md', ['Something is true, and it comes from nowhere.']);
+    const { err, code } = run();
+    fs.rmSync(path.join(tickets, '02-silent.md'));
+    if (code === 0) throw new Error('a ticket tracing to nothing passed');
+    if (!/02-silent\.md: its acceptance criteria cite no requirement/.test(err)) {
+      throw new Error(`wrong diagnosis: ${err}`);
+    }
+    return true;
+  });
+
+  // Present is not the same as resolving. A renumbered spec leaves citations
+  // that still look like citations, which is the drift this check exists for.
+  assert('a citation the spec does not number fails, and the number is quoted back', () => {
+    ticket('03-dangling.md', ['Criterion 99 holds.']);
+    const { err, code } = run();
+    fs.rmSync(path.join(tickets, '03-dangling.md'));
+    if (code === 0) throw new Error('a citation to criterion 99 passed against a two-criterion spec');
+    if (!/03-dangling\.md: cites criterion 99, and the spec numbers none of them/.test(err)) {
+      throw new Error(`wrong diagnosis: ${err}`);
+    }
+    return true;
+  });
+
+  assert('a citation outside the acceptance criteria section does not count', () => {
+    fs.writeFileSync(
+      path.join(tickets, '04-elsewhere.md'),
+      ['---', 'status: open', '---', '', '# t', '', '## Acceptance Criteria', '',
+        '- [ ] Something is true.', '', '## Notes', 'Requirement 1 explains why.', ''].join('\n'),
+      'utf8',
+    );
+    const { err, code } = run();
+    fs.rmSync(path.join(tickets, '04-elsewhere.md'));
+    if (code === 0) throw new Error('a citation in Notes satisfied the check');
+    return /04-elsewhere\.md: its acceptance criteria cite no requirement/.test(err);
+  });
+
+  assert('an obsolete ticket is skipped, since the point of that status is the spec moved on', () => {
+    ticket('05-dropped.md', ['Something nobody asked for.'], 'obsolete');
+    const { code } = run();
+    fs.rmSync(path.join(tickets, '05-dropped.md'));
+    return code === 0;
+  });
+
+  // A landed effort is the record of what was reviewed. Skipping it silently
+  // would read exactly like checking it and passing, so the summary says so.
+  assert('an implemented effort is skipped, and the summary names what did not fire', () => {
+    ticket('06-silent.md', ['Something is true, and it comes from nowhere.']);
+    spec('implemented');
+    const { out, code } = run();
+    spec('accepted');
+    fs.rmSync(path.join(tickets, '06-silent.md'));
+    if (code !== 0) throw new Error('an implemented effort was still checked');
+    if (!/Traceability not checked for 1 implemented effort\(s\): probe/.test(out)) {
+      throw new Error(`the skip was silent: ${out}`);
+    }
+    return true;
+  });
+
+  assert('a spec numbering nothing fails against the spec rather than each ticket', () => {
+    fs.writeFileSync(
+      path.join(effort, 'spec.md'),
+      ['---', 'status: accepted', '---', '', '# Problem', 'x', ''].join('\n'),
+      'utf8',
+    );
+    const { err, code } = run();
+    spec('accepted');
+    if (code === 0) throw new Error('a spec numbering nothing passed while carrying tickets');
+    if (!/probe\/spec\.md: numbers no requirements and no acceptance criteria/.test(err)) {
+      throw new Error(`the ticket was blamed instead of the spec: ${err}`);
+    }
+    return true;
+  });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 section('the guard fires', () => {
   const before = failures.length;
   assert('a deliberately false assertion is recorded as a failure', false, { silent: true });
@@ -2750,5 +2885,5 @@ if (failures.length > 0) {
 
 process.stdout.write('\nnot checked mechanically, and deliberately so:\n');
 process.stdout.write('  - whether a use-when shaped like a trigger names the right occasion\n');
-process.stdout.write('  - whether each mode genuinely gives something up\n');
+process.stdout.write('  - whether a posture genuinely gives up what its skill says it does\n');
 process.stdout.write("  - whether a skill's procedure produces what it claims\n");

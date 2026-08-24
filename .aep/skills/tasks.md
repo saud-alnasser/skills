@@ -42,10 +42,40 @@ reviews it.
    licenses parallel work (`[[policies/execution]]`); an edge you leave implicit
    becomes a collision later.
 5. **Write the tasks.**
-6. **Regenerate the index** — `node .aep/scripts/index.mjs`. Local tickets earn a
+6. **Check that every ticket traces**, below. A ticket citing no requirement is
+   an error, not a warning, and finding it here costs a line where finding it at
+   implementation costs a wave.
+7. **Regenerate the index** — `node .aep/scripts/index.mjs`. Local tickets earn a
    section there listing each one's effort, `status`, and `blocked-by`, which is
    how a later session finds the frontier without reading every ticket.
-7. **Report the graph**: what can start now, what is blocked, and on what.
+8. **Report the graph**: what can start now, what is blocked, and on what.
+
+## Every ticket traces to a requirement, and it is checked
+
+```
+node .aep/scripts/validate.mjs
+```
+
+**A ticket whose acceptance criteria cite no requirement and no acceptance
+criterion of the effort's `spec.md` is an error, and the run exits non-zero
+naming the ticket.** A citation reads `requirement 12` or `criterion 4`, and it
+is checked against what the spec actually numbers, so a spec renumbered under a
+ticket fails as loudly as a ticket written against nothing.
+
+**This is what replaced the one-file rule.** Until AEP 3 the spec and the
+technical approach lived in one file, and a ticket could not describe a design
+the spec did not contain, because there was nowhere else for one to live. Two
+files can drift apart. A citation that has to resolve is what the split traded
+for, so run it before reporting the graph rather than at the end of the effort.
+
+**What it does not catch:** a ticket that cites a requirement and then
+contradicts it, or a plan that contradicts the spec. It answers *does this
+ticket come from somewhere*, never *is this ticket right*. The second is a
+reading, and `[[skills/review]]` is where a reading gets made.
+
+An effort whose spec is `implemented` is skipped, and the summary names it. A
+landed effort is the record of what was reviewed, and this check exists to keep
+a live effort's two files together.
 
 ## What a task must expose
 
@@ -56,8 +86,8 @@ reviews it.
 - **implementation constraints**
 
 Local tickets go to `efforts/<effort>/tickets/`, in the shape
-`[[templates/ticket.template]]` gives, with `status: open`, `part-of: <effort>`, and
-`blocked-by:` where it applies.
+`[[templates/ticket.template]]` gives, with `status: open` and `blocked-by:` where
+it applies, and nothing else in the frontmatter.
 
 ## Constraints
 

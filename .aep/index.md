@@ -98,7 +98,7 @@ Start at [[protocol]].
 | aep-3 | accepted | [[efforts/aep-3/spec]] | 0 | 0 | 20 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
-| readable-output | accepted | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
+| readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
 | runtime-adapters | implemented | [[efforts/runtime-adapters/spec]] | 1 | 0 | 10 |
 | tracker-labels | implemented | [[efforts/tracker-labels/spec]] | 0 | 0 | 7 |
 | uniform-reporting | implemented | [[efforts/uniform-reporting/spec]] | 1 | 0 | 8 |
@@ -128,7 +128,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | aep-3 | open | 14 |
 | [[efforts/aep-3/tickets/16-install]] feat(install): entrypoints and the label seed land on the way in | aep-3 | open | 15, 01 |
 | [[efforts/aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | aep-3 | open | 16 |
-| [[efforts/aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | aep-3 | open | 06 |
+| [[efforts/aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | aep-3 | resolved | 06 |
 | [[efforts/aep-3/tickets/19-version-control]] chore(rules): this repository states what the runner may push | aep-3 | resolved | 10 |
 | [[efforts/aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | aep-3 | open | 08, 11, 12, 13, 17, 18, 19 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
