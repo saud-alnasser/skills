@@ -148,6 +148,39 @@ The tracker gains nothing from holding it: nobody schedules by hand.*
 and it is the unit they review and merge. Fifteen issues for one change is
 fifteen things to close and one thing nobody can see the shape of.*
 
+**Where the repository has a tracker, both objects are required**, and each links
+to the effort in both directions: the effort directory is named for the issue
+number, and both bodies name the effort's path. A run finding a tracker and an
+effort short of either object **opens what is missing and says so**.
+
+*Why this is stated rather than left implied: having no tracker is a real posture
+with its own procedure below, and an implied requirement makes that posture
+reachable by not asking. A run that never looked would land in the smaller shape
+with nothing to contradict it, and the effort would be half of what the protocol
+describes.*
+
+### Where there is no tracker
+
+**The effort is a branch, and merging it is the human's.** No issue, no pull
+request, no tracker call at all. The number comes from a local counter, and the
+run's durable record is the repository:
+
+| Read | To recover |
+| --- | --- |
+| commits on the effort branch | which tickets landed |
+| ticked criteria in the ticket files | what is verified, and what verified it |
+| `spec.md`'s `status:` | whether the effort closed |
+
+The close is the same close with its second half absent: `spec.md` is stamped
+`implemented` and the run stops there, because there is no draft to mark ready
+and no labels to move. **The runner never merges — with a tracker or without.**
+
+*Why this needs saying: every step that closes an effort was written against a
+pull request, so a repository without one was not losing a projection, it was
+losing the run's memory. It has one only because tickets are local files — the
+ticks are in the repository already, and were being projected rather than
+stored.*
+
 **The tracker is read, and never mirrored into `.aep/`** — a local copy of a
 tracker object is exactly the hidden database this protocol does without, and it
 disagrees with the original the moment one is written and the other is not.
@@ -163,7 +196,8 @@ say without opening either. **Where a label and the file disagree, the file
 wins** (`[[policies/authority]]`) and the label is corrected — never the
 reverse, and never by editing the file to match a label somebody changed.
 
-A repository with no tracker loses the projection and nothing else.
+A repository with no tracker has nothing to project onto, and what it does
+instead is above.
 
 ### Derived, and initial
 

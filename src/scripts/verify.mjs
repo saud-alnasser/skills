@@ -1010,6 +1010,60 @@ section('skills', () => {
   assert('the 2.x branch writes nothing at all on a refusal', () =>
     /On a refusal, write nothing/.test(twoXBranch));
 
+  // Requirement 61. `rules/` is the one directory the upgrade preserves and
+  // never reads, which is exactly where a rule and the policy under it stop
+  // agreeing: the rule was legal against the release it was written under, and
+  // the release just moved. This repository is the instance -- 3 gives the
+  // runner permission to push the effort branch, and its version-control rule
+  // said never push until somebody edited it by hand.
+  const reconcileStart = update.indexOf('7. **Reconcile');
+  const reconcileEnd = update.indexOf('8. **Report declared');
+  assert('the upgrade reconciles rules against the law that changed under them', () =>
+    reconcileStart > 0 && reconcileEnd > reconcileStart);
+  const reconcile = flat(update.slice(reconcileStart, reconcileEnd));
+
+  // "Computed, not chosen" is the whole reason this step is reproducible: the
+  // citations select the candidates, so the same tree raises the same list.
+  assert('the reconciliation computes its candidates rather than judging them', () =>
+    /candidates are computed, not chosen/.test(reconcile)
+    && /every rule citing a policy whose text changed/.test(reconcile));
+
+  // Three outcomes, and the third has to be "nothing". A step that always finds
+  // something to rewrite is one that rewrites rules the release never touched.
+  assert('the reconciliation classifies three cases, and one of them writes nothing', () =>
+    /restates law the release changed/.test(reconcile)
+    && /contradicts the new law/.test(reconcile)
+    && /did not touch \| \*\*nothing\*\*/.test(reconcile));
+
+  // The same gate a tracker write passes, because it is the same act: a write
+  // into governance somebody else owns.
+  assert('the reconciliation shows every edit before making one', () =>
+    /exact before-and-after strings, as one list, before the first one is made/.test(reconcile));
+  assert('the reconciliation writes nothing at all on a refusal', () =>
+    /On a refusal, write nothing/.test(reconcile)
+    && /not the ones that only remove a restatement/.test(reconcile));
+
+  // The way out of a contradiction is a deviation, never a deletion -- which is
+  // the constraint this step would otherwise be the first to break.
+  assert('a rule is never deleted to settle a contradiction', () =>
+    /\*\*Never delete a rule\*\*/.test(reconcile)
+    && /declared deviation/.test(reconcile)
+    && /never removed/.test(flat(update)));
+
+  // Stated as law rather than as one skill's procedure, so a second reader of
+  // the same question finds the same answer.
+  assert('the policy says a rule is legal against the release it was written under', () => {
+    const authority = flat(noCR(readSrc('policies', 'authority.md')));
+    return /A rule is legal against the release it was written under/.test(authority)
+      && /`\[\[skills\/update\]\]` reconciles the two/.test(authority);
+  });
+
+  // A step with no closing condition is a step that gets skipped quietly.
+  assert('the close names the reconciliation, so skipping it is not free', () =>
+    /Every rule citing a policy the crossed releases changed has been reconciled or reported/
+      .test(flat(update))
+    && /a refusal left every rule byte-identical/.test(flat(update)));
+
   // The upgrade's own steps had read ownership off the same field that is now
   // the 2.x marker. A step still saying "classify by declared owner" would
   // classify a 3 tree, where the field is absent, as owning nothing at all.
@@ -1628,6 +1682,64 @@ section('the effort opens', () => {
     assert('the ' + forge + ' seed does not send the dependency graph to the forge', () =>
       /never comes here|no longer applies/.test(seed));
   }
+
+  // Requirements 62 and 63. Every step that closes an effort was written
+  // against a pull request, so "no tracker" was not a posture with a procedure,
+  // it was the absence of one -- reachable by not asking, and landing the run
+  // in half the shape with nothing to contradict it.
+  const noTracker = headingBlock(execution, 'Where there is no tracker');
+  assert('the policy gives the tracker-less effort a procedure of its own', () =>
+    noTracker.length > 0);
+  assert('the tracker-less effort is a branch the human merges', () =>
+    /\*\*The effort is a branch, and merging it is the human's\.\*\*/.test(noTracker)
+    && /No issue, no pull\s+request, no tracker call at all/.test(noTracker));
+
+  // The record is what makes the posture survivable: a killed session resumes
+  // off the repository, and it can, because the ticks are in the ticket files
+  // rather than only in a pull request that does not exist here.
+  assert('the tracker-less run has a durable record, and it is the repository', () =>
+    ['commits on the effort branch', 'ticked criteria in the ticket files']
+      .every((row) => noTracker.includes(row)));
+  assert('the tracker-less close is the same close with its second half absent', () =>
+    /stamped\s+`implemented` and the run stops there/.test(noTracker)
+    && /no draft to mark ready/.test(noTracker));
+  assert('the runner merges in neither shape', () =>
+    /The runner never merges .{1,3}with a tracker or without/.test(noTracker));
+
+  // The line this replaced said a repository with no tracker "loses the
+  // projection and nothing else", which was the claim that made the posture
+  // look free. It also lost both objects and the run's memory.
+  assert('the policy no longer says the projection is all a tracker-less repository loses', () =>
+    !/loses the projection and nothing else/.test(execution));
+
+  // The other half. Requirement 6 creates both objects; nothing said they were
+  // required, which is what made not creating them a choice.
+  assert('both tracker objects are required where a tracker exists', () =>
+    /\*\*Where the repository has a tracker, both objects are required\*\*/.test(execution)
+    && /opens what is missing and says so/.test(flat(execution)));
+  assert('each tracker object links to the effort in both directions', () =>
+    /the effort directory is named for the issue\s+number, and both bodies name the effort's path/
+      .test(execution));
+  assert('the policy says why an implied requirement was not enough', () =>
+    /reachable by not asking/.test(flat(execution)));
+
+  // The two skills that would otherwise each assume a tracker.
+  assert('specify names which posture it is in rather than assuming one', () =>
+    /rows 1 and 5 have nowhere to land/.test(flat(specify))
+    && /Not asking is not how a repository ends up in the\s+second shape/.test(specify));
+  assert('specify narrows its one ask when there is nothing public to push', () =>
+    /With no tracker there is nothing public to ask about/.test(specify)
+    && /It stays one ask/.test(specify));
+  assert("the runner's close names the tracker-less shape", () => {
+    const runner = readSrc('skills', 'implement.md');
+    return /steps 2 and 3 have nowhere to land and\s+the close is step 1/.test(runner)
+      && /\*\*The runner never merges\*\*, in either shape/.test(runner);
+  });
+  assert('the runner resumes off the repository where there is no pull request', () => {
+    const runner = flat(readSrc('skills', 'implement.md'));
+    return /Where there is no tracker the repository is the whole record/.test(runner)
+      && /projecting them, never storing them/.test(runner);
+  });
 
   // The sub-issue resolution this repository never adopted. It is recorded as a
   // declined option rather than deleted, because the next reader will find the
@@ -4148,6 +4260,35 @@ section('the specification', () => {
     ticketing.includes('**A ticket is never an object in a tracker**'));
   assert('specs.md states exactly two tracker objects per effort', () =>
     ticketing.includes('**Exactly two tracker objects exist per effort**'));
+
+  // Requirements 62 and 63, in the normative document rather than only in the
+  // payload that implements them. The two have to move together: a payload
+  // stating a posture the specification does not is a fork inside one release.
+  assert('specs.md requires both tracker objects where a tracker exists', () =>
+    ticketing.includes('**Where the repository has a tracker, both objects are REQUIRED**')
+    && ticketing.includes('MUST open what is missing and report it'));
+  assert('specs.md gives the tracker-less effort a procedure and a merger', () =>
+    ticketing.includes(
+      "**Where the repository has no tracker, the effort is a branch and merging it is the human's.**",
+    )
+    && /MUST NOT merge\*\*, with a tracker or without/.test(ticketing));
+
+  // Requirement 61. The upgrade grew a numbered duty, so the list has to carry
+  // it: a procedure described in prose below a list that does not name it is a
+  // step an implementer reads past.
+  assert('specs.md lists the rule reconciliation among the upgrade duties', () =>
+    /\*\*reconciles rules against the policies the crossed releases changed\*\*/.test(upgrade));
+  assert('specs.md says a rule is legal against the release it was written under', () =>
+    upgrade.includes(
+      '**A rule is legal against the release it was written under, and an upgrade is where that is rechecked.**',
+    )
+    && /compute the candidates rather than judge them/.test(upgrade)
+    && /write nothing at all on a refusal/.test(upgrade)
+    && /\*\*never delete a rule\.\*\*/.test(upgrade));
+  assert('the rule hierarchy names where its judgement is rechecked', () => {
+    const hierarchy = headingBlock(specText, '10. Policies and rules');
+    return /an upgrade rechecks it against the release being installed/.test(hierarchy);
+  });
 });
 
 section('the guard fires', () => {

@@ -91,6 +91,38 @@ skills that entered it.
   landed are exempt from both checks: a merged effort is the record of what was
   reviewed, and this release does not rewrite it.
 
+- **Having no tracker is a posture with a procedure, not the absence of one.**
+  Every step that closes an effort was written against a pull request, so a
+  repository without one was not losing a projection, it was losing the run's
+  memory. It now has a stated shape: the effort is a branch, `/specify` makes no
+  tracker call and a local counter supplies the number, the run's record is the
+  commits and the ticked criteria in the ticket files, and the close stamps
+  `spec.md` and stops there. **The human merges.** The runner never does, with a
+  tracker or without.
+
+  The other half is that **where a tracker exists, the issue and the pull request
+  are required**, and each links to the effort in both directions: the effort
+  directory is named for the issue number, both bodies name the effort's path.
+  A run that finds one missing opens it and says so. Until now nothing said the
+  two objects were required, which made the smaller shape reachable by not
+  asking.
+
+- **An upgrade reconciles your rules against the law that changed under them.**
+  A rule may tighten a policy and may never contradict one, and that judgement
+  was made against the release the rule was written under. `/update` now reads
+  every rule citing a policy the crossed releases changed and classifies it:
+  a restatement of changed law is rewritten to cite the policy, a contradiction
+  is rewritten to the new law or recorded as a declared deviation, and a rule
+  tightening a policy the release did not touch is left byte-identical.
+
+  The candidates are computed from the rule's own citations rather than judged,
+  so the same tree raises the same list. **Every edit is shown as exact
+  before-and-after strings, as one set, before the first is made, and a refusal
+  writes nothing**, the gate a tracker write passes, because it is the same act.
+  A rule is never deleted. This release is its own instance: 3.0 gives the runner
+  permission to push the effort branch, and a repository whose `version-control`
+  rule still reads "never push" carries a rule the protocol now contradicts.
+
 ### Upgrading
 
 - **Two mechanisms classify a tree, and the older one has a stated end.** `/update`

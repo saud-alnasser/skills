@@ -95,6 +95,13 @@ it is the same step for a one-line fix and a fifteen-ticket feature:
 own artifacts land through, and because it is where the run will keep its memory
 (`[[policies/execution]]`).
 
+**Where the repository has a tracker, both objects are required**, and an effort
+found short of either is opened rather than left as it is. **Where it has none,
+rows 1 and 5 have nowhere to land**: rows 2 to 4 run unchanged, a local counter
+supplies the number, and the effort is a branch a human merges
+(`[[policies/execution]]`). Not asking is not how a repository ends up in the
+second shape — look, and say which one this is.
+
 ### It asks once, and only here
 
 **This is the one human moment in an effort.** It asks for two things in one
@@ -110,6 +117,9 @@ the whole design exists to make the last one.*
 
 **A refusal stops the opening.** It does not slide to something the agent is
 allowed to do instead — the spec stays local, unopened, and the run says so.
+
+**With no tracker there is nothing public to ask about**, so the ask narrows to
+`priority:` and the branch and its commit are made. It stays one ask.
 
 ### Afterwards
 

@@ -299,7 +299,7 @@ The hierarchy is:
 policies  →  rules  →  effort rules  →  ticket constraints
 ```
 
-A lower level MUST NOT silently violate a higher one. A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one; where a repository must genuinely differ, that is a declared deviation (§7). A conflict the hierarchy cannot resolve is **surfaced to the human**, never resolved by an agent picking a side.
+A lower level MUST NOT silently violate a higher one. A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one; where a repository must genuinely differ, that is a declared deviation (§7). That judgement holds against the release the rule was written under, and an upgrade rechecks it against the release being installed (§30). A conflict the hierarchy cannot resolve is **surfaced to the human**, never resolved by an agent picking a side.
 
 Every policy and every rule MUST declare `use-when`. **Rigidity is authority, not loading**: a policy is selected by its trigger exactly as any other conditional artifact is, and no conforming instruction loads the policy set because it exists (§23). An agent discovers, determines relevance, loads what applies, and executes.
 
@@ -466,6 +466,12 @@ Tasks **reference** the specification rather than copying large portions of it. 
 **A ticket is never an object in a tracker**, and the dependency graph never leaves the repository. *Why: the graph is read on every scheduling pass (§19.2), and a graph held in a tracker has to be fetched, paginated, and interpreted before a frontier can be computed. Local, it is a field a script reads. The tracker gains nothing by holding it, because nobody schedules by hand.*
 
 **Exactly two tracker objects exist per effort** — one issue, whose body is `spec.md`, and one pull request, carrying the approach, the tickets, and the run's memory. An implementation MUST NOT create a third, per ticket or otherwise. *Why one issue rather than one per ticket: an effort is what a human agreed to, and it is the unit they review and merge. Fifteen issues for one change is fifteen things to close and one thing nobody can see the shape of.*
+
+**Where the repository has a tracker, both objects are REQUIRED**, and each MUST link to the effort in both directions: the effort directory is named for the issue number, and both bodies name the effort's path. An implementation finding a tracker and an effort short of either object MUST open what is missing and report it. *Why this is stated rather than implied: having no tracker is a posture with its own procedure below, and an implied requirement makes that posture reachable by not asking — an implementation that never looked lands in the smaller shape with nothing to contradict it.*
+
+**Where the repository has no tracker, the effort is a branch and merging it is the human's.** No issue, no pull request, and no tracker call is made. The effort's number comes from a local counter (§14.1), and the run's durable record is the repository: the commits on the effort branch say which tasks landed, the ticked criteria in the ticket files say what is verified, and `spec.md`'s `status` says whether the effort closed. The close is the close of §21 with its tracker half absent — `spec.md` is stamped `implemented` and the run stops, there being no draft to mark ready and no label to move. **A conforming implementation MUST NOT merge**, with a tracker or without.
+
+*Why the absence needs a procedure of its own: every step that closes an effort is written against a pull request, so a repository without one loses not a projection but the run's memory. It has one only because tasks are files here — the ticks are already in the repository, and the pull request was projecting them rather than storing them.*
 
 **The tracker is read and never mirrored into `.aep/`.** A local copy of a tracker object is exactly the hidden database §2 forbids, and it disagrees with the original the moment one is written and the other is not. The direction that is permitted is the reverse: a label projects what a file says, and the file wins when they disagree.
 
@@ -819,7 +825,8 @@ An upgrade:
 5. reports protocol-owned artifacts present in the repository but no longer shipped — **retired, never deleted**: deciding a file is obsolete is a human's call,
 6. **applies the release's declared moves**, described below,
 7. detects compatibility problems and declared deviations (§7),
-8. **never silently overwrites repository-owned governance.**
+8. **reconciles rules against the policies the crossed releases changed**, described below,
+9. **never silently overwrites repository-owned governance.**
 
 **A move is not a retirement.** Where a release relocates a protocol-owned artifact, the old path is not merely unshipped — its content now lives elsewhere, and leaving the file in place would govern the repository with two copies of one text, both of which resolve. So a release **declares its moves**, as source, destination, and the release that made the move, and an upgrade:
 
@@ -830,6 +837,16 @@ An upgrade:
 **A move MUST apply only to a tree that predates it**, compared against the release the tree declared on arrival (§6). A tree declaring nothing predates everything, since unknown is not current and the move only ever removes a protocol-owned file whose content exists at the target. *Why the bound is required rather than merely tidy: the source path is vacant afterwards, and a repository is entitled to write its own artifact there (§29). Without the bound that artifact is reported as a collision on every upgrade it ever runs.*
 
 A declared move MAY be dropped from a release once no supported tree predates it.
+
+**A rule is legal against the release it was written under, and an upgrade is where that is rechecked.** A rule MAY tighten or extend a policy and MUST NOT soften, contradict, or opt out of one (§10) — a judgement made against one release, which a later release can invalidate without touching the rule. An upgrade therefore MUST, for every rule citing a policy whose text changed between the declared release and the running one:
+
+- **compute the candidates rather than judge them.** The rule's own citations select it, so the same tree raises the same list;
+- classify each as **restating** law the release changed, **contradicting** it, or **tightening a policy the release did not touch** — and write nothing for the third;
+- rewrite a restatement to cite the policy, and rewrite a contradiction to the new law or record it as a declared deviation (§7) where the repository means to differ;
+- **show every edit as exact before-and-after strings, as one set, before the first is made, and write nothing at all on a refusal.** This is a write into governance the repository owns, and it passes the gate a tracker write passes;
+- **never delete a rule.** A contradiction the repository means to keep becomes a deviation that says so.
+
+*Why an upgrade and not validation: a rule and the policy under it can only disagree across a release boundary, and validation runs against a single release and sees two files that agree. The upgrade is the one step standing on both sides of one.*
 
 **Some releases require something of the reader that no upgrade can do for them** — most often a change to a repository-owned artifact, which an upgrade correctly refuses to touch. A release therefore MAY **declare notices**, each carrying the release it applies from and one statement of what to check and why.
 

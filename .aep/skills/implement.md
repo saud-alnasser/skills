@@ -275,7 +275,11 @@ before it says so anywhere else:
    **mark the pull request ready** — the run's own last act, permitted by
    `[[rules/version-control]]`.
 
-The human reviews and merges.
+**Where the repository has no tracker, steps 2 and 3 have nowhere to land and
+the close is step 1** (`[[policies/execution]]`). There is no draft to ready and
+no label to move; the branch is finished and stamped.
+
+The human reviews and merges. **The runner never merges**, in either shape.
 
 ## What may stop the run
 
@@ -327,6 +331,11 @@ the issue, and the repository**:
 | **ticked checkboxes in the pull request** | which criteria of the in-flight ticket are verified, and what verified each |
 | the collapsed **run log** | the ledger, the converge round, review attempts, what was recorded and not acted on |
 | `frontier.mjs` | what is left, and what blocks it |
+
+**Where there is no tracker the repository is the whole record**, and it is
+enough: the commits say which tickets landed, and each ticket file's ticked
+criteria say what is verified. Those are the same ticks — the pull request was
+projecting them, never storing them.
 
 **Re-verify nothing already ticked. Trust nothing that is not.** A tick was made
 by `[[agents/reviewer-correctness]]` and never by the agent that wrote the code,

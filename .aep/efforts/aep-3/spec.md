@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: accepted
 ---
 
 # Problem
@@ -658,6 +658,74 @@ trimmed to look smaller than it is.
     The admission narrows to what the proxies do not cover rather than
     disappearing, because a trigger can satisfy all four and still be wrong.
 
+## The tracker is not optional, and neither is its absence
+
+61. **An upgrade reconciles this repository's rules against the law that changed
+    under them.** A rule may tighten or extend a policy and may never soften,
+    contradict, or opt out of one (`[[policies/authority]]`) — and that judgement
+    was made against the release the rule was written under. When a crossed
+    release changes the policy, the rule does not move with it.
+
+    The candidates are **computed, not judged**: every rule citing a policy the
+    crossed releases changed. Each is then classified, and the classification is
+    what a human reviews:
+
+    | The rule | Do |
+    | --- | --- |
+    | restates law the release changed | rewrite it to cite the policy rather than repeat it |
+    | contradicts the new law — softens it, or opts out | rewrite it to the new law, or record a **declared deviation** where the repository means to differ |
+    | tightens a policy the release did not touch | **untouched** |
+
+    **Every edit is shown as exact before-and-after strings, as one set, before
+    the first one is made, and on a refusal nothing is written** — the same gate
+    a tracker write passes, for the same reason: this is somebody else's
+    governance. A rule is never deleted; a contradiction the repository means to
+    keep becomes a deviation that says so.
+
+    *Why the upgrade and not validation: a rule and a policy can only be read
+    against each other at the moment one of them moves, and the upgrade is that
+    moment. Today it is also the one step that deliberately looks away —
+    `[[skills/update]]` preserves `rules/` untouched and reports only deviations
+    somebody already declared. This repository is the instance: 3 gives the
+    runner permission to push the effort branch, and a repository whose
+    `version-control` rule still reads "never push, never publish" carries a rule
+    the protocol now contradicts, with the policy quietly winning and nobody
+    told.*
+
+62. **Where the repository has no tracker, an effort is a branch, and merging it
+    is the human's.** `[[skills/specify]]` creates no issue and no pull request
+    and makes no tracker call; the local counter of requirement 4 supplies the
+    number; the run's durable record is the repository itself — one commit per
+    ticket on the effort branch, and each ticket's criteria ticked in its own
+    file. The close stamps `spec.md` to `implemented` under requirement 33 and
+    stops there, because there is no draft to mark ready. **The human merges the
+    branch.** The runner never merges, with a tracker or without.
+
+    *Why this needs stating: requirement 12 says a repository with no tracker
+    "loses the projection and nothing else", and the projection is the only thing
+    it loses for free. It also loses the issue, the pull request, the run log's
+    home, and the record `[[skills/implement]]` reconstructs a killed session
+    from. Each of those needs a named substitute, and each already has one,
+    because requirement 5 made tickets local files: the commits say which tickets
+    landed and the ticked boxes say what was verified.*
+
+63. **Where the repository has a tracker, the issue and the pull request are not
+    optional, and each links to the effort in both directions.** Requirement 6
+    creates both; this is what makes not creating them a defect rather than a
+    posture. The tracker points at the repository by the effort directory being
+    named for the issue number (requirement 4); the repository is pointed at from
+    the tracker by both bodies naming the effort's path. A run that finds a
+    tracker and an effort without its two objects **opens them and says so**,
+    rather than continuing in the shape of requirement 62.
+
+    *Why: "no tracker" was never a posture a run was meant to choose, and nothing
+    said so, which made it one — reachable by not asking. This repository is the
+    instance and the reason this requirement exists: issues are enabled, and
+    across forty-four pull requests, thirty-eight of them merged, it has never
+    opened one, so every effort in it has been half the shape the protocol
+    describes.*
+
+
 # Acceptance Criteria
 
 1. A one-line bug fix and a fifteen-ticket feature both produce one issue, one
@@ -833,6 +901,21 @@ trimmed to look smaller than it is.
     name. An `obsolete` ticket is exempt, and so is every ticket under an effort
     whose spec is `implemented`, because a landed effort is the record of what
     was reviewed.
+
+49. A rule restating a policy an upgrade changes is rewritten to cite it, and a
+    rule tightening a policy the upgrade did not touch is byte-identical
+    afterwards. Every edit is shown as before-and-after strings before the first
+    is written, and a refusal leaves every rule unchanged.
+
+50. In a repository with no tracker, `/specify` ends with a branch and a commit
+    and makes no tracker call, and the close stamps `spec.md` to `implemented`
+    and leaves the merge to the human.
+
+51. In a repository with a tracker, an effort carries exactly one issue and one
+    pull request, the effort directory is named for the issue number, and both
+    bodies name the effort's path. This repository's `aep-3` is the first to
+    carry both.
+
 
 # Constraints
 

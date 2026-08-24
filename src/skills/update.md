@@ -53,9 +53,11 @@ directory *outside* `.aep/` says 1.x.
 5. **Preserve repository-owned artifacts.** `rules/`, `contexts/`, `references/`,
    and `efforts/` are untouched — the installer replaces exactly what the
    manifest names, so a repository file standing where a shipped one would land
-   is not in it and survives. **An upgrade MUST NEVER silently overwrite
-   repository-owned governance** — where a repository file collides with a
-   shipped name, report the collision and let the human resolve it.
+   is not in it and survives. **`rules/` is read again at step 7**, which
+   proposes and never writes on its own; the installer still cannot reach it.
+   **An upgrade MUST NEVER silently overwrite repository-owned governance** —
+   where a repository file collides with a shipped name, report the collision and
+   let the human resolve it.
 
    **Seeds are never re-seeded.** A starting point the repository has since
    corrected is its own file now; a newer release's version of it is not an
@@ -80,14 +82,47 @@ directory *outside* `.aep/` says 1.x.
    notice and moving on is how it is missed: the output scrolls, the upgrade
    reports success, and nothing ever asks again.
 
-7. **Report declared deviations.** Every deviation recorded under `[[rules]]` is
+7. **Reconcile the rules against the law that changed under them.** `rules/` is
+   the repository's and the installer does not touch it — which is why nothing
+   has ever read a rule against the policy it tightens. A rule may tighten or
+   extend a policy and may never soften, contradict, or opt out of one
+   (`[[policies/authority]]`), and that judgement was made against the release
+   the rule was written under. The releases just crossed may have moved the
+   policy out from under it.
+
+   **The candidates are computed, not chosen**: every rule citing a policy whose
+   text changed between the declared release and the running one. Reading the
+   citations is what makes the step reproducible — a rule citing nothing raises
+   no candidate, and a rule citing three policies is checked against all three.
+
+   | The rule | Do |
+   | --- | --- |
+   | restates law the release changed | rewrite it to cite the policy rather than repeat it — a restatement is a second home, and this is the release it drifted in |
+   | contradicts the new law: softens it, opts out, or forbids what the policy now requires | rewrite it to the new law, or record a **declared deviation** (`[[policies/artifacts]]`) where the repository means to differ |
+   | tightens or extends a policy the release did not touch | **nothing** |
+
+   **Show every edit as exact before-and-after strings, as one list, before the
+   first one is made. Then ask. On a refusal, write nothing** — not the obvious
+   ones, not the ones that only remove a restatement. This is the gate a tracker
+   write passes (`[[policies/execution]]`) and for the same reason: it lands in
+   governance somebody else owns.
+
+   **Never delete a rule**, and never settle a contradiction by removing the side
+   that lost. A repository entitled to differ says so as a deviation, which the
+   next step then surfaces on every upgrade after this one.
+
+   *Why here and not in validation: a rule and the policy under it can only be
+   compared at the moment one of them moves, and this is that moment. Validation
+   runs against a single release and sees two files that agree.*
+
+8. **Report declared deviations.** Every deviation recorded under `[[rules]]` is
    surfaced with the release it was declared under and how long it has stood.
    *A deviation nobody is reminded of becomes a silent fork.*
-8. **Migrate what the release requires**, applying only migrations newer than the
+9. **Migrate what the release requires**, applying only migrations newer than the
    release the repository declared, and each only after confirming by content
    that the shape it repairs is actually present.
-9. **Regenerate derived state**: `node .aep/scripts/index.mjs`.
-10. **Validate**: `node .aep/scripts/validate.mjs`.
+10. **Regenerate derived state**: `node .aep/scripts/index.mjs`.
+11. **Validate**: `node .aep/scripts/validate.mjs`.
 
 ## Coming from 2.x
 
@@ -175,7 +210,8 @@ visible to everyone in it, and a deleted milestone does not come back.
 ## Constraints
 
 - **Never delete a repository-owned artifact.** Where one is obsolete, say so and
-  let `[[skills/prune]]` and the human handle it.
+  let `[[skills/prune]]` and the human handle it. A rule that step 7 found
+  contradicting new law is rewritten or declared, never removed.
 - Never resolve a governance collision by picking a side.
 - Do not commit.
 
@@ -184,6 +220,10 @@ visible to everyone in it, and a deleted milestone does not come back.
 The declared release matches the running one, `validate.mjs` passes, repository
 knowledge is intact, every deviation and collision has been reported, and every
 notice the upgrade printed has been done or reported as outstanding.
+
+Every rule citing a policy the crossed releases changed has been reconciled or
+reported, no rule was rewritten without its before-and-after shown first, and a
+refusal left every rule byte-identical.
 
 Coming from 2.x, add: no artifact under `.aep/` carries a retired field, no
 effort spec holds an architecture section, every tracker write was shown before
