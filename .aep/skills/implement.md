@@ -25,7 +25,7 @@ becomes a wrong edit. Run it, and quote it:
 node .aep/scripts/position.mjs check
 ```
 
-**This is what fills `Standing` in the turn's opening report**
+**This is what fills `Position` in the turn report**
 (`[[policies/reporting]]`): the script's output, then what no script can produce
 — the contexts this task touches, and every claim the source contradicted, with
 what was corrected.

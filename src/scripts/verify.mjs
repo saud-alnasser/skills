@@ -982,20 +982,9 @@ section('policies', () => {
 
 // --- §16.2 what a turn tells the human --------------------------------------
 
-/** The opening slots, in the order the contract fixes, then the closing ones. */
-const OPENING_SLOTS = ['Standing', 'Request', 'Assuming', 'Stages'];
-const CLOSING_SLOTS = ['State', 'Next', 'Unsettled'];
-
-/**
- * Skills whose report is the short form.
- *
- * Pinned here rather than derived. The test that assigns a form, does this
- * skill write to the repository, dispatch, or decide on the human's behalf, is
- * applied by an author and not by a script. Pinning it is what turns the
- * declaration in each skill from a value nobody checks into one that has to
- * agree with a second, independent statement.
- */
-const SHORT_FORM_SKILLS = ['help', 'survey', 'domain'];
+/** The two slots before the work, in the order the contract fixes, then the two after. */
+const OPENING_SLOTS = ['Position', 'Assuming'];
+const CLOSING_SLOTS = ['State', 'Next'];
 
 /**
  * The stage names a skill declares, read from its own procedure.
@@ -1006,19 +995,6 @@ const SHORT_FORM_SKILLS = ['help', 'survey', 'domain'];
  * a shape this does not know, from "a step with no name", which is the defect
  * that would otherwise pass as a shorter list.
  */
-function stageNames(text) {
-  const headings = [...text.matchAll(/^## (\d+) \u2014 (.+)$/gm)].map((m) => m[2].trim());
-  if (headings.length > 0) return { stages: headings, total: headings.length, shape: 'headings' };
-
-  const procedure = /^## Procedure\s*$([\s\S]*?)(?=^## |\Z)/m.exec(text);
-  if (!procedure) return { stages: [], total: 0, shape: 'none' };
-
-  const body = procedure[1];
-  const total = [...body.matchAll(/^(\d+)\. /gm)].length;
-  const stages = [...body.matchAll(/^(\d+)\. \*\*(.+?)[.:]?\*\*/gm)].map((m) => m[2].trim());
-  return { stages, total, shape: 'procedure' };
-}
-
 section('reporting', () => {
   const policy = readSrc('policies', 'reporting.md');
   const prose = flat(policy);
@@ -1086,18 +1062,42 @@ section('reporting', () => {
     /The unit is the turn/i.test(prose));
   assert('the contract makes a nested skill a stage rather than a second report', () =>
     /opens no report of its own/.test(prose));
-  assert('the contract requires a turn that stops early to close', () =>
-    /stops early closes with the same three slots/.test(prose));
-  assert('the contract fills Standing with what a skill already verifies', () =>
+  assert('the contract holds every slot to one line', () =>
+    /\*\*Four slots, one line each\*\*/.test(prose) &&
+    /One line each is the whole constraint/.test(prose));
+  assert('the contract keeps the work out of the slots rather than shortening it', () =>
+    /the work goes between them/.test(prose));
+  assert('the contract fills Position with what a skill already verifies', () =>
     /Never with a new check/i.test(prose));
-  assert('the contract separates the two forms by their stage markers', () =>
-    /the difference is the markers/.test(prose));
-  assert('the contract states the test that assigns a form', () =>
-    /write to the repository, dispatch a sub-agent, or decide on the human's behalf/.test(prose));
-  assert('the contract forbids selecting a form during a run', () =>
-    /never selected during a run/i.test(prose));
-  assert('the contract reads stage names off the skill rather than a second list', () =>
-    /never declared a second time/.test(prose));
+  assert('the contract requires a turn that stops early to close', () =>
+    /stops early closes with the same four slots/.test(prose));
+  assert('the contract puts what would clear a stop in Next', () =>
+    /names in `Next`\s+what would clear it/.test(prose) &&
+    /a stop with nothing to act on is\s+the failure/i.test(prose));
+
+  // The ledger, and the narrowing it costs. Each half separately: a policy
+  // describing the ledger without narrowing the exemption leaves it exempt from
+  // how governed text reads, which is the half a reader would never notice.
+  assert('the contract puts a ledger between the slots', () =>
+    /## The ledger/.test(policy) &&
+    /One line per unit of work, marked as it is crossed/.test(prose));
+  assert('a ledger line carries the unit, its verified criteria, and its commit', () =>
+    /carries the unit,\s+how many of its acceptance criteria are verified, and the commit/.test(prose));
+  assert('the ledger is written for the human and for the run that wrote it', () =>
+    /written for two readers at once/i.test(prose) &&
+    /re-reads its own lines to\s+recover where it is/.test(prose));
+  assert('the ledger forfeits the exemption for text a protocol agent reads', () =>
+    /the one narrowing of the exemption/i.test(prose));
+  assert('the narrowing says which side wins where the two readers disagree', () =>
+    /stability\s+wins on the structure and the prose wins inside a cell/.test(prose));
+  assert('the ledger is one artifact rather than a report and a state file', () =>
+    /Why not two artifacts/.test(prose));
+
+  // The count. A ten-unit run is four slot lines and ten ledger lines, and the
+  // policy has to say the second number scales while the first does not.
+  assert('the contract fixes the slot count against a growing ledger', () =>
+    /A run that crosses one unit emits one line/.test(prose) &&
+    /crosses ten emits ten, and\s+still four slots/.test(prose));
 
   // One home. A second copy of the slot set is the drift this whole effort is
   // against, so the check is over every shipped artifact rather than the ones
@@ -1135,31 +1135,18 @@ section('reporting', () => {
     assert(`${name} states the contract without naming a rendering`, () => !rendering.test(text));
   }
 
-  // Every skill declares a form, and the declaration agrees with the pin above.
-  for (const name of SKILLS) {
-    const artifact = readArtifact(path.join(SRC, 'skills', `${name}.md`));
-    const expected = SHORT_FORM_SKILLS.includes(name) ? 'short' : 'full';
-  }
-
-  // A note is reached from inside a run rather than invoked, so it opens no
-  // report and declaring a form would claim otherwise.
-  for (const file of walk(path.join(SRC, 'skills')).filter((f) => f.endsWith('.md'))) {
-    const rel = toPosix(SRC, file);
-    if (!/^skills\/[^/]+\/.+\.md$/.test(rel)) continue;
-    assert(`${rel} declares no report. A note opens none`,
-      readArtifact(file).fields.report === undefined);
-  }
-
-  // Stage names, mechanically, for every full-form skill. `total` is what makes
-  // this a real check: a skill whose steps are half-named would otherwise pass
-  // with a shorter list, and the run would cross a stage the report never named.
-  for (const name of SKILLS) {
-    if (SHORT_FORM_SKILLS.includes(name)) continue;
-    const { stages, total, shape } = stageNames(readSrc('skills', `${name}.md`));
-    assert(`skills/${name} declares its stages in a shape this can read`, shape !== 'none');
-    assert(`skills/${name} yields at least one stage name`, stages.length > 0);
-    assert(`skills/${name} names every one of its ${total} steps`, stages.length === total);
-  }
+  // One shape, so there is no second one to declare. Checked over the whole
+  // payload rather than over skills alone: the field is gone, and a file that
+  // still describes choosing between two forms is the same defect written out.
+  assert('no shipped artifact declares a report form', () => {
+    const declaring = payloadArtifacts()
+      .filter((file) => readArtifact(file).fields.report !== undefined)
+      .map((file) => toPosix(SRC, file));
+    if (declaring.length > 0) throw new Error(declaring.join(', '));
+    return true;
+  });
+  assert('the contract no longer offers two forms to choose between', () =>
+    !/report: full/.test(policy) && !/\bshort form\b/i.test(prose));
 
   // Nothing acquired a position read. The set is pinned by name so a third is
   // a failure; `specify` reads position/marker.json directly and runs no
@@ -1178,8 +1165,8 @@ section('reporting', () => {
   // The absorbed surfaces: each conforms, and the reasoning that justified the
   // shape it had before survives the absorption.
   const implement = readSrc('skills', 'implement.md');
-  assert('skills/implement fills Standing from the position script', () =>
-    /fills `Standing`/.test(implement) && /position\.mjs check/.test(implement));
+  assert('skills/implement fills Position from the position script', () =>
+    /fills `Position`/.test(implement) && /position\.mjs check/.test(implement));
   assert('skills/implement keeps the reason its position report existed', () =>
     /Nothing to report is still reported/.test(implement));
   assert('skills/implement makes review a stage of its own turn', () =>

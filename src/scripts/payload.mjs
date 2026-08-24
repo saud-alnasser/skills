@@ -128,16 +128,6 @@ export const NOTICES = [
       'file you own. A flat tree needs no change at all.',
   },
   {
-    since: '2.4.0',
-    check:
-      'Skills you wrote yourself now need one more frontmatter field: report: full, or ' +
-      'report: short, if the skill neither writes to the repository, dispatches a sub-agent, ' +
-      'nor decides anything on your behalf. It says which form that skill\'s turn report takes, ' +
-      'and validate.mjs fails a skill without one, because a skill with no declared form has no ' +
-      'defined shape to report in. Shipped skills already carry it; an upgrade never edits a ' +
-      'file you own, so yours are yours to add.',
-  },
-  {
     since: '2.3.0',
     check:
       'Tasks in an external tracker: your reference for that tracker, references/github.md, ' +
