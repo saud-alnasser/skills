@@ -299,6 +299,23 @@ function agentWrapper(target, { name, wrapped, description, shape }) {
 }
 
 /**
+ * Skills that ship as files and are never published as a command.
+ *
+ * Each is a stage that one of the four workflow commands runs: grilling inside
+ * `specify` and `plan`, research where a fact decides the design, review before
+ * anything lands. They stay readable, because the runner reads them, and they
+ * stop being something to type.
+ *
+ * A negative list rather than a list of what is registered, so a skill added
+ * later is published by default. The opposite default fails silently: a new
+ * command that simply never appears looks exactly like one nobody wrote.
+ *
+ * Kept here rather than in `contract.mjs`, because nothing an installed tree
+ * runs needs to know which skills a runtime publishes.
+ */
+export const STAGE_SKILLS = ['refine', 'research', 'review'];
+
+/**
  * Renders every adapter file as `{ relativePath, contents }`.
  * Pure: callers decide whether to write or compare, which is what lets the
  * verification suite assert the committed adapter is current.
@@ -328,7 +345,11 @@ export function renderAdapter(distributionRoot, target, shape) {
   // from its own skill, not an entry point. Wrapping one would publish a
   // command the protocol does not have, under a name (`ui`, `tests`) that reads
   // like a skill in a runtime's listing.
-  wrap('skill', topLevel(path.join(distributionRoot, 'skills')));
+  //
+  // A stage is excluded for the same reason one layer up: it is reached from
+  // inside a command, so publishing it offers the human a way to run half of one.
+  wrap('skill', topLevel(path.join(distributionRoot, 'skills'))
+    .filter((file) => !STAGE_SKILLS.includes(path.basename(file, '.md'))));
   wrap('agent', walk(path.join(distributionRoot, 'agents')).filter((f) => f.endsWith('.md')));
 
   return files.sort((a, b) => (a.relativePath < b.relativePath ? -1 : 1));

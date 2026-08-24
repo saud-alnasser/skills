@@ -26,8 +26,9 @@ scopes name the surface changed (`protocol`, `configure`, `tracker`).
 
 - Say what capability changed and why. **Never a file-by-file account.**
 - Never `--no-verify`; never bypass signing.
-- **Committing is part of finishing** — `[[skills/commit]]` does not wait to be
-  asked. Everything in the right-hand column above does.
+- **Committing is part of finishing** — `[[skills/implement]]` lands reviewed
+  work without waiting to be asked. Everything in the right-hand column above
+  does wait.
 
 ## How work reaches the default branch
 

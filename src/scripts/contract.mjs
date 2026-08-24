@@ -54,12 +54,11 @@ export const PROTOCOL_FILES = [
   'scripts/index.mjs',
   'scripts/position.mjs',
   'scripts/validate.mjs',
-  'skills/commit.md',
-  'skills/commit/conflicts.md',
   'skills/domain.md',
   'skills/handoff.md',
   'skills/help.md',
   'skills/implement.md',
+  'skills/implement/conflicts.md',
   'skills/implement/diagnosing.md',
   'skills/implement/dispatch.md',
   'skills/install.md',
@@ -80,7 +79,6 @@ export const PROTOCOL_FILES = [
   'skills/survey.md',
   'skills/survey/report.md',
   'skills/tasks.md',
-  'skills/tasks/labels.md',
   'skills/tdd.md',
   'skills/tdd/mocking.md',
   'skills/tdd/tests.md',
@@ -251,7 +249,7 @@ export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
  */
 export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill', 'modes'];
 
-/** The eighteen conforming skills. */
+/** The sixteen conforming skills. */
 export const SKILLS = [
   'specify',
   'refine',
@@ -259,7 +257,6 @@ export const SKILLS = [
   'tasks',
   'implement',
   'review',
-  'commit',
   'research',
   'prototype',
   'survey',

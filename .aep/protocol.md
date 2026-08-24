@@ -82,7 +82,7 @@ is repaired or reported, **never invented**.
 ## The workflow
 
 ```
-/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+/specify → /plan? → /tasks → /implement
 ```
 
 `refine` runs when ambiguity or tradeoffs remain; `plan` when the approach is
@@ -97,7 +97,7 @@ only when that skill sends you there.
 
 **Pick the smallest process that produces a reliable result.** Not every change
 needs research, a prototype, a grill, sub-agents, or worktrees. A one-line fix
-goes `/specify → /tasks → /implement → /review → /commit`, and even that is more
+goes `/specify → /tasks → /implement`, and even that is more
 than some changes deserve.
 
 ## The invariants

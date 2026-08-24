@@ -35,7 +35,7 @@ local commits that the human assembles, describes, and submits by hand.
 
 ## Done is decided in the wrong place, from the wrong evidence
 
-`[[skills/commit]]` step 3 sets the effort's `spec.md` to `status: implemented`
+``skills/commit`` step 3 sets the effort's `spec.md` to `status: implemented`
 "when this commit completes its last acceptance criterion." A skill that sees one
 ticket's diff is deciding whether an entire effort is finished, from evidence
 that cannot answer the question.
@@ -95,7 +95,7 @@ structured, or not at all.
 
 ## The tracker footprint grows with the work
 
-One issue per task is why `[[skills/tasks/labels]]` exists: nine hundred words
+One issue per task is why ``skills/tasks/labels`` exists: nine hundred words
 deciding whether a milestone, an existing label, or a new label carries the
 grouping fact, plus an approval gate for creating one. All of it solves a problem
 created by having many issues.
@@ -212,7 +212,7 @@ and by the orchestrator as its own state.
 - An effort-level runner in `[[skills/implement]]`, with wave-based integration
   onto one branch.
 - **Converge** as the runner's termination condition.
-- The dissolution of `[[skills/commit]]`.
+- The dissolution of ``skills/commit``.
 - **The report**: seven slots to four, plus a ledger written for two readers.
 - **The entrypoint**: `AGENTS.md` as the one entry, and a pointer file per
   targeted runtime.
@@ -432,7 +432,7 @@ trimmed to look smaller than it is.
     24's first trip-wire rather than more rounds. A configurable cap is a value
     nobody can set correctly until a run has already gone wrong.*
 
-32. Converge owns the two effort-level judgements `[[skills/commit]]` currently
+32. Converge owns the two effort-level judgements ``skills/commit`` currently
     makes from one ticket's diff: whether the effort is implemented, and whether
     the change moved a boundary, retired a concept, or falsified a
     `[[contexts]]` or `[[references]]`. What it falsified is corrected in the
@@ -485,18 +485,21 @@ trimmed to look smaller than it is.
     cut removes no capability aimed at the codebase rather than at a change**:
     `survey`, `domain`, and `prune` all survive.
 
-43. `[[skills/commit]]` is removed. Its mechanics run inline in the runner:
+43. ``skills/commit`` is removed. Its mechanics run inline in the runner:
     stage, write the message, commit, regenerate the index, stamp the marker,
     mark the ticket resolved. Its two effort-level judgements move to converge
-    under requirement 32. `[[skills/commit/conflicts]]` survives as depth the
-    runner reads when integration hits a conflict.
+    under requirement 32. Its conflict note survives as depth the runner reads
+    when integration hits a conflict, and moves to
+    `[[skills/implement/conflicts]]`: a note under a directory whose skill has
+    been deleted is unreachable from any skill, which the artifact contract
+    already forbids.
 
 44. `[[skills/specify]]` resolves material uncertainty inside the invocation:
     factual by research, product and tradeoff by grill. `[[skills/plan]]` does
     the same for the technical approach. Neither hands back a routing
     instruction.
 
-45. `[[skills/tasks/labels]]` is removed with its ladder and its approval gate.
+45. ``skills/tasks/labels`` is removed with its ladder and its approval gate.
     Requirements 11 through 19 replace it, and they answer a different question:
     which of this repository's labels describe this effort, not which label
     carries a grouping fact.
@@ -740,7 +743,7 @@ trimmed to look smaller than it is.
 
 29. `grep -r 'modes/' src/` returns nothing outside the migration path.
     `protocol.md`'s primitives table has seven rows. `src/skills/commit.md` does
-    not exist and `src/skills/commit/conflicts.md` does.
+    not exist and `src/skills/implement/conflicts.md` does.
 
 30. Typing `/refine`, `/research`, `/review`, `/commit`, or `/converge` is not
     required to complete any workflow. A `/specify` invocation on a request
@@ -1023,7 +1026,7 @@ mechanism AEP 3 needs already exists and is consulted by the wrong thing.
 | `skills/plan.md` | absorbs refine; writes `plan.md` |
 | `skills/tasks.md` | traceability check; the labels ladder is gone |
 | `skills/tasks/labels.md` | deleted |
-| `skills/commit.md` | deleted; `commit/conflicts.md` survives as runner depth |
+| `skills/commit.md` | deleted; its conflict note moves to `implement/conflicts.md` |
 | `skills/refine.md`, `research.md`, `review.md` | survive as files, unregistered as commands |
 | `skills/install.md`, `update.md`, `update/migration.md` | entrypoints, label seed, the layout branch, tracker reshape |
 | `agents/reviewer-correctness.md` | ticks the criteria it already checks |

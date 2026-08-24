@@ -47,7 +47,6 @@ Start at [[protocol]].
 
 | Artifact | Load when | Owner |
 | --- | --- | --- |
-| [[skills/commit]] | reviewed work is ready to land as a commit | — |
 | [[skills/domain]] | the words the problem is described in are doing the damage — a fuzzy term, or one word meaning three things | — |
 | [[skills/handoff]] | this session is ending or has run long, and the next session must pick the work up | — |
 | [[skills/help]] | the question is about AEP itself — what to reach for, and when | — |
@@ -115,7 +114,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/03-frontmatter-stripped]] refactor(protocol): every artifact drops the six fields nothing reads | aep-3 | resolved | 02 |
 | [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | open | 03 |
+| [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | open | 04, 05, 06 |
 | [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | open | 07 |

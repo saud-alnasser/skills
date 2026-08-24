@@ -72,8 +72,8 @@ would have told them the run went somewhere they did not intend.*
 **One thing the human asked for produces one opening report and one closing
 block**, emitted by the outermost skill.
 
-A skill entered from inside another — `[[skills/review]]` and `[[skills/commit]]`
-from `[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
+A skill entered from inside another — `[[skills/review]]` from
+`[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
 and `[[skills/prose]]` as sub-skills — is a **stage of the run it is inside**. It
 opens no report of its own. Everything it produces is unaffected; only the
 preamble is not repeated.
@@ -108,7 +108,6 @@ on entry anyway:
 | --- | --- |
 | `[[skills/implement]]` | the position marker against `HEAD` and the working tree |
 | `[[skills/review]]` | the pinned merge-base, and that the subject is non-empty |
-| `[[skills/commit]]` | that the stages ran — position, tests, review outcomes |
 | a skill that reads no repository state | *nothing to verify*, said plainly |
 
 *Why the slot is fixed but its content is not: making every skill read the

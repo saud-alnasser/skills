@@ -2,7 +2,7 @@
 use-when: "a merge or rebase has stopped with conflicts that need resolving"
 ---
 
-# Commit — resolving a conflict
+# Landing — resolving a conflict
 
 **A conflict is two intents a text diff could not reconcile.** Recovering both
 intents is the work; editing the markers out is not, and a resolution that
@@ -40,17 +40,17 @@ than this one.
 
 Type checks, tests, formatter — whatever it has. **A merge that builds is not a
 merge that works,** and the suite is the only thing that separates them. This is
-the one place `[[skills/commit]]`'s *confirm, do not repeat* does not apply: the
-merge produced a tree no earlier stage ever saw.
+the one place landing's *confirm, do not repeat* does not apply: the merge
+produced a tree no earlier stage ever saw.
 
 ## 5 — Finish the operation
 
 Stage the resolved paths **by name**, then continue; on a rebase, keep going
 until every commit has landed. `[[references]]` has the invocations.
 
-Then return to `[[skills/commit]]`. A conflict resolution is part of landing the
-change, not a substitute for the rest of it — the diff still has to be read
-whole, and the derived state still has to be regenerated.
+Then return to `[[skills/implement]]`. A conflict resolution is part of landing
+the change, not a substitute for the rest of it — the derived state still has to
+be regenerated and the marker still has to be stamped.
 
 ## What goes in the message
 

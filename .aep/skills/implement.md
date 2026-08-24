@@ -56,10 +56,9 @@ Where the tasks live is this repository's business — an external tracker, or
 `efforts/<effort>/tickets/`. Read `[[references]]` rather than assuming.
 
 **In an external tracker the frontier comes from the recorded query**, which that
-tracker's reference holds along with what carries the effort
-(`[[skills/tasks/labels]]`). Read the edges off what the query returns — never by
-opening every issue and judging from its prose, which is inference wearing a
-reading's clothes.
+tracker's `[[references]]` holds along with what carries the effort. Read the
+edges off what the query returns — never by opening every issue and judging from
+its prose, which is inference wearing a reading's clothes.
 
 If the frontier is empty, **say so rather than inventing work.** If everything
 left is blocked, name what blocks it. If the invocation carried a *request*
@@ -123,13 +122,59 @@ role, which branches — before creating anything. Stated, not gated.
 returns, under `## What the orchestrator owns once the last child returns`, and
 that is where to read it.
 
-`[[skills/review]]`, apply the fixes, then `[[skills/commit]]` — **without
-prompting.** Committing reviewed work is part of finishing. Then mark the task
-resolved. Further changes amend that commit; nothing is pushed.
+`[[skills/review]]`, apply the fixes, then land it — **without prompting.**
+Landing reviewed work is part of finishing, which is why there is no separate
+command to type: by the time the work is reviewed there is nobody left to ask.
 
-Both run **as stages of this turn** and open no report of their own
-(`[[policies/reporting]]`). Everything they produce still reaches the human;
+Review runs **as a stage of this turn** and opens no report of its own
+(`[[policies/reporting]]`). Everything it produces still reaches the human;
 only the preamble is not repeated.
+
+### Landing it
+
+**Confirm; do not repeat.** The tests ran, and `[[skills/review]]` ran with an
+outcome against every finding — fixed, ticketed, or accepted and recorded. **A
+finding still open is a blocker, never a silent pass.** A stage that did not run
+is named and the run stops there, saying what would clear it: a refusal the
+reader cannot act on is a wall rather than a check.
+
+1. **Mark the task resolved, and the effort `implemented` where this was its
+   last criterion** — before staging. Both are tracked, so moving them after the
+   commit leaves the tree dirty the moment it lands. Only the status field moves.
+2. **Regenerate the index** — `node .aep/scripts/index.mjs`. Here rather than
+   earlier, because this is the last point at which the tree is known complete
+   and an index regenerated before the final edit is already stale. **Never
+   hand-edit one**: `validate.mjs` regenerates and compares, so a hand edit is a
+   build failure that names the file.
+3. **Write the message by detection.** Read `git log --oneline -30`,
+   `CONTRIBUTING.md`, and any pull request template. Where the repository
+   demonstrates a convention, follow it silently; `[[rules/version-control]]`
+   supplies the default only where the repository is silent, **including which
+   form the task reference takes**. Say what capability changed and why, and
+   **never give a file-by-file account** — the diff already lists the files.
+4. **Commit.** Where landing means resolving a merge or rebase conflict,
+   `[[skills/implement/conflicts]]` has the discipline: a conflict is two intents,
+   and recovering both is the work.
+5. **Stamp the marker** — `node .aep/scripts/position.mjs stamp`. Last, once the
+   commit exists, because a commit cannot contain its own hash. **An amend
+   produces a new commit, so an amend re-stamps.**
+
+Further changes amend that commit. Never push, never publish
+(`[[rules/version-control]]`).
+
+## 5 — When the effort has no unresolved task left
+
+Two judgements that a single task's diff cannot support, so they are asked once
+the effort is whole rather than at each commit.
+
+- **Is the effort implemented?** Every acceptance criterion in `spec.md` met, not
+  every ticket closed. A ticket can be resolved against a criterion nobody
+  checked.
+- **Did the change move a boundary, retire a concept, or falsify a `[[contexts]]`
+  or a `[[references]]`?** Read the effort's diff entire, which no single task
+  ever saw. **What it falsified is corrected in this effort**, so the change and
+  the thing it contradicts never land apart. A concept nobody had named is a
+  finding to report, never a licence to name it here.
 
 ## Constraints
 

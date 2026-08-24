@@ -23,9 +23,12 @@ reviews it.
    repository that already has one** — `[[policies/execution]]` and the
    protocol both forbid mirroring an external tracker.
 
-   **Where the answer is an external tracker, go to `[[skills/tasks/labels]]`
-   before writing anything.** The effort has to be findable in that tracker, and
-   what carries it is the tracker's own to answer — settled once, then read.
+   **Where the answer is an external tracker, read that tracker's
+   `[[references]]` before writing anything.** The effort has to be findable
+   there, and what carries it is the tracker's own to answer — settled once and
+   recorded, then read rather than rederived. Where the reference is silent, the
+   tool's own help is the authority, and the answer is written back into the
+   reference so the next session reads it instead of deciding it again.
 3. **Decompose by acceptance criterion**, not by file or by layer. A task that
    maps to no criterion is either scope nobody asked for or a criterion the spec
    is missing — resolve which before writing it.

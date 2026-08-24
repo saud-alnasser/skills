@@ -41,7 +41,7 @@ import {
   wikiLinks,
 } from './contract.mjs';
 import { render as renderManifest, shippedPaths } from './manifest.mjs';
-import { renderAdapter, TARGETS } from './adapters.mjs';
+import { renderAdapter, STAGE_SKILLS, TARGETS } from './adapters.mjs';
 import { contentHash, readStamps, shippedArtifacts } from './release.mjs';
 import {
   BUILD_ONLY_SCRIPTS,
@@ -569,7 +569,7 @@ const POSTURED_SKILLS = [
 section('skills', () => {
   // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§16.1).
   const onDisk = topLevel(path.join(SRC, 'skills')).map((f) => path.basename(f, '.md')).sort();
-  assert('the skill set is exactly the eighteen specs.md names', () =>
+  assert('the skill set is exactly the specs.md names', () =>
     JSON.stringify(onDisk) === JSON.stringify([...SKILLS].sort()));
   if (JSON.stringify(onDisk) !== JSON.stringify([...SKILLS].sort())) {
     process.stdout.write(`        on disk: ${onDisk.join(', ')}\n`);
@@ -618,6 +618,43 @@ section('skills', () => {
 
   assert('skills/plan forbids plan.md', /NEVER create `plan\.md`/.test(readSrc('skills', 'plan.md')));
 
+  // Four workflow commands and the utilities. Asserted against a real render
+  // rather than against the list that drives it, which would only prove the list
+  // equals itself.
+  const publishedSkills = () => new Set(
+    renderAdapter(SRC, TARGETS.claude, TARGETS.claude.committed)
+      .filter((file) => file.kind === 'skill')
+      .map((file) => file.name),
+  );
+  assert('the adapter publishes the four workflow commands', () => {
+    const published = publishedSkills();
+    const missing = ['specify', 'plan', 'tasks', 'implement']
+      .filter((name) => !published.has(name));
+    if (missing.length > 0) throw new Error(`not published: ${missing.join(', ')}`);
+    return true;
+  });
+  // Pinned by name, never derived from `STAGE_SKILLS`. Asking the exclusion list
+  // whether the things on it were excluded is a check that cannot fail: drop a
+  // name and both sides move together, which is how this assertion passed the
+  // first time it was perturbed.
+  const NEVER_A_COMMAND = ['refine', 'research', 'review'];
+  assert('the adapter publishes none of the three skills that became stages', () => {
+    const published = publishedSkills();
+    const leaked = NEVER_A_COMMAND.filter((name) => published.has(name));
+    if (leaked.length > 0) throw new Error(`published as commands: ${leaked.join(', ')}`);
+    return true;
+  });
+  assert('the mechanism that excludes them names exactly those three', () =>
+    JSON.stringify([...STAGE_SKILLS].sort()) === JSON.stringify([...NEVER_A_COMMAND].sort()));
+  assert('each of the three still ships as a file to be read', () => {
+    const absent = NEVER_A_COMMAND
+      .filter((name) => !fs.existsSync(path.join(SRC, 'skills', `${name}.md`)));
+    if (absent.length > 0) {
+      throw new Error(`removed rather than unregistered: ${absent.join(', ')}`);
+    }
+    return true;
+  });
+
   const reviewSkill = readSrc('skills', 'review.md');
   assert('skills/review runs two independent axes', /two sub-agents|two independent/i.test(reviewSkill));
   assert('skills/review names both reviewer agents', () =>
@@ -625,8 +662,37 @@ section('skills', () => {
     reviewSkill.includes('agents/reviewer-standards'));
   assert('skills/review requires an outcome per finding', /outcome/i.test(reviewSkill));
 
-  assert('skills/commit forbids pushing and publishing', () =>
-    /never runs `git push`/.test(readSrc('skills', 'commit.md')));
+  // The two files this release removed, pinned by name. A suite that asserts
+  // only what exists cannot tell a deliberate deletion from a file somebody
+  // restored out of habit.
+  assert('skills/commit.md is gone, its mechanics inline in the runner', () =>
+    !fs.existsSync(path.join(SRC, 'skills', 'commit.md')));
+  assert('skills/tasks/labels.md is gone with its ladder', () =>
+    !fs.existsSync(path.join(SRC, 'skills', 'tasks', 'labels.md')));
+
+  // Landing is the part of /implement that used to be a command, so what the
+  // command guaranteed is now guaranteed there or nowhere.
+  const runner = readSrc('skills', 'implement.md');
+  assert('the runner lands the work without a command to type', () =>
+    /without prompting/i.test(runner));
+  assert('the runner forbids pushing and publishing', () =>
+    /[Nn]ever push, never publish/.test(runner));
+  assert('the runner stamps the marker after the commit exists', () =>
+    /position\.mjs stamp/.test(runner) && /cannot contain its own hash/.test(runner));
+  assert('the runner regenerates the index as part of landing', () =>
+    /index\.mjs/.test(runner));
+  assert('the runner detects the message convention rather than asserting one', () =>
+    /git log --oneline -30/.test(runner));
+  assert('the runner reads the conflict note where landing hits one', () =>
+    runner.includes('skills/implement/conflicts'));
+
+  // The two judgements a single task's diff cannot support. Each named
+  // separately: one assertion over both passes while either is missing, and the
+  // second is the one that quietly goes, because it is the expensive one.
+  assert('the effort-level judgement asks whether the effort is implemented', () =>
+    /has no unresolved task left/.test(runner) && /Is the effort implemented/.test(runner));
+  assert('the effort-level judgement asks what the change falsified', () =>
+    /falsif/i.test(runner) && /corrected in this effort/.test(runner));
 
   assert('skills/implement forbids splitting a task across sub-agents', () =>
     /never split across sub-agents/i.test(readSrc('skills', 'implement.md')));
@@ -636,8 +702,8 @@ section('skills', () => {
 
   assert('skills/implement reads an external frontier from the recorded query', () =>
     /frontier comes from the recorded query/.test(readSrc('skills', 'implement.md')));
-  assert('skills/tasks routes to the tracker note before writing external tasks', () =>
-    readSrc('skills', 'tasks.md').includes('skills/tasks/labels'));
+  assert("skills/tasks sends external tasks to that tracker's own reference", () =>
+    readSrc('skills', 'tasks.md').includes('[[references]]'));
 
   // §31.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
@@ -693,40 +759,6 @@ section('skill notes', () => {
     assert(`${rel} is linked from skills/${owner}.md. An unlinked note is unreachable`, () =>
       linkedBy.get(owner)?.has(target) === true);
   }
-
-  // The tracker note carries the whole external-task procedure, and each of these
-  // is a step that reads as optional the moment its sentence goes missing.
-  const labels = readSrc('skills', 'tasks', 'labels.md');
-
-  assert('the tracker note orders the ladder: native, then existing, then new', () => {
-    const native = labels.indexOf('a first-class feature of this tracker');
-    const existing = labels.indexOf('an existing label that already serves it');
-    const created = labels.indexOf('a new label');
-    if (native < 0 || existing < 0 || created < 0) throw new Error('a rung is missing');
-    if (!(native < existing && existing < created)) {
-      throw new Error('the rungs are present but out of order');
-    }
-    return true;
-  });
-  assert('the tracker note forbids a label for what the tracker models natively', () =>
-    /A label is never created for a fact the tracker models natively/.test(labels));
-  assert('the tracker note requires a native feature to be queryable, not merely adjacent', () =>
-    /A native feature counts only if it answers the same question/.test(labels));
-  assert('the tracker note shows one fact naming differently in two trackers', () =>
-    /effort\/<slug>/.test(labels) && /Effort: <slug>/.test(labels));
-  assert('the tracker note allows for creating no label at all', () =>
-    /\*\*no label is created\*\*/.test(labels));
-  assert('the tracker note requires the resolution to be recorded, then read', () =>
-    /Later sessions read it\. They do not rederive it\./.test(labels));
-  assert('the tracker note writes the section where the reference has none', () =>
-    /Where the reference has no such section, write it/.test(labels));
-  assert('the tracker note gates creating a label or a milestone', () =>
-    /Creating a label or a milestone publishes/.test(labels) &&
-    /exact strings, never a summary/i.test(labels));
-  assert('the tracker note stops on a refused permission rather than sliding down the ladder', () =>
-    /Approval is not permission/.test(labels));
-  assert('the tracker note separates resolving the mechanism from applying it per effort', () =>
-    /Resolve once per tracker; apply every effort/.test(labels));
 
   // Asked of each target rather than spelled here: a target is free to prefix
   // the names it publishes, and a hand-built `skills/<name>/SKILL.md` would
@@ -1092,15 +1124,17 @@ section('reporting', () => {
     assert(`skills/${name} names every one of its ${total} steps`, stages.length === total);
   }
 
-  // Nothing acquired a position read. The set is pinned by name so a fourth is
+  // Nothing acquired a position read. The set is pinned by name so a third is
   // a failure; `specify` reads position/marker.json directly and runs no
-  // script, which is why it is not here.
+  // script, which is why it is not here. It lost `commit` when landing stopped
+  // being a command: /implement now reads position on entry and stamps it on the
+  // way out, which is both of that set in one skill.
   const readsPosition = SKILLS
     .filter((name) => /position\.mjs/.test(readSrc('skills', `${name}.md`)))
     .sort();
-  assert('exactly commit, implement, and install invoke position.mjs', () =>
-    JSON.stringify(readsPosition) === JSON.stringify(['commit', 'implement', 'install']));
-  if (JSON.stringify(readsPosition) !== JSON.stringify(['commit', 'implement', 'install'])) {
+  assert('exactly implement and install invoke position.mjs', () =>
+    JSON.stringify(readsPosition) === JSON.stringify(['implement', 'install']));
+  if (JSON.stringify(readsPosition) !== JSON.stringify(['implement', 'install'])) {
     process.stdout.write(`        on disk: ${readsPosition.join(', ')}\n`);
   }
 
@@ -1111,8 +1145,8 @@ section('reporting', () => {
     /fills `Standing`/.test(implement) && /position\.mjs check/.test(implement));
   assert('skills/implement keeps the reason its position report existed', () =>
     /Nothing to report is still reported/.test(implement));
-  assert('skills/implement makes review and commit stages of its own turn', () =>
-    /as stages of this turn/.test(implement));
+  assert('skills/implement makes review a stage of its own turn', () =>
+    /as a stage of this turn/.test(implement));
   for (const name of ['tdd', 'domain']) {
     assert(`skills/${name} says a nested entry opens no report`, () =>
       /opening no report of its own/.test(readSrc('skills', `${name}.md`)));
@@ -1402,7 +1436,12 @@ section('governed text', () => {
 // --- §29 the adapter is a pointer, and it is current ------------------------
 
 section('adapter', () => {
-  const shippedSkills = topLevel(path.join(SRC, 'skills')).length;
+  // What a runtime should publish, which is every top-level skill except the
+  // ones that are stages of another. Derived rather than written out, so a skill
+  // added later is counted without this line being remembered.
+  const shippedSkills = topLevel(path.join(SRC, 'skills'))
+    .filter((file) => !STAGE_SKILLS.includes(path.basename(file, '.md')))
+    .length;
   const shippedAgents = topLevel(path.join(SRC, 'agents')).length;
 
   // Stated here rather than read off the target, because a target asserted

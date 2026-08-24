@@ -29,18 +29,23 @@ that first; everything else loads when its `use-when` fires.
 ## The spine
 
 ```
-/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+/specify → /plan? → /tasks → /implement
 ```
 
-`refine` when ambiguity remains. `plan` when the approach is not obvious.
-Everything else is a capability, not a stage.
+`plan` when the approach is not obvious. Everything else is a capability rather
+than a stage.
+
+**Four commands, and grilling, research, and review are not among them** — they
+are stages the four run. `[[skills/refine]]`, `[[skills/research]]`, and
+`[[skills/review]]` are still here to be read, and reaching for one directly is
+reaching for depth rather than typing a command.
 
 **Pick the smallest process that produces a reliable result.**
 
 ```
-simple:   /specify → /tasks → /implement → /review → /commit
+simple:   /specify → /tasks → /implement
 complex:  /specify → research → prototype → /plan → /tasks
-          → parallel /implement → /review → /commit
+          → parallel /implement
 ```
 
 ## What to reach for
@@ -53,7 +58,6 @@ complex:  /specify → research → prototype → /plan → /tasks
 | turn an accepted spec into work | `[[skills/tasks]]` |
 | build a task | `[[skills/implement]]` |
 | judge finished work | `[[skills/review]]` |
-| land it | `[[skills/commit]]` |
 | establish an external fact | `[[skills/research]]` |
 | answer *can this work* | `[[skills/prototype]]` |
 | find where the codebase is costing you | `[[skills/survey]]` |
@@ -62,7 +66,7 @@ complex:  /specify → research → prototype → /plan → /tasks
 | make text read as though a person wrote it | `[[skills/prose]]` |
 | join a repository to AEP | `[[skills/install]]` |
 | move to a newer AEP release, or bring a 1.x repository forward | `[[skills/update]]` |
-| resolve a merge conflict | `[[skills/commit/conflicts]]` |
+| resolve a merge conflict | `[[skills/implement/conflicts]]` |
 | diagnose a bug whose cause is unknown | `[[skills/implement/diagnosing]]` |
 | clear out stale AEP artifacts | `[[skills/prune]]` |
 | carry work into a fresh session | `[[skills/handoff]]` |

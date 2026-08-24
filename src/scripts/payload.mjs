@@ -81,6 +81,20 @@ export const NOTICES = [
   {
     since: '3.0.0',
     check:
+      'Two skills are gone and one moved. /commit is no longer a command: landing is ' +
+      'part of finishing a task, so its mechanics run inline at the end of /implement, ' +
+      'and the two judgements it made about a whole effort, whether the effort is ' +
+      'implemented and whether the change falsified a context or a reference, are made ' +
+      'once the effort has no unresolved task left. skills/tasks/labels.md is gone with ' +
+      'its ladder and its approval gate; what replaces it asks which of your labels ' +
+      'describe an effort rather than which label carries a grouping fact. And ' +
+      'skills/commit/conflicts.md is now skills/implement/conflicts.md, beside the skill ' +
+      'that reads it. Your own reference for a tracker is untouched, and the query it ' +
+      'records is still what the frontier is read from.',
+  },
+  {
+    since: '3.0.0',
+    check:
       'modes/ is gone. A mode existed to state a posture, its mindset and what that ' +
       'mindset gives up, and every one of those now sits inside the skill that used to ' +
       'enter it, where it is read at the moment it applies rather than fetched. Delete ' +
