@@ -913,8 +913,10 @@ trimmed to look smaller than it is.
 
 51. In a repository with a tracker, an effort carries exactly one issue and one
     pull request, the effort directory is named for the issue number, and both
-    bodies name the effort's path. This repository's `aep-3` is the first to
-    carry both.
+    bodies name the effort's path. This repository's own effort is the first to
+    carry both, as issue 45 and `.aep/efforts/45-aep-3/`. Its branch keeps the
+    name `aep-3` it was pushed under, because renaming a pushed branch to match
+    a directory is a cost the requirement never asked for.
 
 
 # Constraints

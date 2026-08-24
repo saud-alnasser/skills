@@ -90,7 +90,7 @@ Start at [[protocol]].
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
-| aep-3 | accepted | [[efforts/aep-3/spec]] | 0 | 0 | 25 |
+| 45-aep-3 | accepted | [[efforts/45-aep-3/spec]] | 0 | 0 | 25 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -106,31 +106,31 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 
 | Ticket | Effort | Status | Blocked by |
 | --- | --- | --- | --- |
-| [[efforts/aep-3/tickets/01-ownership-lookup]] feat(protocol): ownership is looked up rather than declared | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | aep-3 | resolved | 01 |
-| [[efforts/aep-3/tickets/03-frontmatter-stripped]] refactor(protocol): every artifact drops the six fields nothing reads | aep-3 | resolved | 02 |
-| [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | resolved | 04, 05, 06 |
-| [[efforts/aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | aep-3 | resolved | 07 |
-| [[efforts/aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | aep-3 | resolved | 01 |
-| [[efforts/aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | aep-3 | resolved | 09 |
-| [[efforts/aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | aep-3 | resolved | 10 |
-| [[efforts/aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | aep-3 | resolved | 10 |
-| [[efforts/aep-3/tickets/13-report-shape]] feat(policies): the turn report is four slots and a ledger | aep-3 | resolved | 03 |
-| [[efforts/aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | aep-3 | resolved | 06, 07 |
-| [[efforts/aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | aep-3 | resolved | 14 |
-| [[efforts/aep-3/tickets/16-install]] feat(install): entrypoints and the label seed land on the way in | aep-3 | resolved | 15, 01 |
-| [[efforts/aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | aep-3 | resolved | 16 |
-| [[efforts/aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | aep-3 | resolved | 06 |
-| [[efforts/aep-3/tickets/19-version-control]] chore(rules): this repository states what the runner may push | aep-3 | resolved | 10 |
-| [[efforts/aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | aep-3 | resolved | 08, 11, 12, 13, 17, 18, 19 |
-| [[efforts/aep-3/tickets/21-tickets-are-local]] fix(protocol): the payload stops offering a tracker as a home for tickets | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/22-spec-stamped-implemented]] feat(implement): the close stamps the spec it just satisfied | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/23-criteria-ticked-before-resolved]] feat(implement): a ticket cannot be resolved with a criterion left unticked | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | aep-3 | resolved | — |
-| [[efforts/aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | aep-3 | open | — |
+| [[efforts/45-aep-3/tickets/01-ownership-lookup]] feat(protocol): ownership is looked up rather than declared | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | 45-aep-3 | resolved | 01 |
+| [[efforts/45-aep-3/tickets/03-frontmatter-stripped]] refactor(protocol): every artifact drops the six fields nothing reads | 45-aep-3 | resolved | 02 |
+| [[efforts/45-aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | 45-aep-3 | resolved | 03 |
+| [[efforts/45-aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | 45-aep-3 | resolved | 03 |
+| [[efforts/45-aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | 45-aep-3 | resolved | 03 |
+| [[efforts/45-aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | 45-aep-3 | resolved | 04, 05, 06 |
+| [[efforts/45-aep-3/tickets/08-specification]] docs(spec): the specification follows the implementation it defines | 45-aep-3 | resolved | 07 |
+| [[efforts/45-aep-3/tickets/09-frontier]] feat(scripts): the frontier is computed rather than judged | 45-aep-3 | resolved | 01 |
+| [[efforts/45-aep-3/tickets/10-runner-loop]] feat(implement): one invocation carries an effort to a finished stack | 45-aep-3 | resolved | 09 |
+| [[efforts/45-aep-3/tickets/11-run-log]] feat(implement): the pull request becomes the run’s memory | 45-aep-3 | resolved | 10 |
+| [[efforts/45-aep-3/tickets/12-converge]] feat(implement): converge decides when the effort is done | 45-aep-3 | resolved | 10 |
+| [[efforts/45-aep-3/tickets/13-report-shape]] feat(policies): the turn report is four slots and a ledger | 45-aep-3 | resolved | 03 |
+| [[efforts/45-aep-3/tickets/14-effort-opening]] feat(specify): an effort opens as one issue, one branch, one pull request | 45-aep-3 | resolved | 06, 07 |
+| [[efforts/45-aep-3/tickets/15-labels]] feat(protocol): labels project the effort’s state onto the tracker | 45-aep-3 | resolved | 14 |
+| [[efforts/45-aep-3/tickets/16-install]] feat(install): entrypoints and the label seed land on the way in | 45-aep-3 | resolved | 15, 01 |
+| [[efforts/45-aep-3/tickets/17-migration]] feat(update): a 2.x tree reaches 3 without losing what the repository owns | 45-aep-3 | resolved | 16 |
+| [[efforts/45-aep-3/tickets/18-tasks-traceability]] feat(tasks): a ticket that traces to no requirement fails | 45-aep-3 | resolved | 06 |
+| [[efforts/45-aep-3/tickets/19-version-control]] chore(rules): this repository states what the runner may push | 45-aep-3 | resolved | 10 |
+| [[efforts/45-aep-3/tickets/20-release]] chore(dist): release AEP 3.0.0 | 45-aep-3 | resolved | 08, 11, 12, 13, 17, 18, 19 |
+| [[efforts/45-aep-3/tickets/21-tickets-are-local]] fix(protocol): the payload stops offering a tracker as a home for tickets | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/22-spec-stamped-implemented]] feat(implement): the close stamps the spec it just satisfied | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/23-criteria-ticked-before-resolved]] feat(implement): a ticket cannot be resolved with a criterion left unticked | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | 45-aep-3 | resolved | — |
+| [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | open | — |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
