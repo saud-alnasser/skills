@@ -266,6 +266,54 @@ after the race it existed to win.
 A claim held elsewhere is never taken — not renamed around, not branched from,
 not force-created over. Report it and move to the next task.
 
+**The claim is read before the work, and it is computed rather than judged.**
+
+```
+node .aep/scripts/scope.mjs read
+```
+
+Quote what it prints. **Never infer the claim from what the branch is called:**
+naming belongs to the repository (`[[rules/version-control]]`), and under a
+runtime that opens a thread per branch it belongs to the runtime, which
+generates one. The name is the signal that may say nothing.
+
+| | Is |
+| --- | --- |
+| **the claim** | the efforts the branch's **own commits** touch |
+| **the working set** | the efforts the tree is touching **now** |
+
+**A scoped run MUST NOT write a file belonging to an effort outside its claim,
+and MUST NOT take a ticket of one.** Reading is unrestricted. Source outside the
+efforts is untouched by this, since changing it is what an effort exists to do.
+
+**There are no exemptions**, and that includes a skill whose subject is the whole
+tree. `[[skills/prune]]` or `[[skills/survey]]` reaching another effort's
+artifact **stops and names it**; a tree-wide subject belongs on an unscoped
+checkout, which is where it was always going to be run from.
+
+*Why no exemption list: an exemption is a second mechanism deciding how strong
+the first one is, and it is the copy that goes wrong. A run that has to be
+somewhere else is a sentence to read; a list of who may ignore the rule is a
+thing to maintain.*
+
+**An empty claim is unscoped and takes any effort.** That is the default branch,
+and it is the state an effort is opened in — the first commit fixes the claim
+for every turn after it. **A claim of more than one is not an error**, and a run
+that must act on a single effort, holding one and given none, **ends the turn
+listing the set** rather than choosing from it.
+
+**A named effort outside the claim stops on a dirty tree and switches on a clean
+one.** Clean, the run checks that effort's branch out and proceeds, which is
+plainly what was meant. Dirty, it ends the turn naming the claim, the effort it
+was given, and the uncommitted paths, because switching would carry one effort's
+edits onto another's branch.
+
+**A ticket branch name MUST be unique across efforts.** Ticket ids restart per
+effort, so two efforts each holding a ticket `03` would otherwise produce one
+branch name for two claims, and the second run to reach it takes a claim another
+already holds. **How** uniqueness is reached is the repository's to state in its
+own version-control rule; **that** it holds is this policy's.
+
 ## What a child gets, and what it does not
 
 A child receives a **brief**: its objective, its inputs **as paths rather than

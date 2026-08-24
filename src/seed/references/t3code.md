@@ -38,6 +38,19 @@ rather than from an installed tree.
 Where the provider is OpenCode, prefer the `opencode` adapter instead — both
 locations are read there, and installing both loads every skill twice.
 
+## Worktree threads
+
+A worktree thread runs in its own linked worktree, placed inside the project at
+`.t3-worktrees/<thread-id>/`.
+
+**That path must be gitignored.** AEP fingerprints the working tree with
+`git ls-files --others`, so a worktree directory nobody ignored is untracked
+content sitting in the checkout: from the moment a second thread exists, every
+thread reads as drifted from its recorded position, and nothing anyone did to
+this repository caused it. The T3 Code documentation does not say whether it
+adds the ignore rule itself, so look for the entry rather than assuming it. One
+line in `.gitignore` settles it either way.
+
 ## Failure handling
 
 - **A skill that does not appear is usually a provider question, not a T3 Code

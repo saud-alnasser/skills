@@ -21,16 +21,23 @@ one thing.
 ## 0 — Position. Every invocation. No exceptions.
 
 This is the command that turns knowledge into code, so a stale belief here
-becomes a wrong edit. Run it, and quote it:
+becomes a wrong edit. Run both, and quote both:
 
 ```
 node .aep/scripts/position.mjs check
+node .aep/scripts/scope.mjs read
 ```
 
+**Two questions, two answers, printed together and never merged.** The marker
+says whether the tree moved since a run last looked at it; the scope says which
+efforts this branch claims and what isolation is in force. A non-empty claim
+confines the run to the efforts it names (`[[policies/execution]]`).
+
 **This is what fills `Position` in the turn report**
-(`[[policies/reporting]]`): the script's output, then what no script can produce
-— the contexts this task touches, and every claim the source contradicted, with
-what was corrected.
+(`[[policies/reporting]]`). The claim and the isolation go in `Position` beside
+the marker's answer, and beside both goes what no script can produce — the
+contexts this task touches, and every claim the source contradicted, with what
+was corrected.
 
 **Nothing to report is still reported** — a silent check is indistinguishable
 from one that never ran.
@@ -55,6 +62,19 @@ ends it.
 | --- | --- |
 | **named a ticket** | that ticket, alone, and the run ends there. Taking a second is choosing work you were not given |
 | **named an effort, or nothing** | the whole effort, wave after wave |
+
+**Where the invocation named nothing, the effort is the claim read at step 0.**
+An empty claim takes any effort (`[[policies/execution]]`), so an unscoped run is
+unchanged from what it has always been: the effort is whichever the invocation
+named, and an invocation naming none against an empty claim has nothing to
+schedule from and ends the turn saying so. A claim of more than one, with no
+effort named, ends the turn listing the set rather than picking from it.
+
+**A named effort outside the claim stops on a dirty tree and switches on a clean
+one** (`[[policies/execution]]`). Clean: check that effort's branch out and carry
+on, which is plainly what was meant. Dirty: end the turn naming the claim, the
+effort you were given, and the uncommitted paths — switching would carry one
+effort's edits onto another's branch.
 
 **The frontier is read, never judged.** `frontier.mjs` prints what is ready, what
 is blocked and on what, and what is parked; the run quotes it rather than holding
@@ -85,7 +105,7 @@ first edit is a report of a race already lost.
 
 ```
 effort branch      <effort>                     aep-3
-ticket branch      <ticket-id>-<slug>           17-assignment-and-claim
+ticket branch      <effort>/<ticket-id>-<slug>  aep-3/17-assignment-and-claim
 ```
 
 The effort branch is created once and every wave lands on it. **Children in a

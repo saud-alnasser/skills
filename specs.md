@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.0.0
+**Version:** 3.1.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -126,7 +126,7 @@ A conforming repository:
 │       │   └── prototypes/
 │       └── tickets/         the effort's tasks (§14.4)
 ├── policies/                governance AEP defines — protocol-owned
-├── position/                per-clone operational state — gitignored
+├── position/                per-working-tree operational state — gitignored
 ├── references/              procedural/operational knowledge
 ├── rules/                   governance this repository defines — repository-owned
 ├── scripts/                 protocol scripts
@@ -135,7 +135,7 @@ A conforming repository:
 │   └── <skill>/<note>.md    depth, loaded only on the branch that needs it (§15.1)
 ├── templates/               skeletons for authoring a new artifact
 ├── worktrees/               isolated checkouts — gitignored
-└── .gitignore               defines what per-clone means
+└── .gitignore               defines what is never committed
 ```
 
 `.aep/.gitignore` MUST exclude `position/` and `worktrees/`. Everything else under `.aep/` is committed.
@@ -583,6 +583,14 @@ Worktrees provide isolated execution environments, used for implementation, para
 
 Worktrees are **infrastructure and never knowledge storage**. Permanent knowledge returns to rules, contexts, evidence, efforts, specs, or repository source. Worktree state MUST NOT be treated as protocol state, and `.aep/worktrees/` is gitignored.
 
+### 18.1 The isolation in force is detected, never required
+
+A runtime MAY place each of its threads in a worktree of its own, and some do. **A conforming implementation MUST NOT require worktrees, and MUST NOT create, name, or remove one the runtime owns.** It detects what is in force and reports it: a linked worktree is distinguished from a main checkout by `git rev-parse --git-dir` differing from `--git-common-dir`, and the sibling worktrees with the branch each holds are read from `git worktree list --porcelain`. AEP's own `.aep/worktrees/`, above, is unaffected by this — the orchestrator creates those for sub-agent isolation and removes them with it.
+
+What the detection establishes is the **strength of the claim** (§19.2), and a run MUST report which of the two it has. Inside one clone, git refuses a second worktree on a branch already checked out and the refusal names where the claim is held, so the claim is **enforced**. Across clones nothing refuses anything, so the claim is **advisory**, and a run whose checkout is not isolated says so rather than implying a guarantee nothing performs.
+
+*Why detected rather than required: a worktree per thread is the runtime's choice, and AEP under a runtime that provides none MUST behave identically apart from the strength of the claim it reports. Requiring them would make the protocol unrunnable where they are not on offer, and assuming them would have every run report an enforcement that, between two clones, does not exist.*
+
 ## 19. Parallelism
 
 ### 19.1 The unit is a whole task
@@ -613,9 +621,30 @@ An implementation MUST NOT infer independence from a guess about which files wil
 
 Sub-agents MAY receive separate worktrees. Parallelism MUST NOT compromise rules, the specification, repository integrity, or acceptance criteria.
 
+### 19.3 Scope: the claim, and the working set
+
+**An invocation that acts on an effort MUST establish which efforts it is inside before it acts.** The answer is **computed and quoted, never judged** — derived from the branch and reported as read — and a conforming instruction MUST NOT direct an agent to infer it from a branch name in prose. What a branch is called belongs to the repository (§7.1) and, under a runtime that generates one per thread, to the runtime, so the name is the one signal that may say nothing.
+
+Two questions sit behind the answer, and holding them apart is what this subsection is for:
+
+| | Is |
+| --- | --- |
+| **the claim** | the set of efforts whose directories the branch's **own commits** touch, measured against the default branch |
+| **the working set** | the set of efforts the tree is touching **now** — staged, unstaged, or untracked |
+
+**Confinement is the working set measured against the claim.** A scoped run MUST NOT write a file belonging to an effort outside its claim, and MUST NOT take a ticket of one. Reading is unrestricted, and source outside the efforts is untouched by the rule, since changing it is what an effort exists to do.
+
+*Why the claim is read from the commits and never from the tree: a scope computed from the working tree can never fire a guard, because the first illegal write enlarges the scope that was supposed to catch it. Read from the commits, the claim is a fact the run cannot edit by misbehaving.*
+
+**A claim is a set, usually of one.** An **empty claim is unscoped and permits any effort**: it is the ordinary state of the default branch, and of a branch carrying no commits of its own, which is the state an effort is opened in — the first commit fixes the claim for every turn after it. A claim of more than one is what a branch carrying a chain of efforts holds, and is not by itself an error.
+
+**A run that must act on a single effort, holding a claim of more than one and given none to act on, MUST end the turn listing the set rather than choose from it.** That is the only place ambiguity stops a run: at the point where one effort has to be picked, and nothing is guessed.
+
+**A ticket branch name MUST be unique across efforts.** Ticket ids restart per effort, a ticket being a file under its own effort (§14.4), so two efforts each holding a ticket `03` would otherwise produce one branch name for two claims, and the second run to reach it takes a claim another already holds. **How uniqueness is achieved is the repository's to state** in its own version-control rule; that it holds is this specification's.
+
 ## 20. Position
 
-Position is lightweight operational state, per-clone and never committed. `.aep/position/marker.json`:
+Position is lightweight operational state, per working tree and never committed. `.aep/position/marker.json`:
 
 ```json
 {
@@ -628,6 +657,8 @@ Position is lightweight operational state, per-clone and never committed. `.aep/
 `tree` is the working-tree state the last read was made against, `head` the Git HEAD it was made against, `sessions` the active or relevant AEP sessions.
 
 Position MAY additionally record **untracked** operational facts — state not represented by tracked artifacts. This MUST remain lightweight and MUST NOT become a hidden database (§2).
+
+Position is gitignored, so it is **per working tree rather than per clone**: two linked worktrees of one clone hold two markers, and two agents sharing one checkout hold one between them — the opposite of a claim in both directions. **Position therefore MUST NOT carry which effort a run is inside.** That is computed from the branch (§19.3), and a copy of it here would be a second source of truth, able to disagree with the first and gitignored where nobody would see it do so.
 
 **Position is NOT** Git, architecture, memory, context, a decision record, or a source of truth. **If position conflicts with repository state, repository state wins**, and position is re-derived rather than trusted.
 
@@ -922,7 +953,7 @@ src/
 
 **The manifest is generated from `src/`, never maintained beside it** (§7). It ships to installed trees inside the payload's own contract module, which is what lets an installed tree answer *is this file the protocol's* without the release being present.
 
-Two consequences are normative. **This specification is never installed** — it defines the protocol and is not part of it, which is why no shipped artifact may cite it (§31.3). And **`.aep/.gitignore` ships as a file rather than being generated by a script**, so what per-clone means is a reviewable artifact rather than a string in a program.
+Two consequences are normative. **This specification is never installed** — it defines the protocol and is not part of it, which is why no shipped artifact may cite it (§31.3). And **`.aep/.gitignore` ships as a file rather than being generated by a script**, so what is never committed is a reviewable artifact rather than a string in a program.
 
 ### 31.2 The suite
 
@@ -1113,6 +1144,7 @@ A conforming implementation preserves all of the following:
 53. An invocation of `implement` takes the effort rather than one wave, and the run ends when converge finds no gap — never merely because the tickets ran out.
 54. Converge appends tickets and never edits the spec or the plan; an approach that cannot satisfy a requirement stops on the return-to-plan invariant.
 55. The run's durable memory is the pull request, so a resumed run reconstructs its position from what was written rather than from what it remembers.
+56. A run's scope is the claim its branch's own commits make rather than what its working tree is touching; an empty claim is unscoped, a claim of more than one stops a run that must act on one, and the isolation in force is detected and reported rather than required.
 
 ---
 

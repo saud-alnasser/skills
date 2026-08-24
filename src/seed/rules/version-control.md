@@ -39,20 +39,45 @@ Conventional Commits — `type(scope): summary`.
 
 ## Branches
 
-One branch per task, named `<task-id>-<slug>` — the id first, so the task is
-recoverable from the branch name by reading up to the first `-`.
+One branch per ticket, cut from the branch its effort is on and named
+`<effort>/<ticket-id>-<slug>`, where `<effort>` is the effort directory's own
+name: `51-branch-scope/03-execution-policy`.
+
+**The namespace is what makes the name unique**, and uniqueness across efforts
+is required (`[[policies/execution]]`). Ticket ids restart at `01` in every
+effort, so two efforts each holding a ticket `03` want one bare `03-<slug>` for
+two different claims. Under a runtime that gives each thread its own worktree,
+git refuses the second outright; without one, the second run quietly takes a
+claim the first is already holding. The namespace also gives a fresh branch an
+effort before it has any commits: the first segment is an effort directory name,
+and that is the only signal a branch with nothing on it carries.
+
+**Existing branches keep the names they have.** The convention is forward-only:
+a branch already called `03-execution-policy` still resolves to its effort by
+what its commits touch, and renaming one breaks the claim whoever is on it
+holds.
 
 **The branch is the claim** (`[[policies/execution]]`): create it before the first
 read of source, not after the first edit.
 
 ## How work reaches the default branch
 
-This decides how a commit references its task, and getting it wrong is expensive:
+Two things turn on which of these a repository does, and getting either wrong is
+expensive. The first is how a commit references its task:
 
 | This repository | Then |
 | --- | --- |
 | a branch merged by a pull request a human writes | the commit references the task but **closes nothing** — a closing keyword in a commit fires on a later cherry-pick or rebase, closing something nobody merged. The keyword belongs in the pull request body |
 | stacked changes, submitted by a stacking tool | the commit **carries the closing keyword** — it reaches the default branch only through its own branch's pull request, so the hazard above cannot arise |
+
+The second is where a new effort's branch starts, and it is the same row that
+answers it. `[[skills/specify]]` reads this rule rather than branching from
+whatever `HEAD` happens to be checked out:
+
+| This repository | A new effort's branch is based on |
+| --- | --- |
+| a branch merged by a pull request | the default branch's tip, fetched first. An effort opened from another effort's branch carries that effort's unmerged commits, and its pull request then asks for a review of work nobody in it wrote |
+| stacked changes | the current branch, which is what stacking means. The parent change is reviewed on its own branch and lands through its own pull request |
 
 **Confirm which applies rather than assuming.** With stacked changes,
 `blocked-by` means *stack on top of*, not *wait for* — assume plain git on a

@@ -1,5 +1,121 @@
 # Changelog
 
+## 3.1.0
+
+AEP has said the branch is the claim since 2.x, in three places, and nothing
+ever read it. A run learned which effort it was inside from the human, in the
+conversation, on every invocation. That holds while one session runs at a time
+and stops holding the moment a runtime opens a thread per branch, because
+threads share no conversation and the branch is the only thing telling them
+apart.
+
+### Added
+
+- **`scripts/scope.mjs`, which answers where a run is from git alone.** `read`
+  prints the efforts the branch claims, the efforts the tree is touching now,
+  the isolation in force, and the base it measured against. `check` compares the
+  second against the first and lists what falls outside. Exit 1 is the notable
+  condition rather than an error, matching `position.mjs` and `frontier.mjs`:
+  for `read` it means unscoped, for `check` it means something is outside the
+  claim, and exit 2 means git could not be read.
+
+- **The claim, and the working set.** The claim is the set of efforts the
+  branch's own commits touch, measured against the default branch. The working
+  set is what the tree is touching now. Confinement is the second measured
+  against the first, and the order matters: a scope computed from the working
+  tree can never fire a guard, because the first illegal write enlarges the
+  scope that was supposed to catch it.
+
+- **Resolution reads content first and the branch name second.** What a branch
+  is called belongs to the repository, and under a runtime that generates one
+  per thread it belongs to the runtime. A rule that recognised an effort by
+  branch name would resolve `t3code/a1b2c3d4` to nothing, which is safe and
+  worth nothing on the runtime this was built for. The name survives as the
+  fallback for a branch with no commits of its own, which is the only signal
+  such a branch carries.
+
+- **Isolation is detected and reported, never required.** A linked worktree is
+  distinguished from a main checkout by `git rev-parse --git-dir` differing from
+  `--git-common-dir`, and the sibling worktrees with the branch each holds come
+  from `git worktree list --porcelain`. Inside one clone git refuses a second
+  worktree on a branch already checked out and names the holder, so the claim is
+  enforced. Across clones nothing refuses anything, so it is advisory and the
+  run says so. AEP creates, names, and removes nothing the runtime owns, and a
+  runtime that offers no worktrees changes nothing but the strength of the claim
+  reported.
+
+### Changed
+
+- **A run establishes its claim before it acts.** `specify`, `plan`, `tasks`,
+  `implement`, `refine`, `review`, `prune`, and `survey` each read the scope on
+  entry, quote it, and put the claim and the isolation in `Position` beside
+  whatever that skill already verifies. `implement` keeps its position marker
+  read: two questions, two answers, printed together and never merged.
+
+- **A scoped run writes nothing belonging to an effort outside its claim**, and
+  takes no ticket of one. Reading is unrestricted, and source outside the
+  efforts is untouched by the rule, since changing it is what an effort exists
+  to do. There are no exemptions, including for a skill whose subject is the
+  whole tree: a `prune` or `survey` run that would reach another effort's
+  artifact stops and names it, and belongs on an unscoped checkout. An exemption
+  list would be a second mechanism deciding how strong the first one is.
+
+- **An empty claim is unscoped and takes any effort**, which is the default
+  branch and the state an effort is opened in. A claim of more than one is not
+  an error, and stops only a run that must act on a single effort and was given
+  none. A named effort outside the claim switches on a clean tree and stops on a
+  dirty one, naming the claim, the effort it was given, and the uncommitted
+  paths.
+
+- **A ticket branch name must be unique across efforts**, ticket ids being
+  per effort. The seeded version-control rule now names one
+  `<effort>/<ticket-id>-<slug>`, and says why: two efforts each holding a ticket
+  `03` otherwise want one branch name for two claims, which git refuses outright
+  where threads have worktrees and which the second run quietly takes where they
+  do not. How uniqueness is reached stays the repository's; that it holds is the
+  protocol's.
+
+- **A new effort's branch base is read from the repository's rule.** Where a
+  repository stacks, a new effort stacks on the current branch; where it does
+  not, the base is the default branch's tip, whatever `HEAD` happens to be.
+  `specify` used to branch from wherever it was standing, so an effort opened
+  from another effort's branch inherited that effort's unmerged commits and its
+  pull request asked for a review of work nobody in it wrote.
+
+- **Position is per working tree, not per clone.** The specification said
+  per-clone, and gitignored state is not: two linked worktrees of one clone hold
+  two markers, and two agents sharing one checkout hold one between them, which
+  is the opposite of a claim in both directions. The marker therefore does not
+  carry which effort a run is inside, and the correction is the sentence that
+  used to make it look like it could.
+
+### Fixed
+
+- **`/plan` said it extended `spec.md` with the technical approach**, while the
+  specification and the plan template both put that approach in `plan.md` beside
+  the spec. The skill contradicted the specification it implements, so an agent
+  reading both had to pick one. It writes `plan.md` now, and `status` stays the
+  spec's, an effort having one state.
+
+- **The seeded t3 Code reference now says the worktree path must be gitignored.**
+  A thread runs in `.t3-worktrees/<thread-id>/`, and AEP fingerprints the tree
+  with `git ls-files --others`, so an unignored worktree directory makes every
+  thread read as drifted the moment a sibling exists.
+
+### Upgrading
+
+Nothing to do. `scope.mjs` arrives with the upgrade, an existing effort branch
+resolves by what its commits touched with no rename and no marker, and an
+unscoped run behaves exactly as it did before.
+
+**One thing to read rather than to run.** An upgrade never edits `rules/`, so a
+repository seeded before this release keeps a version-control rule naming a
+ticket branch `<task-id>-<slug>`, which is not unique across efforts. `/aep:update`
+reconciles rules against law that changed under them and will report the
+divergence; the decision is yours. The convention is forward-only either way:
+existing branches keep the names they have, still resolve by what their commits
+touched, and renaming a live one takes away a claim somebody may be holding.
+
 ## 3.0.0
 
 Ownership stops being something an artifact claims about itself, frontmatter

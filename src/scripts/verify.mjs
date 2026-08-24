@@ -2608,16 +2608,24 @@ section('release', () => {
     return true;
   });
 
-  // The entry for this release, up to the previous one. Scoped, because every
-  // subject below is discussed somewhere in the file's history and a search of
-  // the whole document would pass on a release that said nothing.
-  const entry = () => {
-    const from = changelog.indexOf(`## ${specVersion}`);
+  // One release's entry, up to the next heading. Scoped, because every subject
+  // below is discussed somewhere in the file's history and a search of the whole
+  // document would pass on a release that said nothing.
+  const entry = (version = specVersion) => {
+    const from = changelog.indexOf(`## ${version}`);
     if (from < 0) return '';
     const rest = changelog.slice(from);
     const next = rest.slice(1).search(/^## \d/m);
     return next < 0 ? rest : rest.slice(0, next + 1);
   };
+
+  // The release those removals belong to. `RETIRED_FIELDS` and `RETIRED_DIRS`
+  // describe what 3.0 stopped accepting, so the entry that must name them is
+  // 3.0.0's and not whichever release was cut most recently. Bound to the
+  // newest entry, these four asked every later release to repeat a removal it
+  // did not make, which is a suite that fails on the next release for being
+  // correct.
+  const REMOVALS = '3.0.0';
 
   // What an upgrading repository cannot find out by reading its own tree: every
   // field and directory that stopped being legal, every command that stopped
@@ -2625,19 +2633,19 @@ section('release', () => {
   // under. A release that removes something and does not say so is one every
   // repository discovers through a validation failure.
   assert('the changelog names every retired field', () =>
-    RETIRED_FIELDS.every((field) => new RegExp(`\`${field}\``).test(entry())));
+    RETIRED_FIELDS.every((field) => new RegExp(`\`${field}\``).test(entry(REMOVALS))));
   assert('the changelog names every directory this release stopped shipping', () =>
-    RETIRED_DIRS.every(({ dir }) => entry().includes(`\`${dir}/\``)));
+    RETIRED_DIRS.every(({ dir }) => entry(REMOVALS).includes(`\`${dir}/\``)));
   assert('the changelog names the commands this release removed', () =>
-    /Two skills are gone/.test(entry())
-    && entry().includes('`/commit`')
-    && entry().includes('skills/tasks/labels.md'));
+    /Two skills are gone/.test(entry(REMOVALS))
+    && entry(REMOVALS).includes('`/commit`')
+    && entry(REMOVALS).includes('skills/tasks/labels.md'));
   assert('the changelog names both ways a tree is classified', () =>
-    /Two mechanisms classify a tree/.test(entry())
-    && /carrying `owner:`/.test(entry())
-    && /classified by the manifest/.test(entry()));
+    /Two mechanisms classify a tree/.test(entry(REMOVALS))
+    && /carrying `owner:`/.test(entry(REMOVALS))
+    && /classified by the manifest/.test(entry(REMOVALS)));
   assert('the changelog states when the older classifier goes', () =>
-    /no repository the maintainer knows of/.test(entry()));
+    /no repository the maintainer knows of/.test(entry(REMOVALS)));
 
   assert('a licence ships', () => fs.existsSync(path.join(REPO, 'LICENSE')));
 
@@ -4334,6 +4342,321 @@ section('the specification', () => {
     const hierarchy = headingBlock(specText, '10. Policies and rules');
     return /an upgrade rechecks it against the release being installed/.test(hierarchy);
   });
+});
+
+// --- 19.3 scope is computed from the branch ---------------------------------
+// The pair that carries this section is a branch a runtime named. `t3code/<hex>`
+// resolves to its effort by what its commits touched, and the same branch
+// renamed to another effort's exact directory name still resolves to the first.
+// A resolution that read the name would satisfy every other assertion here and
+// fail those two, which is why they are written as a pair rather than as one
+// happy path.
+
+section('scope', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-'));
+  const aep = path.join(dir, '.aep');
+
+  const git = (...args) =>
+    execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  const write = (file, body) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, body, 'utf8');
+  };
+  const effortFile = (effort, ...parts) => path.join(aep, 'efforts', effort, ...parts);
+  const stub = (heading) => `---\nstatus: open\n---\n\n# ${heading}\n`;
+
+  const run = (command, options = {}) => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'scope.mjs'), command, '--root', options.root ?? aep],
+      { cwd: options.cwd ?? dir, encoding: 'utf8' },
+    );
+    return { out: result.stdout, err: result.stderr, code: result.status };
+  };
+  const fieldOf = (out, label) => new RegExp(`^${label}\\s+(.*)$`, 'm').exec(out)?.[1]?.trim() ?? null;
+
+  git('init', '--quiet', '-b', 'main');
+  git('config', 'user.email', 'suite@example.invalid');
+  git('config', 'user.name', 'suite');
+  // `resolveAepRoot` accepts a candidate only where it holds `protocol.md`, and
+  // an explicit `--root` that fails that test falls through to wherever the
+  // script itself sits. Without this copy every assertion below would answer
+  // about this repository while looking as though it had read the fixture.
+  fs.mkdirSync(aep, { recursive: true });
+  fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+  write(path.join(dir, 'README.md'), 'fixture\n');
+  write(effortFile('40-alpha', 'spec.md'), stub('alpha'));
+  write(effortFile('41-beta', 'spec.md'), stub('beta'));
+  // A ticket id two efforts both hold, and one only a single effort holds. The
+  // first must resolve to neither and the second to its own.
+  write(effortFile('40-alpha', 'tickets', '03-shared-id.md'), stub('shared'));
+  write(effortFile('41-beta', 'tickets', '03-shared-id.md'), stub('shared'));
+  write(effortFile('41-beta', 'tickets', '07-only-beta.md'), stub('only beta'));
+  git('add', '-A');
+  git('commit', '--quiet', '-m', 'base');
+
+  const touch = (effort, name, body) => {
+    write(effortFile(effort, name), body);
+    git('add', '-A');
+    git('commit', '--quiet', '-m', `${effort} ${name}`);
+  };
+
+  assert('the default branch holds no claim, which is unscoped and exit 1', () => {
+    const { out, code } = run('read');
+    if (fieldOf(out, 'claim') !== 'unscoped') throw new Error(`claim on the base branch: ${out}`);
+    if (code !== 1) throw new Error(`exit ${code}, expected 1 for unscoped`);
+    if (fieldOf(out, 'base') === null) throw new Error(`no base reported: ${out}`);
+    return true;
+  });
+
+  git('checkout', '--quiet', '-b', 't3code/deadbeef');
+
+  assert('a runtime-named branch with no commit of its own is unscoped', () => {
+    const { out, code } = run('read');
+    return fieldOf(out, 'claim') === 'unscoped' && code === 1;
+  });
+
+  touch('40-alpha', 'plan.md', '---\nuse-when: "building"\n---\n\n# Architecture\n');
+
+  assert('the same branch resolves to the effort its commit touched', () => {
+    const { out, code } = run('read');
+    if (fieldOf(out, 'claim') !== '40-alpha') throw new Error(`claim: ${out}`);
+    if (code !== 0) throw new Error(`exit ${code}, expected 0 for a claim`);
+    return true;
+  });
+
+  assert('renaming the branch to another effort does not move the claim', () => {
+    // The perturbation for the content path. Named `41-beta`, which is the exact
+    // directory name of the other effort, so a name match would answer `41-beta`
+    // and a content match answers `40-alpha`.
+    git('branch', '-m', '41-beta');
+    const named = git('rev-parse', '--abbrev-ref', 'HEAD').trim();
+    if (named !== '41-beta') throw new Error(`the rename did not take: ${named}`);
+    const claim = fieldOf(run('read').out, 'claim');
+    git('branch', '-m', 't3code/deadbeef');
+    if (claim !== '40-alpha') throw new Error(`the name answered instead of the commits: ${claim}`);
+    return true;
+  });
+
+  assert('a branch touching two efforts claims both, and check still passes', () => {
+    git('checkout', '--quiet', '-b', 'two-efforts');
+    write(effortFile('40-alpha', 'spec.md'), stub('alpha moved'));
+    write(effortFile('41-beta', 'spec.md'), stub('beta moved'));
+    git('add', '-A');
+    git('commit', '--quiet', '-m', 'both');
+    const { out, code } = run('read');
+    if (fieldOf(out, 'claim') !== '40-alpha, 41-beta') throw new Error(`claim: ${out}`);
+    if (code !== 0) throw new Error(`exit ${code}`);
+    const checked = run('check');
+    if (checked.code !== 0) throw new Error(`check on a two-effort claim: ${checked.out}`);
+    return true;
+  });
+
+  assert('the working set outside the claim is listed, and check exits 1', () => {
+    git('checkout', '--quiet', 't3code/deadbeef');
+    // Three shapes at once: modified, staged, and untracked. The untracked one
+    // carries a space and a non-ASCII character, which `git status --porcelain`
+    // quotes without `-z` and which then matches no prefix and vanishes.
+    write(effortFile('41-beta', 'spec.md'), stub('edited outside the claim'));
+    write(effortFile('41-beta', 'tickets', '09-staged.md'), stub('staged'));
+    git('add', path.join(aep, 'efforts', '41-beta', 'tickets', '09-staged.md'));
+    write(effortFile('41-beta', 'a note éà spaces.md'), 'untracked\n');
+    write(effortFile('40-alpha', 'spec.md'), stub('edited inside the claim'));
+    write(path.join(dir, 'README.md'), 'edited source, which the rule does not cover\n');
+
+    const { out, code } = run('check');
+    if (code !== 1) throw new Error(`exit ${code}, expected 1 with work outside the claim`);
+    for (const wanted of ['41-beta/spec.md', '41-beta/tickets/09-staged.md', 'a note éà spaces.md']) {
+      if (!out.includes(wanted)) throw new Error(`not listed: ${wanted}\n${out}`);
+    }
+    // The listed paths only. The header names the claim, so searching the whole
+    // output for the claimed effort finds the header and proves nothing.
+    const listed = out.split('\n').filter((line) => line.startsWith('  ')).map((line) => line.trim());
+    const wrong = listed.filter((file) => file.includes('40-alpha') || file.includes('README.md'));
+    if (wrong.length > 0) throw new Error(`listed what the rule does not cover: ${wrong.join(', ')}`);
+    return true;
+  });
+
+  assert('an empty claim takes any effort, so check passes on it', () => {
+    git('stash', '--quiet', '--include-untracked');
+    git('checkout', '--quiet', 'main');
+    const { out, code } = run('check');
+    if (code !== 0) throw new Error(`exit ${code} on an empty claim: ${out}`);
+    return /unscoped/.test(out);
+  });
+
+  assert('a branch named for a ticket only one effort holds resolves to it', () => {
+    git('checkout', '--quiet', '-b', '07-only-beta');
+    return fieldOf(run('read').out, 'claim') === '41-beta';
+  });
+
+  assert('a ticket id two efforts hold names neither of them', () => {
+    git('checkout', '--quiet', 'main');
+    git('checkout', '--quiet', '-b', '03-shared-id');
+    return fieldOf(run('read').out, 'claim') === 'unscoped';
+  });
+
+  assert('a linked worktree is enforced and names the sibling holding a branch', () => {
+    git('checkout', '--quiet', 'main');
+    const linked = path.join(dir, 'linked');
+    git('worktree', 'add', '--quiet', linked, 't3code/deadbeef');
+
+    const inside = run('read', { cwd: linked, root: path.join(linked, '.aep') });
+    const isolation = fieldOf(inside.out, 'isolation') ?? '';
+    if (!/^worktree, enforced/.test(isolation)) throw new Error(`inside a worktree: ${inside.out}`);
+    if (!inside.out.includes(`main at `)) throw new Error(`the sibling branch is not named: ${inside.out}`);
+
+    const outside = fieldOf(run('read').out, 'isolation') ?? '';
+    if (!/^checkout, /.test(outside)) throw new Error(`in the main checkout: ${outside}`);
+
+    // The word `enforced` rests on this refusal, so the refusal is asserted
+    // rather than assumed.
+    let refused = false;
+    try {
+      git('worktree', 'add', '--quiet', path.join(dir, 'second'), 't3code/deadbeef');
+    } catch {
+      refused = true;
+    }
+    git('worktree', 'remove', '--force', linked);
+    if (!refused) throw new Error('git allowed two worktrees on one branch');
+    return true;
+  });
+
+  assert('a tree git cannot read is exit 2 rather than an answer', () => {
+    const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-nogit-'));
+    fs.mkdirSync(path.join(bare, '.aep', 'efforts'), { recursive: true });
+    fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(bare, '.aep', 'protocol.md'));
+    const { code, out } = run('read', { cwd: bare, root: path.join(bare, '.aep') });
+    fs.rmSync(bare, { recursive: true, force: true });
+    if (code !== 2) throw new Error(`exit ${code} with no git, expected 2. stdout: ${out}`);
+    return true;
+  });
+
+  assert('a root that is not an AEP tree is refused rather than answered about', () => {
+    // The trap this closes: an explicit root that failed to resolve used to fall
+    // through to wherever the script sat, so a scope read pointed at the wrong
+    // place answered `unscoped` about a different tree. `unscoped` means take
+    // anything, so the fail-open direction was the dangerous one.
+    const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-notaep-'));
+    const { code, out, err } = run('read', { cwd: dir, root: bare });
+    fs.rmSync(bare, { recursive: true, force: true });
+    if (code !== 2) throw new Error(`exit ${code} for a root holding no protocol.md. stdout: ${out}`);
+    if (!err.includes(bare)) throw new Error(`the refusal does not name the root given: ${err}`);
+    return true;
+  });
+
+  assert('the script ships, and reaches an installed tree', () => {
+    if (!PAYLOAD_SCRIPTS.includes('scope.mjs')) throw new Error('not in PAYLOAD_SCRIPTS');
+    return fs.existsSync(path.join(installFixture().aep, 'scripts', 'scope.mjs'));
+  });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// --- 19.3 the surfaces that state the rule ----------------------------------
+
+section('scope surfaces', () => {
+  // Every prose matcher here runs over `flat`, because a shipped file wraps at
+  // eighty columns and a phrase that happens to straddle a line break would
+  // fail an assertion the text actually satisfies.
+  const policy = flat(readSrc('policies', 'execution.md'));
+
+  assert('the policy has a run read its claim, computed rather than judged', () =>
+    /scope\.mjs read/.test(policy) && /computed rather than judged/.test(policy));
+  assert('the policy forbids writing another effort and leaves reading alone', () =>
+    /MUST NOT write a file belonging to an effort outside its claim/.test(policy)
+    && /Reading is unrestricted/.test(policy));
+  assert('confinement has no exemptions, tree-wide subjects included', () =>
+    /There are no exemptions/.test(policy)
+    && /\[\[skills\/prune\]\]/.test(policy)
+    && /unscoped checkout/.test(policy));
+  assert('the policy states the mismatch in both directions', () =>
+    /stops on a dirty tree and switches on a clean one/.test(policy)
+    && /uncommitted paths/.test(policy));
+  assert('the policy states the ambiguity stop and what an empty claim permits', () =>
+    /ends the turn listing the set/.test(policy)
+    && /An empty claim is unscoped and takes any effort/.test(policy));
+  assert('the policy requires a ticket branch unique across efforts', () =>
+    /A ticket branch name MUST be unique across efforts/.test(policy));
+
+  // Pinned by name, exactly as the position read is: a ninth skill acquiring one
+  // is a decision, and a decision that arrives as a drift is one nobody made.
+  const EFFORT_SKILLS = ['implement', 'plan', 'prune', 'refine', 'review', 'specify', 'survey', 'tasks'];
+  const readsScope = SKILLS
+    .filter((name) => /scope\.mjs read/.test(readSrc('skills', `${name}.md`)))
+    .sort();
+  assert('exactly the eight effort skills invoke scope.mjs', () =>
+    JSON.stringify(readsScope) === JSON.stringify([...EFFORT_SKILLS].sort()));
+  if (JSON.stringify(readsScope) !== JSON.stringify([...EFFORT_SKILLS].sort())) {
+    process.stdout.write(`        on disk: ${readsScope.join(', ')}\n`);
+  }
+
+  assert('each of the eight puts the claim and the isolation in Position', () => {
+    const missing = EFFORT_SKILLS.filter((name) => {
+      const text = flat(readSrc('skills', `${name}.md`));
+      return !(/claim and the isolation go in/.test(text) && /`Position`/.test(text));
+    });
+    if (missing.length > 0) throw new Error(missing.join(', '));
+    return true;
+  });
+
+  const implement = flat(readSrc('skills', 'implement.md'));
+  assert('the runner says an empty claim leaves it unchanged', () =>
+    /An empty claim takes any effort/.test(implement) && /unscoped run is unchanged/.test(implement));
+  assert('the runner states the mismatch it performs', () =>
+    /switches on a clean one/.test(implement)
+    && /Clean: check that effort's branch out/.test(implement)
+    && /uncommitted paths/.test(implement));
+  assert('the runner keeps the marker read beside the scope read', () =>
+    /position\.mjs check/.test(implement) && /never merged/.test(implement));
+
+  const specify = flat(readSrc('skills', 'specify.md'));
+  assert('specify reads a new branch base from the repository rule', () =>
+    /`\[\[rules\/version-control\]\]` says which shape this repository is in/.test(specify)
+    && /the base is the default branch's tip/.test(specify));
+
+  for (const name of ['prune', 'survey']) {
+    const text = flat(readSrc('skills', name + '.md'));
+    assert(`${name} is confined like everything else`, () =>
+      /buys no exemption/.test(text) && /unscoped checkout/.test(text));
+  }
+
+  const seedRule = flat(readSrc('seed', 'rules', 'version-control.md'));
+  assert('the seeded rule namespaces a ticket branch by its effort', () =>
+    /`<effort>\/<ticket-id>-<slug>`/.test(seedRule));
+  assert('the seeded rule says why the namespace exists', () =>
+    /restart at `01`/.test(seedRule) && /\[\[policies\/execution\]\]/.test(seedRule));
+  assert('no shipped rule still names a bare ticket branch', () =>
+    !/named\s+`<task-id>-<slug>`/.test(seedRule));
+  // The runner shows the branch names a run creates, so a bare example there
+  // contradicts the rule shipped beside it, and a repository following both
+  // gets two answers for one name.
+  assert('the runner shows a ticket branch namespaced by its effort', () =>
+    /ticket branch\s+`?<effort>\/<ticket-id>-<slug>/.test(implement)
+    && !/ticket branch\s+`?<ticket-id>-<slug>/.test(implement));
+  assert('the seeded rule says where a new effort branch is based, both shapes', () =>
+    /A new effort's branch is based on/.test(seedRule)
+    && /the default branch's tip/.test(seedRule)
+    && /the current branch, which is what stacking means/.test(seedRule));
+
+  const t3 = flat(readSrc('seed', 'references', 't3code.md'));
+  assert('the t3 Code reference requires the worktree path to be ignored', () =>
+    /gitignored/.test(t3) && /ls-files/.test(t3));
+
+  const plan = flat(readSrc('skills', 'plan.md'));
+  assert('the plan skill writes plan.md rather than extending the spec', () =>
+    /Writes the effort's `plan\.md`/.test(plan)
+    && /efforts\/<effort>\/plan\.md/.test(plan)
+    && !/into `spec\.md`/.test(plan));
+
+  assert('specs.md defines the claim against the working set', () =>
+    specText.includes('**own commits**') && specText.includes('Confinement is the working set measured against the claim.'));
+  assert('specs.md keeps isolation detected rather than required', () =>
+    specText.includes('MUST NOT require worktrees'));
+  assert('specs.md requires a ticket branch unique across efforts', () =>
+    /ticket branch name MUST be unique across efforts/i.test(specText));
+  assert('specs.md no longer calls gitignored state per-clone', () =>
+    !specText.includes('per-clone'));
 });
 
 section('the guard fires', () => {
