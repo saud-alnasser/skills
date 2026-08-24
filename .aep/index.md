@@ -92,7 +92,7 @@ Start at [[protocol]].
 | --- | --- | --- | --- | --- | --- |
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
 | 47-post-merge-labels | — | **missing** | 0 | 0 | 0 |
-| 51-branch-scope | accepted | [[efforts/51-branch-scope/spec]] | 1 | 0 | 0 |
+| 51-branch-scope | accepted | [[efforts/51-branch-scope/spec]] | 1 | 0 | 8 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -134,6 +134,14 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/45-aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/26-no-unconditional-tracker-call]] fix(protocol): nothing shipped reaches for a tracker before establishing there is one | 45-aep-3 | resolved | — |
+| [[efforts/51-branch-scope/tickets/01-scope-script]] feat(scripts): the claim, the working set, and the isolation are computed | 51-branch-scope | open | — |
+| [[efforts/51-branch-scope/tickets/02-specification]] docs(specs): the specification says what a run is scoped by | 51-branch-scope | open | — |
+| [[efforts/51-branch-scope/tickets/03-execution-policy]] feat(policies): the claim is read before the work, and confinement has no exemptions | 51-branch-scope | open | 02 |
+| [[efforts/51-branch-scope/tickets/04-skills-entry]] feat(skills): a skill that names an effort resolves its scope on entry | 51-branch-scope | open | 01, 03 |
+| [[efforts/51-branch-scope/tickets/05-plan-skill-correction]] fix(skills): the plan skill stops contradicting the specification | 51-branch-scope | open | 04 |
+| [[efforts/51-branch-scope/tickets/06-seeds]] feat(seed): the seeded rules and references state their halves | 51-branch-scope | open | 03 |
+| [[efforts/51-branch-scope/tickets/07-verify]] test(verify): every claim this effort adds is asserted, and each was seen to fail | 51-branch-scope | open | 01, 02, 03, 04, 05, 06 |
+| [[efforts/51-branch-scope/tickets/08-regenerate]] chore(dist): the adapter is regenerated and this repository reinstalls its own tree | 51-branch-scope | open | 07 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
