@@ -59,6 +59,12 @@ exists, put the options on the table — each named, with what it buys, what it
 costs, what it risks, and what it means for maintenance — recommend one, and let
 the human choose. **An alternative left unmentioned is a decision made silently.**
 
+**A converge round is not a way around this.** Converge closes gaps below the
+plan and raises anything above it (`[[policies/execution]]`). A requirement the
+approach cannot satisfy is the plan being wrong, and a ticket appended against it
+is this prohibition being evaded one round at a time — which reads as progress,
+because a ticket got written.
+
 ## Publishing
 
 Never push, never publish, never open a pull request unasked

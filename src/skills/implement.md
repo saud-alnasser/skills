@@ -63,9 +63,9 @@ say so.
 
 **When the frontier is empty and unresolved tickets remain, the blocking work is
 what to build.** An edge names a ticket, that ticket is somewhere, and finding it
-is reading the graph rather than inventing work. An empty frontier is reported as
-the end of the run **only when nothing unresolved remains at all**, which is
-`frontier.mjs` exiting 1.
+is reading the graph rather than inventing work. When nothing unresolved remains
+at all — `frontier.mjs` exiting 1 — **go to step 5 and converge.** That is never
+the end of the run by itself.
 
 Where the tickets live is this repository's business — an external tracker, or
 `efforts/<effort>/tickets/`. Read `[[references]]` rather than assuming. **In an
@@ -193,19 +193,49 @@ Further changes amend that commit. Never push, never publish
 
 **Then schedule again.** Back to step 1, against the tip this wave just made.
 
-## 5 — When the effort has no unresolved ticket left
+## 5 — Converge
 
-Two judgements that a single ticket's diff cannot support, so they are asked once
-the effort is whole rather than at each commit.
+**No unresolved ticket left is not the end of the run.** Tickets were a map of
+the work drawn before the work was done, and a map running out is not the
+territory being covered. Converge is where the two claims are separated
+(`[[policies/execution]]`).
 
-- **Is the effort implemented?** Every acceptance criterion in `spec.md` met, not
-  every ticket closed. A ticket can be resolved against a criterion nobody
-  checked.
-- **Did the change move a boundary, retire a concept, or falsify a `[[contexts]]`
-  or a `[[references]]`?** Read the effort's diff entire, which no single ticket
-  ever saw. **What it falsified is corrected in this effort**, so the change and
-  the thing it contradicts never land apart. A concept nobody had named is a
-  finding to report, never a licence to name it here.
+Read the effort's **whole diff** — which no single ticket ever saw — against
+`spec.md` and `plan.md`, and answer three things:
+
+1. **Is every acceptance criterion in `spec.md` met?** Not: is every ticket
+   closed. A ticket can be resolved against a criterion nobody checked.
+2. **Did the change move a boundary, retire a concept, or falsify a
+   `[[contexts]]` or a `[[references]]`?** What it falsified is corrected **in
+   this effort**, so the change and the thing it contradicts never land apart. A
+   concept nobody had named is a finding to report, never a licence to name it
+   here.
+3. **For each gap: was it not built, or does the approach not work?**
+
+| The gap is | Do this |
+| --- | --- |
+| **work nobody built** | append tickets for it, and go back to step 1. That is round two |
+| **an approach that cannot satisfy the requirement** | **stop.** Return-to-plan, the first trip-wire. Never append a ticket against it |
+
+**Converge appends tickets. It never edits `spec.md` or `plan.md`.** A converge
+that could edit the spec would close every gap it found by narrowing what was
+asked, and the run would end green having agreed with itself.
+
+### At most twice
+
+Converge, build the gap, converge again. **A third round is not run.** Name the
+remaining gaps at the close and in the pull request, leave the pull request **not
+ready**, and end.
+
+*Why two: a third round finding new gaps means the plan was wrong rather than the
+work incomplete, and that is the trip-wire above rather than more rounds.*
+
+### When a round finds no gap
+
+The effort is complete. Finalise the pull request description, compute `size:`,
+move the issue and the pull request to `status: in review`, and **mark the pull
+request ready** — the run's own last act, permitted by
+`[[rules/version-control]]`. The human reviews and merges.
 
 ## What may stop the run
 
@@ -265,3 +295,7 @@ Every acceptance criterion of every ticket has been checked and the check was
 shown, each ticket landed as one commit on the effort branch, the tests the
 rules require pass, nothing outside the effort changed, and every ticket's
 status reflects reality. A parked ticket is named, with what parked it.
+
+**And converge ran.** A run that stopped because the tickets ran out has not
+finished; it has run out of map. The effort is done when a converge round found
+no gap, or when the cap was reached and the remaining gaps were named.

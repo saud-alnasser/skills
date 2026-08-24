@@ -286,3 +286,68 @@ rather than each child's summary concatenated.
 
 That account is text a human reads, so `[[policies/reporting]]` governs how it is
 written.
+
+## Converge decides when the effort is done
+
+**An exhausted ticket list and a satisfied spec are different claims.** Tickets
+are a map of the work, drawn before the work was done, and a map that runs out
+is not the territory being covered. So when no unresolved ticket remains the run
+**converges**: it assesses the codebase against `spec.md` and `plan.md`, and
+where the spec is unmet it appends the remaining work as tickets and carries on.
+
+**The effort is complete when a converge round finds no gap.** Not when the
+tickets run out.
+
+### Not built, or does not work
+
+Converge separates two findings that look identical from inside one diff:
+
+| What converge found | What it does |
+| --- | --- |
+| **work that was not built** | appends tickets, and the run continues |
+| **an approach that cannot satisfy a requirement** | stops on the return-to-plan trip-wire, above |
+
+**Converge never builds around the second.** A gap that keeps reappearing
+because the design cannot close it is the plan being wrong, and appending a
+ticket against it buys another round of the same failure while looking like
+progress. *Why this line matters more than it reads: autonomy below the plan is
+what a run is for, and converge is the one stage positioned to quietly acquire
+autonomy above it. `[[policies/engineering]]`'s prohibition on silently deciding
+architecture is what it would be evading.*
+
+### It appends. It never edits
+
+**Converge MUST NOT edit `spec.md` or `plan.md`.** It writes tickets and nothing
+else.
+
+*Why: converge is the last thing running before the work is handed over, and it
+is the only stage with both the whole diff in view and nobody reviewing it. A
+converge that could edit the spec would be able to close every gap it found by
+narrowing what the spec asked for, and the run would end green having quietly
+agreed with itself. A spec that turns out to be wrong is a return-to-plan event,
+which reaches the human.*
+
+### Two rounds
+
+**Converge runs at most twice per effort.** Converge, build the gap, converge
+again. Past that the remaining gaps are named at the close and in the tracker,
+and the run ends rather than grinding.
+
+*Why two, and why not configurable: a third round finding new gaps means the plan
+was wrong rather than the work incomplete, and that is the return-to-plan
+trip-wire rather than more rounds. A configurable cap is a number nobody can set
+correctly until a run has already gone wrong.*
+
+### The two judgements a single diff cannot support
+
+Both are asked once the effort is whole, because neither is visible from one
+ticket:
+
+- **Is the effort implemented?** Every acceptance criterion in `spec.md` met —
+  not every ticket closed. A ticket can be resolved against a criterion nobody
+  checked.
+- **Did the change move a boundary, retire a concept, or falsify a
+  `[[contexts]]` or a `[[references]]`?** Read the effort's diff entire, which no
+  single ticket ever saw. **What it falsified is corrected in this effort**, so
+  the change and the thing it contradicts never land apart. A concept nobody had
+  named is a finding to report, never a licence to name it here.

@@ -809,8 +809,8 @@ section('skills', () => {
     /frontier\.mjs/.test(runner) && /quotes it rather than holding\s+the graph/.test(runner));
   assert('an empty frontier with work left means building what blocks it', () =>
     /the blocking work is\s+what to build/.test(runner));
-  assert('an empty frontier ends the run only when nothing unresolved remains', () =>
-    /only when nothing unresolved remains/.test(runner));
+  assert('an empty frontier sends the run to converge rather than ending it', () =>
+    /When nothing unresolved remains\s+at all/.test(runner) && /go to step 5 and converge/.test(runner));
   assert('the runner returns to scheduling after each wave lands', () =>
     /Then schedule again/.test(runner));
 
@@ -877,13 +877,12 @@ section('skills', () => {
     /may depend on triggering compaction/.test(runner) &&
     /An agent cannot invoke\s+it/.test(runner));
 
-  // The two judgements a single task's diff cannot support. Each named
-  // separately: one assertion over both passes while either is missing, and the
-  // second is the one that quietly goes, because it is the expensive one.
-  assert('the effort-level judgement asks whether the effort is implemented', () =>
-    /has no unresolved ticket left/.test(runner) && /Is the effort implemented/.test(runner));
-  assert('the effort-level judgement asks what the change falsified', () =>
-    /falsif/i.test(runner) && /corrected in this effort/.test(runner));
+  // The two judgements a single task's diff cannot support. They live under
+  // converge now, and the `converge` section asserts both halves; what is
+  // asserted here is that the runner still routes to them, since a runner whose
+  // step 5 went missing reads exactly like one whose tickets ran out.
+  assert('the runner reaches converge as its own step', () =>
+    /^## 5 .*Converge$/m.test(runner));
 
   assert('skills/implement forbids splitting a task across sub-agents', () =>
     /never split across sub-agents/i.test(readSrc('skills', 'implement.md')));
@@ -1191,6 +1190,80 @@ section('policies', () => {
     /policies\s+→\s+rules/.test(authority));
   assert('policies/authority forbids a rule softening a policy', () =>
     /never soften it/i.test(authority));
+});
+
+// Converge is where the run decides it is finished. It is also the one stage
+// with the whole diff in view and nobody reviewing it, so what it may not do is
+// pinned as hard as what it does.
+section('converge', () => {
+  const execution = readSrc('policies', 'execution.md');
+  const engineering = readSrc('policies', 'engineering.md');
+  const runner = readSrc('skills', 'implement.md');
+
+  assert('the policy separates an exhausted ticket list from a satisfied spec', () =>
+    /An exhausted ticket list and a satisfied spec are different\s+claims/.test(execution));
+  assert('the runner says an empty frontier is not the end of the run', () =>
+    /go to step 5 and converge/.test(runner) &&
+    /never\s+the end of the run by itself/.test(runner));
+  assert('the effort is complete when a round finds no gap, not when tickets run out', () =>
+    /\*\*The effort is complete when a converge round finds no gap\.\*\*/.test(execution));
+
+  // The two findings that look identical from inside one diff. Dropping either
+  // half leaves a converge that still reads complete and quietly builds around
+  // a plan that cannot work.
+  for (const [what, where, pattern] of [
+    ['work that was not built appends tickets', execution, /\*\*work that was not built\*\* \| appends tickets/],
+    ['an approach that cannot satisfy stops', execution, /cannot satisfy a requirement\*\* \| stops on the return-to-plan/],
+    ['converge never builds around the second', execution, /\*\*Converge never builds around the second\.\*\*/],
+    ['the runner asks which of the two a gap is', runner, /was it not built, or does the approach not work/],
+    ['the runner never appends against the second', runner, /Never append a ticket against it/],
+  ]) {
+    assert(what, () => pattern.test(where));
+  }
+
+  // The prohibition. Stated in both places a reader could arrive from, because
+  // a converge that may edit the spec can close any gap by narrowing the ask.
+  assert('the policy forbids converge editing spec.md or plan.md', () =>
+    /\*\*Converge MUST NOT edit `spec\.md` or `plan\.md`\.\*\*/.test(execution));
+  assert('the runner states the same prohibition where converge runs', () =>
+    /It never edits `spec\.md` or `plan\.md`/.test(runner));
+  assert('the reason for the prohibition is stated, not left as a rule', () =>
+    /close every gap it found by narrowing what was\s+asked/.test(runner) ||
+    /narrowing what the spec asked for/.test(execution));
+
+  // A cap with no reason beside it is a magic number, and the next reader
+  // raises it.
+  assert('the cap is two rounds, in both the policy and the runner', () =>
+    /\*\*Converge runs at most twice per effort\.\*\*/.test(execution) &&
+    /### At most twice/.test(runner));
+  assert('the reason for two is stated rather than left as a value', () =>
+    /Why two, and why not configurable/.test(execution) &&
+    /a third round finding new gaps means the plan\s+was wrong/.test(execution));
+  assert('reaching the cap names the gaps and leaves the pull request not ready', () =>
+    /leave the pull request \*\*not\s+ready\*\*/.test(runner) &&
+    /remaining gaps at the close and in the pull request/.test(runner));
+
+  // Converge inherited these from the commit skill this release removed. They
+  // are asked once the effort is whole because one ticket's diff cannot support
+  // either.
+  assert('converge owns whether the effort is implemented, criterion by criterion', () =>
+    /Is the effort implemented\?\*\* Every acceptance criterion in `spec\.md` met/.test(execution) &&
+    /Not: is every ticket\s+closed/.test(runner));
+  assert('converge owns whether the change falsified a context or a reference', () =>
+    /falsify a\s+`\[\[contexts\]\]` or a `\[\[references\]\]`/.test(execution) &&
+    /corrected \*\*in\s+this effort\*\*/.test(runner));
+
+  assert('a finished round readies the pull request, which the rule permits', () =>
+    /mark the pull\s+request ready/.test(runner) &&
+    /permitted by\s+`\[\[rules\/version-control\]\]`/.test(runner));
+
+  // Converge is a stage, not a fourth thing to type, and not a fourth
+  // trip-wire. Both are how it would grow.
+  assert('converge is not invocable and ships no skill of its own', () =>
+    !fs.existsSync(path.join(SRC, 'skills', 'converge.md')) && !SKILLS.includes('converge'));
+  assert('engineering.md says converge is not a route around deciding architecture', () =>
+    /\*\*A converge round is not a way around this\.\*\*/.test(engineering) &&
+    /evaded one round at a time/.test(engineering));
 });
 
 // --- §16.2 what a turn tells the human --------------------------------------
