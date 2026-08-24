@@ -17,7 +17,12 @@ representation for is rewritten into that shape.
 Any of these means 1.x, whatever the directory is called: a `protocol.md` outside
 `.aep/`; a `policies/`, `decisions/`, or `designs/` directory **outside `.aep/`**;
 a `map.md` sitting in several directories; frontmatter declaring `owner:
-framework` or a bare `version:`.
+framework`.
+
+**A bare `version:` is not evidence of anything.** 1.x used it, and so does 3 —
+on `protocol.md`, the one artifact that declares a release. A classifier reading
+it would send a current tree here, and this skill installs a fresh layer beside
+the one already running.
 
 **`.aep/policies/` means the opposite.** AEP ships policies of its own, and they
 are protocol law — a current tree, not a 1.x one. The two uses of the word are

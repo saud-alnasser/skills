@@ -131,22 +131,19 @@ function collectEfforts(root) {
 }
 
 function render(root) {
-  const protocol = readArtifact(path.join(root, 'protocol.md'));
   const sections = SECTIONS.map((section) => ({
     ...section,
     rows: collect(root, section.dir, { flat: section.flat }),
   }));
   const efforts = collectEfforts(root);
 
-  // The index carries the release the bootstrap declares and nothing else. Its
-  // own `date` used to be the newest any artifact declared, which was a field
-  // computed from a field that no longer exists on the artifacts it read.
+  // No frontmatter at all. The index is derived, so both fields it used to
+  // carry were answers to questions nothing asks of it: ownership is a lookup
+  // now, and the release is `protocol.md`'s to declare. Writing them anyway put
+  // retired fields into every tree AEP generates, which an upgrade then reports
+  // as written under an older contract -- true of the file, and nothing the
+  // repository could act on, since the next run of this script rewrites it.
   const out = [];
-  out.push('---');
-  out.push(`aep: ${protocol.fields.aep ?? protocol.fields.version ?? 'unknown'}`);
-  out.push('owner: repository');
-  out.push('---');
-  out.push('');
   out.push(GENERATED_NOTICE);
   out.push('');
   out.push('# AEP index');

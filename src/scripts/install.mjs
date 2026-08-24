@@ -20,7 +20,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CANONICAL_ENTRYPOINT, readArtifact, walk, toPosix, isProtocolPath } from './contract.mjs';
+import {
+  CANONICAL_ENTRYPOINT, RETIRED_FIELDS, readArtifact, walk, toPosix, isProtocolPath,
+} from './contract.mjs';
 import { contentHash } from './release.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
@@ -31,6 +33,7 @@ import {
   PAYLOAD_FILES,
   PAYLOAD_SCRIPTS,
   PER_CLONE_DIRS,
+  RETIRED_DIRS,
   REPOSITORY_DIRS,
   SEEDS,
 } from './payload.mjs';
@@ -38,7 +41,7 @@ import {
 const report = {
   written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [], edited: [],
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
-  pointed: [],
+  pointed: [], unconverted: [], retiredDirs: [],
 };
 
 /** The distribution root, `src/`, since this script lives in `src/scripts/`. */
@@ -371,6 +374,41 @@ function installEntrypoints(repo, requested, dryRun) {
   }
 }
 
+/**
+ * Which contract a tree was written under, read from the tree itself.
+ *
+ * A tree carrying `owner:` on its artifacts is 2.x, classified by that field
+ * because that is what the field was for. A tree without it is 3, classified by
+ * the manifest. The version a tree declares is not consulted: a repository that
+ * hand-edited its bootstrap, or one written before the field existed, declares
+ * something that is not evidence of anything.
+ *
+ * **The removal condition is stated here rather than left to judgement: this
+ * branch goes when no repository the maintainer knows of still declares a 2.x
+ * layout.** A compatibility branch with no stated end is one nobody removes, and
+ * it is read on every upgrade forever.
+ */
+function carriesRetiredFields(aep) {
+  if (!fs.existsSync(aep)) return [];
+  return walk(aep)
+    .filter((file) => file.endsWith('.md'))
+    .filter((file) => {
+      const { fields } = readArtifact(file);
+      return RETIRED_FIELDS.some((field) => fields[field] !== undefined);
+    })
+    .map((file) => toPosix(aep, file));
+}
+
+/** An effort spec still holding the architecture 3 keeps in `plan.md`. */
+function specsHoldingArchitecture(aep) {
+  const efforts = path.join(aep, 'efforts');
+  if (!fs.existsSync(efforts)) return [];
+  return walk(efforts)
+    .filter((file) => path.basename(file) === 'spec.md')
+    .filter((file) => /^#\s+Architecture\s*$/m.test(fs.readFileSync(file, 'utf8')))
+    .map((file) => toPosix(aep, file));
+}
+
 function ensureDir(target, dryRun) {
   if (fs.existsSync(target)) return;
   if (!dryRun) fs.mkdirSync(target, { recursive: true });
@@ -480,6 +518,27 @@ function main() {
     const today = new Date().toISOString().slice(0, 10);
     rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
     collectNotices(declared);
+
+    // A directory a past release owned and this one does not ship. Reported
+    // rather than removed, and reported before the conversion list below,
+    // because a reader who deletes it themselves has answered the next item too.
+    for (const { dir, since, was } of RETIRED_DIRS) {
+      if (fs.existsSync(path.join(aep, dir))) {
+        report.retiredDirs.push(`.aep/${dir}/ (stopped being shipped in ${since}: ${was})`);
+      }
+    }
+
+    // What this script can recognise and must not convert. Both lists are the
+    // 2.x layout showing through, and both need a judgement -- a field carries
+    // content the manifest cannot place, and splitting a spec decides what is
+    // WHAT and what is HOW. `[[skills/update]]` does that with a human; the
+    // installer's whole job here is to make sure neither goes unnoticed.
+    for (const rel of carriesRetiredFields(aep)) {
+      report.unconverted.push(`${rel} (frontmatter written under an older contract)`);
+    }
+    for (const rel of specsHoldingArchitecture(aep)) {
+      report.unconverted.push(`${rel} (holds # Architecture, which 3 keeps in plan.md)`);
+    }
   }
 
   installSeeds(repo, from, aep, dryRun);
@@ -526,6 +585,10 @@ function main() {
   list('name collisions, a repository file stands where a moved one did', report.collided,
     (entry) => entry);
   list('protocol files no longer shipped, review then /prune', report.retired);
+  list('directories no longer shipped, review then /prune', report.retiredDirs,
+    (entry) => entry);
+  list('written under an older contract, /update converts these with you',
+    report.unconverted, (entry) => entry);
 
   // Last, and not as a counted list. Everything above is what the upgrade did;
   // this is the part it could not do for you, so it is the thing still open when

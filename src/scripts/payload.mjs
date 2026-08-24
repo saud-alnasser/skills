@@ -212,6 +212,23 @@ import { CANONICAL_ENTRYPOINT } from './contract.mjs';
  */
 export const LABEL_SEED = 'seed/labels.json';
 
+/**
+ * Directories a past release owned and this one does not ship.
+ *
+ * Not a move: a move relocates content, and these hold a concept that is gone.
+ * Not a deletion either -- deciding a file is obsolete is a human's call, and a
+ * repository may have written its own notes inside one. So an upgrade reports
+ * them and leaves them, which is what `retired` already means for a file.
+ *
+ * Without this list the failure is silent in the worst way: ownership is a
+ * lookup now, so a directory the manifest does not name reads as the
+ * repository's, and `.aep/modes/` sits in an upgraded tree forever with nothing
+ * saying it stopped meaning anything.
+ */
+export const RETIRED_DIRS = [
+  { dir: 'modes', since: '3.0.0', was: 'the working posture, now stated in each skill' },
+];
+
 /** Directories that are per-clone and gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];
 
