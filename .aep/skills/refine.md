@@ -8,7 +8,11 @@ Attacks an effort's `spec.md` until ambiguity and unresolved tradeoffs have
 surfaced. Optional, repeatable, and frequently the highest-value step in the
 spine.
 
-**Enters `[[modes/refine]]`.** Read it and hold its tradeoffs.
+**Posture.** Adversarial, on purpose. Find the reading of this spec under
+which the delivered thing is wrong and everybody was technically correct.
+Agreement is not the goal and is often the failure. **What this gives up** is
+momentum, and the human's comfort: refinement feels like obstruction while it
+is happening and like foresight afterwards.
 
 ## Procedure
 

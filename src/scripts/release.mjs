@@ -48,15 +48,22 @@ export function shippedArtifacts() {
 }
 
 /**
- * The artifact's content with the two computed lines removed.
+ * The artifact's content with the computed lines removed.
  *
  * Anything else moves the hash and earns the file a new stamp: a word of prose,
  * a frontmatter field, a line of a table.
+ *
+ * Three names for two lines. `version:` is what the bootstrap declares now and
+ * `aep:` is what it declared before 3.0.0, and both have to go: a hash covering
+ * the release number can never match, because the number is written into the
+ * file after the hash is taken. `date:` is retired and stays filtered while
+ * trees predating its removal are still upgrading, since this same hash is what
+ * identifies a file as one the protocol shipped.
  */
 export function contentHash(text) {
   const stable = text
     .split('\n')
-    .filter((line) => !/^aep:\s/.test(line) && !/^date:\s/.test(line))
+    .filter((line) => !/^(aep|version|date):\s/.test(line))
     .join('\n');
   return createHash('sha256').update(stable).digest('hex');
 }

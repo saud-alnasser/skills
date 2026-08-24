@@ -32,10 +32,12 @@ whichever runtime adapters the repository asks for.
    node <distribution>/scripts/install.mjs --into <repository>
    ```
 
-   It writes `protocol.md`, `rules/`, `modes/`, `skills/`, `agents/`,
-   `templates/`, `scripts/`, and `.aep/.gitignore` — all `owner: protocol`,
-   verbatim. It **refuses to overwrite any `owner: repository` file** and reports
-   what it skipped.
+   It writes `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`,
+   `scripts/`, and `.aep/.gitignore` verbatim — everything the release ships,
+   which it knows by exact path. It **writes nothing outside that set**, so
+   `rules/`, `contexts/`, `references/`, and `efforts/` are yours and stay
+   untouched, and it reports anything of yours found standing where the protocol
+   ships.
 
    It then seeds the repository-owned starting points, **each only where the
    evidence is there**:

@@ -1,5 +1,55 @@
 # Changelog
 
+## 3.0.0
+
+Ownership stops being something an artifact claims about itself, frontmatter
+shrinks to what decides whether to load a file, and `modes/` folds into the
+skills that entered it.
+
+### Changed
+
+- **Ownership is a lookup, not a declaration.** `scripts/contract.mjs` carries
+  the directory table and a generated manifest of the exact paths a release
+  ships. The installer consults it to decide what it may write and what it must
+  preserve, and the validator uses it to name a file standing in a protocol
+  directory that this release does not ship. Nothing reads `owner:` any more,
+  and the case the field could never catch, a file that simply omits it, is now
+  the same case as any other.
+
+- **Frontmatter is `use-when`, and `paths` where applicability follows the
+  repository.** Six fields are gone: `aep`, `date`, `kind`, `mode`, `report`,
+  and `owner`. `kind` restated the directory, `date` was a freshness claim
+  nothing checked, `report` chose between two shapes the reporting policy now
+  fixes at one, and the release is named once, in the bootstrap's `version:`,
+  instead of on every shipped file.
+
+  A tree you own is not edited by the upgrade, so your own rules and contexts
+  keep whatever they carry. Validation rejects a retired field only on a path
+  the protocol ships.
+
+- **`use-when` is checked rather than trusted.** Four mechanical checks, since
+  discovery now rests on this one field: it states an occasion rather than a
+  topic, it is not a restatement of the heading, it is not the file or directory
+  name, and it stays inside a word bound measured from the shipped corpus.
+
+- **`modes/` is gone.** A mode stated a posture, its mindset and what that
+  mindset gives up, and every one of those now sits inside the skill that used
+  to enter it, read at the moment it applies rather than fetched. Delete
+  `.aep/modes/`: the validator fails a tree that still has it. If you wrote a
+  mode of your own, its content belongs in your own skill or rule.
+
+### Added
+
+- **`scripts/frontier.mjs`**, shipped and installed. It reads an effort's
+  tickets and prints what is ready, what is blocked and on what, and what is
+  parked. Exit 0 while work remains, 1 when nothing is unresolved, 2 when the
+  graph cannot be read, so an unreadable effort never looks like a finished one.
+
+- **`scripts/manifest.mjs`**, build-only. It regenerates the shipped-path
+  manifest from the payload, and the suite fails when the committed one is
+  stale. A stale manifest fails open: a new file would be treated as the
+  repository's and never installed.
+
 ## 2.7.0
 
 What an agent writes for a human becomes governance, and an orchestrator owes one

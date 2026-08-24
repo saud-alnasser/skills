@@ -12,7 +12,6 @@ import path from 'node:path';
 import {
   PROTOCOL_DIRS,
   FORBIDDEN_DIRS,
-  MODES,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
@@ -87,17 +86,6 @@ function checkArtifact(root, file) {
   }
 
   // Situational fields, when present.
-  if (fields.mode !== undefined) {
-    if (!Array.isArray(fields.mode)) {
-      fail(rel, 'mode must be a YAML array, e.g. mode: [implement, review]');
-    } else {
-      for (const mode of fields.mode) {
-        if (!MODES.includes(mode)) {
-          fail(rel, `mode "${mode}" is not one of: ${MODES.join(', ')}`);
-        }
-      }
-    }
-  }
   if (fields.paths !== undefined && !Array.isArray(fields.paths)) {
     fail(rel, 'paths must be a YAML array');
   }
@@ -164,7 +152,9 @@ function checkArtifact(root, file) {
 function checkStructure(root) {
   for (const forbidden of FORBIDDEN_DIRS) {
     if (fs.existsSync(path.join(root, forbidden))) {
-      fail(`${forbidden}/`, 'this directory was retired and must not exist. See protocol.md');
+      fail(`${forbidden}/`, 'this directory was retired and must not exist. What it ' +
+        'held has moved or was dropped, and the notices for the release that retired ' +
+        'it say which. Move anything of yours out of it, then delete it');
     }
   }
 

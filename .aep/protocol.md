@@ -1,5 +1,5 @@
 ---
-version: 2.7.0
+version: 3.0.0
 use-when: "at the start of every session, before doing anything else in a repository that has a .aep/ directory"
 ---
 
@@ -30,7 +30,6 @@ to it.
 | **Tasks** | executable work derived from an effort | tickets, local or external |
 | **Agents** | who performs work, in what role | `agents/` |
 | **Skills** | reusable capabilities | `skills/` |
-| **Modes** | how to think during an activity | `modes/` |
 | **Worktrees** | isolated execution environments | `worktrees/` |
 | **Position** | lightweight operational state | `position/` |
 
@@ -47,7 +46,7 @@ but never soften it.
 ├── protocol.md    this file
 ├── index.md       derived discovery index — regenerate, never edit
 ├── policies/      AEP's governance      rules/  yours
-├── agents/  contexts/  modes/  references/  scripts/  skills/
+├── agents/  contexts/  references/  scripts/  skills/
 ├── templates/     skeletons for authoring a new artifact
 ├── efforts/<effort>/{spec.md, evidence/{research,prototypes}/, tickets/}
 ├── position/      per-clone, gitignored

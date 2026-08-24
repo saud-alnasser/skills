@@ -36,7 +36,6 @@ const SECTIONS = [
   { dir: 'rules', title: 'Rules', columns: ['Load when', 'Paths'] },
   { dir: 'contexts', title: 'Contexts', columns: ['Load when', 'Paths'] },
   { dir: 'references', title: 'References', columns: ['Load when'] },
-  { dir: 'modes', title: 'Modes', columns: ['Load when'] },
   { dir: 'skills', title: 'Skills', columns: ['Load when'], flat: true },
   { dir: 'agents', title: 'Agents', columns: ['Load when'] },
   { dir: 'templates', title: 'Templates', columns: ['Load when'] },

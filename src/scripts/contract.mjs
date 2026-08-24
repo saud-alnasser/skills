@@ -31,7 +31,7 @@ export const RETIRED_FIELDS = ['aep', 'date', 'kind', 'mode', 'report', 'owner',
  * `protocol.md` is the protocol's, and `index.md` is derived and regenerated in
  * place.
  */
-export const PROTOCOL_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates', 'scripts'];
+export const PROTOCOL_DIRS = ['policies', 'skills', 'agents', 'templates', 'scripts'];
 export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
 export const PROTOCOL_ROOT_FILES = ['protocol.md'];
 export const REPOSITORY_ROOT_FILES = ['index.md'];
@@ -43,14 +43,6 @@ export const PROTOCOL_FILES = [
   'agents/researcher.md',
   'agents/reviewer-correctness.md',
   'agents/reviewer-standards.md',
-  'modes/implement.md',
-  'modes/plan.md',
-  'modes/prototype.md',
-  'modes/refine.md',
-  'modes/research.md',
-  'modes/review.md',
-  'modes/specify.md',
-  'modes/test.md',
   'policies/artifacts.md',
   'policies/authority.md',
   'policies/engineering.md',
@@ -97,7 +89,6 @@ export const PROTOCOL_FILES = [
   'templates/agent.template.md',
   'templates/agents.template.md',
   'templates/context.template.md',
-  'templates/mode.template.md',
   'templates/protocol.template.md',
   'templates/prototype.template.md',
   'templates/reference.template.md',
@@ -242,24 +233,23 @@ export function useWhenProblems(value, { heading = '', name = '', directory = ''
   return problems;
 }
 
-/** The eight canonical modes. `mode:` is an array drawn from these. */
-export const MODES = [
-  'specify',
-  'plan',
-  'refine',
-  'implement',
-  'research',
-  'prototype',
-  'review',
-  'test',
-];
-
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
 
-/** Directories that must never exist under `.aep/`. */
-export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill'];
+/**
+ * Directories that must never exist under `.aep/`.
+ *
+ * A retired directory is not the same as one this release happens not to ship.
+ * The stray-file check names a file standing where the protocol ships and asks a
+ * human to move it; this names a directory whose whole concept is gone, where
+ * the answer is always the same and there is nothing to decide.
+ *
+ * `modes/` joins them at 3.0.0: each mode's posture now sits inside the skill
+ * that entered it, so a tree keeping the directory is governed by two copies of
+ * one text, which is the failure a retirement exists to prevent.
+ */
+export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill', 'modes'];
 
 /** The eighteen conforming skills. */
 export const SKILLS = [

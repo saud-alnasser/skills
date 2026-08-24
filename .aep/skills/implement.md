@@ -9,7 +9,12 @@ context can be cleared between any two.
 
 **`/implement` builds what was planned, or it stops. It never redesigns.**
 
-**Enters `[[modes/implement]]`.** Read it and hold its tradeoffs.
+**Posture.** Correctness over exploration. The interesting decisions were made
+in `[[skills/plan]]`; this command executes them and reports when they turn out
+to be wrong. Read before you modify, and match what surrounds the code you are
+writing. **What this gives up** is creative latitude: an improvement you notice
+that is not in the task is raised rather than taken, and the diff stays about
+one thing.
 
 ## 0 — Position. Every invocation. No exceptions.
 

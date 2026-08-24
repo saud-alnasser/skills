@@ -22,7 +22,6 @@ that first; everything else loads when its `use-when` fires.
 | evidence | what has been discovered — research and prototypes |
 | efforts | what change is being made; `spec.md` is its truth |
 | tasks | executable work derived from the spec |
-| `[[modes]]` | how to think during an activity |
 | `[[agents]]` | who does work, in what role |
 | worktrees | isolated execution; never knowledge |
 | position | lightweight operational state; never truth |

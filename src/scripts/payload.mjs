@@ -16,7 +16,7 @@
 export const PAYLOAD_FILES = ['protocol.md'];
 
 /** Protocol-owned directories copied wholesale into `.aep/`. */
-export const PAYLOAD_DIRS = ['policies', 'modes', 'skills', 'agents', 'templates'];
+export const PAYLOAD_DIRS = ['policies', 'skills', 'agents', 'templates'];
 
 /**
  * Protocol-owned files a release moved, and where their content now ships.
@@ -78,6 +78,18 @@ export const MOVES = [
  * notice**, and most releases will not.
  */
 export const NOTICES = [
+  {
+    since: '3.0.0',
+    check:
+      'modes/ is gone. A mode existed to state a posture, its mindset and what that ' +
+      'mindset gives up, and every one of those now sits inside the skill that used to ' +
+      'enter it, where it is read at the moment it applies rather than fetched. Delete ' +
+      '.aep/modes/: validate.mjs now fails a tree that still has one, because a ' +
+      'directory nothing ships and nothing links to is a second copy of text the skills ' +
+      'now carry. If you wrote a mode of your own, its content belongs in your own skill ' +
+      'or rule. Nothing under modes/ is preserved by the upgrade, and nothing there is ' +
+      'deleted for you either.',
+  },
   {
     since: '2.7.0',
     check:

@@ -8,7 +8,12 @@ Extends the **same** `spec.md` with the technical approach. Run it when the
 change is large enough, or unfamiliar enough, that starting to build would mean
 deciding architecture by accident.
 
-**Enters `[[modes/plan]]`.** Read it and hold its tradeoffs.
+**Posture.** Design against the codebase that exists rather than the one you
+would prefer, and read the seams you intend to cut before proposing where to
+cut them. A plan that would work in a clean repository and not in this one is
+not a plan. **What this gives up** is optionality: finishing means committing
+to an approach and writing down why the alternatives lost, which is
+uncomfortable precisely when it matters most.
 
 ## Procedure
 

@@ -1,5 +1,5 @@
 ---
-aep: 2.7.0
+aep: 3.0.0
 owner: repository
 ---
 
@@ -43,19 +43,6 @@ Start at [[protocol]].
 | [[references/git]] | running any git operation here — reading state, branching, staging, committing, or working with worktrees | — |
 | [[references/github]] | reading or writing GitHub issues, pull requests, or checks for this repository | — |
 
-## Modes
-
-| Artifact | Load when | Owner |
-| --- | --- | --- |
-| [[modes/implement]] | building production code against an approved plan | — |
-| [[modes/plan]] | turning a settled specification into a technical approach | — |
-| [[modes/prototype]] | answering can-this-work by building something disposable | — |
-| [[modes/refine]] | attacking a specification to expose ambiguity, weak criteria, and unresolved tradeoffs | — |
-| [[modes/research]] | establishing a fact that a decision depends on, from primary sources | — |
-| [[modes/review]] | evaluating finished work against what was asked and against this repository's rules | — |
-| [[modes/specify]] | establishing what a change is and why, before any decision about how | — |
-| [[modes/test]] | writing or judging tests, and establishing that a behaviour's absence would be caught | — |
-
 ## Skills
 
 | Artifact | Load when | Owner |
@@ -95,7 +82,6 @@ Start at [[protocol]].
 | [[templates/agent.template]] | defining a new agent role that a skill will dispatch | — |
 | [[templates/agents.template]] | writing or extending a runtime's entrypoint, so it reaches AEP without restating it | — |
 | [[templates/context.template]] | adding orientation for an area of this repository | — |
-| [[templates/mode.template]] | defining a way of working, where the eight shipped modes do not fit | — |
 | [[templates/protocol.template]] | auditing what the bootstrap must contain, or porting AEP to a runtime whose entrypoint differs | — |
 | [[templates/prototype.template]] | recording what a prototype answered, before deleting the code | — |
 | [[templates/reference.template]] | recording how a tool is actually operated in this repository | — |
@@ -128,7 +114,7 @@ Local tickets only. Where an external tracker holds the work, it is not mirrored
 | [[efforts/aep-3/tickets/01-ownership-lookup]] feat(protocol): ownership is looked up rather than declared | aep-3 | resolved | — |
 | [[efforts/aep-3/tickets/02-frontmatter-checks]] feat(protocol): the frontmatter contract shrinks and use-when gains real checks | aep-3 | resolved | 01 |
 | [[efforts/aep-3/tickets/03-frontmatter-stripped]] refactor(protocol): every artifact drops the six fields nothing reads | aep-3 | resolved | 02 |
-| [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | open | 03 |
+| [[efforts/aep-3/tickets/04-modes-folded]] refactor(protocol): modes fold into the skills that entered them | aep-3 | resolved | 03 |
 | [[efforts/aep-3/tickets/05-skills-cut]] refactor(skills): commit and the labels ladder are removed, four commands remain | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/06-templates-split]] feat(templates): the spec splits from the plan | aep-3 | open | 03 |
 | [[efforts/aep-3/tickets/07-bootstrap]] feat(protocol): the bootstrap names seven primitives and states ownership once | aep-3 | open | 04, 05, 06 |

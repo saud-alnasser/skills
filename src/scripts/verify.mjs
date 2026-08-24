@@ -25,8 +25,8 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  MODES,
   SKILLS,
+  FORBIDDEN_DIRS,
   PROTOCOL_FILES,
   isProtocolPath,
   useWhenProblems,
@@ -386,7 +386,7 @@ section('manifest', () => {
   // published from the adapter's own directory, so the runtime's scans land
   // inside `src/`.
   assert('every shipped surface lives under src/', () => {
-    const stray = ['skills', 'agents', 'modes', 'policies', 'scripts', 'templates', 'protocol.md']
+    const stray = ['skills', 'agents', 'policies', 'scripts', 'templates', 'protocol.md']
       .filter((name) => fs.existsSync(path.join(REPO, name)));
     if (stray.length > 0) throw new Error(`at the repository root: ${stray.join(', ')}`);
     return true;
@@ -557,6 +557,15 @@ section('protocol.md', () => {
 
 // --- §16 the skill set ------------------------------------------------------
 
+// The skills that entered a mode, and so carry a posture now that `modes/` is
+// gone. Written here rather than in `contract.mjs`: nothing an installed tree
+// runs needs to know which skills hold a posture, and an export no consumer
+// reads is the shape this release spent four tickets removing.
+const POSTURED_SKILLS = [
+  'specify', 'plan', 'tasks', 'implement', 'review',
+  'research', 'prototype', 'refine', 'tdd', 'prune', 'survey',
+];
+
 section('skills', () => {
   // Top-level only: `skills/<skill>/<note>.md` is depth, not a skill (§16.1).
   const onDisk = topLevel(path.join(SRC, 'skills')).map((f) => path.basename(f, '.md')).sort();
@@ -575,7 +584,21 @@ section('skills', () => {
     }
     const artifact = readArtifact(file);
     assert(`skills/${name} declares use-when`, isNonEmptyString(artifact.fields['use-when']));
+  }
 
+  // What the retired `modes/` directory used to hold. A mode stated a mindset
+  // and what that mindset gave up, and the second half is the one a fold loses:
+  // it is the uncomfortable half, and a skill that keeps only the first reads
+  // like advice rather than like a trade. So both are asserted by name, and
+  // only of the skills that entered a mode. A utility never had a posture and
+  // gains nothing by being made to claim one.
+  for (const name of POSTURED_SKILLS) {
+    const file = path.join(SRC, 'skills', `${name}.md`);
+    if (!fs.existsSync(file)) continue;
+    const body = fs.readFileSync(file, 'utf8');
+    assert(`skills/${name} states its posture`, () => /\*\*Posture\.\*\*/.test(body));
+    assert(`skills/${name} states what that posture gives up`, () =>
+      /\*\*What this gives up\*\*/.test(body));
   }
 
   // The discovery surface. `protocol.md` gives `help` one job, answering *what do
@@ -724,21 +747,6 @@ section('skill notes', () => {
     if (published.length > 0) throw new Error(published.join(', '));
     return true;
   });
-});
-
-// --- §14 the mode set -------------------------------------------------------
-
-section('modes', () => {
-  const onDisk = listMarkdown('modes').map((file) => path.basename(file, '.md')).sort();
-  assert('the mode set is exactly the eight specs.md names', () =>
-    JSON.stringify(onDisk) === JSON.stringify([...MODES].sort()));
-
-  for (const name of MODES) {
-    const file = path.join(SRC, 'modes', `${name}.md`);
-    if (!fs.existsSync(file)) continue;
-    const artifact = readArtifact(file);
-    assert(`modes/${name} states what it gives up`, /What this gives up/.test(artifact.body));
-  }
 });
 
 // --- §18 agents -------------------------------------------------------------
@@ -1289,7 +1297,7 @@ section('seeds', () => {
 section('templates', () => {
   const templates = listMarkdown('templates').map((file) => path.basename(file, '.md'));
   for (const expected of ['protocol', 'agents', 'agent', 'rule', 'reference', 'context', 'skill',
-    'mode', 'spec', 'ticket', 'research', 'prototype']) {
+    'spec', 'ticket', 'research', 'prototype']) {
     assert(`templates/${expected}.template.md ships`, templates.includes(`${expected}.template`));
   }
   for (const file of listMarkdown('templates')) {
@@ -1328,9 +1336,13 @@ section('links', () => {
 // --- §5, §15.2, §17 structures that must not exist --------------------------
 
 section('forbidden', () => {
-  for (const dir of ['decisions', 'tools', 'grill']) {
+  // Read from the contract, never from a second list here: two lists of the
+  // same thing drift, and the one in the test file drifts silently.
+  for (const dir of FORBIDDEN_DIRS) {
     assert(`no ${dir}/ in the distribution`, !inSrc(dir));
   }
+  assert('modes/ is a retired directory rather than merely an unshipped one', () =>
+    FORBIDDEN_DIRS.includes('modes'));
   assert('no plan.md ships', !inSrc('plan.md'));
 
   const all = [...payloadArtifacts(), ...SEEDS.map((s) => path.join(SRC, ...s.source.split('/')))]
@@ -1681,12 +1693,16 @@ section('release', () => {
     process.stdout.write(`        vendored: ${vendored.map((f) => toPosix(SRC, f)).join(', ')}\n`);
   }
 
-  assert('every mode is entered by at least one skill', () => {
-    const skillText = topLevel(path.join(SRC, 'skills'))
-      .map((f) => fs.readFileSync(f, 'utf8'))
-      .join('\n');
-    const orphans = MODES.filter((mode) => !skillText.includes(`modes/${mode}`));
-    if (orphans.length > 0) throw new Error(`never entered: ${orphans.join(', ')}`);
+  // The fold's own guard. A citation of a directory nothing ships resolves to
+  // nothing, and the link checker would catch it in a shipped artifact, but not
+  // in a comment, a script message, or a template placeholder. This covers the
+  // whole payload at once.
+  assert('nothing in the payload cites the retired modes directory', () => {
+    const citing = payloadArtifacts()
+      .filter((file) => fs.existsSync(file))
+      .filter((file) => /\[\[modes\//.test(fs.readFileSync(file, 'utf8')))
+      .map((file) => toPosix(SRC, file));
+    if (citing.length > 0) throw new Error(citing.join(', '));
     return true;
   });
 
@@ -2030,10 +2046,10 @@ section('install fixture', () => {
   });
 
   assert('an upgrade replaces a protocol-owned file that was edited locally', () => {
-    const modeFile = path.join(aep, 'modes', 'implement.md');
-    fs.writeFileSync(modeFile, 'tampered\n', 'utf8');
+    const shipped = path.join(aep, 'policies', 'artifacts.md');
+    fs.writeFileSync(shipped, 'tampered\n', 'utf8');
     update();
-    return fs.readFileSync(modeFile, 'utf8') === readSrc('modes', 'implement.md');
+    return fs.readFileSync(shipped, 'utf8') === readSrc('policies', 'artifacts.md');
   });
 
   assert('an upgrade never re-seeds a corrected starting point', () => {

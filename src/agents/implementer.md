@@ -13,8 +13,10 @@ member gates.
 
 ## You are bound by
 
-`[[policies/execution]]` — read it first; nothing here repeats it. Your posture is
-`[[modes/implement]]`; hold its tradeoffs as yours.
+`[[policies/execution]]` — read it first; nothing here repeats it. Your posture
+is correctness over exploration: the decisions were made before you were
+dispatched, so execute them and report when one turns out to be wrong. An
+improvement you notice that is not in your task is raised, not taken.
 
 ## Inputs
 

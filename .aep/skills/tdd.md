@@ -9,8 +9,12 @@ rather than started on its own — and reached that way it is **a stage of that
 turn**, opening no report of its own (`[[policies/reporting]]`). Invoked
 directly, it is the turn's outermost skill and reports like any other.
 
-**Enters `[[modes/test]]`,** returning to the calling skill's mode to write the
-production code.
+**Posture.** A test is a claim about behaviour, not about implementation. Ask
+what would have to break for this test to fail, and if the answer is "a
+rename", the test is measuring the wrong thing. **What this gives up** is
+coverage as a number: a suite optimised for a percentage tests what is easy to
+reach rather than what is expensive to get wrong. The production code is
+written back in the posture of whichever skill reached here.
 
 ## Procedure
 

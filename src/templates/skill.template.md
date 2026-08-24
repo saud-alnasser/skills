@@ -15,7 +15,9 @@ use-when: "<the situation that calls for this capability>"
 
 One or two lines: what this produces, and when it is the right thing to reach for.
 
-**Enters `[[modes/<mode>]]`.** Read it and hold its tradeoffs.
+**Posture.** How to think while running this, and **what this gives up** to
+think that way. Two sentences, in your own words: a skill that names no
+tradeoff is one nobody can tell they are running badly.
 
 ## Procedure
 Numbered steps, in order. Each one an action, not a principle.

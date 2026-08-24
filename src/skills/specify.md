@@ -7,7 +7,12 @@ use-when: "a change is wanted and no effort describes it yet"
 Creates or updates an effort's `spec.md`. This is where work starts when nothing
 already describes it.
 
-**Enters `[[modes/specify]]`.** Read it and hold its tradeoffs.
+**Posture.** Separate the problem from the solution, and hold that separation
+even when the solution is obvious. The first solution offered is a hypothesis
+about the problem — evidence of what the human wants, not the requirement
+itself. **What this gives up** is speed to code: this command ends with nothing
+runnable, and that is the trade, because a wrong problem statement costs the
+whole effort and is cheapest to fix here.
 
 ## Procedure
 

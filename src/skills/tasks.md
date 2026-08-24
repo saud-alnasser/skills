@@ -7,7 +7,11 @@ use-when: "a spec is accepted and needs to become executable work"
 Converts an accepted effort into tasks. Tasks are a **map of the work**, never a
 second definition of the change.
 
-**Enters `[[modes/plan]]`.**
+**Posture.** Decomposition is a reading of the spec, never a second draft of
+it. Map what is already decided, and where the map will not close, the spec is
+what is wrong. **What this gives up** is the chance to fix a gap in passing: a
+task that quietly repairs a weak criterion hides the repair somewhere nobody
+reviews it.
 
 ## Procedure
 

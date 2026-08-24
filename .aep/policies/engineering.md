@@ -102,7 +102,7 @@ Those are the only two kinds.
   decision is an architecture chosen by whoever ran the search.*
 - **Prototype code is disposable.** It MUST NOT automatically become production
   code; promotion is an explicit decision recorded in `spec.md`, and what is
-  promoted is rewritten under `[[modes/implement]]`.
+  promoted is rewritten under `[[skills/implement]]`.
 - **Grill is not evidence.** It is a mechanism; its conclusions land in the spec,
   a policy, a rule, a context, or an evidence file. There is no `grill/`
   directory.

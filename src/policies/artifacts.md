@@ -49,15 +49,16 @@ The artifact describes this repository.
 
 | Path | Owner |
 | --- | --- |
-| `protocol.md`, `policies/`, `modes/`, `skills/`, `agents/`, `templates/`, `scripts/` | `protocol` |
+| `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`, `scripts/` | protocol |
 | `rules/`, `contexts/`, `references/`, `efforts/` | `repository` |
 | `index.md` | derived — regenerate with `scripts/index.mjs`, never hand-edit |
 
 **`policies/` and `rules/` admit one owner each, with no exception.** A policy is
 AEP's law and a rule is the repository's, so a file in the wrong directory is a
-defect the validator reports rather than a case to decide. An installer still
-reads the declared field before overwriting anything — it preserves such a file
-and leaves the report to say so.
+defect the validator reports rather than a case to decide. An installer writes
+only the exact paths the release ships and so cannot reach such a file at all
+— which is why the validator has to name it, and why nothing is lost by the
+installer staying silent.
 
 ### When the protocol does not fit
 
@@ -116,26 +117,22 @@ Every Markdown file under `.aep/` MUST open with YAML frontmatter:
 
 ```yaml
 ---
-
+use-when: "<the occasion on which this is the thing to read>"
 ---
 ```
 
-Those three are required on every artifact, with no exceptions. `date` is the
-last-modified date as `YYYY-MM-DD` — **update it when you change the file**, or
-it becomes a claim about freshness that nothing checks.
+That is the whole of it on most artifacts. **Frontmatter carries what decides
+whether to load the file, and nothing else.** A field describing the file to a
+reader who has already opened it is a field the body should be saying, and a
+field nothing reads is a claim nothing can falsify.
 
 Situational fields:
 
 | Field | When | Contract |
 | --- | --- | --- |
-| `kind` | unless the directory makes it redundant | `agent` `context` `spec` `prototype` `research` `reference` `policy` `rule` `skill` `ticket` `protocol` `mode` |
-| `mode` | when the artifact is relevant to particular ways of working | a YAML **array** of: `specify` `plan` `refine` `implement` `research` `prototype` `review` `test` |
 | `paths` | when applicability follows repository paths | glob patterns |
 | `status` | efforts and local tickets **only** | spec: `draft` `accepted` `implemented`; ticket: `open` `resolved` `obsolete` |
 | `blocked-by` | tickets only | ticket identifiers this one waits on |
-| `part-of` | tickets only | the effort this ticket belongs to |
-| `use-when` | **required** on every policy, rule, reference, and context | one sentence |
-| `report` | **required** on every skill; never on a note beside one | `full` or `short`, assigned by the test in `[[policies/reporting]]` |
 
 ### `use-when` states a trigger, never a topic
 
@@ -145,12 +142,6 @@ Situational fields:
 *Why: a topic satisfies every mechanical check and still cannot be selected on,
 so the artifact ends up loaded always or never — both defeat progressive
 discovery.* This is the one failure the frontmatter contract cannot catch for you.
-
-### `mode:` is applicability, not state
-
-`mode: [implement, review]` means *this is relevant while implementing or
-reviewing*. It does **not** mean the agent is in that mode. Your mode is set by
-the skill you are running.
 
 ### Links
 

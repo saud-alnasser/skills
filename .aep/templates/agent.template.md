@@ -23,8 +23,8 @@ description from, so it must stand alone.
 
 ## You are bound by
 
-`[[policies/execution]]` — read it first; repeat none of it here. Your posture is
-`[[modes/<mode>]]`; hold its tradeoffs as yours.
+`[[policies/execution]]` — read it first; repeat none of it here. Your posture
+is <the stance this role holds>, and it gives up <what that stance costs>.
 
 ## Inputs
 What the brief provides — as paths, never pasted content. Everything else you
