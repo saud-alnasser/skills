@@ -282,6 +282,39 @@ detaches the worktree, which frees the branch at once for whoever reviews it, an
 removes the directory separately. A surface kept after a failure therefore holds
 no branch, and a run that died cannot lock an effort against its own resumption.
 
+**The isolation's kind decides whether a run takes a surface. The role that
+surface carries decides what the run may do once it holds one**, and the same
+read reports both — computed from git and from the path of the tree, never
+judged and never inferred from what the branch is called. Reporting the role
+refuses nothing by itself, exactly as reporting the isolation does. What follows
+from it is here.
+
+| `role` | Read in | May | MUST NOT |
+| --- | --- | --- | --- |
+| `orchestrator` | the effort's own surface, or one the runtime supplied | integrate, and dispatch a child per task | integrate anywhere but the surface it holds |
+| `implementer` | a ticket's surface under an effort | build the one ticket it was given, and request what it may not do itself | integrate into the effort branch, or dispatch |
+| `none` | the main checkout | take a surface | write anything before it has taken one |
+| `unknown` | a tree matching no row above | everything it could already do | — |
+
+**A run computing `role: implementer` neither integrates nor dispatches.** That
+is the pair a child's brief already carries, and keying it to the role is what
+makes it outlive the brief: a child whose context was cleared reads where it is
+standing and derives both again. **A run computing `role: orchestrator`
+integrates only in the surface it holds**, which is the rule below about the only
+integrator, keyed on something a run can check rather than on remembering it.
+
+**`role: none` is not a missing answer.** It is the main checkout, and it is
+exactly the state the isolation rule above requires a run to act on before its
+first write: take a surface, create the effort branch into it, and the role
+reads `orchestrator` because the run now holds one. A run that reads `none` and
+writes anyway has skipped the claim rather than found a hole in it.
+
+**`role: unknown` fires nothing.** Where the tree matches no known surface, every
+rule keyed on the role declines and the run proceeds exactly as it would have.
+*Why it fails open: a derivation that narrows on a wrong answer blocks correct
+work in a tree that plainly has a role, and nothing downstream can tell that
+refusal from a real one.*
+
 A claim held elsewhere is never taken — not renamed around, not branched from,
 not force-created over. Report it and move to the next task. **That now covers a
 surface as well as a branch:** a worktree another run holds is not entered.
@@ -463,8 +496,9 @@ helper two of them wrote, a pattern one followed and another did not.
 >
 > *Why the bound is drawn at the diffs rather than at the effort: a bound read off
 > `spec.md` cannot distinguish reconciling a seam from rebuilding a task a child
-> already delivered, and the orchestrator is the one agent with no reviewer above
-> it.*
+> already delivered, and nothing reviews the orchestrator's reach until the whole
+> effort is judged at the close, by which point a seam rebuilt as a task is work
+> nobody asked for that has already landed.*
 
 **Every decision a child recorded and stopped on.** A child has no surface on
 which to ask, so the orchestrator raises it, in the form the section above fixes.
@@ -498,7 +532,7 @@ because everything it needs is written down as it goes.
 | --- | --- |
 | which tickets are done | commits on the effort branch |
 | which criteria of a ticket are verified, and what verified each | **ticked checkboxes in the pull request body**, inline |
-| the ledger, the converge round, review attempts per ticket, items recorded but not acted on, anything a child raised that was not a trip-wire | a **collapsed run log section** of the pull request |
+| the ledger, the converge round, the review round and what it found, items recorded but not acted on, anything a child raised that was not a trip-wire | a **collapsed run log section** of the pull request |
 
 **The orchestrator writes the run log as the run proceeds**, not at the end. A
 record written at the end is a record that does not exist for the failure it was
@@ -510,14 +544,26 @@ run that will later write a confident close over work nobody can find.
 
 ### Ticking a criterion
 
-**A criterion's checkbox is ticked by `[[agents/reviewer-correctness]]`**, which
-already judges each requirement and each acceptance criterion against the diff.
-It is ticked **at the moment it is verified**, carrying inline what verified it.
+**The orchestrator ticks a criterion at the moment it verifies it**, carrying
+inline what verified it: the command and what it printed, or the case it traced.
+Never in a batch at the close. A run killed mid-ticket keeps every tick already
+made and loses only the rest.
 
-**The agent that wrote the code never ticks its own criteria.** *Why: a tick is
-the claim that somebody checked, and a claim checked by its own author is the
-thing the whole review axis exists to not be. It is also what makes resumption
-safe — a resumed run trusts a tick without re-deriving it.*
+**A dispatched child never ticks its own criteria.** *Why: a tick is the claim
+that somebody checked, and a claim checked by its own author is the thing the
+whole review axis exists to not be. It is also what makes resumption safe, since
+a resumed run trusts a tick without re-deriving it.*
+
+**What the narrowing gives up, and what pays for it.** That rule used to bind
+every author, and it cost nothing while a reviewer stood at each ticket. Review
+now judges the effort once, at the close, so one case is left over: a wave of
+one is built inline by `[[skills/implement]]` rather than dispatched, and the
+orchestrator that verifies that ticket is the agent that wrote it. **That tick
+is the author's own, and it is the whole of what this section gives up.** What
+pays for it is that `[[skills/review]]` is now guaranteed to run over the whole
+effort branch before anything is handed over, so inline-built work is judged by
+somebody who did not write it before anyone is asked to merge it. The second
+reader moves from the tick to the handover; it is not removed.
 
 ### Resuming
 
@@ -574,11 +620,12 @@ architecture is what it would be evading.*
 field of one file: `status` on `spec.md`, at the close, when the round found no
 gap.
 
-*Why: converge is the last thing running before the work is handed over, and it
-is the only stage with both the whole diff in view and nobody reviewing it. A
-converge that could edit the spec would be able to close every gap it found by
-narrowing what the spec asked for, and the run would end green having quietly
-agreed with itself. A spec that turns out to be wrong is a return-to-plan event,
+*Why: converge is the stage that decides whether the spec is met, and a stage
+that could edit the spec would be able to close every gap it found by narrowing
+what was asked, and the run would end green having quietly agreed with itself.
+Review runs after it and over the same whole diff, which catches a great deal,
+but it judges the diff against the spec rather than auditing what the spec was
+before converge touched it. A spec that turns out to be wrong is a return-to-plan event,
 which reaches the human.*
 
 *Why `status` is nonetheless converge's to write: it is the only field that
@@ -599,6 +646,13 @@ and the run ends rather than grinding.
 was wrong rather than the work incomplete, and that is the return-to-plan
 trip-wire rather than more rounds. A configurable cap is a number nobody can set
 correctly until a run has already gone wrong.*
+
+**A ticket a review finding produced does not spend a round.** This cap counts
+rounds that went looking for a gap between the spec and the work. A review
+finding is not one of those, because converge has already agreed the spec is met
+and the review is judging the diff rather than the ask. Counted here, the second
+review round would be unreachable whenever converge found a gap once and then
+found none, and a run could end not ready with no gap it could name.
 
 ### The two judgements a single diff cannot support
 

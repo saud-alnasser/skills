@@ -38,10 +38,23 @@ yourself** — rules, contexts, references, and the source.
 
 ## Constraints
 
-- **You do not integrate.** The orchestrator merges. Never touch the main
-  checkout.
-- **You do not dispatch.** Where you need a capability that requires it, request
-  it and stop.
+**These are keyed on the role you compute, not on this brief still being in
+context.** Read where you are standing before you act on any of them:
+
+```
+node .aep/scripts/scope.mjs read
+```
+
+The surface you were dispatched into is a ticket's, under its effort, so the
+role it reports is `implementer`, and that is you. The two refusals below are
+what the role may not do, so an agent that has lost everything else still
+derives them from where it is standing. `[[policies/execution]]` states them as
+the rule, and says what the other roles may do.
+
+- **A run computing `role: implementer` does not integrate.** The orchestrator
+  merges, in the surface it holds. Never touch the main checkout.
+- **A run computing `role: implementer` does not dispatch.** Where you need a
+  capability that requires it, request it and stop.
 - **You do not decide.** A decision the plan did not make — a genuine
   architectural fork, an ambiguity in the spec, scope the task does not cover —
   is **recorded and returned as `stopped`**. You have no surface on which to ask

@@ -71,9 +71,12 @@ discovering it later costs the commit.
 ## Worktrees
 
 ```sh
-git worktree add .aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
+# Anchored on the main checkout, because the path is what decides a run's role.
+# Relative, git resolves it against the cwd, which nests one surface in another.
+# <main> is the first entry of `git worktree list --porcelain`.
+git worktree add <main>/.aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
 git worktree list
-git worktree remove .aep/worktrees/<effort>/<ticket-id>-<slug>
+git worktree remove <main>/.aep/worktrees/<effort>/<ticket-id>-<slug>
 ```
 
 The branch name carries the effort as a namespace. Ticket ids restart at `01` in

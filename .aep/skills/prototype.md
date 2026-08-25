@@ -24,7 +24,11 @@ API behave as documented under our load. `[[policies/engineering]]` routes facts
 
 1. **State the hypothesis, and what would falsify it.** Both, in writing, before
    any code. *A prototype with no failure condition confirms whatever you hoped.*
-2. **Create a worktree.** Under `.aep/worktrees/` — never prototype in the
+2. **Create a worktree.** Under the main checkout's
+   `.aep/worktrees/<effort>/_prototype-<slug>`, anchored there rather than on
+   wherever you are standing, because the path is what decides a run's role. The
+   leading underscore marking it as not a ticket surface, so nothing computes
+   the role of a child from it (`[[policies/execution]]`) — never prototype in the
    working checkout; the whole point is that this code is going to be deleted.
 3. **Build only what answers the question.** No error handling you do not need to
    observe the result, no abstraction, no tests beyond the ones that prove the

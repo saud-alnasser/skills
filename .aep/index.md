@@ -93,6 +93,7 @@ Start at [[protocol]].
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
 | 51-branch-scope | implemented | [[efforts/51-branch-scope/spec]] | 1 | 0 | 10 |
 | 54-working-surface | implemented | [[efforts/54-working-surface/spec]] | 2 | 0 | 16 |
+| 56-surface-position | accepted | [[efforts/56-surface-position/spec]] | 0 | 0 | 17 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -160,6 +161,23 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/54-working-surface/tickets/14-seed-git-reference]] fix(seed): the shipped git reference carries what this release requires | 54-working-surface | resolved | 13 |
 | [[efforts/54-working-surface/tickets/15-session-caller]] feat(implement): the run passes its session identifier when it stamps | 54-working-surface | resolved | 13 |
 | [[efforts/54-working-surface/tickets/16-surfaces-are-removed]] fix(protocol): a surface is removed, not only released | 54-working-surface | resolved | 14, 15 |
+| [[efforts/56-surface-position/tickets/01-scope-surface]] feat(scripts): scope computes the surface a run stands in and the role it carries | 56-surface-position | resolved | — |
+| [[efforts/56-surface-position/tickets/02-specification]] docs(specs): the specification defines the surface, the role, and one marker per surface | 56-surface-position | resolved | — |
+| [[efforts/56-surface-position/tickets/03-the-role-refuses]] feat(protocol): the role refuses, in the policy and in the implementer's brief | 56-surface-position | resolved | 02 |
+| [[efforts/56-surface-position/tickets/04-check-where-you-stamp]] feat(implement): the position check happens in the surface the run will stamp | 56-surface-position | resolved | 02 |
+| [[efforts/56-surface-position/tickets/05-specify-reads-by-script]] feat(specify): specify reads position by script rather than by prose | 56-surface-position | resolved | 02 |
+| [[efforts/56-surface-position/tickets/06-prune-and-survey]] feat(skills): prune and survey check the marker on entry and stamp it at close | 56-surface-position | resolved | 02 |
+| [[efforts/56-surface-position/tickets/07-reporting-table]] feat(policies): the reporting table names every skill that reads position | 56-surface-position | resolved | 04, 05, 06 |
+| [[efforts/56-surface-position/tickets/08-marker-shape]] test(scripts): the marker's shape is pinned to three keys | 56-surface-position | obsolete | — |
+| [[efforts/56-surface-position/tickets/09-regenerate-and-reinstall]] chore(dist): regenerate the adapter and reinstall the dogfood tree | 56-surface-position | resolved | 01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 17 |
+| [[efforts/56-surface-position/tickets/10-review-unit]] docs(specs): review's unit is the effort, not the ticket | 56-surface-position | resolved | — |
+| [[efforts/56-surface-position/tickets/11-reviewers-once]] feat(implement): the reviewers are dispatched once, for the effort | 56-surface-position | resolved | 04, 10 |
+| [[efforts/56-surface-position/tickets/12-who-ticks]] feat(policies): the orchestrator ticks what it verified, and a child still never does | 56-surface-position | resolved | 03, 10 |
+| [[efforts/56-surface-position/tickets/13-ticking-reaches-every-file]] fix(protocol): the narrowed ticking rule reaches every file that states it | 56-surface-position | resolved | 12 |
+| [[efforts/56-surface-position/tickets/14-ticking-authorship]] fix(protocol): the ticking rule's authorship claim reaches every file that states it | 56-surface-position | resolved | — |
+| [[efforts/56-surface-position/tickets/15-falsified-rationales]] fix(protocol): the rationales this effort falsified are corrected where they stand | 56-surface-position | resolved | — |
+| [[efforts/56-surface-position/tickets/16-the-anchor]] fix(protocol): a ticket surface is anchored on the main checkout, and the discriminator is the underscore | 56-surface-position | resolved | 14, 15 |
+| [[efforts/56-surface-position/tickets/17-two-counters]] fix(protocol): the specification's marker rule fits a run that stamps nothing, and the two counters are told about each other | 56-surface-position | resolved | 16 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |
