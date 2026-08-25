@@ -25,6 +25,11 @@ uncomfortable precisely when it matters most.
    isolation go in `Position`, beside that spec's `status:`
    (`[[policies/reporting]]`). If `status:` is still `draft` and material
    questions are open, go back to `[[skills/refine]]` first.
+
+   **Where the effort is not the one this checkout is on, enter its working
+   surface rather than checking its branch out** (`[[policies/execution]]`). An
+   effort in flight holds its branch in a worktree, so `git switch` to it is
+   refused, and what this skill writes has to land on that branch.
 2. **Read the code you intend to change** — not the parts you remember, the parts
    you will touch. `[[policies/engineering]]`: names are not proof.
 3. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required

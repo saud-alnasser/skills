@@ -263,8 +263,28 @@ work.
 dispatching anything.** A branch created after its child started is a claim made
 after the race it existed to win.
 
+**A run claims the working surface it writes through as well as the branch it is
+on, and a worktree is how it holds one.** The two are not one guarantee. A branch
+says which work is whose; a worktree is what stops a second run from writing
+through the same tree. A run holding only the first identifies its work correctly
+and can still have another run move the checkout under it between a read and a
+write, which is a claim that reports itself as intact while being violated.
+
+So **where the isolation is `checkout`, the run takes a worktree of its own
+before its first write, and creates its effort branch into it.** Where the
+isolation is `worktree`, the runtime already gave it one and it takes no second.
+That decision is keyed on the isolation's kind and **never on its enforcement**:
+enforcement describes the clone rather than this checkout, so a run keying on it
+declines a surface in exactly the case that needs one.
+
+**Releasing that claim and removing the surface are separate acts.** The run
+detaches the worktree, which frees the branch at once for whoever reviews it, and
+removes the directory separately. A surface kept after a failure therefore holds
+no branch, and a run that died cannot lock an effort against its own resumption.
+
 A claim held elsewhere is never taken — not renamed around, not branched from,
-not force-created over. Report it and move to the next task.
+not force-created over. Report it and move to the next task. **That now covers a
+surface as well as a branch:** a worktree another run holds is not entered.
 
 **The claim is read before the work, and it is computed rather than judged.**
 
@@ -302,11 +322,17 @@ for every turn after it. **A claim of more than one is not an error**, and a run
 that must act on a single effort, holding one and given none, **ends the turn
 listing the set** rather than choosing from it.
 
-**A named effort outside the claim stops on a dirty tree and switches on a clean
-one.** Clean, the run checks that effort's branch out and proceeds, which is
-plainly what was meant. Dirty, it ends the turn naming the claim, the effort it
-was given, and the uncommitted paths, because switching would carry one effort's
-edits onto another's branch.
+**A named effort outside the claim stops on a dirty tree and moves to it on a
+clean one.** Clean, the run **enters that effort's working surface** and
+proceeds, which is plainly what was meant. Dirty, it ends the turn naming the
+claim, the effort it was given, and the uncommitted paths, because moving would
+carry one effort's edits onto another's branch.
+
+**Entering a surface, rather than checking a branch out.** An effort in flight
+holds its branch in a worktree, so `git switch` to it is refused, and the refusal
+is the mechanism working. The run opens that worktree instead, and creates one
+where the effort has none. A refusal met here is never routed around: it names
+where the claim is held, and a claim held elsewhere is not taken.
 
 **A ticket branch name MUST be unique across efforts.** Ticket ids restart per
 effort, so two efforts each holding a ticket `03` would otherwise produce one
@@ -386,9 +412,37 @@ end: a conflict then arrives as one pile with no task to name it, and what gets
 untangled is whichever child happened to be second. Integrated per task, a
 conflict surfaces at that task's integration and is named against that task.
 
-**The orchestrator is the only integrator.** A child works in its own worktree
+**The orchestrator is the only integrator, and it integrates in the surface it
+holds** — its own worktree, never a checkout another run can move. Being the only
+integrator says who; the surface says where, and the second is what makes the
+first true. An orchestrator integrating in a shared checkout is the only
+integrator right up until the moment another run switches the branch under it.
+
+A child works in its own worktree
 and never merges into the shared branch, because two children integrating
 themselves produce a conflict neither of them can see.
+
+**A surface is removed, not merely released.** Detaching frees the branch;
+removing the directory is a separate act performed **from outside that
+directory**, since a process cannot remove the one it stands in. A run that only
+ever detaches leaves one directory per effort behind, and the next run
+cannot clear it, because a directory somebody kept deliberately and one somebody
+abandoned look identical from outside.
+
+**A ticket branch is a build claim, and it is released once its work reaches the
+effort branch.** It exists so git refuses a second run the same ticket, and it
+holds nothing the moment the orchestrator has integrated it. Delete it there, in
+the step that lands the work, never before: a branch deleted while its work is
+still outside the effort branch is data loss rather than tidiness. **A parked or
+failed ticket keeps its branch**, because nothing was integrated and there is
+nothing to release.
+
+*Why this is stated rather than left to taste: a run that keeps them leaves one
+branch per ticket whose every commit is already in the effort branch, and under a
+stacking tool it leaves metadata describing levels nobody will review. The
+effort branch is the reviewable unit, which follows from exactly one pull request
+per effort above: a branch integrated rather than merged is not a level of
+anything.*
 
 Because the unit is a whole task, one child failing costs exactly that task: its
 siblings land, and it returns to the frontier.

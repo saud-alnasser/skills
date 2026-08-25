@@ -71,13 +71,67 @@ discovering it later costs the commit.
 ## Worktrees
 
 ```sh
-git worktree add .aep/worktrees/<task-id> -b <task-id>-<slug>
+git worktree add .aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
 git worktree list
-git worktree remove .aep/worktrees/<task-id>
+git worktree remove .aep/worktrees/<effort>/<ticket-id>-<slug>
 ```
+
+The branch name carries the effort as a namespace. Ticket ids restart at `01` in
+every effort, so a bare `03-shared-id` is a name two efforts can both want
+(`[[rules/version-control]]`).
 
 `.aep/worktrees/` is gitignored by `.aep/.gitignore`. Worktrees are
 infrastructure, never knowledge.
+
+### The run's own surface
+
+The run holds its effort branch in a worktree too, not only its children
+(`[[policies/execution]]`). **Create the branch and the worktree in one act:**
+
+```sh
+git worktree add -b <effort> .aep/worktrees/<effort>/_run <base>
+```
+
+Two commands would leave a window in which the branch exists and nothing holds
+it, and that window is where another run checks it out.
+
+### Releasing it
+
+**Detach first, then remove.** Separate acts, and the order is not
+interchangeable:
+
+```sh
+git -C .aep/worktrees/<effort>/_run switch --detach   # frees the branch, keeps the directory
+git worktree remove .aep/worktrees/<effort>/_run      # run from outside that directory
+```
+
+Detaching frees the branch at once, so whoever reviews the effort can check it
+out. It also succeeds where removal fails, and removal fails routinely: a process
+cannot remove the directory it is standing in, which on Windows is absolute.
+**Releasing the branch is the part that is not optional.**
+
+### What git refuses, and what it does not
+
+Against a branch a worktree holds, these fail, and the message names the holder:
+
+```
+git worktree add <path> <held>     fatal: '<held>' is already used by worktree at ...
+git switch <held>                  fatal: '<held>' is already used by worktree at ...
+git branch -f <held> <commit>      fatal: cannot force update the branch '<held>' ...
+```
+
+**That is the guarantee, and it is the whole of it.** Meeting one of these is the
+mechanism working rather than an error to route around: it means another run
+holds that claim, and `[[policies/execution]]` says a claim held elsewhere is
+never taken.
+
+Two things it does not cover, stated because a reader who believes otherwise is
+worse off than one who knows:
+
+- **`git update-ref refs/heads/<held> <commit>` moves a held branch** with no
+  complaint. The refusals sit on the porcelain, not on the ref.
+- **A second clone refuses nothing.** The guarantee stops at this clone
+  (`specs.md` section 18.2).
 
 ## What is never run
 
