@@ -91,8 +91,8 @@ Start at [[protocol]].
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
-| 47-post-merge-labels | — | **missing** | 0 | 0 | 0 |
 | 51-branch-scope | implemented | [[efforts/51-branch-scope/spec]] | 1 | 0 | 10 |
+| 54-working-surface | implemented | [[efforts/54-working-surface/spec]] | 2 | 0 | 16 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -144,6 +144,22 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/51-branch-scope/tickets/08-regenerate]] chore(dist): release 3.1.0, and this repository reinstalls its own tree | 51-branch-scope | resolved | 07 |
 | [[efforts/51-branch-scope/tickets/09-explicit-root-is-refused]] fix(scripts): an explicit root that is not an AEP root is refused, not ignored | 51-branch-scope | resolved | — |
 | [[efforts/51-branch-scope/tickets/10-runner-branch-example]] fix(skills): the runner's ticket branch example carries the effort namespace | 51-branch-scope | resolved | — |
+| [[efforts/54-working-surface/tickets/01-specification]] docs(specs): the specification says a run claims the surface it writes through | 54-working-surface | resolved | — |
+| [[efforts/54-working-surface/tickets/02-position-sessions]] feat(scripts): the marker records the sessions that stamped it | 54-working-surface | resolved | 01 |
+| [[efforts/54-working-surface/tickets/03-execution-policy]] feat(policies): a run claims a working surface, not only a branch | 54-working-surface | resolved | 01 |
+| [[efforts/54-working-surface/tickets/04-specify-cuts-into-a-worktree]] feat(specify): the effort branch is created into a worktree | 54-working-surface | resolved | 03 |
+| [[efforts/54-working-surface/tickets/05-runner-holds-its-surface]] feat(implement): the run enters its surface, integrates there, and releases it at the close | 54-working-surface | resolved | 03 |
+| [[efforts/54-working-surface/tickets/06-supersede-51-boundaries]] fix(efforts): effort 51's two boundaries stop contradicting what 54 builds | 54-working-surface | resolved | — |
+| [[efforts/54-working-surface/tickets/07-stack-levels]] docs(rules): this repository says which branches are stack levels | 54-working-surface | resolved | — |
+| [[efforts/54-working-surface/tickets/08-verify-git-guarantees]] test(verify): git's refusals are asserted against real worktrees | 54-working-surface | resolved | 04, 05 |
+| [[efforts/54-working-surface/tickets/09-verify-shipped-surfaces]] test(verify): the shipped surfaces are asserted against the new requirements | 54-working-surface | resolved | 01, 02, 03, 04, 05, 06, 07 |
+| [[efforts/54-working-surface/tickets/10-release]] chore(dist): release 3.2.0 and reinstall this repository's tree | 54-working-surface | resolved | 08, 09 |
+| [[efforts/54-working-surface/tickets/11-git-reference]] docs(references): the git reference carries the working-surface invocations | 54-working-surface | resolved | 05, 10 |
+| [[efforts/54-working-surface/tickets/12-reaching-a-held-effort]] fix(protocol): reaching a named effort means entering its surface, not checking its branch out | 54-working-surface | resolved | 11 |
+| [[efforts/54-working-surface/tickets/13-ticket-branch-lifecycle]] fix(protocol): a ticket branch is released once its work is in the effort branch | 54-working-surface | resolved | 12 |
+| [[efforts/54-working-surface/tickets/14-seed-git-reference]] fix(seed): the shipped git reference carries what this release requires | 54-working-surface | resolved | 13 |
+| [[efforts/54-working-surface/tickets/15-session-caller]] feat(implement): the run passes its session identifier when it stamps | 54-working-surface | resolved | 13 |
+| [[efforts/54-working-surface/tickets/16-surfaces-are-removed]] fix(protocol): a surface is removed, not only released | 54-working-surface | resolved | 14, 15 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |

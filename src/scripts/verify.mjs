@@ -836,9 +836,16 @@ section('skills', () => {
   // Wave-based integration, and the two halves that make it work: where a child
   // branches from, and who merges. Dropping either produces a run that still
   // finishes, with conflicts nobody can attribute.
+  // Matched over a flattened copy: these are shipped prose wrapped at eighty
+  // columns, so a phrase straddling a line break would fail on the wrap rather
+  // than on the claim. The module-level `flat` is shadowed further down this
+  // block, so flattening happens here rather than through it.
+  const runnerFlat = runner.split(/\s+/).join(' ');
   assert('a wave branches from the effort branch tip and the next from the new tip', () =>
-    /branch from the effort branch's current tip/.test(runner) &&
-    /next wave branches from\s+the new tip/.test(runner));
+    /branch from the effort branch's current tip/.test(runnerFlat) &&
+    /next wave branches from the new tip/.test(runnerFlat));
+  assert("every wave lands in the run's own worktree rather than a shared checkout", () =>
+    /every wave lands on it, \*\*in the run's own worktree and never in a shared checkout\*\*/.test(runnerFlat));
   assert('the orchestrator integrates each child as it returns', () =>
     /Integrate each child as it returns/.test(runner) &&
     /Not all of them at the end/.test(runner));
@@ -1732,7 +1739,7 @@ section('the effort opens', () => {
     && /It stays one ask/.test(specify));
   assert("the runner's close names the tracker-less shape", () => {
     const runner = readSrc('skills', 'implement.md');
-    return /steps 2 and 3 have nowhere to land and\s+the close is step 1/.test(runner)
+    return /steps 2 and 3 have nowhere to land and\s+the close is steps 1 and 4/.test(runner)
       && /\*\*The runner never merges\*\*, in either shape/.test(runner);
   });
   assert('the runner resumes off the repository where there is no pull request', () => {
@@ -4553,6 +4560,444 @@ section('scope', () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+// --- 18.2 the working surface, asserted against git rather than described ----
+
+section('working surface', () => {
+  // Every refusal below is git's own, and the design rests on them entirely, so
+  // they are exercised against real worktrees rather than quoted from the prose
+  // that describes them.
+  //
+  // Each assertion takes its own branch and its own surface, and gives both
+  // back. That is not tidiness: an earlier draft shared one branch across the
+  // section, and perturbing the setup re-held it as a side effect, so three
+  // assertions stayed green for a reason that had nothing to do with what they
+  // claimed. A guard whose fire-check passes for the wrong reason is a guard
+  // nobody can trust the green of.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-surface-'));
+  const git = (...args) =>
+    execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  const inSurface = (cwd, ...args) =>
+    execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  /** True where the command failed. Git refuses by exit status; the wording is a git version's to change. */
+  const refuses = (fn) => {
+    try {
+      fn();
+      return false;
+    } catch {
+      return true;
+    }
+  };
+
+  git('init', '--quiet', '-b', 'main');
+  git('config', 'user.email', 'suite@example.invalid');
+  git('config', 'user.name', 'suite');
+  fs.writeFileSync(path.join(dir, 'README.md'), 'fixture\n', 'utf8');
+  git('add', '-A');
+  git('commit', '--quiet', '-m', 'base');
+  const worktreePaths = () =>
+    git('worktree', 'list', '--porcelain')
+      .split('\n')
+      .filter((line) => line.startsWith('worktree '))
+      .map((line) => line.slice('worktree '.length).trim());
+
+  const reset = () => {
+    if (git('rev-parse', '--abbrev-ref', 'HEAD').trim() !== 'main') git('switch', '--quiet', 'main');
+    // The main checkout is the entry git lists first. Comparing paths instead
+    // is unreliable here: `os.tmpdir()` can hand back an 8.3 short name while
+    // git prints the long one, so the two never compare equal and the cleanup
+    // tries to remove the checkout it is standing in. `scope.mjs` carries the
+    // same warning about the same platform.
+    const [, ...linked] = worktreePaths();
+    for (const tree of linked) git('worktree', 'remove', '--force', tree);
+    git('worktree', 'prune');
+    for (const branch of git('branch', '--format=%(refname:short)').split('\n')) {
+      const name = branch.trim();
+      if (name && name !== 'main') git('branch', '-D', '--quiet', name);
+    }
+  };
+
+  /** Runs `fn` against `name`, held by a worktree of its own, and gives both back afterwards. */
+  const held = (name, fn) => {
+    const surface = path.join(dir, `surface-${name}`);
+    git('worktree', 'add', '--quiet', '-b', name, surface, 'main');
+    try {
+      return fn(surface);
+    } finally {
+      reset();
+    }
+  };
+
+  assert('an effort branch is created into a worktree in one act, and the worktree holds it', () =>
+    held('effort-one-act', () =>
+      git('worktree', 'list', '--porcelain').includes('branch refs/heads/effort-one-act')));
+
+  assert('a second worktree on the held branch is refused', () =>
+    held('effort-second-tree', () =>
+      refuses(() => git('worktree', 'add', '--quiet', path.join(dir, 'second'), 'effort-second-tree'))));
+
+  assert('another checkout switching to the held branch is refused', () =>
+    held('effort-switch', () => refuses(() => git('switch', '--quiet', 'effort-switch'))));
+
+  assert('force-moving the held branch by name is refused', () =>
+    held('effort-force', () => refuses(() => git('branch', '-f', 'effort-force', 'main'))));
+
+  assert('the 2026-08-24 incident cannot replay from a shared checkout', () =>
+    held('effort-replay', () => {
+      // Both damaging steps needed the shared checkout to resolve the other
+      // effort's branch: the cherry-pick landed on whatever HEAD then was, and
+      // the reset moved whatever the name pointed at. Held, neither is reachable.
+      const before = git('rev-parse', 'effort-replay').trim();
+      const reached = !refuses(() => git('switch', '--quiet', 'effort-replay'));
+      const moved = !refuses(() => git('branch', '-f', 'effort-replay', 'main'));
+      const after = git('rev-parse', 'effort-replay').trim();
+      if (reached) throw new Error('the shared checkout reached the held branch');
+      if (moved || after !== before) throw new Error(`the held branch moved: ${before} -> ${after}`);
+      return git('rev-parse', '--abbrev-ref', 'HEAD').trim() === 'main';
+    }));
+
+  assert('detaching the holder releases the branch and leaves the directory in place', () =>
+    held('effort-detach', (surface) => {
+      inSurface(surface, 'switch', '--detach', '--quiet');
+      const taken = !refuses(() => git('switch', '--quiet', 'effort-detach'));
+      if (!taken) throw new Error('detaching did not release the branch');
+      return fs.existsSync(surface);
+    }));
+
+  assert('a clean close releases the branch, then removes the surface', () =>
+    held('effort-clean', (surface) => {
+      // The close in its required order. Detach first: it succeeds even where
+      // removal fails, and a run that reversed them has nothing left to detach.
+      inSurface(surface, 'switch', '--detach', '--quiet');
+      // Reachable *before* the directory goes, which is the whole point of the
+      // order. Removing a worktree frees its branch too, so an assertion that
+      // only looked afterwards would pass with no detach in it at all. That is
+      // exactly what an earlier draft of this did.
+      if (refuses(() => git('switch', '--quiet', 'effort-clean'))) {
+        throw new Error('detaching did not free the branch before the surface was removed');
+      }
+      git('switch', '--quiet', 'main');
+      git('worktree', 'remove', '--force', surface);
+      if (fs.existsSync(surface)) throw new Error('the surface survived a clean close');
+      return true;
+    }));
+
+  assert('a stop keeps the surface and releases the branch anyway', () =>
+    held('effort-stop', (surface) => {
+      // A trip-wire ends the turn without reaching the close. The tree is what
+      // is worth keeping; the branch inside it is not, because whoever acts on
+      // the stop is the one most likely to want it.
+      inSurface(surface, 'switch', '--detach', '--quiet');
+      const reachable = !refuses(() => git('switch', '--quiet', 'effort-stop'));
+      if (!fs.existsSync(surface)) throw new Error('a stop removed the surface');
+      return reachable;
+    }));
+
+  assert('a surface a dead run left still holds its branch, and is re-entered rather than duplicated', () =>
+    held('effort-dead', (surface) => {
+      // Nothing runs on a crash, so this worktree still holds its branch. What
+      // makes that safe is re-entry, never the branch being free, and a second
+      // surface for the same effort is refused.
+      const duplicate = refuses(() =>
+        git('worktree', 'add', '--quiet', path.join(dir, 'duplicate'), 'effort-dead'));
+      if (!duplicate) throw new Error('git allowed a second surface for one effort');
+      // Re-entry is opening the directory that already exists, which asks git
+      // for no permission at all.
+      return /^effort-dead$/m.test(inSurface(surface, 'rev-parse', '--abbrev-ref', 'HEAD'));
+    }));
+
+  assert('update-ref is NOT refused, which is why the caveat is stated rather than glossed', () =>
+    held('effort-plumbing', (surface) => {
+      // Asserted in the direction it actually behaves. A suite claiming this
+      // hole was closed would be the reason somebody later believed it was.
+      fs.writeFileSync(path.join(surface, 'moved.txt'), 'ahead\n', 'utf8');
+      inSurface(surface, 'add', '-A');
+      inSurface(surface, 'commit', '--quiet', '-m', 'ahead of main');
+      const before = git('rev-parse', 'effort-plumbing').trim();
+      if (before === git('rev-parse', 'main').trim()) throw new Error('the fixture did not diverge');
+      git('update-ref', 'refs/heads/effort-plumbing', git('rev-parse', 'main').trim());
+      const after = git('rev-parse', 'effort-plumbing').trim();
+      if (before === after) throw new Error('update-ref did not move a held branch; the caveat may be stale');
+      return true;
+    }));
+
+  assert('the suite leaves no worktree and no branch of its own behind', () => {
+    reset();
+    const remaining = worktreePaths();
+    if (remaining.length !== 1) throw new Error(`${remaining.length} worktrees left: ${remaining.join(', ')}`);
+    return git('branch', '--format=%(refname:short)').trim() === 'main';
+  });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// --- 18.2 the surfaces that state the working-surface rule ------------------
+
+section('working surface surfaces', () => {
+  // Prose matchers run over a flattened copy: a shipped file wraps at eighty
+  // columns, so a phrase straddling a break would fail on the wrap rather than
+  // on the claim.
+  const flatten = (text) => text.split(/\s+/).join(' ');
+  const execution = flatten(readSrc('policies', 'execution.md'));
+  const runner = flatten(readSrc('skills', 'implement.md'));
+  const opener = flatten(readSrc('skills', 'specify.md'));
+  const marker = readSrc('scripts', 'position.mjs');
+  const spec = flatten(specText);
+
+  assert('the execution policy names the working surface as something a run claims', () =>
+    /claims the working surface it writes through as well as the branch/.test(execution));
+
+  assert('the execution policy says a run takes a surface where its checkout is not isolated', () =>
+    /where the isolation is `checkout`, the run takes a worktree of its own/.test(execution));
+
+  assert('the execution policy keys the decision on the kind and forbids the enforcement', () =>
+    /keyed on the isolation's kind and \*\*never on its enforcement\*\*/.test(execution));
+
+  assert('the execution policy separates releasing the claim from removing the surface', () =>
+    /Releasing that claim and removing the surface are separate acts/.test(execution));
+
+  assert('the orchestrator integrates in the surface it holds', () =>
+    /only integrator, and it integrates in the surface it holds/.test(execution));
+
+  assert('the specification carries the rule as well as the policy', () =>
+    /A run whose checkout is \*\*not\*\* isolated MUST take a worktree of AEP's own/.test(spec)
+    && /fixed by the isolation's kind, and never by its enforcement/.test(spec));
+
+  assert('the specification still forbids effort identity in the marker', () =>
+    /Position therefore MUST NOT carry which effort a run is inside/.test(spec));
+
+  assert('the specification bounds the marker to three keys', () =>
+    /Nothing AEP writes adds a key beyond `tree`, `head`, and `sessions`/.test(spec));
+
+  assert('the specification says sessions is a diagnostic nothing acts on', () =>
+    /MUST NOT read it to decide whether to proceed/.test(spec));
+
+  assert('the specification names both holes rather than implying the surface is inviolable', () =>
+    /It does not refuse `git update-ref`, and it reaches no further than the clone/.test(spec));
+
+  assert('both skills key the surface decision on the kind', () =>
+    /Never key on the enforcement/.test(opener) && /never on its\s?enforcement/.test(runner));
+
+  assert('the opener creates the branch into the worktree in one act', () =>
+    /git worktree add -b <effort> .aep\/worktrees\/<effort>\/_run <base>/.test(opener));
+
+  assert('the opener takes no second surface where the runtime gave one', () =>
+    /\*\*Take no second one\*\*/.test(opener));
+
+  assert('the runner re-enters an existing surface rather than duplicating it', () =>
+    /re-entered, never duplicated/.test(runner));
+
+  assert('the runner stops on a dirty surface rather than guessing whose edits those are', () =>
+    /end the turn naming the uncommitted paths/.test(runner));
+
+  assert('the runner detaches before it removes, and says removal is the optional half', () =>
+    /\*\*Detach first, always:\*\*/.test(runner)
+    && /Removal is best-effort and\s+releasing the branch is not/.test(runner));
+
+  assert('the runner keeps the surface on a stop and removes it on a clean close', () =>
+    /removed on a clean close and kept on a stop or a failure/.test(runner));
+
+  assert('the marker script takes a session identifier and never invents one', () =>
+    /--session <id>/.test(marker) && /function recordSession/.test(marker));
+
+  assert('nothing shipped branches on what sessions contains', () => {
+    // The field is a diagnostic. A shipped surface reading it to decide would
+    // reproduce the stale-lock failure the effort's research recorded.
+    // Asserted behaviourally rather than by pattern. A regex draft of this
+    // missed `if (readMarker(root)?.sessions?.length > 1)`, because its
+    // character class could not cross the parenthesis in `readMarker(root)`, so
+    // the guard read green while the thing it forbade sat two lines away.
+    const readers = PAYLOAD_SCRIPTS
+      .filter((name) => name !== 'position.mjs')
+      .filter((name) => /\bsessions\b/.test(readSrc('scripts', name)));
+    if (readers.length > 0) throw new Error(`scripts reading sessions: ${readers.join(', ')}`);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-sessions-'));
+    try {
+      const aep = path.join(dir, '.aep');
+      fs.mkdirSync(aep, { recursive: true });
+      fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+      const git = (...args) =>
+        execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      git('init', '--quiet', '-b', 'main');
+      git('config', 'user.email', 'suite@example.invalid');
+      git('config', 'user.name', 'suite');
+      fs.writeFileSync(path.join(dir, 'README.md'), 'fixture\n', 'utf8');
+      git('add', '-A');
+      git('commit', '--quiet', '-m', 'base');
+
+      const call = (command) =>
+        spawnSync(process.execPath, [path.join(SRC, 'scripts', 'position.mjs'), command, '--root', aep],
+          { cwd: dir, encoding: 'utf8' });
+      const markerFile = path.join(aep, 'position', 'marker.json');
+      const withSessions = (sessions) => {
+        const written = JSON.parse(fs.readFileSync(markerFile, 'utf8'));
+        fs.writeFileSync(markerFile, `${JSON.stringify({ ...written, sessions }, null, 2)}\n`, 'utf8');
+      };
+
+      call('stamp');
+      withSessions([]);
+      const alone = call('check');
+      // Two identifiers against one marker is the shared-checkout state. If any
+      // shipped behaviour keys on the field, this is where it diverges.
+      withSessions([{ id: 'a', at: '2026-01-01T00:00:00.000Z' }, { id: 'b', at: '2026-01-02T00:00:00.000Z' }]);
+      const shared = call('check');
+      if (alone.status !== shared.status) {
+        throw new Error(`check exit changed with sessions present: ${alone.status} -> ${shared.status}`);
+      }
+      if (alone.stdout !== shared.stdout) {
+        throw new Error(`check output changed with sessions present:\n${alone.stdout}\n---\n${shared.stdout}`);
+      }
+      return true;
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  assert('no shipped surface describes the marker as clone-wide', () => {
+    // The token appears in this suite, naming what it forbids, which is why the
+    // suite excludes itself rather than the guard tripping on its own text.
+    const offenders = [];
+    for (const file of walk(SRC)) {
+      if (path.basename(file) === 'verify.mjs') continue;
+      if (!/\.(md|mjs|json)$/.test(file) && path.basename(file) !== 'gitignore') continue;
+      if (/per-clone/.test(fs.readFileSync(file, 'utf8'))) offenders.push(path.relative(SRC, file));
+    }
+    if (offenders.length > 0) throw new Error(`still call state per-clone: ${offenders.join(', ')}`);
+    return true;
+  });
+
+  assert('the marker written by the shipped script carries exactly three keys', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-marker-'));
+    try {
+      const aep = path.join(dir, '.aep');
+      fs.mkdirSync(aep, { recursive: true });
+      fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+      const git = (...args) =>
+        execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      git('init', '--quiet', '-b', 'main');
+      git('config', 'user.email', 'suite@example.invalid');
+      git('config', 'user.name', 'suite');
+      fs.writeFileSync(path.join(dir, 'README.md'), 'fixture\n', 'utf8');
+      git('add', '-A');
+      git('commit', '--quiet', '-m', 'base');
+
+      const stamp = (...extra) =>
+        spawnSync(process.execPath, [path.join(SRC, 'scripts', 'position.mjs'), 'stamp', '--root', aep, ...extra],
+          { cwd: dir, encoding: 'utf8' });
+
+      stamp('--session', 'sess-one');
+      let written = JSON.parse(fs.readFileSync(path.join(aep, 'position', 'marker.json'), 'utf8'));
+      const keys = Object.keys(written).sort().join(',');
+      if (keys !== 'head,sessions,tree') throw new Error(`marker keys: ${keys}`);
+      if (written.sessions[0]?.id !== 'sess-one') throw new Error('the session identifier was not recorded');
+
+      // A second identifier against one marker is the state that says a
+      // checkout is being shared, and it is the only thing the field buys.
+      stamp('--session', 'sess-two');
+      written = JSON.parse(fs.readFileSync(path.join(aep, 'position', 'marker.json'), 'utf8'));
+      if (written.sessions.length !== 2) throw new Error(`two sessions expected, got ${written.sessions.length}`);
+
+      // Re-stamping as one of them updates rather than appends: a run stamps
+      // once per ticket, and an appending list reports one agent as a dozen.
+      stamp('--session', 'sess-one');
+      written = JSON.parse(fs.readFileSync(path.join(aep, 'position', 'marker.json'), 'utf8'));
+      if (written.sessions.length !== 2) throw new Error(`dedupe failed: ${written.sessions.length} entries`);
+
+      // No identifier leaves the field exactly as it was, so a runtime that
+      // supplies none stamps as it always did.
+      stamp();
+      written = JSON.parse(fs.readFileSync(path.join(aep, 'position', 'marker.json'), 'utf8'));
+      if (written.sessions.length !== 2) throw new Error('a bare stamp disturbed the sessions field');
+      return true;
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  assert('the runner releases a ticket branch once its work is on the effort branch', () =>
+    /Release the ticket branch/.test(runner)
+    && /Only after the commit\s+has landed/.test(readSrc('skills', 'implement.md'))
+    && /A parked or\s+failed ticket keeps both/.test(runner));
+
+  assert('the policy says a ticket branch is a build claim rather than a reviewable level', () =>
+    /A ticket branch is a build claim, and it is released once its work reaches the/.test(execution)
+    && /a branch integrated rather than merged is not a level of anything/.test(execution));
+
+  assert('the specification carries the ticket-branch lifecycle as a requirement', () =>
+    /A ticket branch is a build claim and MUST be released once its work reaches the effort branch/.test(spec));
+
+  assert('the shipped seed carries the working-surface invocations', () => {
+    // The seed is what a repository installs. Updating only this repository's
+    // own copy ships a reference that contradicts the protocol beside it.
+    const seed = flatten(readSrc('seed', 'references', 'git.md'));
+    if (/worktrees\/<task-id>/.test(seed)) throw new Error('the seed still uses the bare ticket form');
+    for (const wanted of [
+      /git worktree add -b <effort> .aep\/worktrees\/<effort>\/_run <base>/,
+      /switch --detach/,
+      /from the root, not from inside/,
+      /cannot force update the branch/,
+      /update-ref refs\/heads\/<held> <commit>/,
+    ]) {
+      if (!wanted.test(seed)) throw new Error(`the seed is missing ${wanted}`);
+    }
+    return true;
+  });
+
+  assert('the runner passes the session identifier when it stamps', () =>
+    /position\.mjs stamp --session <id>/.test(runner)
+    && /the identifier your harness gave this session/.test(runner)
+    && /\*\*Never invent one\.\*\*/.test(runner));
+
+  assert('the close says where the removal is performed from', () =>
+    /Leave the surface, then remove it from the repository root/.test(runner)
+    && /the second command\s?is run from elsewhere rather than skipped/.test(runner));
+
+  assert('the landing step releases the ticket worktree with its branch', () =>
+    /Release the ticket branch and the worktree holding it/.test(runner)
+    && /The directory goes with the branch/.test(runner));
+
+  assert("nothing reaps another run's surface, and the text says why", () =>
+    /A run removes only its own surface/.test(spec)
+    && /look identical from outside/.test(execution));
+
+  assert('a surface is removable from the repository root while the process stands elsewhere', () => {
+    // What makes the close achievable at all. A run cannot remove the directory
+    // it is standing in, so the suite proves removal works from outside it.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-remove-'));
+    try {
+      const git = (...args) =>
+        execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      git('init', '--quiet', '-b', 'main');
+      git('config', 'user.email', 'suite@example.invalid');
+      git('config', 'user.name', 'suite');
+      fs.writeFileSync(path.join(dir, 'README.md'), 'fixture\n', 'utf8');
+      git('add', '-A');
+      git('commit', '--quiet', '-m', 'base');
+
+      const surface = path.join(dir, 'surface');
+      git('worktree', 'add', '--quiet', '-b', 'effort-remove', surface, 'main');
+      execFileSync('git', ['switch', '--detach', '--quiet'],
+        { cwd: surface, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      git('worktree', 'remove', '--force', surface);
+      if (fs.existsSync(surface)) throw new Error('the surface survived removal from the root');
+      // And the branch it held is reachable, which is the point of detaching first.
+      git('switch', '--quiet', 'effort-remove');
+      git('switch', '--quiet', 'main');
+      return true;
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  assert('the marker script is text, so a guard that greps it actually reads it', () => {
+    // It carried a raw NUL as the fingerprint separator, which made grep treat
+    // the whole file as binary and skip it. Every sweep over the shipped tree
+    // was passing here by not looking, including the one above.
+    const bytes = fs.readFileSync(path.join(SRC, 'scripts', 'position.mjs'));
+    return !bytes.includes(0);
+  });
+});
+
 // --- 19.3 the surfaces that state the rule ----------------------------------
 
 section('scope surfaces', () => {
@@ -4571,8 +5016,10 @@ section('scope surfaces', () => {
     && /\[\[skills\/prune\]\]/.test(policy)
     && /unscoped checkout/.test(policy));
   assert('the policy states the mismatch in both directions', () =>
-    /stops on a dirty tree and switches on a clean one/.test(policy)
+    /stops on a dirty tree and moves to it on a\s+clean one/.test(policy)
     && /uncommitted paths/.test(policy));
+  assert('the policy says to enter the surface rather than check the branch out', () =>
+    /Entering a surface, rather than checking a branch out/.test(policy));
   assert('the policy states the ambiguity stop and what an empty claim permits', () =>
     /ends the turn listing the set/.test(policy)
     && /An empty claim is unscoped and takes any effort/.test(policy));
@@ -4604,9 +5051,11 @@ section('scope surfaces', () => {
   assert('the runner says an empty claim leaves it unchanged', () =>
     /An empty claim takes any effort/.test(implement) && /unscoped run is unchanged/.test(implement));
   assert('the runner states the mismatch it performs', () =>
-    /switches on a clean one/.test(implement)
-    && /Clean: check that effort's branch out/.test(implement)
+    /moves to it on a\s+clean one/.test(implement)
+    && /Clean: \*\*enter that effort's surface\*\*/.test(implement)
     && /uncommitted paths/.test(implement));
+  assert('the runner says a refused switch is the guard working', () =>
+    /Enter the surface; do not check the branch out/.test(implement));
   assert('the runner keeps the marker read beside the scope read', () =>
     /position\.mjs check/.test(implement) && /never merged/.test(implement));
 

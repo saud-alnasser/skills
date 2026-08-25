@@ -61,12 +61,64 @@ shells and mangle the body silently.
 ## Worktrees
 
 ```sh
-git worktree add .aep/worktrees/<task-id> -b <task-id>-<slug>
+git worktree add .aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
 git worktree list
-git worktree remove .aep/worktrees/<task-id>
+git worktree remove .aep/worktrees/<effort>/<ticket-id>-<slug>
 ```
 
+The branch name carries the effort as a namespace. Ticket ids restart at `01` in
+every effort, so a bare `03-shared-id` is a name two efforts can both want.
+
 Worktrees are infrastructure, never knowledge. `.aep/worktrees/` is gitignored.
+
+### The run's own surface
+
+The run holds its effort branch in a worktree too, not only its children. **Create
+the branch and the worktree in one act:**
+
+```sh
+git worktree add -b <effort> .aep/worktrees/<effort>/_run <base>
+```
+
+Two commands would leave a window in which the branch exists and nothing holds
+it, and that window is where another run checks it out.
+
+### Releasing it, and removing it
+
+**Detach first, then remove**, and run the removal **from the repository root**
+rather than from inside the surface:
+
+```sh
+git -C .aep/worktrees/<effort>/_run switch --detach   # frees the branch, keeps the directory
+git worktree remove .aep/worktrees/<effort>/_run      # from the root, not from inside
+```
+
+Detaching frees the branch at once, so whoever reviews the effort can check it
+out, and it succeeds even where removal fails. **Releasing the branch is the part
+that is not optional.** A process cannot remove the directory it is standing in,
+which is why the second command is run from elsewhere.
+
+Leaving surfaces behind is the way this pattern fails in practice, so removal is
+part of finishing rather than housekeeping.
+
+### What git refuses, and what it does not
+
+Against a branch a worktree holds, these fail, and the message names the holder:
+
+```
+git worktree add <path> <held>     fatal: '<held>' is already used by worktree at ...
+git switch <held>                  fatal: '<held>' is already used by worktree at ...
+git branch -f <held> <commit>      fatal: cannot force update the branch '<held>' ...
+```
+
+**Meeting one of these is the mechanism working**, never an error to route
+around: it means another run holds that claim.
+
+Two things it does not cover:
+
+- **`git update-ref refs/heads/<held> <commit>` moves a held branch** with no
+  complaint. The refusals sit on the porcelain, not on the ref.
+- **A second clone refuses nothing.** The guarantee stops at this clone.
 
 ## What is never run
 

@@ -232,7 +232,7 @@ export const RETIRED_DIRS = [
   { dir: 'modes', since: '3.0.0', was: 'the working posture, now stated in each skill' },
 ];
 
-/** Directories that are per-clone and gitignored. */
+/** Directories that stay local to a working tree and are gitignored. */
 export const PER_CLONE_DIRS = ['position', 'worktrees'];
 
 /**

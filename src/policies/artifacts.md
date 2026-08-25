@@ -110,8 +110,10 @@ Consequently:
 - **Never reference `.aep/` from source comments or from the repository's own
   documentation.** AEP is protocol machinery; code that cites it acquires a
   dependency on a tool that may be removed.
-- **Per-clone state stays per-clone.** `position/` and `worktrees/` are
-  gitignored, and nothing shared may depend on them.
+- **Local state stays local.** `position/` and `worktrees/` are gitignored,
+  and nothing shared may depend on them. Gitignored means **per working tree**
+  rather than per clone: two linked worktrees hold two markers, and two agents
+  sharing one checkout hold one between them.
 - **An artifact is placed by its scope.** What belongs to one effort — its spec,
   its evidence, its tickets — lives in that effort's directory. What spans every
   effort lives at the root of `.aep/`.

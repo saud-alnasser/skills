@@ -133,6 +133,49 @@ commit per ticket, `aep-3` being the worked example. Under stacking a ticket is 
 `blocked-by` names, and the effort is the stack rather than one branch inside it.
 An effort small enough to be one ticket is one branch, which is most of them.
 
+### No, a ticket branch is not a stack level
+
+**Stack levels are effort branches. A ticket branch is a build claim, and it is
+not tracked.**
+
+It exists so git refuses a second run the same ticket, and it holds nothing once
+the orchestrator has integrated its work into the effort branch. The step that
+lands the work deletes it (`[[policies/execution]]`). Tracking something that
+lives for one ticket and is then deleted leaves metadata describing a level
+nobody will ever review.
+
+Stated because three implementers in one wave of effort 48 each reached this
+question independently, and all three declined and escalated. Three agents
+hitting one ambiguity is an underspecified rule, not three cautious agents.
+
+**What made it ambiguous is a conflation worth naming.** Tracking a branch and
+opening a pull request for one are different acts, and the answer turns on
+neither of them:
+
+| | Is | Applies to |
+| --- | --- | --- |
+| `gt track` | **local metadata**, in `.git/.graphite_metadata.db` | branches that will be reviewed, so effort branches |
+| a pull request | a **tracker object** | one per effort, for the effort branch |
+
+`[[policies/execution]]` allows exactly two tracker objects per effort, one issue
+and one pull request, and says AEP creates no other. A ticket branch therefore
+never gets one, which means it never merges on its own, which means it is not a
+level of anything. **A branch integrated rather than merged is not a stack
+level**, and that is the whole answer.
+
+*This corrects the sentence above saying that under stacking the effort is the
+stack rather than one branch inside it. The commits are arranged that way while
+the work is being built; the reviewable unit is the effort branch, and the ticket
+branches collapse into it as each one lands. Effort 54 answered the tracking
+question the other way first, tracked twelve ticket branches, and then had to
+delete all twelve and their metadata, which is what made the right answer
+visible.*
+
+**If ticket branches should instead be separately reviewable, each with its own
+pull request, that is a change to `[[policies/execution]]`'s two-object rule and
+it is the human's to make.** A rule may tighten a policy and never soften one, so
+this file cannot grant it.
+
 The closing keyword goes on the commit that completes the work (above), so a
 branch still being amended carries `Refs #<n>` and gains `Closes #<n>` on the
 amend that finishes it.

@@ -21,6 +21,11 @@ reviews it.
    isolation go in `Position`, beside that spec's `status:`
    (`[[policies/reporting]]`). Read it whole — requirements, acceptance criteria,
    and the technical sections if `[[skills/plan]]` ran.
+
+   **Where the effort is not the one this checkout is on, enter its working
+   surface rather than checking its branch out** (`[[policies/execution]]`). An
+   effort in flight holds its branch in a worktree, so `git switch` to it is
+   refused, and what this skill writes has to land on that branch.
 2. **Tasks live under `efforts/<effort>/tickets/`, and there is nowhere to
    look.** Not per repository, not per convention: a task is a file, its
    `blocked-by` is an edge a script reads, and the frontier is computed from the

@@ -70,11 +70,15 @@ named, and an invocation naming none against an empty claim has nothing to
 schedule from and ends the turn saying so. A claim of more than one, with no
 effort named, ends the turn listing the set rather than picking from it.
 
-**A named effort outside the claim stops on a dirty tree and switches on a clean
-one** (`[[policies/execution]]`). Clean: check that effort's branch out and carry
-on, which is plainly what was meant. Dirty: end the turn naming the claim, the
-effort you were given, and the uncommitted paths — switching would carry one
-effort's edits onto another's branch.
+**A named effort outside the claim stops on a dirty tree and moves to it on a
+clean one** (`[[policies/execution]]`). Clean: **enter that effort's surface** at
+step 2 and carry on, which is plainly what was meant. Dirty: end the turn naming
+the claim, the effort you were given, and the uncommitted paths — moving would
+carry one effort's edits onto another's branch.
+
+**Enter the surface; do not check the branch out.** An effort in flight holds its
+branch in a worktree, so `git switch` to it is refused, and that refusal is the
+guard working rather than an obstacle. Open the worktree instead.
 
 **The frontier is read, never judged.** `frontier.mjs` prints what is ready, what
 is blocked and on what, and what is parked; the run quotes it rather than holding
@@ -99,19 +103,35 @@ reason**; that satisfies the edges that named it, and the run continues.
 
 ## 2 — Claim it
 
-**The claim is the branch, and creating it is the first act of the run** — before
-the first read of source, and long before the first edit. A claim made after the
-first edit is a report of a race already lost.
+**The claim is the branch and the surface, and taking both is the first act of
+the run** — before the first read of source, and long before the first edit. A
+claim made after the first edit is a report of a race already lost.
+
+**Enter the run's own worktree before anything else** (`[[policies/execution]]`).
+Read the isolation step 0 already printed, and key on its **kind**, never on its
+enforcement:
+
+| The isolation says | Do |
+| --- | --- |
+| `checkout` | enter `.aep/worktrees/<effort>/_run`, creating it from the effort branch where it does not exist |
+| `worktree` | the runtime gave you a surface already. **Take no second one**, work here, and say in `Position` which surface that is |
+
+**A worktree this effort already has is re-entered, never duplicated.** A run
+that stopped or died left one, and a second surface for one effort is two places
+its branch could be worked from. **Where that tree is dirty, end the turn naming
+the uncommitted paths** — the same answer as a named effort outside the claim on
+a dirty tree, and for the same reason: you cannot tell whose edits those are.
 
 ```
 effort branch      <effort>                     aep-3
 ticket branch      <effort>/<ticket-id>-<slug>  aep-3/17-assignment-and-claim
 ```
 
-The effort branch is created once and every wave lands on it. **Children in a
-wave branch from the effort branch's current tip, and the next wave branches from
-the new tip** — so each wave sees everything the waves before it landed, and no
-child is working against a tree three tickets stale.
+The effort branch is created once and every wave lands on it, **in the run's own
+worktree and never in a shared checkout**. **Children in a wave branch from the
+effort branch's current tip, and the next wave branches from the new tip** — so
+each wave sees everything the waves before it landed, and no child is working
+against a tree three tickets stale.
 
 Check both sides before creating — a local branch of that name, and the remote
 (fetch first, or the answer is stale). **A claim held elsewhere is never taken:**
@@ -152,7 +172,12 @@ which role, which branches — before creating anything. Stated, not gated.
 
 ## 4 — Integrate, review, land, repeat
 
-**Integrate each child as it returns**, one at a time, into the effort branch.
+**Integrate each child as it returns**, one at a time, into the effort branch
+**inside the run's own worktree** (`[[policies/execution]]`). Never in the
+checkout the run was invoked from: a `cherry-pick` or a `reset` there resolves
+the branch name at write time, so it lands wherever another run last left `HEAD`,
+and a clean `git status` read a moment earlier does not make that safe.
+
 Not all of them at the end: a conflict then arrives as one pile with no ticket to
 name it, and the second child's work is what gets untangled by whoever is least
 able to. Integrated per ticket, **a conflict surfaces at that ticket's
@@ -209,20 +234,39 @@ reader cannot act on is a wall rather than a check.
    The evidence is then in the history a bisect reads, and the ledger line looks
    like every other one. A ticket that quietly lands nothing is a ticket nobody
    can tell was done.
-5. **Stamp the marker** — `node .aep/scripts/position.mjs stamp`. Last, once the
+5. **Release the ticket branch and the worktree holding it.** Its work is on the
+   effort branch now, so the claim it held is spent and both hold nothing. Remove
+   the worktree, delete the branch, and drop any stacking metadata with them
+   (`[[policies/execution]]`). **Only after the commit has landed** — releasing
+   one whose work is still outside the effort branch is data loss. **A parked or
+   failed ticket keeps both**, since nothing was integrated.
+
+   The directory goes with the branch. Releasing one and leaving the other is how
+   a clone fills with worktrees whose branches no longer exist.
+6. **Stamp the marker** — `node .aep/scripts/position.mjs stamp --session <id>`,
+   passing **the identifier your harness gave this session**. Last, once the
    commit exists, because a commit cannot contain its own hash. **An amend
    produces a new commit, so an amend re-stamps.**
 
+   **Never invent one.** Where the runtime exposes no session identifier, drop
+   the flag and stamp as before; everything else is unaffected
+   (`[[policies/execution]]`).
+
+   What it buys is one thing: a second identifier against one marker says two
+   agents are sharing a checkout. **It is a diagnostic and nothing reads it to
+   decide** — an identifier carries no liveness, so a run gating on one would
+   block on the leavings of every abnormal exit.
+
 Further changes amend that commit.
 
-6. **Write the run log**, in the pull request, before taking the next ticket.
+7. **Write the run log**, in the pull request, before taking the next ticket.
    The ledger line for this ticket, the converge round, how many times each
    ticket failed review, items recorded but not acted on, and anything a child
    raised that was not a trip-wire (`[[policies/execution]]`). **A failed write
    is reported, never continued past** — the run has just lost its memory and
    does not know it yet.
 
-7. **Re-sync the derived labels** on both objects: `status:` from where the
+8. **Re-sync the derived labels** on both objects: `status:` from where the
    effort now stands, `type:` from what the spec describes, and every flag the
    diff establishes — `flag: dependencies` where a dependency manifest or a
    lockfile moved, `flag: release` where what a release publishes moved,
@@ -292,12 +336,49 @@ before it says so anywhere else:
    `size:` from the diff** against the thresholds that repository's own `size:`
    descriptions state.
 3. **Move the issue and the pull request to `status: in review`**, then
-   **mark the pull request ready** — the run's own last act, permitted by
-   `[[rules/version-control]]`.
+   **mark the pull request ready** — permitted by `[[rules/version-control]]`.
+4. **Release the surface, then remove it.** Detach the run's worktree, which
+   frees the effort branch at once so whoever reviews it can check it out, and
+   only then remove the directory. **Detach first, always:** detaching succeeds
+   even where removal fails, and a run that reversed them has nothing left to
+   detach.
+
+   **Leave the surface, then remove it from the repository root:**
+
+   ```
+   git -C .aep/worktrees/<effort>/_run switch --detach
+   git worktree remove .aep/worktrees/<effort>/_run
+   ```
+
+   A process cannot remove the directory it is standing in, so the second command
+   is run from elsewhere rather than skipped. **Removal is best-effort and
+   releasing the branch is not**, but a close that only ever detaches leaves one
+   directory per effort, which is how this pattern fails in practice.
+
+   **The directory is removed on a clean close and kept on a stop or a failure**,
+   so there is something to inspect after exactly the runs worth inspecting.
+
+   Where the runtime supplied the surface, AEP took none and releases none.
 
 **Where the repository has no tracker, steps 2 and 3 have nowhere to land and
-the close is step 1** (`[[policies/execution]]`). There is no draft to ready and
-no label to move; the branch is finished and stamped.
+the close is steps 1 and 4** (`[[policies/execution]]`). There is no draft to
+ready and no label to move; the branch is finished, stamped, and released.
+
+**A run that stops keeps its surface, and releases the branch anyway.** The
+trip-wires below end the turn without reaching this close, and the tree is
+deliberately left to be inspected. **Detach on the way out**: the directory is
+what is worth keeping, and the branch held inside it is not, because a human
+about to act on the stop is the person most likely to want it.
+
+**A run that dies releases nothing**, because nothing runs. Its worktree still
+holds the effort branch, and that is safe for one reason only: **the run that
+resumes the effort re-enters that same worktree at step 2** rather than needing
+the branch back. Re-entry is what stops a dead run locking an effort, not
+detachment, which is why step 2 re-enters rather than creating a second surface.
+
+What must never happen is the reverse pairing — a directory removed while its
+branch is still claimed — which is why these two acts are ordered rather than
+done together.
 
 The human reviews and merges. **The runner never merges**, in either shape.
 

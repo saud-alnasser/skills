@@ -92,7 +92,7 @@ it is the same step for a one-line fix and a fifteen-ticket feature:
 | --- | --- |
 | 1 | **create the issue**, body `spec.md`, each requirement's acceptance criterion a checkbox |
 | 2 | **rename** `efforts/xxxx-<slug>/` to `efforts/<number>-<slug>/`, before the first commit, so the rename never appears in history |
-| 3 | **create the effort branch**, based where `[[rules/version-control]]` says |
+| 3 | **create the effort branch into the run's own worktree**, based where `[[rules/version-control]]` says, so the branch is held from the moment it exists |
 | 4 | **commit the effort's artifacts** as one `docs` commit |
 | 5 | **push, and open a draft pull request** carrying the approach from `plan.md`, and each ticket's criteria as checkboxes — or **saying tickets are not yet cut**, never an empty list |
 
@@ -102,6 +102,31 @@ stacks, the new effort's branch is created on the current branch and the rule is
 quoted as the reason; where it does not, the base is the default branch's tip,
 whatever `HEAD` happens to be. Read it rather than branching from where you are
 standing, or the new effort carries the unmerged commits of the one you were on.
+
+**The branch is created into a worktree rather than checked out where you are
+standing** (`[[policies/execution]]`). One act creates both, so there is no
+window in which the branch exists unheld:
+
+```
+git worktree add -b <effort> .aep/worktrees/<effort>/_run <base>
+```
+
+Read the isolation `scripts/scope.mjs` already printed at step 1, and key on its
+**kind**:
+
+| The isolation says | Do |
+| --- | --- |
+| `checkout` | take the worktree above. The surface you are standing in is one another run can move |
+| `worktree` | the runtime already gave you a surface. **Take no second one**, and create the branch where you are |
+
+**Never key on the enforcement.** It describes the clone rather than this
+checkout, so it reads `enforced` on a shared checkout with worktrees elsewhere,
+which is the one case that most needs a surface of its own.
+
+Say in `Position` which surface the run is using, and where none was taken, why.
+
+**A refusal at the ask leaves no worktree behind.** The spec stays local and
+unopened, and nothing was created to clean up.
 
 **The pull request exists from the first draft** because it is what the effort's
 own artifacts land through, and because it is where the run will keep its memory

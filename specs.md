@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.1.0
+**Version:** 3.2.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -591,6 +591,20 @@ What the detection establishes is the **strength of the claim** (§19.2), and a 
 
 *Why detected rather than required: a worktree per thread is the runtime's choice, and AEP under a runtime that provides none MUST behave identically apart from the strength of the claim it reports. Requiring them would make the protocol unrunnable where they are not on offer, and assuming them would have every run report an enforcement that, between two clones, does not exist.*
 
+### 18.2 A run holds the surface it writes through
+
+Detection above establishes what is in force. **What a run does about it is fixed by the isolation's kind, and never by its enforcement.**
+
+A run whose checkout is already a linked worktree holds a surface of its own, and MUST NOT take a second. A run whose checkout is **not** isolated MUST take a worktree of AEP's own, under `.aep/worktrees/`, and **create its effort branch into it before its first write** (§19.2). Creating the branch and the worktree in one act is what leaves no window in which the branch exists unheld.
+
+*Why the kind and not the enforcement: enforcement answers whether a claim inside this clone can be taken twice, which is a fact about the clone rather than about this checkout. A run keying on it would decline to take a surface in precisely the case that most needs one — a main checkout two agents are sharing, where the presence of other worktrees elsewhere already reads as enforced.*
+
+**A surface MUST be removed and not merely released**, and the removal is performed from outside that directory, because a process cannot remove the one it stands in. **A run removes only its own surface**: a directory a stopped run kept deliberately and one an abandoned run left behind are indistinguishable from outside, so nothing reaps another run's. *Why this is normative rather than housekeeping: leaving surfaces behind is the observed steady state of worktree-per-run implementations, at gigabytes each, and a guard that fills a disk is one somebody turns off.*
+
+**Releasing the claim and removing the surface are separate acts.** A run releases its effort branch by detaching the worktree holding it, which frees the branch at once, and removes the directory separately. A surface kept after a failure therefore holds no branch, and a run that died cannot lock an effort against its own resumption.
+
+**The exclusion is git's, and it stops at the porcelain.** Git refuses a second worktree on a held branch, refuses a checkout switching to it, and refuses `git branch -f` against it. It does not refuse `git update-ref`, and it reaches no further than the clone. A conforming implementation MUST NOT describe the surface as though either hole were closed.
+
 ## 19. Parallelism
 
 ### 19.1 The unit is a whole task
@@ -619,6 +633,8 @@ An implementation MUST NOT infer independence from a guess about which files wil
 
 **The branch is the claim, and the parent creates every branch in the set before dispatching anything** — so a child claims nothing, and a claim is never made after the race it existed to win.
 
+**A run claims the working surface it writes through as well as the branch it is on**, and a worktree is how it holds one (§18.2). The two are not one guarantee: a branch names what a run owns, and a worktree is what stops a second run from writing through the same tree. An implementation with the first and not the second identifies its work correctly and can still have another run move the checkout under it between a read and a write. **The orchestrator integrates in the surface it holds**, never in a checkout another run can move.
+
 Sub-agents MAY receive separate worktrees. Parallelism MUST NOT compromise rules, the specification, repository integrity, or acceptance criteria.
 
 ### 19.3 Scope: the claim, and the working set
@@ -640,6 +656,8 @@ Two questions sit behind the answer, and holding them apart is what this subsect
 
 **A run that must act on a single effort, holding a claim of more than one and given none to act on, MUST end the turn listing the set rather than choose from it.** That is the only place ambiguity stops a run: at the point where one effort has to be picked, and nothing is guessed.
 
+**A ticket branch is a build claim and MUST be released once its work reaches the effort branch.** It exists so that git refuses a second run the same ticket, and it holds nothing once the orchestrator has integrated it, so the step that lands the work deletes it. Deleting one whose work is still outside the effort branch is data loss and MUST NOT happen; a parked or failed ticket keeps its branch, because nothing was integrated. *Why specified rather than left to taste: an implementation that keeps them leaves one branch per ticket whose every commit is already in the effort branch, and the effort branch is the reviewable unit, since exactly one pull request exists per effort (§16) and a branch integrated rather than merged is not a level of anything.*
+
 **A ticket branch name MUST be unique across efforts.** Ticket ids restart per effort, a ticket being a file under its own effort (§14.4), so two efforts each holding a ticket `03` would otherwise produce one branch name for two claims, and the second run to reach it takes a claim another already holds. **How uniqueness is achieved is the repository's to state** in its own version-control rule; that it holds is this specification's.
 
 ## 20. Position
@@ -655,6 +673,12 @@ Position is lightweight operational state, per working tree and never committed.
 ```
 
 `tree` is the working-tree state the last read was made against, `head` the Git HEAD it was made against, `sessions` the active or relevant AEP sessions.
+
+`sessions` holds identifiers **the runtime supplied**, with when each stamped. An implementation MUST NOT invent one: a session's identity is known to the agent because its harness generated it, and no script can discover it agent-agnostically. Where a runtime supplies none the field stays empty, and every other guarantee in this specification is unaffected.
+
+**It is a diagnostic and never a claim, and a conforming implementation MUST NOT read it to decide whether to proceed.** A session identifier carries no liveness: it cannot be distinguished from the same identifier left behind by a process that was killed, so a run gating on one would block on the leavings of every abnormal exit. Exclusion is git's (§18.2) and needs no liveness, because it is not a lease. What the field buys is that a checkout being shared says so to whoever reads it afterwards.
+
+**Nothing AEP writes adds a key beyond `tree`, `head`, and `sessions`.** The effort a run is inside is computed from the branch (§19.3) and the working surface is the tree the marker already sits in, so either would be a second copy of a fact already derivable. The permission below to record further untracked operational facts is the consuming repository's, and is not a licence for the protocol to spend.
 
 Position MAY additionally record **untracked** operational facts — state not represented by tracked artifacts. This MUST remain lightweight and MUST NOT become a hidden database (§2).
 
@@ -1145,6 +1169,9 @@ A conforming implementation preserves all of the following:
 54. Converge appends tickets and never edits the spec or the plan; an approach that cannot satisfy a requirement stops on the return-to-plan invariant.
 55. The run's durable memory is the pull request, so a resumed run reconstructs its position from what was written rather than from what it remembers.
 56. A run's scope is the claim its branch's own commits make rather than what its working tree is touching; an empty claim is unscoped, a claim of more than one stops a run that must act on one, and the isolation in force is detected and reported rather than required.
+57. A run claims the working surface it writes through as well as the branch it is on: where its checkout is not isolated it takes a worktree of AEP's own and creates its effort branch into it before the first write, keyed on the isolation's kind and never on its enforcement, and it releases that claim by detaching before it removes the surface.
+58. A ticket branch is a build claim released when its work reaches the effort branch, deleted by the step that lands it and never before; a parked or failed ticket keeps its branch.
+59. Position records the sessions that stamped it, supplied by the runtime and never invented, as a diagnostic that nothing reads to decide whether to proceed; and nothing AEP writes adds a key to the marker beyond `tree`, `head`, and `sessions`.
 
 ---
 

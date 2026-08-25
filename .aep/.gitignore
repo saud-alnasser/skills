@@ -1,6 +1,6 @@
-# What per-clone means. Installed as .aep/.gitignore.
+# What stays local. Installed as .aep/.gitignore.
 #
-# Position is this clone's operational state and must never be shared — a
+# Position is this working tree's operational state and must never be shared: a
 # committed marker always describes somebody else's tree. Worktrees are isolated
 # checkouts, which are infrastructure rather than knowledge.
 position/

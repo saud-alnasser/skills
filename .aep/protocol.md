@@ -1,5 +1,5 @@
 ---
-version: 3.1.0
+version: 3.2.0
 use-when: "at the start of every session, before doing anything else in a repository that has a .aep/ directory"
 ---
 
@@ -49,7 +49,7 @@ but never soften it.
 ├── agents/  contexts/  references/  scripts/  skills/
 ├── templates/     skeletons for authoring a new artifact
 ├── efforts/<effort>/{spec.md, evidence/{research,prototypes}/, tickets/}
-├── position/      per-clone, gitignored
+├── position/      per working tree, gitignored
 └── worktrees/     isolated checkouts, gitignored
 ```
 

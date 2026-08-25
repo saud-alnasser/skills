@@ -212,11 +212,30 @@ guarantee, and the run says which it is.
 - **Creating, naming, or removing the runtime's worktree**, and renaming a branch
   the runtime generated. AEP reads what the runtime did and does not reach into
   it.
-- **Requiring worktrees, or shipping one worktree per effort.** AEP's own
-  `.aep/worktrees/` for sub-agent isolation is unchanged and unrelated.
-- **A registry of active sessions**, in the position marker or anywhere else. The
-  answer is derivable from git, and a second copy of a derivable fact is a copy
-  that goes stale.
+- **Requiring a worktree of the runtime.** Scope resolution behaves identically
+  where the runtime provides none, reporting a weaker claim, and AEP neither
+  creates, names, nor removes a worktree the runtime owns.
+
+  *Narrowed by `[[efforts/54-working-surface/spec]]`. This bullet also said AEP's
+  own `.aep/worktrees/` was "unchanged and unrelated", and effort 54 changes
+  exactly that: the orchestrator now takes one of AEP's own where its checkout is
+  not isolated. What this effort declined was making the runtime's worktrees a
+  requirement of resolution, which still holds. What it should not have said is
+  that AEP's own were out of reach forever.*
+
+- **A registry of active sessions as a claim.** Nothing reads a session
+  identifier to decide whether to proceed. An identifier carries no liveness: it
+  cannot be told apart from one left by a process that was killed, so a run
+  gating on it blocks on the leavings of every abnormal exit.
+
+  *Superseded by `[[efforts/54-working-surface/spec]]`, which records sessions in
+  the marker as a diagnostic. This bullet declined a registry "in the position
+  marker or anywhere else", and `specs.md` section 20 has declared a `sessions`
+  field since it was written, so the bullet contradicted the specification this
+  effort was amending. What was right in it survives above and in the rule it
+  drew on: a second copy of a fact derivable from git goes stale. A session
+  identifier is not one, which is exactly why it is admissible where the effort a
+  run is inside is not.*
 - **Changing how the position marker computes drift.** `head` and `tree` keep
   their meaning; only the word describing where the marker lives is corrected.
 - **Tracker-side concurrency.** Two threads editing one issue or one pull request
