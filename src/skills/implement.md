@@ -21,30 +21,36 @@ one thing.
 ## 0 — Position. Every invocation. No exceptions.
 
 This is the command that turns knowledge into code, so a stale belief here
-becomes a wrong edit. Run both, and quote both:
+becomes a wrong edit. Run it, and quote it:
 
 ```
-node .aep/scripts/position.mjs check
 node .aep/scripts/scope.mjs read
 ```
 
-**Two questions, two answers, printed together and never merged.** The marker
-says whether the tree moved since a run last looked at it; the scope says which
-efforts this branch claims and what isolation is in force. A non-empty claim
-confines the run to the efforts it names (`[[policies/execution]]`).
+The scope says which efforts this branch claims and what isolation is in force.
+A non-empty claim confines the run to the efforts it names
+(`[[policies/execution]]`).
+
+**Position takes two reads and this step is only the first of them.** The other
+is the marker check, and it runs at **step 2, once the surface has been
+entered.** Neither half can sit where the other one does:
+
+| The read | Sits | Because |
+| --- | --- | --- |
+| the scope | **here** | the isolation it prints is what decides whether step 2 takes a surface at all, so a run that read it later would be keying that decision on an answer it did not have yet |
+| the marker | **step 2** | a marker is per working tree and describes the tree it sits in, so the one to read is the one the run will stamp on the way out |
+
+**Do not merge them back into one step.** Read together here, the run would
+report drift for the checkout it is about to leave and then stamp a different
+file, and the two acts read as one guarantee while being quietly two markers.
 
 **This is what fills `Position` in the turn report**
 (`[[policies/reporting]]`). The claim and the isolation go in `Position` beside
-the marker's answer, and beside both goes what no script can produce — the
-contexts this task touches, and every claim the source contradicted, with what
-was corrected.
+the marker's answer from step 2, and beside them goes what no script can
+produce — the contexts this task touches, and every claim the source
+contradicted, with what was corrected.
 
-**Nothing to report is still reported** — a silent check is indistinguishable
-from one that never ran.
-
-A marker match licenses skipping the drift read and **nothing else**. Any
-statement you are about to rely on is still checked against the source
-(`[[policies/authority]]`), and anything found stale is fixed where it is found.
+**Two questions, two answers, reported together and never merged.**
 
 ## 1 — Take the effort
 
@@ -122,6 +128,33 @@ its branch could be worked from. **Where that tree is dirty, end the turn naming
 the uncommitted paths** — the same answer as a named effort outside the claim on
 a dirty tree, and for the same reason: you cannot tell whose edits those are.
 
+### Check the marker, in the surface you just entered
+
+The second half of step 0, and it runs here rather than there:
+
+```
+node .aep/scripts/position.mjs check
+```
+
+It says whether this tree moved since a run last looked at it. **A marker
+belongs to the surface it sits in**, so the one in the checkout you were invoked
+in answers nothing about this one. Checked there and stamped here, the run would
+quote drift for a tree it was about to leave and stamp a tree it never compared:
+the answer would be true of nowhere, and nothing about it would look wrong.
+
+Where the isolation said `worktree` no second surface was taken, so the two
+orders name one file and the difference is invisible. **The order is written for
+the `checkout` case**, which is the one that has two.
+
+**Nothing to report is still reported** — a silent check is indistinguishable
+from one that never ran.
+
+A marker match licenses skipping the drift read and **nothing else**. Any
+statement you are about to rely on is still checked against the source
+(`[[policies/authority]]`), and anything found stale is fixed where it is found.
+
+### Then the branch
+
 ```
 effort branch      <effort>                     aep-3
 ticket branch      <effort>/<ticket-id>-<slug>  aep-3/17-assignment-and-claim
@@ -162,6 +195,16 @@ which role, which branches — before creating anything. Stated, not gated.
    | the ticket is a bug and the cause is not known | `[[skills/implement/diagnosing]]` — build the signal before the theory |
    | technical uncertainty survives | `[[skills/prototype]]`, in a worktree |
 
+   **A child's surface is created under the main checkout's `.aep/worktrees/`,
+   never relative to the surface you are standing in.** Give the path from the
+   main checkout, or git resolves it against your own working directory and
+   nests the child inside your surface. **The path is what decides the role**
+   (`[[policies/execution]]`), so a child that lands anywhere else computes the
+   role of wherever it landed. Nested, it reads `unknown` and refuses nothing;
+   outside `.aep/worktrees/` altogether it reads as the surface a runtime
+   supplied, whose occupant is an orchestrator, and it will believe it may
+   integrate and dispatch.
+
    **A ticket is never split across sub-agents** (`[[policies/execution]]`). A
    ticket too large for one child is too large — it goes back to
    `[[skills/tasks]]`.
@@ -170,7 +213,7 @@ which role, which branches — before creating anything. Stated, not gated.
 6. **Verify each acceptance criterion explicitly**, one at a time, and **quote
    what you ran and what it printed**. "It should work" is not verification.
 
-## 4 — Integrate, review, land, repeat
+## 4 — Integrate, land, repeat
 
 **Integrate each child as it returns**, one at a time, into the effort branch
 **inside the run's own worktree** (`[[policies/execution]]`). Never in the
@@ -187,26 +230,23 @@ integration and is named against that ticket**.
 `[[policies/execution]]` holds what the orchestrator owes once the last child
 returns, under `## What the orchestrator owns once the last child returns`.
 
-Then `[[skills/review]]`, apply the fixes, and land it — **without prompting.**
-Landing reviewed work is part of finishing, which is why there is no separate
-command to type: by the time the work is reviewed there is nobody left to ask.
+Then land it — **without prompting.** Landing is part of finishing, which is why
+there is no separate command to type: by the time a wave is integrated there is
+nobody left to ask.
 
-Review runs **as a stage of this turn** and opens no report of its own
-(`[[policies/reporting]]`). Everything it produces still reaches the human; only
-the preamble is not repeated.
-
-**A review that rejects twice parks the ticket.** Two fix attempts, then record
-it unresolved with what the review said, **leave its dependents alone**, and
-carry on with the tickets that do not need it. A third attempt is a loop that
-looks like work, and converge sees the gap regardless.
+**No review runs here.** It runs once at the close, over the effort branch, after
+converge finds no gap — step 5, and nowhere else in this run. A reviewer holding
+one ticket's diff cannot see a defect that lives between two of them, and it is
+the effort branch a human is asked to merge, so that is the unit judged. Nothing
+reaches a human unjudged in the meantime: the branch these commits land on is the
+run's own, and its pull request is still a draft.
 
 ### Landing it
 
-**Confirm; do not repeat.** The tests ran, and `[[skills/review]]` ran with an
-outcome against every finding — fixed, ticketed, or accepted and recorded. **A
-finding still open is a blocker, never a silent pass.** A stage that did not run
-is named and the run stops there, saying what would clear it: a refusal the
-reader cannot act on is a wall rather than a check.
+**Confirm; do not repeat.** The tests the rules require ran, and every acceptance
+criterion was verified with what verified it quoted. A stage that did not run is
+named and the run stops there, saying what would clear it: a refusal the reader
+cannot act on is a wall rather than a check.
 
 1. **Mark the ticket resolved** before staging. It is tracked, so moving it after
    the commit leaves the tree dirty the moment the commit lands.
@@ -215,7 +255,7 @@ reader cannot act on is a wall rather than a check.
    the claim the work is done and the ticks are the evidence for it, so a box
    left open is that claim with its evidence removed, and `validate.mjs` fails
    the ticket by name. **The way out is never to tick it**: a criterion that
-   cannot be met parks the ticket unresolved with what the review said, or marks
+   cannot be met parks the ticket unresolved with what blocked it, or marks
    it `obsolete` where the spec moved on.
 2. **Regenerate the index** — `node .aep/scripts/index.mjs`. Here rather than
    earlier, because this is the last point at which the tree is known complete
@@ -260,10 +300,10 @@ reader cannot act on is a wall rather than a check.
 Further changes amend that commit.
 
 7. **Write the run log**, in the pull request, before taking the next ticket.
-   The ledger line for this ticket, the converge round, how many times each
-   ticket failed review, items recorded but not acted on, and anything a child
-   raised that was not a trip-wire (`[[policies/execution]]`). **A failed write
-   is reported, never continued past** — the run has just lost its memory and
+   The ledger line for this ticket, the converge round, the review round and
+   what it found, items recorded but not acted on, and anything a child raised
+   that was not a trip-wire (`[[policies/execution]]`). **A failed write is
+   reported, never continued past** — the run has just lost its memory and
    does not know it yet.
 
 8. **Re-sync the derived labels** on both objects: `status:` from where the
@@ -320,10 +360,47 @@ ready**, and end.
 *Why two: a third round finding new gaps means the plan was wrong rather than the
 work incomplete, and that is the trip-wire above rather than more rounds.*
 
+**A ticket a review finding produced does not spend a converge round.** The cap
+counts rounds that went looking for a gap between the spec and the work, and a
+review finding is not one of those: converge already agreed the spec was met.
+Counted against the cap, the second review round below becomes unreachable on
+the ordinary path, where converge found a gap once and then found none, and the
+run would end not ready with no gaps it could name.
+
 ### When a round finds no gap
 
-The effort is complete, and the run says so in the file that asked for it
-before it says so anywhere else:
+**The reviewers run here, and here only.** Converge has just said the effort
+satisfies the spec, and the effort branch now carries the whole diff a human is
+asked to merge. Go to `[[skills/review]]` with that branch as the subject and the
+effort's `spec.md` as what was asked for.
+
+Review runs **as a stage of this turn** and opens no report of its own
+(`[[policies/reporting]]`). Everything it produces still reaches the human; only
+the preamble is not repeated. Moving when it runs did not make it a turn.
+
+**Correcting what it finds costs nothing extra, because nothing has left the
+run's reach.** The effort branch is held in the run's own surface, its pull
+request is a draft, and `main` is untouched, so every commit in the effort is
+still the run's to change. Validate each finding, then fix it here, or **write it
+as a ticket, which reaches the frontier like any other work** and is scheduled
+from step 1. `[[skills/review]]`'s outcome table already makes **Ticketed**
+available without the human; only **Accepted** is reserved to them.
+
+**Two review rounds, and no third.** Review, correct, review again when the
+correcting work lands. A finding still open after the second round is **recorded
+unresolved with what the review said**, the pull request is left **not ready**,
+and the run ends there saying so. Without that bound, review-to-ticket-to-review
+is a loop with no stated end, and a loop with no stated end is precisely what the
+per-ticket rule this replaces existed to prevent.
+
+**An open finding blocks the handover.** A finding is closed by being fixed, by
+becoming a ticket the run schedules, or by the human accepting it, and **the pull
+request is never marked ready while one is still open.**
+
+#### Then close it
+
+With every finding closed, the effort is complete, and the run says so in the
+file that asked for it before it says so anywhere else:
 
 1. **Stamp `spec.md` to `status: implemented`.** That is the judgement of step 1
    above, recorded. Three things read it — `[[skills/tasks]]` skips an
@@ -336,7 +413,8 @@ before it says so anywhere else:
    `size:` from the diff** against the thresholds that repository's own `size:`
    descriptions state.
 3. **Move the issue and the pull request to `status: in review`**, then
-   **mark the pull request ready** — permitted by `[[rules/version-control]]`.
+   **mark the pull request ready** — permitted by `[[rules/version-control]]`,
+   and reached only with every review finding closed.
 4. **Release the surface, then remove it.** Detach the run's worktree, which
    frees the effort branch at once so whoever reviews it can check it out, and
    only then remove the directory. **Detach first, always:** detaching succeeds
@@ -394,9 +472,10 @@ Everything else the run notices is recorded and carried to the close.
 | **a ticket contradicts `spec.md`** | the tickets were cut wrong (`[[policies/execution]]`), and a run that builds the wrong thing ten times is worse than one interruption |
 
 **There is no fourth.** A review that rejected once and passed after the fix does
-not stop the run. A ticket parked after two rejections does not stop the run. A
-finding, a surprise, an improvement noticed in passing: recorded, carried to the
-close, and **never a reason to come and ask.**
+not stop the run. A finding still open when the review bound is reached ends the
+run at the close rather than interrupting it, which is the same shape as
+converge's own cap. A finding, a surprise, an improvement noticed in passing:
+recorded, carried to the close, and **never a reason to come and ask.**
 
 *Why exactly three: the point of the loop is that the human intervenes at the
 idea, not at the implementation. Every condition added here is a decision moved
@@ -430,7 +509,7 @@ the issue, and the repository**:
 | --- | --- |
 | commits on the effort branch | which tickets landed |
 | **ticked checkboxes in the pull request** | which criteria of the in-flight ticket are verified, and what verified each |
-| the collapsed **run log** | the ledger, the converge round, review attempts, what was recorded and not acted on |
+| the collapsed **run log** | the ledger, the converge round, the review round and what it found, what was recorded and not acted on |
 | `frontier.mjs` | what is left, and what blocks it |
 
 **Where there is no tracker the repository is the whole record**, and it is
@@ -438,9 +517,12 @@ enough: the commits say which tickets landed, and each ticket file's ticked
 criteria say what is verified. Those are the same ticks — the pull request was
 projecting them, never storing them.
 
-**Re-verify nothing already ticked. Trust nothing that is not.** A tick was made
-by `[[agents/reviewer-correctness]]` and never by the agent that wrote the code,
-which is what makes it safe to resume on (`[[policies/execution]]`).
+**Re-verify nothing already ticked. Trust nothing that is not.** A tick records
+that a criterion was verified and carries inline what verified it, so a resumed
+run reads the evidence rather than the claim (`[[policies/execution]]`). A
+dispatched child never ticks its own. Where a wave of one was built here, the
+tick is its author's, and what covers that case is the review over the whole
+effort branch, which runs before anything is handed over.
 
 **A detached HEAD names no branch and holds no claim** — do not guess the ticket
 from the diff; claim one properly or hand back.

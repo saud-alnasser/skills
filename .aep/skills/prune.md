@@ -15,14 +15,26 @@ delete, and the human disposes.
 
 ## Procedure
 
-1. **Read the scope, then start from what is mechanically broken.**
-   `node .aep/scripts/scope.mjs read`, quoted, then
-   `node .aep/scripts/validate.mjs`. A non-empty claim confines this run like any
-   other, and a subject that is the whole tree buys no exemption
-   (`[[policies/execution]]`): reaching another effort's artifact stops the run
-   and names it, and a tree-wide sweep belongs on an unscoped checkout. The claim
-   and the isolation go in `Position`, beside what `validate.mjs` printed
-   (`[[policies/reporting]]`).
+1. **Read the position and the scope, then start from what is mechanically
+   broken.**
+
+   ```
+   node .aep/scripts/position.mjs check
+   node .aep/scripts/scope.mjs read
+   ```
+
+   Both quoted, then `node .aep/scripts/validate.mjs`. **Two questions, two
+   answers, and never merged:** the marker says whether this surface moved since
+   a run last read it, and the scope says which efforts this branch claims and
+   what isolation is in force. This skill takes no surface and enters none, so
+   the marker it checks here is the surface it works in and the one it stamps at
+   step 7.
+
+   A non-empty claim confines this run like any other, and a subject that is the
+   whole tree buys no exemption (`[[policies/execution]]`): reaching another
+   effort's artifact stops the run and names it, and a tree-wide sweep belongs on
+   an unscoped checkout. The claim and the isolation go in `Position`, beside the
+   marker's answer and what `validate.mjs` printed (`[[policies/reporting]]`).
 2. **Sweep for the five staleness classes:**
 
    | Class | Test | Default disposition |
@@ -42,6 +54,15 @@ delete, and the human disposes.
    and the evidence.
 5. **Apply only what the human approves.**
 6. **Regenerate the index.**
+7. **Stamp the marker** — `node .aep/scripts/position.mjs stamp --session <id>`,
+   passing **the identifier your harness gave this session**. **Never invent
+   one:** where the runtime exposes no identifier, drop the flag and stamp as
+   before (`[[policies/execution]]`).
+
+   A sweep stamps even where it deleted nothing, because the marker records the
+   tree a run **read** and not the tree a run committed, and reading this tree
+   end to end is the whole of what this skill does. Stamped last, so what it
+   records is the tree the approved removals left behind.
 
 ## Constraints
 

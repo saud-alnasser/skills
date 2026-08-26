@@ -875,17 +875,115 @@ section('skills', () => {
   assert('a ticket with no diff lands an empty commit carrying what was checked', () =>
     /\*\*empty commit\*\* whose message carries what was checked/.test(runner));
 
-  // The review cap, and what it does not do. A cap that stopped the run would
-  // be a fourth trip-wire wearing a limit's clothes.
-  assert('a review that rejects twice parks the ticket', () =>
-    /rejects twice parks the ticket/.test(runner) &&
-    /Two fix attempts/.test(runner));
-  assert('parking leaves the dependents alone and the run continues', () =>
-    /leave its dependents alone/.test(runner) &&
-    /carry on with the tickets that do not need it/.test(runner));
-  assert('a parked ticket does not stop the run, and neither does one rejection', () =>
-    /A review that rejected once and passed after the fix does\s+not stop the run/.test(runner) &&
-    /A ticket parked after two rejections does not stop the run/.test(runner));
+  // Review judges the effort now, so the per-ticket cap it used to carry names
+  // no ticket and has gone. Swept over every shipped document rather than the
+  // runner alone: a rule that moved into a policy while its old home was
+  // cleaned reads as removed and still binds.
+  assert('no rule parks a ticket after two review rejections, anywhere shipped', () => {
+    const parking = /rejects twice parks the ticket|parked after two rejections|Two fix attempts/;
+    const holding = walk(SRC)
+      .filter((file) => file.endsWith('.md') && parking.test(fs.readFileSync(file, 'utf8')))
+      .map((file) => toPosix(SRC, file));
+    if (holding.length > 0) {
+      throw new Error(`the parking rule survives in ${holding.join(', ')}`);
+    }
+    return true;
+  });
+
+  // What replaces it. The gate is the handover rather than the commit, because
+  // review's subject is the branch every commit already sits on.
+  //
+  // Matched over a flattened copy: this is shipped prose wrapped at eighty
+  // columns, so a phrase straddling a line break would fail on the wrap rather
+  // than on the claim. The module-level `flat` is shadowed later in this same
+  // block, which puts it in the temporal dead zone here, so this block carries
+  // its own flattener rather than reaching for one it cannot see yet.
+  const flatten = (text) => text.split(/\s+/).join(' ');
+
+  assert('an open finding blocks the pull request being marked ready', () =>
+    /\*\*An open finding blocks the handover\.\*\*/.test(flatten(runner))
+    && /the pull request is never marked ready while one is still open/.test(flatten(runner)));
+  assert('a finding is closed by a fix, a ticket, or the human accepting it', () =>
+    /closed by being fixed, by becoming a ticket the run schedules, or by the human accepting it/
+      .test(flatten(runner)));
+  assert('a review that passed after its fix still does not stop the run', () =>
+    /A review that rejected once and passed after the fix does\s+not stop the run/.test(runner)
+    && /ends the\s+run at the close rather than interrupting it/.test(runner));
+
+  // Where review runs, in two halves. Either half alone is satisfied by a
+  // document that runs review twice, which is exactly the half-finished move
+  // this pair exists to catch: named after converge, and named nowhere in the
+  // per-ticket landing sequence.
+  const runnerStep = (number) => {
+    const start = runner.search(new RegExp(`^## ${number} `, 'm'));
+    if (start < 0) throw new Error(`the runner has no step ${number}`);
+    const rest = runner.slice(start);
+    const end = rest.slice(1).search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end + 1);
+  };
+  const landing = runnerStep(4);
+  const closing = runnerStep(5);
+
+  assert('the runner names review after converge finds no gap', () => {
+    const noGap = closing.indexOf('### When a round finds no gap');
+    if (noGap < 0) throw new Error('the converge step no longer names a round that finds no gap');
+    const named = closing.indexOf('[[skills/review]]');
+    if (named < 0) throw new Error('the converge step never reaches review');
+    return named > noGap;
+  });
+  assert('the runner runs no review in the per-ticket landing sequence', () => {
+    if (landing.includes('[[skills/review]]')) {
+      throw new Error('review is still named in the step that integrates and lands a ticket');
+    }
+    return /\*\*No review runs here\.\*\*/.test(landing)
+      && /It runs once at the close, over the effort branch, after\s+converge finds no gap/.test(landing);
+  });
+  assert('review stays a stage of the turn where it now runs', () =>
+    /Review runs \*\*as a stage of this turn\*\* and opens no report of its own/.test(flatten(closing)));
+
+  // The correction path and its bound, asserted together on purpose. A path
+  // with no stated end is review-to-ticket-to-review forever, which is the
+  // failure the parking rule above existed to prevent, so a document stating
+  // the path alone has to fail here rather than pass on the half it kept.
+  assert('a validated finding becomes a ticket, bounded at two rounds', () => {
+    const close = flatten(closing);
+    if (!/write it as a ticket, which reaches the frontier like any other work/.test(close)) {
+      throw new Error('the close never sends a validated finding to the frontier as a ticket');
+    }
+    if (!/\*\*Two review rounds, and no third\.\*\*/.test(close)) {
+      throw new Error('the correction path is stated with no bound on the rounds');
+    }
+    return /recorded unresolved with what the review said/.test(close)
+      && /the pull request is left \*\*not ready\*\*/.test(close);
+  });
+  assert('the close says why correcting a finding costs the run nothing extra', () => {
+    const close = flatten(closing);
+    return /costs nothing extra, because nothing has left the run's reach/.test(close)
+      && /held in the run's own surface/.test(close)
+      && /pull request is a draft/.test(close)
+      && /`main` is untouched/.test(close);
+  });
+  assert('ticketing a finding needs no human, and accepting one does', () =>
+    /outcome table already makes \*\*Ticketed\*\* available without the human; only \*\*Accepted\*\* is reserved to them/
+      .test(flatten(closing)));
+
+  // Review's subject is the effort, so step 2 may not lead with a task the
+  // caller happens to hold: an effort's diff spans every task in it, and the
+  // first row that answers is the one that decides what was asked for.
+  assert("review resolves to the effort's spec before anything else", () => {
+    const step = /^## 2 [\s\S]*?(?=^## )/m.exec(reviewSkill);
+    if (!step) throw new Error('skills/review has no step 2');
+    const rows = [...step[0].matchAll(/^\d+\. (.+)$/gm)].map((row) => row[1]);
+    if (rows.length === 0) throw new Error('step 2 lists nothing to resolve the requirements against');
+    if (!/effort's `spec\.md`/.test(rows[0])) throw new Error(`step 2 leads with: ${rows[0]}`);
+    if (rows.some((row) => /the task the caller is holding/.test(row))) {
+      throw new Error('step 2 still offers the task the caller is holding');
+    }
+    return true;
+  });
+  assert('review says an effort-level subject is the ordinary case', () =>
+    /\*\*Row 1 is what an effort-level review resolves to, and that is the ordinary case\.\*\*/
+      .test(flatten(reviewSkill)));
 
   // The trip-wire set. Counted from the table rather than matched as prose: a
   // fourth row is exactly how this grows, and a regex for three names passes
@@ -1380,7 +1478,7 @@ section('the run log', () => {
   for (const [what, pattern] of [
     ['commits carry which tickets are done', /which tickets are done \| commits on the effort branch/],
     ['the pull request body carries which criteria are verified', /ticked checkboxes in the pull request body\*\*, inline/],
-    ['the run log carries the ledger and the converge round', /the ledger, the converge round, review attempts per ticket/],
+    ['the run log carries the ledger, the converge round and the review round', /the ledger, the converge round, the review round and what it found/],
     ['the run log carries what was recorded and not acted on', /items recorded but not acted on/],
     ['the run log carries what a child raised short of a trip-wire', /anything a child raised that was not a trip-wire/],
   ]) {
@@ -1394,17 +1492,152 @@ section('the run log', () => {
     /\*\*A failed write to the run log is a defect to report\*\*/.test(execution) &&
     /never continued past\*\*/.test(runner));
 
-  // The tick, and who owns it. Criterion 20 is the whole reason a resumed run
-  // may trust one without re-deriving it.
-  assert('the correctness reviewer ticks the criteria', () =>
-    /ticked by `\[\[agents\/reviewer-correctness\]\]`/.test(execution) &&
-    /## You tick the criteria, and only you/.test(correctness));
-  assert('a criterion is ticked at the moment it is verified, with what verified it', () =>
-    /at the moment it is verified\*\*, carrying inline what verified it/.test(execution) &&
-    /at the moment you\s+verify it\*\*, carrying inline what verified it/.test(correctness));
-  assert('the agent that wrote the code never ticks its own criteria', () =>
-    /\*\*The agent that wrote the code never ticks its own criteria\.\*\*/.test(execution) &&
+  // The run log counted review attempts per ticket, which a review running once
+  // over the effort makes uncountable. What is worth carrying across a kill is
+  // which round the effort is on and what that round said.
+  // Both files, and the bare phrase rather than either file's full sentence.
+  // The first version of this guard checked one wording in the policy and a
+  // different one in the runner, and the runner's resumption table said plainly
+  // "review attempts" with neither trailing clause. It slipped through both
+  // halves and a review found it, which is why the sweep is over the phrase.
+  // Both files, and the bare phrase rather than either file's full sentence.
+  // The first version of this guard checked one wording in the policy and a
+  // different one in the runner, and the runner's resumption table said plainly
+  // "review attempts" with neither trailing clause. It slipped through both
+  // halves and a review found it, which is why the sweep is over the phrase.
+  assert('no shipped file still counts review attempts in the run log', () => {
+    const holding = [];
+    for (const file of walk(SRC).filter((f) => f.endsWith('.md'))) {
+      const text = fs.readFileSync(file, 'utf8').split(/\s+/).join(' ');
+      // Not `[^.|]`: the runner states this in a table row, so the gap between
+      // the two phrases is full of pipes. The first version of this sweep
+      // excluded them and could never reach its own subject.
+      if (/run log[^.]{0,140}review attempts|review attempts[^.]{0,140}run log/i.test(text)) {
+        holding.push(toPosix(SRC, file));
+      }
+    }
+    if (holding.length > 0) {
+      throw new Error(`the run log still counts review attempts in ${holding.join(', ')}`);
+    }
+    return /the review round and\s+what it found/.test(runner);
+  });
+
+  // The rationale under the converge rule called converge the only stage with
+  // the whole diff in view and nobody reviewing it. This effort put a review
+  // after converge over that same diff, which made the sentence false while it
+  // still stood as the reason for a rule that is still right. The rule is
+  // pinned here with a reason the change did not falsify.
+  assert('the converge rule keeps a reason this effort did not falsify', () =>
+    execution.includes('**Converge MUST NOT edit `spec.md` or `plan.md`.**')
+    && !/only stage with both the whole diff in view and nobody reviewing it/.test(execution)
+    && execution.includes('close every gap it found by narrowing')
+    && /decides whether the spec is\s+met/.test(execution));
+
+  // The tick, and who owns it. Review's unit is the effort now, so no non-author
+  // stands at a ticket when it lands, and the orchestrator ticks what it checked.
+  // Sliced to the section, because part of the claim is that the reasoning lives
+  // where the rule does: a compensation sentence three headings away is not what
+  // criterion 13 asks for.
+  const tickingAt = execution.indexOf('### Ticking a criterion');
+  const ticking = tickingAt < 0 ? '' : execution.slice(tickingAt).split(/\n### /)[0];
+
+  assert('the orchestrator ticks a criterion at the moment it verifies it', () =>
+    /\*\*The orchestrator ticks a criterion at the moment it verifies it\*\*, carrying\s+inline what verified it/.test(ticking));
+  assert('a dispatched child never ticks its own criteria', () =>
+    /\*\*A dispatched child never ticks its own criteria\.\*\*/.test(ticking));
+
+  // Criterion 13, and both halves are one assertion on purpose. The narrowed
+  // rule being present is the easy half. The half that matters is that the
+  // unqualified rule it replaces is gone, because two rules disagreeing over who
+  // may tick is worse than the weaker one alone: each reader stops at whichever
+  // they reach first, and the tree argues for both.
+  assert('the unqualified ticking rule does not survive beside the narrowed one', () =>
+    /\*\*A dispatched child never ticks its own criteria\.\*\*/.test(ticking) &&
+    !/The agent that wrote the code never ticks its own/.test(execution) &&
+    !/checkbox is ticked by/.test(execution));
+
+  // A narrowing is a guarantee traded, so the file says which case it gave up and
+  // what covers that case instead. Without the second clause the diff reads as a
+  // rule dropped for convenience, which is the misreading this section exists to
+  // pre-empt.
+  assert('the narrowing names the case it gives up and what compensates for it', () =>
+    /a wave of\s+one is built inline by `\[\[skills\/implement\]\]`/.test(ticking) &&
+    /the whole of what this section gives up/.test(ticking) &&
+    /`\[\[skills\/review\]\]` is now guaranteed to run over the whole\s+effort branch/.test(ticking));
+
+  // The reason survives the narrowing. A diff that took the reason out along with
+  // the rule would leave a tick meaning nothing, and resumption is built on a
+  // tick meaning somebody checked.
+  assert('the ticking rule still gives resumption as its reason', () =>
+    /a tick is the claim\s+that somebody checked/.test(ticking) &&
+    /a resumed run trusts a tick without re-deriving it/.test(ticking));
+
+  // Criterion 13 does not stop at the file it was written against. Two other
+  // shipped surfaces stated the old rule in their own words, and the narrowing
+  // reached neither, so the tree argued three ways with two of them false. That
+  // is the same defect the assertion above catches inside one section, one and
+  // two files over, and it is worse than the old rule alone: each reader stops
+  // at whichever statement they reach first.
+  //
+  // Swept over the whole shipped tree rather than the two known files, because
+  // the next document to restate the rule is the one nobody thinks to check.
+  // Matched over flattened text: this prose wraps at eighty columns, so a claim
+  // straddling a line break slips a line-oriented pattern while reading fine to
+  // a human. Each shape is named, so a failure says which claim it found and
+  // not merely that something matched.
+  const exclusiveTick = [
+    ['a tick belongs to the reviewer and to nobody else',
+      /tick[^.]{0,60}and only (?:you|the reviewer|the correctness reviewer)\b/i],
+    ['a tick is attributed to the correctness reviewer by name',
+      /tick[^.]{0,40}by `?\[\[agents\/reviewer-correctness\]\]/i],
+    ['only the correctness reviewer may tick',
+      /only `?\[\[agents\/reviewer-correctness\]\]`?[^.]{0,60}tick/i],
+    ['the orchestrator is written out of ticking',
+      /the orchestrator (?:never|does not|cannot|may not|must not) ticks?\b/i],
+    // The authorship phrasing, which is the same claim from the other side
+    // and which the four shapes above do not reach. A wave of one is built
+    // inline, so the orchestrator that verifies it is its author and that
+    // tick is the author's own. A file saying otherwise tells a resumed run
+    // and the effort reviewer to trust a tick that nothing re-derives.
+    ['a tick is claimed never to come from its author',
+      /tick[^.]{0,80}never by the agent that wrote the code/i],
+    ['a ticked box is claimed to have been checked by a non-author',
+      /ticked[^.]{0,80}(?:by somebody|by someone) who did not write the code/i],
+    // The exact sentence this effort removed from the policy. A file-scoped
+    // guard forbids it there; anyone restating the old rule anywhere else
+    // reaches for these words, and the sweep could not see them.
+    ['the removed rule is restated verbatim',
+      /the agent that wrote the code never ticks/i],
+  ];
+  assert('no shipped file says only the correctness reviewer ticks, or that the orchestrator does not', () => {
+    const holding = [];
+    for (const file of walk(SRC).filter((f) => f.endsWith('.md'))) {
+      const text = fs.readFileSync(file, 'utf8').split(/\s+/).join(' ');
+      for (const [claim, pattern] of exclusiveTick) {
+        if (pattern.test(text)) holding.push(`${toPosix(SRC, file)} (${claim})`);
+      }
+    }
+    if (holding.length > 0) {
+      throw new Error(`the exclusive ticking rule survives in ${holding.join(', ')}`);
+    }
+    return true;
+  });
+
+  // The reviewer still ticks what it verifies, and the discipline it states is
+  // still the one a tick it makes carries. Only the exclusivity went: the
+  // heading is asserted to name what the reviewer ticks rather than who else may
+  // not, and the file is asserted to point at the orchestrator's tick as well,
+  // because a heading that merely stopped claiming exclusivity leaves a reader
+  // to infer it from the silence.
+  assert('the correctness reviewer keeps its own tick discipline', () =>
+    /## You tick what you verify/.test(correctness) &&
+    /at the moment you\s+verify it\*\*, carrying inline what verified it/.test(correctness) &&
     /\*\*Never tick a criterion for code you wrote\.\*\*/.test(correctness));
+  const flatCorrectness = correctness.split(/\s+/).join(' ');
+  assert('the reviewer is not the only agent that ticks, and its file says so', () =>
+    /\*\*You are not the only agent that ticks\.\*\*/.test(flatCorrectness) &&
+    /The orchestrator ticks what it verified too/.test(flatCorrectness) &&
+    /What is yours is what you verified/.test(flatCorrectness));
   assert('an unverifiable criterion stays unticked rather than being ticked with a caveat', () =>
     /\*\*A criterion you could not verify stays unticked\*\*/.test(correctness));
 
@@ -1966,19 +2199,154 @@ section('reporting', () => {
   assert('the contract no longer offers two forms to choose between', () =>
     !/report: full/.test(policy) && !/\bshort form\b/i.test(prose));
 
-  // Nothing acquired a position read. The set is pinned by name so a third is
-  // a failure; `specify` reads position/marker.json directly and runs no
-  // script, which is why it is not here. It lost `commit` when landing stopped
-  // being a command: /implement now reads position on entry and stamps it on the
-  // way out, which is both of that set in one skill.
+  // The set is pinned by name, so a skill gaining or losing a position read is a
+  // decision somebody made rather than a drift nobody noticed. Why each member
+  // is in it:
+  //
+  //   install   writes the first marker a tree ever has, so every later check
+  //             has something to compare against.
+  //   implement reads the marker on entry to the surface it takes and stamps it
+  //             on the way out, which is both halves in one skill. It lost
+  //             `commit` from this set when landing stopped being a command.
+  //   prune     sweeps the whole tree in the surface it was invoked in, taking
+  //             no surface and entering none, and stamps at its close.
+  //   specify   reads the surface it was invoked in, before it opens the effort
+  //             into another, and stamps neither.
+  //   survey    reads a bounded part of the codebase in that same surface and
+  //             stamps at its close, despite producing no change.
+  //
+  // `prune` and `survey` stamp because the marker records the tree a run *read*
+  // and not the tree a run committed, so reading is the act that earns a stamp
+  // and a skill that only reads still earns one. `specify` is the exception that
+  // proves it: it reads one surface and commits in another, so stamping the one
+  // it is leaving would be the split this effort removed.
+  const POSITION_SKILLS = ['implement', 'install', 'prune', 'specify', 'survey'];
   const readsPosition = SKILLS
     .filter((name) => /position\.mjs/.test(readSrc('skills', `${name}.md`)))
     .sort();
-  assert('exactly implement and install invoke position.mjs', () =>
-    JSON.stringify(readsPosition) === JSON.stringify(['implement', 'install']));
-  if (JSON.stringify(readsPosition) !== JSON.stringify(['implement', 'install'])) {
+  assert(`exactly ${POSITION_SKILLS.join(', ')} invoke position.mjs`, () =>
+    JSON.stringify(readsPosition) === JSON.stringify([...POSITION_SKILLS].sort()));
+  if (JSON.stringify(readsPosition) !== JSON.stringify([...POSITION_SKILLS].sort())) {
     process.stdout.write(`        on disk: ${readsPosition.join(', ')}\n`);
   }
+
+  // The table above the reason is what a run consults to fill the slot, and it
+  // was written as a description of what was true at the time. Both sides of
+  // this check are computed: the invoker set is `readsPosition`, taken from the
+  // skills themselves just above and never recomputed here, and the rows are
+  // parsed out of the policy. A skill that gains a position read therefore has
+  // to gain a row, without anybody having to remember that it must.
+  const positionRows = (() => {
+    const start = policy.indexOf('### `Position` is filled');
+    if (start < 0) return null;
+    const rest = policy.slice(start);
+    // Past the heading's own line before looking for the next one: `^` under
+    // `/m` matches at offset zero too, so a search over the whole block finds
+    // the heading it started at and returns an empty section that parses to no
+    // rows at all.
+    const body = rest.indexOf('\n') + 1;
+    const end = rest.slice(body).search(/^#{2,4}\s/m);
+    return end < 0 ? rest : rest.slice(0, body + end);
+  })();
+  const tabled = (positionRows ?? '')
+    .split('\n')
+    .filter((line) => line.trimStart().startsWith('|'))
+    .map((line) => /\[\[skills\/([a-z-]+)\]\]/.exec(line)?.[1])
+    .filter(Boolean);
+
+  // One direction only, and deliberately. `review` has a row and reads no
+  // marker, so an equality here would force it out of the table or into a
+  // position read it has no reason to take. The table says what a skill that
+  // reads position puts in the slot; it does not say every skill reads one.
+  assert('every skill that invokes position.mjs has a row in the reporting table', () => {
+    if (positionRows === null) throw new Error('the section holding the table is gone');
+    const missing = readsPosition.filter((name) => !tabled.includes(name));
+    if (missing.length > 0) throw new Error(`no row for ${missing.join(', ')}`);
+    return true;
+  });
+  assert('the table names what a skill puts in the slot rather than requiring the read', () =>
+    /A row says what that skill puts in the slot\. It never says a skill must read the position/.test(prose));
+  assert('the table keeps its answer for a skill that reads no repository state', () =>
+    /\| a skill that reads no repository state \|/.test(policy) &&
+    /the answer for every skill with no row of its own/.test(prose));
+  assert('the table keeps the reason its content is not fixed with its slot', () =>
+    /making every skill read the position would buy uniformity with a behavioural change nobody asked for/.test(prose));
+
+  // Both halves, by name. A skill that checks without stamping leaves its
+  // surface's marker as unmaintained as it found it, which is the state this
+  // pair exists to end, and the check alone reads as though the job were done.
+  for (const name of ['prune', 'survey']) {
+    const text = readSrc('skills', `${name}.md`);
+    assert(`${name} checks the marker on entry and stamps it at its close`, () => {
+      if (!/position\.mjs check/.test(text)) throw new Error('no entry check');
+      if (!/position\.mjs stamp/.test(text)) throw new Error('no stamp at the close');
+      return true;
+    });
+    assert(`${name} says the stamp is earned by reading rather than by committing`, () =>
+      /the marker records the tree a run \*\*read\*\* and not the tree a run committed/.test(flat(text)));
+  }
+
+  assert("prune's stamp leaves a marker for the tree it read", () => {
+    // Run rather than read: the two commands come out of the skill's own text,
+    // so a skill that stops naming them fails here rather than this fixture
+    // passing against a copy of them kept in the suite.
+    const prune = readSrc('skills', 'prune.md');
+    const named = ['check', 'stamp']
+      .filter((command) => new RegExp(`position\\.mjs ${command}`).test(prune));
+    if (named.length !== 2) throw new Error(`prune names ${named.join(' and ') || 'neither command'}`);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-prune-position-'));
+    try {
+      const aep = path.join(dir, '.aep');
+      fs.mkdirSync(aep, { recursive: true });
+      fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+      // The marker the stamp writes is gitignored, exactly as an installed tree
+      // ignores it. Without this the stamp is itself an untracked file, so the
+      // tree fingerprint moves every time anything writes one and every check
+      // after a stamp reports drift the stamp caused.
+      fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+      const git = (...args) =>
+        execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      git('init', '--quiet', '-b', 'main');
+      git('config', 'user.email', 'suite@example.invalid');
+      git('config', 'user.name', 'suite');
+      fs.writeFileSync(path.join(dir, 'README.md'), 'fixture\n', 'utf8');
+      fs.writeFileSync(path.join(dir, 'stale.md'), 'nothing links here\n', 'utf8');
+      git('add', '-A');
+      git('commit', '--quiet', '-m', 'base');
+
+      const call = (command) =>
+        spawnSync(process.execPath, [path.join(SRC, 'scripts', 'position.mjs'), command, '--root', aep],
+          { cwd: dir, encoding: 'utf8' });
+
+      // Step 1. This surface has never been stamped, so the check reports
+      // `unset` and exits 1, which is a report rather than a refusal. What
+      // matters is the commit the sweep then reads the tree against.
+      const entry = call('check');
+      if (!/marker: unset/.test(entry.stdout)) throw new Error(`the entry check said: ${entry.stdout.trim()}`);
+      const readAt = git('rev-parse', 'HEAD').trim();
+
+      // Steps 2 to 6: an approved removal, applied and never committed. That is
+      // what separates the tree prune read from any tree it might have committed.
+      fs.rmSync(path.join(dir, 'stale.md'));
+
+      // Step 7.
+      const stamp = call('stamp');
+      if (stamp.status !== 0) throw new Error(`the stamp exited ${stamp.status}: ${stamp.stderr.trim()}`);
+
+      const marker = JSON.parse(fs.readFileSync(path.join(aep, 'position', 'marker.json'), 'utf8'));
+      if (marker.head !== readAt) {
+        throw new Error(`marker head ${marker.head} is not the tree prune read, ${readAt}`);
+      }
+      // And it describes this surface as it now stands, so the next run here
+      // reads a match rather than drift nothing caused.
+      const after = call('check');
+      if (after.status !== 0) throw new Error(`a check after prune's own stamp reported: ${after.stdout.trim()}`);
+      return true;
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 
   // The absorbed surfaces: each conforms, and the reasoning that justified the
   // shape it had before survives the absorption.
@@ -1994,6 +2362,16 @@ section('reporting', () => {
       /opening no report of its own/.test(readSrc('skills', `${name}.md`)));
   }
   const specify = readSrc('skills', 'specify.md');
+  // Both directions, because either alone leaves the prose read reachable: the
+  // script has to be invoked, and the marker file has to be named nowhere, or
+  // a reader still has the option of comparing it by hand.
+  assert('skills/specify reads position by script rather than by prose', () =>
+    /position\.mjs check/.test(specify) && !/position\/marker\.json/.test(specify));
+  // And it stops at the read. A stamp would land at the close, inside the
+  // surface the effort was opened into, against a check taken in the one the
+  // run was invoked in.
+  assert('skills/specify stamps nothing, and says why', () =>
+    !/position\.mjs stamp/.test(specify) && /This run stamps nothing/.test(specify));
   assert('skills/specify routes its unverified half to Assuming', () =>
     /fills `Assuming`/.test(specify));
   assert('skills/specify routes its sizing floor to Next', () =>
@@ -4261,6 +4639,43 @@ section('the specification', () => {
     return /`refine`, `research`, and `review` are \*\*stages\*\*/.test(block);
   });
 
+  // Review's unit, in the section that defines the spine. Three sites move
+  // together and each is asserted separately, because the failure this guards
+  // against is a document that changes one of them: a table row still reading
+  // "per ticket" beside a paragraph reading "the effort" is two answers to the
+  // question a conforming implementation came here to settle.
+  const spine = headingBlock(specText, '21. The workflow spine');
+  const reviewRow = /^\| `review` \| ([^|]+) \| [^|]+ \| ([^|]+) \|$/m.exec(spine);
+  assert('the stage table gives review the effort as its subject', () =>
+    reviewRow !== null && /effort/.test(reviewRow[1]) && !/ticket/.test(reviewRow[1]));
+  assert('the stage table gives review the close as when it runs', () =>
+    reviewRow !== null && /close/.test(reviewRow[2]) && !/ticket/.test(reviewRow[2]));
+  assert('specs.md gives review the effort as its unit and the effort branch as its subject', () =>
+    /\*\*`review`\*\* is a stage of `implement`, and \*\*its unit is the effort\*\*/.test(spine)
+    && /subject is the effort branch/.test(spine));
+  assert('the spine no longer runs review per ticket, anywhere in the section', () =>
+    !/per ticket/.test(spine));
+  assert('the runner paragraph reviews the effort once rather than each ticket as it goes', () =>
+    !/reviews and commits each/.test(spine) && /reviews the effort once/.test(spine));
+
+  // The commit rule, restated rather than deleted. Both halves are required.
+  // Dropping the sentence satisfies the first alone and reads as a
+  // simplification, and what it would remove is the guarantee that no unjudged
+  // work reaches a human, which is the whole of what the old rule protected.
+  assert('specs.md states the commit rule in a form review-after-the-commit can satisfy', () =>
+    !/MUST NOT commit work that has failed review/.test(spine)
+    && /\*\*An agent MUST NOT hand work to a human while a review finding against it is open\.\*\*/.test(spine)
+    && /pull request MUST NOT be marked ready while/.test(spine));
+  assert('the restated rule still carries what the commit rule protected', () =>
+    /unjudged work never reaches a human/.test(spine));
+
+  // Two axes, and still two. Moving review's unit is the moment a third axis or
+  // a collapsed pair would travel in unnoticed, since the paragraph naming them
+  // is the paragraph being rewritten.
+  assert('the spine keeps review at two independent passes', () =>
+    /\*\*two independent passes\*\*/.test(spine)
+    && /one on correctness and behaviour, one on style, standards, and governance/.test(spine));
+
   // The frontmatter contract, and the fields it lost. The migration and the
   // removals record still name them, and must: a retired field nobody documents
   // is one a 2.x tree carries with nothing to say what became of it. Everything
@@ -4375,12 +4790,15 @@ section('scope', () => {
   const run = (command, options = {}) => {
     const result = spawnSync(
       process.execPath,
-      [path.join(SRC, 'scripts', 'scope.mjs'), command, '--root', options.root ?? aep],
+      [path.join(SRC, 'scripts', 'scope.mjs'), command, '--root', options.root ?? aep, ...(options.args ?? [])],
       { cwd: options.cwd ?? dir, encoding: 'utf8' },
     );
     return { out: result.stdout, err: result.stderr, code: result.status };
   };
   const fieldOf = (out, label) => new RegExp(`^${label}\\s+(.*)$`, 'm').exec(out)?.[1]?.trim() ?? null;
+  // A surface reads about itself: standing in it, and rooted at its own `.aep/`,
+  // which every worktree of this fixture carries because the base commit did.
+  const at = (tree) => ({ cwd: tree, root: path.join(tree, '.aep') });
 
   git('init', '--quiet', '-b', 'main');
   git('config', 'user.email', 'suite@example.invalid');
@@ -4503,9 +4921,13 @@ section('scope', () => {
     return fieldOf(run('read').out, 'claim') === 'unscoped';
   });
 
+  // A worktree AEP did not create, standing outside `.aep/worktrees/`. It is the
+  // isolation assertion's subject below and the runtime surface's after that, so
+  // it is built once and removed once both have read it.
+  const linked = path.join(dir, 'linked');
+
   assert('a linked worktree is enforced and names the sibling holding a branch', () => {
     git('checkout', '--quiet', 'main');
-    const linked = path.join(dir, 'linked');
     git('worktree', 'add', '--quiet', linked, 't3code/deadbeef');
 
     const inside = run('read', { cwd: linked, root: path.join(linked, '.aep') });
@@ -4524,10 +4946,153 @@ section('scope', () => {
     } catch {
       refused = true;
     }
-    git('worktree', 'remove', '--force', linked);
     if (!refused) throw new Error('git allowed two worktrees on one branch');
     return true;
   });
+
+  // --- the surface a run stands in, and the role it carries ------------------
+  //
+  // Four shapes, four real worktrees, read from inside each. The branch names
+  // are deliberately crossed: the run surface holds a ticket-shaped name and the
+  // ticket surface holds the name of an effort directory, so a derivation
+  // reading the branch rather than the path answers these two backwards.
+  const runSurface = path.join(aep, 'worktrees', '40-alpha', '_run');
+  const ticketSurface = path.join(aep, 'worktrees', '40-alpha', '03-thing');
+  // Underscored and not `_run`: the shape a prototype takes. It must resolve to
+  // `unknown` rather than to `ticket`, or a prototype computes `implementer` and
+  // the rule forbidding a child to dispatch fires at a run that is allowed to.
+  const reservedSurface = path.join(aep, 'worktrees', '40-alpha', '_prototype-spike');
+  // The pair the exit-code assertion below builds, named here so the cleanup at
+  // the end of the block can reach them.
+  const resolves = path.join(aep, 'worktrees', '41-beta', '_run');
+  const unresolved = path.join(aep, 'worktrees', '42-gamma');
+  git('worktree', 'add', '--quiet', runSurface, '-b', '41-beta/07-only-beta');
+  git('worktree', 'add', '--quiet', ticketSurface, '-b', '40-alpha');
+  git('worktree', 'add', '--quiet', reservedSurface, '-b', 'proto-spike');
+
+  assert('each of the four surfaces reports its own kind and its own role', () => {
+    const branchOf = (tree) => git('-C', tree, 'branch', '--show-current').trim();
+    if (branchOf(runSurface) !== '41-beta/07-only-beta' || branchOf(ticketSurface) !== '40-alpha') {
+      throw new Error('the crossed branch names are gone, so the path is no longer what is being tested');
+    }
+    const shapes = [
+      ['the main checkout', { cwd: dir, root: aep }, 'main', 'none'],
+      ['the run surface', at(runSurface), 'run at .aep/worktrees/40-alpha/_run', 'orchestrator of 40-alpha'],
+      ['a ticket surface', at(ticketSurface), 'ticket at .aep/worktrees/40-alpha/03-thing',
+        'implementer on 03-thing for 40-alpha'],
+      // Matched rather than compared: the path is git's own spelling of it, and
+      // Node's spelling of the same place can differ on Windows.
+      ['a runtime worktree', at(linked), /^runtime at .+\/linked$/, 'orchestrator'],
+    ];
+    for (const [what, where, surface, role] of shapes) {
+      const { out } = run('read', where);
+      const found = fieldOf(out, 'surface');
+      const held = fieldOf(out, 'role');
+      const matched = surface instanceof RegExp ? surface.test(found ?? '') : found === surface;
+      if (!matched) throw new Error(`${what}: surface "${found}", expected ${surface}`);
+      if (held !== role) throw new Error(`${what}: role "${held}", expected "${role}"`);
+    }
+    return true;
+  });
+
+  assert('an underscored surface other than the run is no ticket', () => {
+    const { out } = run('read', at(reservedSurface));
+    const surface = fieldOf(out, 'surface');
+    const role = fieldOf(out, 'role');
+    if (!/^unknown/.test(surface ?? '')) throw new Error(`surface "${surface}", expected unknown`);
+    if (role !== 'unknown') throw new Error(`role "${role}", expected unknown`);
+    return true;
+  });
+
+  assert('--json carries the surface and the role as fields, in every shape', () => {
+    const shapes = [
+      [{ cwd: dir, root: aep }, { kind: 'main', effort: null, ticket: null }, 'none'],
+      [at(runSurface), { kind: 'run', effort: '40-alpha', ticket: null }, 'orchestrator'],
+      [at(ticketSurface), { kind: 'ticket', effort: '40-alpha', ticket: '03-thing' }, 'implementer'],
+      [at(linked), { kind: 'runtime', effort: null, ticket: null }, 'orchestrator'],
+    ];
+    for (const [where, surface, role] of shapes) {
+      const parsed = JSON.parse(run('read', { ...where, args: ['--json'] }).out);
+      for (const [key, value] of Object.entries(surface)) {
+        if (parsed.surface?.[key] !== value) {
+          throw new Error(`${surface.kind}: surface.${key} is ${JSON.stringify(parsed.surface?.[key])}, expected ${JSON.stringify(value)}`);
+        }
+      }
+      if (parsed.role !== role) throw new Error(`${surface.kind}: role ${JSON.stringify(parsed.role)}, expected ${role}`);
+      if (!parsed.surface.path) throw new Error(`${surface.kind}: the surface carries no path`);
+    }
+    return true;
+  });
+
+  assert('the orchestrator and a child of one effort stop reading alike', () => {
+    // The observation this whole change came from: two agents bound by opposite
+    // rules, standing in two surfaces of one effort, returning the same answer.
+    const orchestrator = run('read', at(runSurface)).out;
+    const child = run('read', at(ticketSurface)).out;
+    for (const label of ['surface', 'role']) {
+      const held = fieldOf(orchestrator, label);
+      const theirs = fieldOf(child, label);
+      if (held === theirs) throw new Error(`both surfaces report ${label} "${held}"`);
+      if (held === 'unknown' || theirs === 'unknown') throw new Error(`${label} unresolved: "${held}" and "${theirs}"`);
+    }
+    return true;
+  });
+
+  assert('a nested .aep finds its own worktrees directory, not the root', () => {
+    // A hardcoded `.aep/worktrees` resolves every surface of an installation
+    // that sits below the repository root to `runtime`, which is a role that
+    // refuses nothing in a tree that plainly has one.
+    const nested = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-nested-'));
+    const inside = (...args) =>
+      execFileSync('git', args, { cwd: nested, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    inside('init', '--quiet', '-b', 'main');
+    inside('config', 'user.email', 'suite@example.invalid');
+    inside('config', 'user.name', 'suite');
+    const under = path.join(nested, 'sub', '.aep');
+    fs.mkdirSync(under, { recursive: true });
+    fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(under, 'protocol.md'));
+    inside('add', '-A');
+    inside('commit', '--quiet', '-m', 'base');
+    const surface = path.join(under, 'worktrees', '40-alpha', '_run');
+    inside('worktree', 'add', '--quiet', surface, '-b', 'runtime/generated');
+
+    const { out } = run('read', { cwd: surface, root: path.join(surface, 'sub', '.aep') });
+    const found = fieldOf(out, 'surface');
+    fs.rmSync(nested, { recursive: true, force: true });
+    if (found !== 'run at sub/.aep/worktrees/40-alpha/_run') throw new Error(`nested surface: ${found}`);
+    return true;
+  });
+
+  assert('the role moves no exit code, whether it resolves or not', () => {
+    // One fixture read twice over: a surface whose role resolves, and one whose
+    // path is a shape AEP never creates, so its role is `unknown`. Both are read
+    // unscoped and then claiming, and the four codes are the two the claim gives.
+    git('worktree', 'add', '--quiet', resolves, '-b', 't3code/aaaaaa');
+    git('worktree', 'add', '--quiet', unresolved, '-b', 't3code/bbbbbb');
+
+    const roleAt = (tree) => fieldOf(run('read', at(tree)).out, 'role');
+    if (roleAt(resolves) !== 'orchestrator of 41-beta') throw new Error(`the role did not resolve: ${roleAt(resolves)}`);
+    if (roleAt(unresolved) !== 'unknown') throw new Error(`the role resolved where it should not: ${roleAt(unresolved)}`);
+
+    const unscoped = [run('read', at(resolves)).code, run('read', at(unresolved)).code];
+    git('-C', resolves, 'checkout', '--quiet', '07-only-beta');
+    git('-C', unresolved, 'checkout', '--quiet', 'two-efforts');
+    const claimed = [run('read', at(resolves)).code, run('read', at(unresolved)).code];
+
+    if (unscoped.join() !== '1,1') throw new Error(`unscoped exits ${unscoped.join(' and ')}, expected 1 from both`);
+    if (claimed.join() !== '0,0') throw new Error(`a claim exits ${claimed.join(' and ')}, expected 0 from both`);
+    return true;
+  });
+
+  // The surfaces go, so the assertions below read the fixture they were written
+  // against. Tolerated rather than asserted: a failure above can leave one of
+  // these unbuilt, and a cleanup that aborts the section would bury the failure
+  // that caused it.
+  for (const surface of [runSurface, ticketSurface, resolves, unresolved, linked]) {
+    try {
+      git('worktree', 'remove', '--force', surface);
+    } catch { /* already gone */ }
+  }
 
   assert('a tree git cannot read is exit 2 rather than an answer', () => {
     const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-scope-nogit-'));
@@ -4758,6 +5323,82 @@ section('working surface surfaces', () => {
   assert('the orchestrator integrates in the surface it holds', () =>
     /only integrator, and it integrates in the surface it holds/.test(execution));
 
+  // The refusals, and what each is keyed on. Both files carried the constraint
+  // as bare prose before this, so a guard that merely finds the constraint
+  // passes on the tree it was written to reject. Each one is therefore located
+  // by its own bold lead and the role is required *inside* that lead: deleting
+  // the keying clause while leaving the sentence has to go red, and a match for
+  // `implementer` anywhere in the file would stay green through exactly that.
+  const executionRaw = readSrc('policies', 'execution.md');
+  const brief = flatten(readSrc('agents', 'implementer.md'));
+  // The subject pattern admits `do not` as well as `does not`, so the sentence
+  // these files used to carry, "You do not integrate", is found and then
+  // rejected for naming no role, rather than read as no constraint at all.
+  const keyedOn = (where, text, named, subject, role) => {
+    const lead = new RegExp(`\\*\\*[^*]*${subject}[^*]*\\*\\*`).exec(text);
+    if (!lead) throw new Error(`${where} states no constraint that it ${named}`);
+    if (!lead[0].includes(`\`role: ${role}\``)) {
+      throw new Error(`${where} states "${lead[0]}" without naming the role it is keyed on`);
+    }
+    return true;
+  };
+
+  assert("the implementer's brief keys its refusals on the role it computes", () =>
+    keyedOn('the brief', brief, 'does not integrate', '\\bdo(?:es)? not integrate\\b', 'implementer')
+    && keyedOn('the brief', brief, 'does not dispatch', '\\bdo(?:es)? not dispatch\\b', 'implementer'));
+
+  assert('the brief tells a cleared context how to compute that role', () =>
+    /keyed on the role you compute/.test(brief) && /scope\.mjs read/.test(brief));
+
+  assert('the execution policy keys the same two refusals on the same role', () =>
+    keyedOn('the policy', execution, 'neither integrates nor dispatches',
+      '\\bneither integrates nor dispatches\\b', 'implementer'));
+
+  assert('the execution policy keys integrating in the held surface on the role', () =>
+    keyedOn('the policy', execution, 'integrates only in the surface it holds',
+      '\\bintegrates only in the surface it holds\\b', 'orchestrator'));
+
+  // Counted off the policy's own table rather than matched as prose: a regex
+  // naming three roles passes while the fourth sits beside them with its
+  // refusal cell emptied, which is the half of the rule that does the work.
+  assert('the policy says what each role may and may not do', () => {
+    const table = /^\| `role` \|[^\n]*\n\|[-| ]+\|\n((?:\|[^\n]*\n)+)/m.exec(executionRaw);
+    if (!table) throw new Error('the policy carries no table of what the roles may do');
+    const rows = [...table[1].matchAll(/^\| `(\w+)` \|([^|\n]*)\|([^|\n]*)\|([^|\n]*)\|\s*$/gm)];
+    const carried = new Map(rows.map((row) => [row[1], { may: row[3].trim(), not: row[4].trim() }]));
+    for (const role of ['orchestrator', 'implementer', 'none', 'unknown']) {
+      const said = carried.get(role);
+      if (!said) throw new Error(`the policy gives \`${role}\` no row`);
+      if (!said.may) throw new Error(`\`${role}\` is told nothing it may do`);
+      if (!said.not) throw new Error(`\`${role}\` is told nothing it may not do`);
+    }
+    return true;
+  });
+
+  // `none` is the row most likely to be written as an absence and then read as
+  // a gap in the derivation. The phrase tying it to the act already required
+  // appears elsewhere in this policy, so it is looked for inside this paragraph
+  // rather than in the file, which would pass on the old text alone.
+  assert('the policy reads `role: none` as the state before a surface is taken', () => {
+    const para = /\*\*`role: none` is not a missing answer\.\*\*([\s\S]*?)\n\n/.exec(executionRaw);
+    if (!para) throw new Error('the policy treats `none` as an absence, or says nothing about it');
+    const said = flatten(para[1]);
+    if (!/take a surface/.test(said)) throw new Error('`none` is not tied to taking a surface');
+    if (!/before its\s?first write/.test(said)) {
+      throw new Error('`none` is not tied to the write it precedes');
+    }
+    return true;
+  });
+
+  assert('the policy has `role: unknown` fire nothing', () => {
+    const para = /\*\*`role: unknown` fires nothing\.\*\*([\s\S]*?)\n\n/.exec(executionRaw);
+    if (!para) throw new Error('the policy says nothing about an unresolved role');
+    if (!/every rule keyed on the role declines/.test(flatten(para[1]))) {
+      throw new Error('`unknown` is named but nothing is said to decline');
+    }
+    return true;
+  });
+
   assert('the specification carries the rule as well as the policy', () =>
     /A run whose checkout is \*\*not\*\* isolated MUST take a worktree of AEP's own/.test(spec)
     && /fixed by the isolation's kind, and never by its enforcement/.test(spec));
@@ -4773,6 +5414,60 @@ section('working surface surfaces', () => {
 
   assert('the specification names both holes rather than implying the surface is inviolable', () =>
     /It does not refuse `git update-ref`, and it reaches no further than the clone/.test(spec));
+
+  // The surface table, counted off its own rows rather than matched as prose.
+  // A regex naming four kinds passes while a fifth row sits beside them, and a
+  // row whose role was dropped still reads correctly on the line above it, so
+  // the kinds and the roles are checked as pairs and the count is checked too.
+  assert('the specification names every surface kind and the role each carries', () => {
+    const block = /\n### 18\.3 [^\n]*\n([\s\S]*?)(?=\n#{2,3} )/.exec(specText);
+    if (!block) throw new Error('the specification defines no surface at all');
+    const rows = [...block[1].matchAll(/^\|[^|\n]+\|\s*`(\w+)`\s*\|\s*`(\w+)`\s*\|\s*$/gm)]
+      .map((row) => [row[1], row[2]]);
+    const carried = new Map(rows);
+    const expected = [
+      ['main', 'none'],
+      ['run', 'orchestrator'],
+      ['ticket', 'implementer'],
+      ['runtime', 'orchestrator'],
+      ['unknown', 'unknown'],
+    ];
+    for (const [kind, role] of expected) {
+      if (!carried.has(kind)) throw new Error(`no surface kind \`${kind}\``);
+      if (carried.get(kind) !== role) {
+        throw new Error(`\`${kind}\` carries \`${carried.get(kind)}\`, not \`${role}\``);
+      }
+    }
+    if (rows.length !== expected.length) {
+      throw new Error(`${rows.length} surface kinds, not ${expected.length}`);
+    }
+    return true;
+  });
+
+  assert('the specification requires the surface and the role to be computed', () =>
+    /MUST compute, from Git and the path of the tree it is standing in, which surface that is and what role the surface carries/
+      .test(spec));
+
+  assert('the specification says an unresolved surface refuses nothing', () =>
+    /both the surface and the role are `unknown`, every rule keyed on the role declines to fire/.test(spec));
+
+  // One marker per surface, and the prohibition that follows from it. The
+  // second is the one worth pinning by itself: the first can survive as a
+  // description while a skill goes on checking in one tree and stamping in
+  // another, which is the state this rule was written against.
+  assert('the specification binds a marker to the surface it sits in', () =>
+    /A marker belongs to the surface it sits in, and describes that surface alone/.test(spec));
+
+  assert("the specification forbids checking one surface's marker while stamping another's", () =>
+    /MUST NOT check one surface's marker while stamping another's/.test(spec)
+    && /the check follows the entry rather than preceding it/.test(spec));
+
+  // What keeps the rule above compatible with the three-key bound asserted
+  // higher up: the surface and the role are derived on every read, so naming
+  // them adds nothing to the marker and contradicts nothing that forbids it.
+  assert('the specification keeps the surface and the role out of the marker', () =>
+    /Which surface that is, and what role it carries, are computed and never recorded here/.test(spec)
+    && /The three keys above stay the whole of what AEP writes/.test(spec));
 
   assert('both skills key the surface decision on the kind', () =>
     /Never key on the enforcement/.test(opener) && /never on its\s?enforcement/.test(runner));
@@ -5056,8 +5751,74 @@ section('scope surfaces', () => {
     && /uncommitted paths/.test(implement));
   assert('the runner says a refused switch is the guard working', () =>
     /Enter the surface; do not check the branch out/.test(implement));
-  assert('the runner keeps the marker read beside the scope read', () =>
+  assert('the runner reports the two answers together without merging them', () =>
     /position\.mjs check/.test(implement) && /never merged/.test(implement));
+
+  // A marker belongs to the surface it sits in, so a run that checks one and
+  // stamps another quotes an answer true of nowhere. Both steps exist either
+  // way, and presence is exactly what the defect looked like, so this pins where
+  // each one sits. The scope read is pinned on the other side of the entry
+  // rather than merely left alone: the isolation is what decides whether a
+  // surface is taken at all, so a run that read it after taking one would be
+  // keying that decision on an answer it did not have yet.
+  // The path decides the role, so where a child's surface is created is part of
+  // the derivation rather than a housekeeping detail. Created relative to the
+  // orchestrator's own surface it nests and reads `unknown`; created outside
+  // `.aep/worktrees/` it reads as a runtime surface, whose occupant is an
+  // orchestrator, and the child computes permissions it must not have. A review
+  // found that second case live, which is why this is asserted and not assumed.
+  // Both counters, and that each names the other. Stated in isolation they
+  // deadlock: a review finding becomes a ticket, the ticket needs a converge
+  // round to reach the second review, and converge is capped independently. A
+  // review found that live, so the exemption is asserted in both files rather
+  // than left to whoever reads only one of them.
+  assert('the converge cap says a review finding does not spend a round', () => {
+    const policy = readSrc('policies', 'execution.md');
+    const runner = readSrc('skills', 'implement.md');
+    const spent = /does not spend a (?:converge )?round/;
+    if (!spent.test(policy)) throw new Error('the policy states the cap without the exemption');
+    if (!spent.test(runner)) throw new Error('the runner states the cap without the exemption');
+    return /already agreed the spec is\s+met/.test(policy + runner);
+  });
+
+  // The narrowed marker rule, and that the one skill it was narrowed for is
+  // named as conforming rather than merely invoking the script. `/specify` at
+  // the moment it orients has neither an effort nor a surface to check, so a
+  // rule requiring the check to follow the entry could never bind it.
+  assert('the specification narrows the marker rule for a run that stamps nothing', () => {
+    const spec = fs.readFileSync(path.join(path.dirname(SRC), 'specs.md'), 'utf8');
+    return /An invocation that \*\*stamps nothing\*\* cannot violate that/.test(spec)
+      && /`\/specify` is the worked example/.test(spec)
+      && /MUST NOT check one surface's marker while stamping another's/.test(spec);
+  });
+
+  // The reserved prefix has one producer in the shipped tree, and the fixture
+  // that asserts it builds its own path. Without this, reverting the skill to a
+  // bare name leaves the suite green while every prototype computes
+  // `implementer` again and is refused a dispatch by a rule written for children.
+  assert('the prototype skill names a reserved surface, anchored', () => {
+    const proto = readSrc('skills', 'prototype.md');
+    if (!/_prototype-<slug>/.test(proto)) throw new Error('the prototype surface is no longer reserved');
+    if (!/main checkout's/.test(proto)) throw new Error('the prototype surface is not anchored');
+    return true;
+  });
+
+  assert('the runner anchors a child surface on the main checkout', () =>
+    /created under the main checkout's\s+`\.aep\/worktrees\/`/.test(implement)
+    && /never relative to the surface you are standing in/.test(implement)
+    && /\*\*The path is what decides the role\*\*/.test(implement));
+
+  assert('the runner checks the marker only once it is in the surface', () => {
+    const scope = implement.indexOf('scope.mjs read');
+    const enter = implement.indexOf("Enter the run's own worktree before anything else");
+    const check = implement.indexOf('position.mjs check');
+    if (scope < 0) throw new Error('the runner no longer reads the scope');
+    if (enter < 0) throw new Error('the runner no longer names entering the surface');
+    if (check < 0) throw new Error('the runner no longer checks the marker');
+    if (scope > enter) throw new Error('the scope read no longer precedes the surface it decides');
+    if (check < enter) throw new Error('the marker is checked before the surface it stamps is entered');
+    return true;
+  });
 
   const specify = flat(readSrc('skills', 'specify.md'));
   assert('specify reads a new branch base from the repository rule', () =>

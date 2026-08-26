@@ -129,9 +129,17 @@ on entry anyway:
 
 | Skill | Position holds |
 | --- | --- |
-| `[[skills/implement]]` | the position marker against `HEAD` and the working tree |
+| `[[skills/implement]]` | the claim, the isolation, and the marker's answer for the surface it entered |
+| `[[skills/install]]` | *nothing to verify*: no marker exists yet, and this run writes the first one |
+| `[[skills/prune]]` | the claim, the isolation, the marker's answer, and what the validator printed |
 | `[[skills/review]]` | the pinned merge-base, and that the subject is non-empty |
+| `[[skills/specify]]` | the claim and the isolation of the surface it was invoked in, beside the marker's answer |
+| `[[skills/survey]]` | the claim, the isolation, the marker's answer, and the bound the survey took |
 | a skill that reads no repository state | *nothing to verify*, said plainly |
+
+**A row says what that skill puts in the slot. It never says a skill must read
+the position**, and the last row is the answer for every skill with no row of its
+own.
 
 *Why the slot is fixed but its content is not: making every skill read the
 position would buy uniformity with a behavioural change nobody asked for, and

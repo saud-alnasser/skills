@@ -16,14 +16,27 @@ whole effort and is cheapest to fix here.
 
 ## Procedure
 
-1. **Orient.** Read `[[index]]`. Check `position/marker.json` against the current
-   `HEAD` and working tree — where they differ, the tree moved under you and
-   anything you remember about it is suspect.
+1. **Orient.** Read `[[index]]`. Then run both, and quote what both print:
 
-   **Then read the scope** — `node .aep/scripts/scope.mjs read` — and quote what
-   it prints. A non-empty claim confines this run to the efforts it names
+   ```
+   node .aep/scripts/position.mjs check
+   node .aep/scripts/scope.mjs read
+   ```
+
+   The marker says whether this tree moved since a run last read it — where it
+   says it moved, anything you remember about the tree is suspect. The scope says
+   which efforts this branch claims and what isolation is in force, and a
+   non-empty claim confines this run to the efforts it names
    (`[[policies/execution]]`). The claim and the isolation go in `Position`,
-   beside the marker read above (`[[policies/reporting]]`).
+   beside the marker's answer (`[[policies/reporting]]`).
+
+   **Both read the surface you were invoked in**, which is the only one that
+   exists yet: the effort has no branch and no worktree until it opens, below.
+
+   **This run stamps nothing.** A stamp lands at a run's close, and by its close
+   this one is standing in the surface it created — stamping there would record a
+   read that happened in a different tree, and a marker checked in one surface
+   and stamped in another describes neither.
 2. **Check for an existing effort, and for an existing boundary.** A request that
    extends work already specified belongs in that effort's spec, not a new one —
    two efforts describing one change is the failure this step prevents. A request

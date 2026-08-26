@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.2.0
+**Version:** 3.3.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -605,6 +605,32 @@ A run whose checkout is already a linked worktree holds a surface of its own, an
 
 **The exclusion is git's, and it stops at the porcelain.** Git refuses a second worktree on a held branch, refuses a checkout switching to it, and refuses `git branch -f` against it. It does not refuse `git update-ref`, and it reaches no further than the clone. A conforming implementation MUST NOT describe the surface as though either hole were closed.
 
+### 18.3 The surface a run stands in, and the role it carries
+
+§18.1 detects what isolation is in force, and §18.2 fixes what a run does about it. Neither answers **which** surface a run is standing in, and that is the question the rules binding it turn on: an orchestrator holding an effort and a child building one of its tickets report the same claim, the same isolation and the same marker state, while being bound by opposite rules.
+
+**A conforming implementation MUST compute, from Git and the path of the tree it is standing in, which surface that is and what role the surface carries**, and MUST report both wherever it reports the isolation. Every surface kind, and the role each carries:
+
+| The tree is | Surface | Role |
+| --- | --- | --- |
+| the main checkout | `main` | `none` |
+| `.aep/worktrees/<effort>/_run` | `run` | `orchestrator` |
+| `.aep/worktrees/<effort>/<name not starting with an underscore>` | `ticket` | `implementer` |
+| a linked worktree outside `.aep/worktrees/` | `runtime` | `orchestrator` |
+| anything else | `unknown` | `unknown` |
+
+A **leading underscore is reserved**, and it is the whole of the discriminator. `_run` is the directory a run creates its effort branch into (§18.2); any other underscored name is a surface AEP made for something that is not a ticket, a prototype among them, and resolves to `unknown` so that nothing keyed on the role fires at it. Every sibling whose name does not start with an underscore is a ticket surface, and no ticket name has to be matched. The derivation reads the path and never the branch name, because what a branch is called belongs to the repository and, under a runtime that generates one per thread, to the runtime (§19.3).
+
+Because the path decides the role, **a conforming implementation MUST create every surface it makes under the main checkout's `.aep/worktrees/`**, resolved from there rather than from the directory the creating run happens to stand in. A surface created relative to a run's own surface nests inside it and resolves to `unknown`; one created outside `.aep/worktrees/` altogether resolves to `runtime`, whose occupant is an orchestrator, and a child placed there would compute permissions it must not have. *Why this is normative rather than an implementation detail: the derivation is sound only if the paths it reads are the ones AEP said it would create, so the anchor is part of the contract rather than a convenience.*
+
+A `runtime` surface carries `orchestrator` because a run handed one takes no second (§18.2), so nothing put it there on some other run's behalf. `main` carries **no** role rather than a missing one: it is the state of a run that has not yet taken a surface, which is exactly the condition §18.2 requires it to act on before its first write.
+
+**The comparison MUST be built from Git's own output** — the current tree from `git rev-parse --show-toplevel`, the main checkout from the first entry of `git worktree list --porcelain`, which Git lists first — and never resolved against the process's working directory. One path spelled two ways reconciles against nothing while reading as though it worked.
+
+**The table is total, and an unresolved surface refuses nothing.** Where the path matches no row above, both the surface and the role are `unknown`, every rule keyed on the role declines to fire, and the run proceeds as it would have. *Why it fails open, as detection does above: the worst outcome of a wrong answer that narrows is correct work blocked in a tree that plainly has a role, and a run has no way to tell that refusal from a real one.*
+
+**What is computed here refuses nothing by itself.** A conforming implementation reports the surface and the role, and MUST NOT exit differently on account of either. What a run *does* about the role — a run holding `implementer` neither integrating nor dispatching, a run holding `orchestrator` integrating only in the surface it holds (§19.2) — is stated by the rules that bind that role, exactly as §18.2 states what a run does about the isolation §18.1 reports. *Why the split: a detection that refuses is one a run must be able to route around when the derivation is wrong, and a documented route around a guard is not a guard.*
+
 ## 19. Parallelism
 
 ### 19.1 The unit is a whole task
@@ -684,6 +710,10 @@ Position MAY additionally record **untracked** operational facts — state not r
 
 Position is gitignored, so it is **per working tree rather than per clone**: two linked worktrees of one clone hold two markers, and two agents sharing one checkout hold one between them — the opposite of a claim in both directions. **Position therefore MUST NOT carry which effort a run is inside.** That is computed from the branch (§19.3), and a copy of it here would be a second source of truth, able to disagree with the first and gitignored where nobody would see it do so.
 
+**A marker belongs to the surface it sits in, and describes that surface alone.** Its `tree` and `head` are that tree's, so a marker read in one surface answers nothing about another, and a run that enters a surface (§18.3) leaves behind whatever marker it read on the way in. **A conforming implementation MUST NOT check one surface's marker while stamping another's**: an invocation that does both MUST make both against the surface it does its work in, which means the check follows the entry rather than preceding it. An invocation that **stamps nothing** cannot violate that, and reads the surface it is standing in at the time; `/specify` is the worked example, since at the moment it orients it has neither an effort nor a surface to check. *Why this is normative rather than an ordering detail: the two acts read as one guarantee and are quietly two files. A run checking before it enters reports drift for a tree it is about to leave and stamps a tree it never compared, so the answer it quotes is true of nowhere and nothing about it looks wrong.*
+
+**Which surface that is, and what role it carries, are computed and never recorded here** (§18.3). Both are derived from Git and the path on every read, for the same reason the effort is: a copy kept in a gitignored file is a second source of truth, free to disagree with the first where nobody would see it do so. The three keys above stay the whole of what AEP writes.
+
 **Position is NOT** Git, architecture, memory, context, a decision record, or a source of truth. **If position conflicts with repository state, repository state wins**, and position is re-derived rather than trusted.
 
 ---
@@ -706,7 +736,7 @@ Position is gitignored, so it is **per working tree rather than per clone**: two
 | `plan` | HOW | `plan.md` | typed, when the approach is not obvious |
 | `tasks` | executable work | tickets under the effort | typed |
 | `implement` | working code, committed | repository source | typed |
-| `review` | the diff satisfies the ticket | findings | from `implement`, per ticket |
+| `review` | the effort's diff satisfies the defined change | findings | from `implement`, once at the close |
 | `converge` | the effort satisfies the spec | further tickets, or completion | from `implement`, when the tickets run out |
 
 `prototype`, `survey`, and `prune` are **capabilities, never lifecycle stages**, reached when uncertainty or the codebase warrants one.
@@ -717,13 +747,13 @@ Position is gitignored, so it is **per working tree rather than per clone**: two
 
 **`/tasks`** converts the planned effort into tickets that derive from the spec, map to acceptance criteria, expose dependencies as `blocked-by`, are bounded, and do not redefine architecture. Every ticket traces to a requirement or an acceptance criterion, and an implementation MUST check it (§14.4).
 
-**`/implement`** takes **the effort, not one wave**. It computes the frontier from the tickets' declared edges, builds what is ready, reviews and commits each, and schedules again — until converge finds no gap or a trip-wire fires. **An exhausted ticket list is not the end of the run**: tickets exhausted and the spec satisfied are different claims, and only the second ends it.
+**`/implement`** takes **the effort, not one wave**. It computes the frontier from the tickets' declared edges, builds what is ready, commits each, and schedules again, until converge finds no gap or a trip-wire fires. It then reviews the effort once, before the work is handed over. **An exhausted ticket list is not the end of the run**: tickets exhausted and the spec satisfied are different claims, and only the second ends it.
 
-**`review`** is a stage of `implement`, run per ticket. It verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security, and documentation. Where the runtime supports sub-agents it MUST use **two independent passes** — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings. Review is not *does it compile*; it is *does the implementation satisfy the defined change*.
+**`review`** is a stage of `implement`, and **its unit is the effort**. Its subject is the effort branch, the diff a human is asked to merge, and it runs once at the close of the run, after converge finds no gap. It verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security, and documentation. Where the runtime supports sub-agents it MUST use **two independent passes** — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings. Review is not *does it compile*; it is *does the implementation satisfy the defined change*. *Why the effort and not one ticket: a reviewer holding a single ticket's diff cannot see a defect that lives between two of them, and the effort branch is the unit a human is asked to merge, since exactly one pull request carries it (§14.4).*
 
 **`converge`** is the effort's termination condition and runs when no unresolved ticket remains. It asks whether the spec is satisfied, and it **appends tickets rather than editing the spec or the plan**: work that was not built becomes further tickets, and an approach that cannot satisfy a requirement stops on the return-to-plan invariant (§22). It runs at most twice; a second round finding a gap the first round created is a signal about the plan, not an invitation to a third.
 
-**An agent MUST NOT commit work that has failed review**, and MUST NEVER merge, publish, or push a tag (§2). What it MAY push is fixed by the repository's own rule, not by this specification.
+**An agent MUST NOT hand work to a human while a review finding against it is open.** A finding is closed by being fixed, by becoming a ticket the run schedules, or by the human accepting it, and a pull request MUST NOT be marked ready while one is still open. *Why the handover rather than the commit: review's subject is the effort branch, so every commit in it exists before the review that judges it, and a rule forbidding the commit would forbid the only order in which the work can happen. What the protocol protects is that unjudged work never reaches a human, and that is a property of the handover.* An agent MUST NEVER merge, publish, or push a tag (§2). What it MAY push is fixed by the repository's own rule, not by this specification.
 
 ## 22. The return-to-plan invariant
 

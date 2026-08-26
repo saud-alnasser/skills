@@ -26,17 +26,19 @@ and speed: a review that agrees quickly has usually only read quickly.
 
 **Scope first** — `node .aep/scripts/scope.mjs read`, quoted. A non-empty claim
 confines the run to the efforts it names (`[[policies/execution]]`), and it is
-what row 4 of the next step resolves to. The claim and the isolation go in the
+what row 1 of the next step resolves to. The claim and the isolation go in the
 `Position` of the turn this is a stage of, beside the pinned merge-base and the
 non-empty subject below (`[[policies/reporting]]`).
 
 Everything downstream is a function of one ref. Take what the caller supplied — a
 SHA, a branch, a tag, `main` — or ask.
 
-**The subject is the working tree, not only what is committed.**
-`[[skills/implement]]` calls this *before* it commits, so on the path that matters
-most the entire change is uncommitted and a commit-range diff is empty. Pin both
-and review their union: the committed range, plus staged, unstaged, and untracked.
+**The subject is the working tree, not only what is committed.** A caller can
+reach this with the change still uncommitted — a human asking mid-change, a fix
+applied and not yet landed — and a commit-range diff is empty then. Pin both and
+review their union: the committed range, plus staged, unstaged, and untracked.
+An effort's whole branch is the committed half of exactly that union, so the same
+pinning serves it without a second procedure.
 
 Compare against the **merge-base**, not the raw ref, so commits that landed on the
 base since this work started are not attributed to it. `[[references]]` has the
@@ -50,10 +52,16 @@ report on no content.
 
 In order, stopping at the first that answers:
 
-1. the task the caller is holding
+1. the effort's `spec.md`, for the claim read at step 1
 2. task references in the commit messages
 3. a path the human passed
-4. the effort's `spec.md`, for the claim read at step 1
+
+**Row 1 is what an effort-level review resolves to, and that is the ordinary
+case.** `[[skills/implement]]` calls this once, at the close, over the whole
+effort branch — a subject that spans every task in the effort, so no single task
+defines it and the spec the effort was built against is what it was asked for.
+Leading with a task the caller happens to be holding would narrow the question to
+one slice of a diff that is deliberately wider than any of them.
 
 If none answers, **ask**. If there is genuinely no spec, the Correctness axis
 reports **no spec available** for the requirements half and says so.
@@ -131,4 +139,5 @@ unfixed problem into a task. What is left is genuinely disposable.
 ## Done when
 
 Both axes have run, findings are reconciled without being merged, and each one is
-fixed, ticketed, or accepted **by the human**.
+fixed, ticketed, or accepted, and **accepting is the only one of the three that
+is the human's**.

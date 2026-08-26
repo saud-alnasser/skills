@@ -1,5 +1,6 @@
 // Answers where a run is, from git alone: which efforts the branch claims,
-// which efforts the tree is touching now, and what isolation is in force.
+// which efforts the tree is touching now, which surface the run stands in and
+// what role that surface makes it, and what isolation is in force.
 //
 // AEP says the branch is the claim and nothing ever read it. Which effort an
 // invocation was inside came from the human, in the conversation, on every
@@ -19,6 +20,18 @@
 // computed from the working tree can never fire a guard: the first illegal
 // write enlarges the scope that would have caught it. Measured from commits,
 // the claim is a fact the run cannot edit by misbehaving.
+//
+// The surface and the role are computed the same way and for the same reason.
+// Two agents standing in two surfaces of one effort are bound by opposite rules,
+// and neither rule was derivable from anything either agent could read: it lived
+// in a brief the run outlives. So the surface is a function of two paths git
+// prints, and the role is a function of the surface. Nothing is stored, because
+// git already holds the fact and a second copy is a fact that can disagree.
+//
+// Reported, never enforced. A run that must not integrate is refused by the
+// policy keyed on the role, exactly as the isolation is reported here and acted
+// on there, so there is one place a reader looks for what a run does about what
+// this script found.
 //
 // This reads git and nothing else. The position marker is a different question,
 // whether the tree moved since some earlier run looked at it, and it carries no
@@ -265,11 +278,90 @@ function isolationOf(repo) {
     path: repo,
     count: worktrees.length,
     siblings,
+    // Carried for the surface below, which needs the main checkout and would
+    // otherwise ask git for the same list a second time. The renderers name the
+    // fields they print, so this one stays internal.
+    worktrees,
   };
 }
 
+// The one directory name reserved under an effort. The skill that opens an
+// effort creates exactly this path and the runner re-enters it, so every other
+// directory beside it belongs to a ticket.
+const RUN = '_run';
+// Every surface AEP creates under an effort is either the run's or a ticket's,
+// and the underscore is what tells them apart. `_run` is the orchestrator; any
+// other underscored name is a surface AEP made for something else, a prototype
+// among them, and resolves to `unknown` so no rule keyed on the role fires at
+// it. Without this a prototype worktree reads as a ticket and its occupant is
+// told it may not dispatch, by a rule written for children.
+const RESERVED = '_';
+
+/** The role a surface makes its occupant. Total over the kinds below. */
+const ROLES = {
+  main: 'none',
+  run: 'orchestrator',
+  ticket: 'implementer',
+  // A worktree the runtime supplied rather than AEP: a run given one takes no
+  // second, so its occupant is the one that integrates.
+  runtime: 'orchestrator',
+  unknown: 'unknown',
+};
+
+/** Forward slashes, no trailing separator, so two paths git printed compare as strings. */
+function normalise(value) {
+  return String(value).replace(/\\/g, '/').replace(/\/+$/, '');
+}
+
 /**
- * The whole answer: the base, the claim, the working set, and the isolation.
+ * The surface this checkout is, decided by where it stands relative to the main
+ * checkout and by nothing else.
+ *
+ * Both sides come from git: the current tree from `--show-toplevel`, the main
+ * checkout from the first entry of `git worktree list --porcelain`, which git
+ * lists first whichever worktree the question is asked from. That is the same
+ * care `resolveScope` takes over its prefix, and for the same reason. On
+ * Windows one spelling of a path can arrive as an 8.3 short name, and a
+ * comparison against anything resolved from the process directory then matches
+ * nothing while reading as though it worked.
+ *
+ * `aepRelative` locates AEP's own worktrees directory, because `.aep/` is not
+ * always at the repository root and a hardcoded `.aep/worktrees` would resolve
+ * every surface of a nested installation to `runtime`.
+ *
+ * Total by construction: a path matching no shape is `unknown`, whose role fires
+ * no rule, which is the direction `resolveBase` above already fails in.
+ */
+export function surfaceOf(repo, mainPath, aepRelative) {
+  const here = repo ? normalise(repo) : '';
+  const main = mainPath ? normalise(mainPath) : '';
+  const unknown = { kind: 'unknown', effort: null, ticket: null, path: here || null };
+  if (!here || !main) return unknown;
+  if (here === main) return { kind: 'main', effort: null, ticket: null, path: here };
+
+  const inner = `${normalise(aepRelative)}/worktrees`;
+  if (!here.startsWith(`${main}/${inner}/`)) {
+    return { kind: 'runtime', effort: null, ticket: null, path: here };
+  }
+
+  // Two segments and no more: `<effort>/<occupant>` is the only shape AEP
+  // creates under here, and anything deeper is something this cannot name.
+  const parts = here.slice(`${main}/${inner}/`.length).split('/');
+  const relative = `${inner}/${parts.join('/')}`;
+  if (parts.length !== 2) return { ...unknown, path: relative };
+
+  const [effort, occupant] = parts;
+  if (occupant !== RUN && occupant.startsWith(RESERVED)) {
+    return { ...unknown, path: relative };
+  }
+  return occupant === RUN
+    ? { kind: 'run', effort, ticket: null, path: relative }
+    : { kind: 'ticket', effort, ticket: occupant, path: relative };
+}
+
+/**
+ * The whole answer: the base, the claim, the working set, the surface this run
+ * stands in with the role it carries, and the isolation.
  *
  * Returns null where git could not be read, which every caller reports as
  * exit 2. A failure to answer is never an exception escaping the script.
@@ -287,7 +379,10 @@ export function resolveScope(root) {
 
   const repo = toplevel.trim();
   if (!repo) return null;
-  const prefix = `${inner.trim()}${path.basename(root)}/efforts/`;
+  // Where `.aep/` sits inside the repository, which is where both the efforts
+  // directory and the worktrees directory are found from.
+  const aepRelative = `${inner.trim()}${path.basename(root)}`;
+  const prefix = `${aepRelative}/efforts/`;
 
   const named = git(repo, ['rev-parse', '--abbrev-ref', 'HEAD']);
   const branch = named === null || named.trim() === 'HEAD' ? null : named.trim();
@@ -299,7 +394,12 @@ export function resolveScope(root) {
   const working = workingSet(repo, prefix);
   if (working === null) return null;
 
-  return { base, branch, claim, working, isolation: isolationOf(repo) };
+  const isolation = isolationOf(repo);
+  // Git lists the main worktree first. Absent it, the surface cannot be placed
+  // and resolves to `unknown`, which refuses nothing.
+  const surface = surfaceOf(repo, isolation.worktrees[0]?.path ?? null, aepRelative);
+
+  return { base, branch, claim, working, surface, role: ROLES[surface.kind], isolation };
 }
 
 /** Everything in the working set the claim does not cover, sorted. */
@@ -318,6 +418,29 @@ function field(label, value) {
   return `${label.padEnd(COLUMN - 1)} ${value}\n`;
 }
 
+/**
+ * The surface, and where it is unless the kind has already said.
+ *
+ * The main checkout needs no path: it is the one surface a reader can identify
+ * without being told where it is.
+ */
+function surfaceLine(surface) {
+  if (surface.kind === 'main' || !surface.path) return surface.kind;
+  return `${surface.kind} at ${surface.path}`;
+}
+
+/**
+ * The role, carrying what it is a role over.
+ *
+ * Two lines rather than a clause on `isolation`, which already carries a kind,
+ * an enforcement, a sibling count and a path. A fifth clause makes it unreadable
+ * at exactly the moment a human is scanning for where they are.
+ */
+function roleLine(role, surface) {
+  if (surface.ticket) return `${role} on ${surface.ticket} for ${surface.effort}`;
+  return surface.effort ? `${role} of ${surface.effort}` : role;
+}
+
 function renderRead(scope) {
   const { kind, enforcement, count, siblings } = scope.isolation;
   const touched = [...scope.working.keys()].sort();
@@ -325,6 +448,10 @@ function renderRead(scope) {
   let out = '';
   out += field('claim', scope.claim.length > 0 ? scope.claim.join(', ') : 'unscoped');
   out += field('working', touched.length > 0 ? touched.join(', ') : '-');
+  // Above the isolation, because these are what a reader acts on and the
+  // isolation is what they were derived from.
+  out += field('surface', surfaceLine(scope.surface));
+  out += field('role', roleLine(scope.role, scope.surface));
   out += field('isolation', siblings.length > 0
     ? `${kind}, ${enforcement}, sibling of ${count} at ${scope.isolation.path}`
     : `${kind}, ${enforcement}`);
@@ -342,6 +469,11 @@ function renderJson(scope) {
   return `${JSON.stringify({
     claim: scope.claim,
     working: [...scope.working.keys()].sort(),
+    // `path` is relative to the main checkout for a surface AEP created under
+    // it, which is how a reader recognises one, and absolute otherwise, because
+    // a surface outside the main checkout has no relative spelling.
+    surface: scope.surface,
+    role: scope.role,
     isolation: { kind, enforcement, path: self, count, siblings },
     base: scope.base,
   }, null, 2)}\n`;

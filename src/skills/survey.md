@@ -23,13 +23,26 @@ Not for a specific bug, and not for a change already described — that is
 
 ## Procedure
 
-1. **Read the scope, then bound the survey.** `node .aep/scripts/scope.mjs read`,
-   quoted. A non-empty claim confines this run like any other, and a subject that
-   is the whole codebase buys no exemption (`[[policies/execution]]`): reaching
-   another effort's artifact stops the run and names it, and a tree-wide subject
-   belongs on an unscoped checkout. The claim and the isolation go in `Position`,
-   beside the bound (`[[policies/reporting]]`). Then bound it — a directory, a
-   package, a subsystem. An unbounded survey returns a list nobody acts on.
+1. **Read the position and the scope, then bound the survey.**
+
+   ```
+   node .aep/scripts/position.mjs check
+   node .aep/scripts/scope.mjs read
+   ```
+
+   Both quoted. **Two questions, two answers, and never merged:** the marker says
+   whether this surface moved since a run last read it, and the scope says which
+   efforts this branch claims and what isolation is in force. This skill takes no
+   surface and enters none, so the marker it checks here is the surface it works
+   in and the one it stamps at step 7.
+
+   A non-empty claim confines this run like any other, and a subject that is the
+   whole codebase buys no exemption (`[[policies/execution]]`): reaching another
+   effort's artifact stops the run and names it, and a tree-wide subject belongs
+   on an unscoped checkout. The claim and the isolation go in `Position`, beside
+   the marker's answer and the bound (`[[policies/reporting]]`). Then bound it —
+   a directory, a package, a subsystem. An unbounded survey returns a list nobody
+   acts on.
 2. **Read what is there.** `[[contexts]]` for the area, then the code.
 3. **Look for the four costs**, in this order:
 
@@ -45,7 +58,16 @@ Not for a specific bug, and not for a change already described — that is
    like.
 5. **Rank by cost × frequency**, not by how bad the code looks. Ugly code nobody
    touches costs nothing.
-6. **Report**, and stop.
+6. **Report.**
+7. **Stamp the marker**, and stop —
+   `node .aep/scripts/position.mjs stamp --session <id>`, passing **the
+   identifier your harness gave this session**. **Never invent one:** where the
+   runtime exposes no identifier, drop the flag and stamp as before
+   (`[[policies/execution]]`).
+
+   A survey stamps despite changing nothing, because the marker records the tree
+   a run **read** and not the tree a run committed. Reading is the act that earns
+   the stamp, and a survey is nothing but reading.
 
 ## Output
 
