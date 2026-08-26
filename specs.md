@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.4.0
+**Version:** 3.5.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -498,6 +498,8 @@ Tasks **reference** the specification rather than copying large portions of it. 
 **The tracker is read and never mirrored into `.aep/`.** A local copy of a tracker object is exactly the hidden database §2 forbids, and it disagrees with the original the moment one is written and the other is not. The direction that is permitted is the reverse: a label projects what a file says, and the file wins when they disagree.
 
 **A conforming implementation MUST NOT create a label for a fact the tracker already models.** Where a first-class feature answers the fact — a milestone, an epic, a parent, a dependency — that feature answers it. What is native differs per system, so it is established per system and never assumed; the resolution is recorded in the repository's reference for that tool (§11) rather than rederived per session.
+
+**The one exception is the terminal value of a `status:` family AEP maintains.** Merged and closed are modelled natively by every forge, and the terminal value is kept anyway, for two reasons that are about the family rather than about the fact: a family with a hole in it cannot be filtered on, so a list scoped to `status:` would silently omit every effort that ever finished; and the value is a projection of the effort's own state rather than a second copy of the forge's, so it is written from the file the effort lives in and corrected against that file whenever the two disagree. *This narrows the prohibition rather than lifting it: outside a family AEP maintains, a label for a natively modelled fact stays forbidden, and nothing here licenses a second label standing beside a native feature.*
 
 ## 15. Skills
 
@@ -1215,7 +1217,7 @@ A conforming implementation preserves all of the following:
 42. Shipped text cites only what resolves where it is read.
 43. An agent never pushes, never publishes, and never silently decides architecture.
 44. Conflicts the governance hierarchy cannot resolve are surfaced to the human, never resolved silently.
-45. The frontier is computed from the tickets' own declared edges without consulting a tracker, and no label is created for a fact the tracker already models.
+45. The frontier is computed from the tickets' own declared edges without consulting a tracker, and no label is created for a fact the tracker already models, save the terminal value of a `status:` family AEP maintains (§14).
 46. An upgrade reports the declared notices for exactly the releases it crosses, shows none to a tree already at the release, previews them in a dry run, and acts on each rather than merely printing it.
 47. `protocol.md`'s `version:` is the single release of record, and an artifact edited without being restamped is detected by comparing content against the manifest rather than by a field.
 48. Every turn opens with one report and closes with one block, in one shape defined in exactly one place; a nested skill entry is a stage rather than a second report; no slot is omitted; and a skill's stage names are read from its own procedure rather than declared a second time.

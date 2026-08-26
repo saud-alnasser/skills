@@ -67,8 +67,8 @@ expensive. The first is how a commit references its task:
 
 | This repository | Then |
 | --- | --- |
-| a branch merged by a pull request a human writes | the commit references the task but **closes nothing** — a closing keyword in a commit fires on a later cherry-pick or rebase, closing something nobody merged. The keyword belongs in the pull request body |
-| stacked changes, submitted by a stacking tool | the commit **carries the closing keyword** — it reaches the default branch only through its own branch's pull request, so the hazard above cannot arise |
+| a branch merged by a pull request | the commit references the task but **closes nothing** — a closing keyword in a commit fires on a later cherry-pick or rebase, closing something nobody merged. The keyword belongs in the pull request body, and `[[skills/specify]]` writes it there as it opens the effort |
+| stacked changes, submitted by a stacking tool | the commit **carries the closing keyword** — it reaches the default branch only through its own branch's pull request, so the hazard above cannot arise. A stack merges bottom-first, so the keyword goes on the change that merges **last** and everything under it carries a plain reference — `[[skills/implement]]` writes it there |
 
 The second is where a new effort's branch starts, and it is the same row that
 answers it. `[[skills/specify]]` reads this rule rather than branching from

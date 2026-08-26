@@ -14,7 +14,8 @@
 // Seeds are the same principle from the other side: shipped as repository-owned
 // starting points, written once, and never reconsidered by any later run.
 //
-//   node install.mjs --into <repo> [--update] [--adapters claude] [--dry-run]
+//   node install.mjs --into <repo> [--update] [--adapters claude]
+//                     [--automation github] [--dry-run]
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -42,8 +43,26 @@ import {
 const report = {
   written: [], preserved: [], seeded: [], skipped: [], retired: [], created: [], edited: [],
   moved: [], collided: [], relinked: [], notices: [], warnings: [], adapters: [],
-  pointed: [], unconverted: [], retiredDirs: [],
+  pointed: [], unconverted: [], retiredDirs: [], automation: [],
 };
+
+/**
+ * Writes a paragraph wrapped, every line under the same indent.
+ *
+ * Wrapped here rather than in whatever declared the text, so each string stays
+ * one string to write and one string to assert against.
+ */
+function wrapped(text, indent) {
+  let line = indent;
+  for (const word of text.split(/\s+/)) {
+    if (line.length + word.length + 1 > 76) {
+      process.stdout.write(`${line}\n`);
+      line = indent;
+    }
+    line += ` ${word}`;
+  }
+  if (line.trim()) process.stdout.write(`${line}\n`);
+}
 
 /** The distribution root, `src/`, since this script lives in `src/scripts/`. */
 function distributionRoot() {
@@ -319,6 +338,294 @@ function installSeeds(repo, from, aep, dryRun) {
 }
 
 /**
+ * The merge-time job each forge seed brings with it, keyed by the forge.
+ *
+ * Read off `SEEDS` rather than listed a second time here. A tracker reference
+ * cannot be declared without its automation, so the pairing is already
+ * guaranteed one file up, and a list beside it would be somewhere for the two
+ * to come apart.
+ */
+const AUTOMATIONS = Object.fromEntries(
+  SEEDS
+    .filter((seed) => seed.automation)
+    .map((seed) => [path.basename(seed.target, '.md'), seed]),
+);
+
+/**
+ * Workflow files a repository already has, as repository-relative paths.
+ *
+ * Relative to the repository rather than rebuilt from a basename: workflows sit
+ * in subdirectories often enough, and a path rebuilt from the filename alone
+ * names a file that does not exist. Every other traversal here uses `walk`'s
+ * path against its root, and this is the same rule.
+ */
+function existingWorkflows(repo) {
+  const dir = path.join(repo, '.github', 'workflows');
+  if (!fs.existsSync(dir)) return [];
+  return walk(dir)
+    .filter((file) => /\.ya?ml$/.test(file))
+    .map((file) => toPosix(repo, file));
+}
+
+/** A repository file, by the relative path these functions pass around. */
+function readAt(repo, relative) {
+  return fs.readFileSync(path.join(repo, ...relative.split('/')), 'utf8');
+}
+
+/**
+ * The shapes an existing labeler is written in, matched against the file rather
+ * than against its name: `labeler.yml` is a convention and not a rule, and a
+ * repository that assigns labels from a differently named workflow has the same
+ * file to add this job to.
+ */
+const ASSIGNS_LABELS = /actions\/labeler|assign-labels|add-labels|--add-label|add_labels|addLabels/;
+
+/**
+ * The sentence a repository writes into its own rule when it declines the job,
+ * and the whole of what stops the offer being made again.
+ *
+ * `[[skills/install]]` quotes this exact sentence to whoever records the
+ * decision, and the suite asserts the skill and this constant are the same
+ * string. A recorded decision nobody reads is a decision that stops working the
+ * day the wording drifts, and the drift is invisible because both halves still
+ * read well.
+ */
+const DECLINED = 'The merge-time status job is declined';
+
+/**
+ * Where that decision lives: the repository's own version-control rule.
+ *
+ * A rule rather than a state file under `.aep/`, because it is a decision about
+ * how this repository works and it carries a reason. It is also where the next
+ * run is already reading, which is what makes it read rather than merely
+ * written.
+ */
+const DECISION_RULE = 'rules/version-control.md';
+
+/** Whether this repository has already recorded declining the job. */
+function declinedHere(aep) {
+  const rule = path.join(aep, ...DECISION_RULE.split('/'));
+  if (!fs.existsSync(rule)) return false;
+  return fs.readFileSync(rule, 'utf8').toLowerCase().includes(DECLINED.toLowerCase());
+}
+
+/**
+ * The body of one top-level key, without the key itself.
+ *
+ * What goes under a map a file already has is what sits below that key, so the
+ * key is dropped: pasting `on:` into a workflow that already has one is the
+ * duplicate this exists to avoid.
+ */
+function under(text, key) {
+  const lines = text.split('\n');
+  const start = lines.indexOf(`${key}:`);
+  if (start < 0) return '';
+  let end = start + 1;
+  while (end < lines.length && (lines[end] === '' || lines[end].startsWith(' '))) end += 1;
+  return lines.slice(start + 1, end).join('\n').replace(/\s+$/, '');
+}
+
+/** The first mapping key in a block, with its colon and without its indentation. */
+function firstKey(block) {
+  const line = block
+    .split('\n')
+    .find((entry) => entry.trim() !== '' && !entry.trimStart().startsWith('#'));
+  return line ? line.trim() : '';
+}
+
+/**
+ * A workflow's top-level `on:`, as the line that declares it.
+ *
+ * Column zero only. An `on:` nested inside something else is not that file's
+ * trigger, and reading one as though it were is how a proposal ends up
+ * described against the wrong map.
+ */
+function triggerLine(text) {
+  return text.split('\n').find((line) => /^(on|"on"|'on'):/.test(line)) ?? null;
+}
+
+/**
+ * What stands in the way of pasting the addition into this file, or null where
+ * nothing does.
+ *
+ * The addition is a block of YAML, so it goes in only where the file's own
+ * shape can take it. Handing somebody a paste that does not parse breaks a
+ * workflow AEP did not author, which is worse than making no offer at all, so
+ * an obstacle is named and the offer stops there.
+ */
+function obstacleInWorkflow(text) {
+  const line = triggerLine(text);
+  if (line === null) return 'it declares no `on:` at the top level';
+  const inline = line.slice(line.indexOf(':') + 1).trim();
+  if (inline !== '' && !inline.startsWith('#')) {
+    return `its trigger is written inline, as \`${line.trim()}\`, and what would go in `
+      + 'is a block';
+  }
+  const block = under(text, line.slice(0, line.indexOf(':')));
+  const indent = block.length - block.trimStart().length;
+  const keys = block
+    .split('\n')
+    .filter((entry) => entry.trim() !== '' && (entry.length - entry.trimStart().length) === indent)
+    .map((entry) => entry.trim().split(':')[0]);
+  if (keys.includes('pull_request')) {
+    return 'it already triggers on `pull_request`, so adding the trigger would declare '
+      + 'that key twice';
+  }
+  return null;
+}
+
+/**
+ * Where a forge's merge-time job goes, and what it joins where something is
+ * already there.
+ *
+ * `hosts` is what keeps the offer from duplicating: a repository already
+ * assigning labels gets the job added to that file rather than a second one
+ * beside it, because two files racing over one label family is what a second
+ * one would introduce. GitLab reaches the same answer for a different reason,
+ * so the two are declared separately rather than sharing a predicate that would
+ * read as one rule.
+ */
+const AUTOMATION_TARGETS = {
+  github: {
+    file: '.github/workflows/effort-status.yml',
+    files: (repo) => existingWorkflows(repo),
+    hosts: (repo) => existingWorkflows(repo)
+      .filter((rel) => ASSIGNS_LABELS.test(readAt(repo, rel))),
+    // A workflow has one `on:` map and one `jobs:` map, so a second copy of
+    // either is not a file GitHub will run. The addition is therefore the
+    // trigger and the job, each going into the map that is already there, and
+    // both are cut from the shipped file rather than written out again: the
+    // standalone copy and the addition cannot then say different things.
+    addition: (text) => [
+      { into: 'its `on:` map', text: under(text, 'on') },
+      { into: 'its `jobs:` map', text: under(text, 'jobs') },
+    ],
+    job: (text) => firstKey(under(text, 'jobs')),
+    obstacle: obstacleInWorkflow,
+    joining: (host) => `${host} already assigns labels, so the job goes into `
+      + 'that file rather than into a second one beside it.',
+  },
+  gitlab: {
+    file: '.gitlab-ci.yml',
+    files: (repo) => (fs.existsSync(path.join(repo, '.gitlab-ci.yml')) ? ['.gitlab-ci.yml'] : []),
+    // GitLab has one pipeline file and this job is a top-level entry in it, so
+    // an existing one is joined whatever it assigns. There is no second path to
+    // write it to, which makes the addition the only shape available rather
+    // than the shape a labeler earns.
+    hosts: (repo) => (fs.existsSync(path.join(repo, '.gitlab-ci.yml')) ? ['.gitlab-ci.yml'] : []),
+    // A GitLab job is a top-level key, so the file it joins takes it whole,
+    // comments included. Nothing has to be cut apart, and the job carries its
+    // own `rules:`, so it guards itself wherever it lands.
+    addition: (text) => [{ into: 'it, at the top level', text: text.trimEnd() }],
+    job: (text) => firstKey(text),
+    // A top-level key sits beside whatever other top-level keys are there, so
+    // the only collision is the job's own name, and the check for a job already
+    // carried answers that one first.
+    obstacle: () => null,
+    // Not because it assigns labels. GitLab reads one pipeline file, so a
+    // second one would not run at all, and saying otherwise would tell a
+    // reader something false about their own repository.
+    joining: (host) => `${host} is this project's one pipeline file, so the `
+      + 'job goes into it rather than into a second file GitLab would never read.',
+  },
+};
+
+/**
+ * The first paragraph of the job's own leading comment, which is where each
+ * forge says what it needs provisioned before it says anything else.
+ *
+ * Read out of the file rather than restated here, so the offer and the thing
+ * offered cannot disagree about what a repository is being asked for. GitHub
+ * needs nothing and GitLab needs a token a person creates, and that difference
+ * is the first line a reader gets either way.
+ */
+function provisioning(automation) {
+  const lead = [];
+  for (const line of automation.split('\n')) {
+    if (!line.startsWith('#')) break;
+    const text = line.replace(/^#\s?/, '').trim();
+    if (text === '') break;
+    lead.push(text);
+  }
+  return lead.join(' ');
+}
+
+/**
+ * Whether a file already carries this job, asked by the job's own key.
+ *
+ * The key rather than the job's lines, because the shipped file invites exactly
+ * one edit: both automation files tell the reader to change the two label
+ * values, so the job matches the vocabulary already in that tracker. A
+ * line-by-line comparison calls the customised copy a different job, proposes
+ * it again into the file that already has it, and hands somebody a duplicate
+ * key. The key is the part that cannot be customised without renaming the job,
+ * and it is read out of the shipped file rather than pinned here.
+ */
+function carries(text, key) {
+  return key !== '' && text.split('\n').some((line) => line.trim() === key);
+}
+
+/**
+ * The offer for one forge: what it needs provisioned, where the job would land,
+ * and the exact text.
+ *
+ * Nothing here reads a tracker. The offer is text and a write, decided from the
+ * distribution and from files already in the repository, so a run that reached
+ * no tracker gains no call to one by making it.
+ */
+function offerAutomation(repo, aep, from, name, dryRun) {
+  const seed = AUTOMATIONS[name];
+  const spec = AUTOMATION_TARGETS[name];
+  const automation = fs.readFileSync(path.join(from, ...seed.automation.split('/')), 'utf8');
+  const offer = {
+    name,
+    provisioning: provisioning(automation),
+    text: automation,
+    addition: spec.addition(automation),
+  };
+
+  // A decision this repository already made, read where it recorded it. Asking
+  // again is what the record exists to stop, and removing the record is how a
+  // repository that changed its mind gets asked once more.
+  if (declinedHere(aep)) {
+    report.automation.push({ ...offer, declined: `.aep/${DECISION_RULE}` });
+    return;
+  }
+
+  const already = spec.files(repo).find((rel) => carries(readAt(repo, rel), spec.job(automation)));
+  if (already) {
+    report.automation.push({ ...offer, standing: already });
+    return;
+  }
+
+  // An existing labeler is proposed to and never written into. A workflow is
+  // executable and the file is somebody else's, so the exact text goes to a
+  // human and the edit is theirs to make.
+  const hosts = spec.hosts(repo);
+  if (hosts.length > 0) {
+    const host = hosts[0];
+    report.automation.push({
+      ...offer,
+      host,
+      hosts,
+      joining: spec.joining(host),
+      obstacle: spec.obstacle(readAt(repo, host)),
+    });
+    return;
+  }
+
+  if (dryRun) {
+    report.automation.push({ ...offer, would: spec.file });
+    return;
+  }
+
+  const target = path.join(repo, ...spec.file.split('/'));
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, automation, 'utf8');
+  report.automation.push({ ...offer, wrote: spec.file });
+}
+
+/**
  * The paragraph a runtime entrypoint carries, and the whole of what one says.
  *
  * It names the canonical entrypoint and nothing under `.aep/`. A pointer that
@@ -445,6 +752,8 @@ function main() {
   const dryRun = args.includes('--dry-run');
   const adapters = value('--adapters', null);
   const requested = adapters ? adapters.split(',').map((name) => name.trim()).filter(Boolean) : [];
+  const automation = value('--automation', null);
+  const forges = automation ? automation.split(',').map((name) => name.trim()).filter(Boolean) : [];
   const aep = path.join(repo, '.aep');
 
   if (!fs.existsSync(path.join(from, 'protocol.md'))) {
@@ -461,6 +770,16 @@ function main() {
     process.stderr.write(
       `unknown runtime${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}. ` +
       `Known: ${Object.keys(TARGETS).join(', ')}
+`,
+    );
+    process.exit(2);
+  }
+
+  const unknownForges = forges.filter((name) => !(name in AUTOMATIONS));
+  if (unknownForges.length > 0) {
+    process.stderr.write(
+      `no merge-time job ships for: ${unknownForges.join(', ')}. ` +
+      `Known: ${Object.keys(AUTOMATIONS).join(', ')}
 `,
     );
     process.exit(2);
@@ -583,6 +902,12 @@ function main() {
     report.adapters.push(`${target.dir}/, ${files.length} wrappers`);
   }
 
+  // Asked for by name, never by default. A workflow is executable and lands
+  // outside `.aep/`, which makes it a larger thing to put in somebody's
+  // repository than a reference file, so it arrives the way an adapter does:
+  // because the caller said so, having been shown the exact text first.
+  for (const name of forges) offerAutomation(repo, aep, from, name, dryRun);
+
   const relative = (file) => path.relative(repo, file).split(path.sep).join('/');
   const list = (label, entries, format = relative) => {
     if (entries.length === 0) return;
@@ -610,6 +935,80 @@ function main() {
   list('written under an older contract, /update converts these with you',
     report.unconverted, (entry) => entry);
 
+  // Each forge leads with what it needs provisioned, because a repository that
+  // declines has to know what it declined, and on GitLab that is a credential a
+  // person creates. Then where the job goes, and then the text itself, verbatim
+  // and unindented: it is YAML somebody may have to paste, and a printed copy
+  // that is not byte-exact is worse than none.
+  if (report.automation.length > 0) {
+    process.stdout.write(
+      `\n${report.automation.length} merge-time ` +
+      `job${report.automation.length === 1 ? '' : 's'}:\n`,
+    );
+    for (const offer of report.automation) {
+      process.stdout.write(`\n  ${offer.name}\n`);
+
+      // A decision already made gets neither the offer nor the text. Printing
+      // what was declined is how an offer nobody wants comes back by being read
+      // one more time, which is the thing the record exists to stop.
+      if (offer.declined) {
+        wrapped(
+          `Declined here already, and recorded in ${offer.declined}. Nothing is ` +
+          'offered and nothing was written. Remove that record to be asked again.',
+          '   ',
+        );
+        continue;
+      }
+
+      wrapped(offer.provisioning, '   ');
+      if (offer.standing) {
+        wrapped(`Already carried by ${offer.standing}. Nothing to do.`, '   ');
+        continue;
+      }
+      if (offer.host) {
+        if (offer.hosts.length > 1) {
+          wrapped(
+            `${offer.hosts.length} files here assign labels: ${offer.hosts.join(', ')}. ` +
+            `This reads ${offer.host}, the first of them.`,
+            '   ',
+          );
+        }
+        // A paste that does not parse breaks a workflow the repository owns and
+        // AEP did not author, so where the file's own shape cannot take the
+        // addition the obstacle is named and nothing is proposed. The offer is
+        // still open; what it needs is a person who knows that file.
+        if (offer.obstacle) {
+          wrapped(
+            `${offer.host} already assigns labels, but the job cannot be added to ` +
+            `it as it stands: ${offer.obstacle}. Nothing was written and nothing ` +
+            'is proposed, because a paste that does not parse would break a ' +
+            'workflow this repository owns. Adding it is a judgement about that ' +
+            "file, and it is a human's.",
+            '   ',
+          );
+          continue;
+        }
+        wrapped(
+          `${offer.joining} Nothing was written: the file is the repository's, ` +
+          "and the edit is a human's to make. Add each of these as it stands, " +
+          'and change nothing else in the file.',
+          '   ',
+        );
+        for (const part of offer.addition) {
+          wrapped(`Into ${part.into}:`, '   ');
+          process.stdout.write(`\n${part.text}\n\n`);
+        }
+        continue;
+      }
+      if (offer.would) {
+        wrapped(`Would be written whole to ${offer.would}:`, '   ');
+      } else {
+        wrapped(`Written whole to ${offer.wrote}. What it now runs:`, '   ');
+      }
+      process.stdout.write(`\n${offer.text}\n`);
+    }
+  }
+
   // Last, and not as a counted list. Everything above is what the upgrade did;
   // this is the part it could not do for you, so it is the thing still open when
   // the run ends, which is where a reader is actually looking.
@@ -620,17 +1019,7 @@ function main() {
     );
     for (const notice of report.notices) {
       process.stdout.write(`\n  ${notice.since}\n`);
-      // Wrapped here rather than in the declaration, so the text stays one
-      // string to write and one string to assert against.
-      let line = '   ';
-      for (const word of notice.check.split(/\s+/)) {
-        if (line.length + word.length + 1 > 76) {
-          process.stdout.write(`${line}\n`);
-          line = '   ';
-        }
-        line += ` ${word}`;
-      }
-      if (line.trim()) process.stdout.write(`${line}\n`);
+      wrapped(notice.check, '   ');
     }
   }
 

@@ -79,6 +79,31 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '3.5.0',
+    check:
+      'The status label ladder now reaches its terminal value without anybody remembering ' +
+      'to move it. Two things arrive. First, a merge-time job for your forge, offered once ' +
+      'at install and once here: it fires when a human merges, moves status: done onto the ' +
+      'change request and the issue it closes, and reaches the same value for a change ' +
+      'request closed without merging. On GitHub it needs nothing provisioned; on GitLab it ' +
+      'needs a project access token with api scope, and the offer says so before it says ' +
+      'anything else. It is written into your repository only if you accept, and where you ' +
+      'already run a workflow that assigns labels it is proposed as an addition to that file ' +
+      'rather than a second one. Decline and nothing is written: the decision is recorded in ' +
+      'your own .aep/rules/version-control.md as an ordinary decision, and it is read ' +
+      'offer is made again, so you are asked once rather than every upgrade. Delete that ' +
+      'paragraph and you will be asked again, which is how you change your mind. Second, ' +
+      '.aep/scripts/reconcile.mjs, which needs no decision from you and arrives either ' +
+      'reads an observation you already fetched, on stdin or from a file, and prints which ' +
+      'efforts have tracker labels disagreeing with their spec.md, including an issue left ' +
+      'open after its change request merged. It makes no network call of its own, so a ' +
+      'repository that declined the job still converges, and a repository with no tracker ' +
+      'runs it and is told every effort is unobserved, which is the answer rather than a ' +
+      'fault. .aep/references/github.md and .aep/references/gitlab.md carry the fetch ' +
+      'the observation, and an upgrade never edits a reference you own, so add it yourself ' +
+      'or read it from the shipped seed.',
+  },
+  {
     since: '3.4.0',
     check:
       'validate.mjs now looks one level outside the tree. Until this release an artifact ' +
@@ -163,6 +188,7 @@ export const PAYLOAD_SCRIPTS = [
   'validate.mjs',
   'position.mjs',
   'scope.mjs',
+  'reconcile.mjs',
 ];
 
 /**
@@ -259,11 +285,42 @@ export const PER_CLONE_DIRS = ['position', 'worktrees'];
  * commonly configured under is listed explicitly. A detector that guesses wider
  * than that installs a reference for a tool the repository does not have, which
  * is the one failure a seed must not have.
+ *
+ * **A reference for a tracker is declared with `forge()` below, never with
+ * this.** A tracker reference records how an effort's state projects onto that
+ * forge's labels, and the terminal value of that projection is the one no file
+ * can derive: merged is a fact the forge holds and the repository never learns.
+ * Something has to move the label at merge, and that something is native to the
+ * forge, so it ships beside the reference or it ships nowhere. `forge()` is what
+ * makes the pair inseparable, and the suite fails a reference carrying the
+ * tracker section with no automation declared next to it. Adding a forge is
+ * therefore two files, and finding that out from a red suite beats finding it
+ * out from a tracker whose labels stopped being true after a merge.
  */
 const reference = (tool, paths, remote) => ({
   source: `seed/references/${tool}.md`,
   target: `references/${tool}.md`,
   detect: remote ? { paths, remote } : { paths },
+});
+
+/**
+ * A tracker reference, and the merge-time job that has to arrive with it.
+ *
+ * `automation` is a path in the distribution and deliberately not a seed of its
+ * own: it has no `target`, so the installer, which copies `source` to `target`
+ * for every entry in `SEEDS` and knows nothing about this field, cannot write it
+ * into anybody's repository. That is the point. A workflow file is executable
+ * and lands outside `.aep/`, which makes it a larger thing to put in someone's
+ * repository than a reference file, so it is a candidate that `[[skills/install]]`
+ * offers with its exact text and writes only on a yes.
+ *
+ * Where it lands is that offer's to decide rather than this file's, which is why
+ * no target is named here: a repository already running a labeler gets the job
+ * added to that workflow instead of a second one beside it.
+ */
+const forge = (tool, paths, remote) => ({
+  ...reference(tool, paths, remote),
+  automation: `seed/automation/${tool}.yml`,
 });
 
 /**
@@ -295,8 +352,8 @@ export const SEEDS = [
 
   // Version control and forges.
   reference('git', ['.git']),
-  reference('github', ['.github'], 'github.com'),
-  reference('gitlab', ['.gitlab-ci.yml'], 'gitlab'),
+  forge('github', ['.github'], 'github.com'),
+  forge('gitlab', ['.gitlab-ci.yml'], 'gitlab'),
   reference('graphite', ['.graphite_repo_config', '.graphite']),
 
   // JavaScript package managers and runtimes.

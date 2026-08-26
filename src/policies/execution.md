@@ -225,13 +225,40 @@ overwrites the human who is.*
 projects onto. A repository whose vocabulary differs records the mapping in its
 forge `[[references]]` rather than adding a second vocabulary beside its own.
 
-| The effort | Issue | Pull request |
-| --- | --- | --- |
-| the spec is being drafted | `status: backlog` | `status: backlog` |
-| the spec is accepted and the tickets are cut | `status: ready` | `status: ready` |
-| the runner is working | `status: in progress` | `status: in progress` |
-| converge found no gap, and the spec is stamped `implemented` | `status: in review` | `status: in review` |
-| merged | closed by the pull request | `status: done` |
+**Every row names what moves it.** A row with no owner is a label nobody sets,
+and the effort then sits at whatever the previous state left behind until a
+person notices.
+
+| The effort | Issue | Pull request | What moves it |
+| --- | --- | --- | --- |
+| the spec is being drafted | `status: backlog` | `status: backlog` | `[[skills/specify]]`, opening both objects |
+| the spec is accepted and the tickets are cut | `status: ready` | `status: ready` | `[[skills/specify]]`, on acceptance |
+| the runner is working | `status: in progress` | `status: in progress` | `[[skills/implement]]`, on taking the first ticket |
+| converge found no gap, and the spec is stamped `implemented` | `status: in review` | `status: in review` | `[[skills/implement]]`, at the close |
+| merged | `status: done`, and the pull request closes it | `status: done` | the forge's merge-time job, and `reconcile.mjs` on the next run where none is installed |
+| closed without merging | `status: done` | `status: done` | the forge's merge-time job, and `reconcile.mjs` on the next run where none is installed |
+
+**The last two rows are the only ones no run can reach.** Every row above them
+projects `spec.md`'s own `status:`, which the run is holding anyway. The last two
+turn on the merge, and the merge is the human's — deliberately, and the run is
+over before it happens. So the terminal value has two owners at different
+latencies: **a job the forge fires on its own merge event**, which needs no AEP
+run to have happened, and **a reconciliation the next run computes** from what it
+already fetched, which is late but present everywhere, including a repository
+that declined the job or predates it. Neither is a person, and neither waits on
+somebody remembering.
+
+**Closed without merging reaches the same value.** Abandoning an effort is a way
+of finishing it, and a `status:` family with a hole where finished should be is
+one nobody can filter on: a list scoped to `status: in review` keeps returning
+work nobody is reviewing. `flag: wontfix` says why it ended; `status: done` says
+that it did.
+
+*Why the terminal value exists at all, when a forge models merged and closed
+natively: it is a projection of the effort's state rather than a second copy of
+the forge's, and it is what keeps the family whole enough to filter on. The
+general rule stands — a label for a fact the tracker already models is not
+created — and this is the one family AEP maintains end to end.*
 
 **`size:` is computed from the diff** when the pull request goes ready for
 review, against the thresholds the repository's own label descriptions state. A

@@ -23,6 +23,42 @@ gh repo view --json nameWithOwner,defaultBranchRef
 Reading is always allowed. `[[policies/authority]]` still applies: read another
 repository freely, write to none.
 
+### The observation `reconcile.mjs` reads
+
+`.aep/scripts/reconcile.mjs` computes which efforts have tracker objects
+with their `spec.md`, and it fetches nothing itself. That is deliberate: it is
+the component that exists for a repository which declined the merge-time job, so
+a forge call inside it would be the one unconditional tracker call the protocol
+does not allow. The caller fetches, because the caller is already here.
+
+Two lists, and the exact fields the script reads:
+
+```sh
+gh issue list --state all --limit 200 --json number,state,labels
+gh pr list --state all --limit 200 --json number,state,labels,closingIssuesReferences
+```
+
+`closingIssuesReferences` is what ties a pull request to its effort, and it is
+populated by the closing keyword. A pull request that carries none is reported
+against no effort, which is the same omission the keyword exists to remove.
+
+They are combined into one object with an `issues` key and a `changeRequests`
+key, each holding that command's output unmodified. Nothing beyond `gh` is
+needed to do it:
+
+```sh
+{ printf '{"issues":'
+  gh issue list --state all --limit 200 --json number,state,labels
+  printf ',"changeRequests":'
+  gh pr list --state all --limit 200 --json number,state,labels,closingIssuesReferences
+  printf '}'
+} | node .aep/scripts/reconcile.mjs --observed -
+```
+
+It prints one line per finding and exits 1 where anything disagrees. Drift is a
+label to correct, never a spec to edit, including where a person moved the label
+by hand.
+
 ## Tasks as issues
 
 Where this repository keeps AEP tasks in GitHub Issues rather than under the

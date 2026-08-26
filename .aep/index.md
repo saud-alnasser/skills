@@ -91,6 +91,7 @@ Start at [[protocol]].
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
+| 47-post-merge-labels | implemented | [[efforts/47-post-merge-labels/spec]] | 1 | 0 | 12 |
 | 48-artifact-paths | implemented | [[efforts/48-artifact-paths/spec]] | 2 | 0 | 11 |
 | 51-branch-scope | implemented | [[efforts/51-branch-scope/spec]] | 1 | 0 | 10 |
 | 54-working-surface | implemented | [[efforts/54-working-surface/spec]] | 2 | 0 | 16 |
@@ -136,6 +137,18 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/45-aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/26-no-unconditional-tracker-call]] fix(protocol): nothing shipped reaches for a tracker before establishing there is one | 45-aep-3 | resolved | — |
+| [[efforts/47-post-merge-labels/tickets/01-closing-keyword]] feat(skills): the runner writes the closing keyword, in the half its shape puts it | 47-post-merge-labels | resolved | — |
+| [[efforts/47-post-merge-labels/tickets/02-the-ladder-names-its-owners]] fix(protocol): the terminal row of the label ladder gets its owners | 47-post-merge-labels | resolved | — |
+| [[efforts/47-post-merge-labels/tickets/03-the-ladder-as-a-value]] feat(scripts): the ladder's rows become a value a script can compute with | 47-post-merge-labels | resolved | 02 |
+| [[efforts/47-post-merge-labels/tickets/04-reconcile]] feat(scripts): reconcile computes tracker drift from an observation it is handed | 47-post-merge-labels | resolved | 03 |
+| [[efforts/47-post-merge-labels/tickets/05-forge-seeds]] feat(seed): a tracker reference cannot ship without its merge-time job | 47-post-merge-labels | resolved | — |
+| [[efforts/47-post-merge-labels/tickets/06-the-offer]] feat(skills): install and update offer the merge-time job, once | 47-post-merge-labels | resolved | 05 |
+| [[efforts/47-post-merge-labels/tickets/07-no-tracker]] test(verify): the no-tracker posture survives everything this effort added | 47-post-merge-labels | resolved | 04, 06 |
+| [[efforts/47-post-merge-labels/tickets/08-release]] chore(dist): release the merge-time half and reinstall this repository's tree | 47-post-merge-labels | resolved | 01, 04, 06, 07 |
+| [[efforts/47-post-merge-labels/tickets/09-unmatched-change-requests]] fix(scripts): a change request the report is silent about | 47-post-merge-labels | obsolete | — |
+| [[efforts/47-post-merge-labels/tickets/10-labeler-trigger-side-effect]] fix(skills): the proposed addition gives a host workflow's own jobs a new trigger | 47-post-merge-labels | obsolete | — |
+| [[efforts/47-post-merge-labels/tickets/11-tracker-reference-detection]] fix(verify): a forge reference is recognised by what it is, not by one heading | 47-post-merge-labels | obsolete | — |
+| [[efforts/47-post-merge-labels/tickets/12-refusal-is-per-forge]] fix(scripts): a refusal recorded for one forge does not answer for another | 47-post-merge-labels | obsolete | — |
 | [[efforts/48-artifact-paths/tickets/01-shared-fence-stripper]] refactor(scripts): the fence stripper becomes shared | 48-artifact-paths | resolved | — |
 | [[efforts/48-artifact-paths/tickets/02-stray-artifacts]] feat(validate): an artifact outside the tree stops being invisible | 48-artifact-paths | resolved | — |
 | [[efforts/48-artifact-paths/tickets/03-the-convention]] docs(protocol): a path in shipped text says where it starts from | 48-artifact-paths | resolved | — |

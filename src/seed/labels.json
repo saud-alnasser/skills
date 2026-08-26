@@ -36,7 +36,7 @@
         {
           "name": "status: done",
           "color": "0e8a16",
-          "description": "Merged. Set on the pull request; the issue closes with it."
+          "description": "Merged, or closed without merging. Set on both objects when the pull request closes."
         }
       ]
     },

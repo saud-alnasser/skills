@@ -32,6 +32,8 @@ import {
   PROTOCOL_FILES,
   PROTOCOL_ROOT_FILES,
   REPOSITORY_ROOT_FILES,
+  SPEC_STATUSES,
+  STATUS_LADDER,
   isProtocolPath,
   useWhenProblems,
   USE_WHEN_MAX_WORDS,
@@ -63,6 +65,7 @@ import {
   RETIRED_DIRS,
   CANONICAL_ENTRYPOINT,
 } from './payload.mjs';
+import { expectedFor } from './reconcile.mjs';
 
 /** `src/`, the distribution. */
 const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -1531,6 +1534,44 @@ section('skills', () => {
   assert('the upgrade classifies ownership by the manifest rather than a field', () =>
     /against the manifest the running release carries/.test(flat(update))
     && !/by its declared `owner`/.test(update));
+
+  // The closing keyword, which is what makes an issue close on its own merge.
+  // Nothing shipped used to put one anywhere, so the issue closed when somebody
+  // happened to remember. Each skill owns one half, and which half a repository
+  // takes is the version-control rule's answer rather than AEP's: a skill that
+  // hard-codes the stacking form is the same defect as one hard-coding the flat
+  // form, pointed the other way. So the half, the routing, and the neutrality are
+  // separate assertions rather than one.
+  //
+  // Asserted against the single paragraph that states it, inside the step that
+  // owns it. Both halves come from one row of one rule, so the paragraphs around
+  // this one discuss the same two shapes. A check reading every paragraph that
+  // mentions the keyword, joined, would let a skill name one shape in the
+  // sentence that governs and pick the other up from a neighbour that governs
+  // nothing: a green light for the exact defect the last assertion exists to
+  // catch. Requiring exactly one paragraph is what keeps the surface that narrow.
+  const keywordParagraphs = (name, heading) =>
+    headingBlock(noCR(readSrc('skills', `${name}.md`)), heading)
+      .split(/\n\s*\n/)
+      .map(flat)
+      .filter((paragraph) => /closing keyword/.test(paragraph));
+  const KEYWORD_HALVES = [
+    ['specify', 'Opening the effort', /the keyword belongs in the body/],
+    ['implement', '4 ', /carries `Closes/],
+  ];
+  for (const [name, heading, half] of KEYWORD_HALVES) {
+    const paragraphs = keywordParagraphs(name, heading);
+    const stated = paragraphs.length === 1 ? paragraphs[0] : '';
+    assert(`skills/${name} states the closing keyword in exactly one paragraph`, () =>
+      paragraphs.length === 1);
+    assert(`skills/${name} states which half of the closing keyword it writes`, () =>
+      half.test(stated));
+    assert(`skills/${name} routes which half applies to the version-control rule`, () =>
+      stated.includes('[[rules/version-control]]'));
+    assert(`skills/${name} names neither repository shape as the only one`, () =>
+      /merges a branch through a pull request/.test(stated)
+      && /the repository stacks/.test(stated));
+  }
 });
 
 // --- §15.1 skill notes ------------------------------------------------------
@@ -2981,6 +3022,165 @@ section('contexts', () => {
     !fs.existsSync(path.join(contextsDir, 'web')) && fs.existsSync(path.join(dir, '.aep')));
 });
 
+// --- a reader for the block YAML the automation seeds are written in --------
+//
+// There is no package manager here and no YAML parser, so "it parses as YAML"
+// has to be answered by something in this file. This is that something, and it
+// is worth being exact about what it is and is not.
+//
+// It reads the subset the two automation seeds use: block mappings, block
+// sequences, plain and quoted scalars, `|` and `>` block scalars, and comments.
+// It catches what actually breaks a workflow file. A tab in the indentation, a
+// key indented under no parent, a duplicate key, a line that is neither a
+// mapping entry nor a sequence item. Every structural assertion below reads the
+// tree it returns rather than grepping the text, so a step that drifted out of
+// its job fails instead of passing on a match found anywhere in the file.
+//
+// It does not catch what it does not implement. Anchors, aliases, flow
+// collections, tags, multiple documents, and complex keys are all legal YAML and
+// all rejected here, so a seed written with one fails this suite rather than the
+// forge. That direction is deliberate: a checker stricter than the format is
+// safe, and a checker looser than it is the one that ships a broken file. It
+// also reads `on:` as the string `on` where YAML 1.1 reads the boolean true,
+// which is why the assertions look that key up by name.
+//
+// What it therefore cannot tell you is whether a forge accepts the file. Only
+// the forge can, and for GitLab nothing in this repository ever will.
+
+/** A scalar with its surrounding quotes and any trailing comment removed. */
+const scalarValue = (text) => {
+  const value = text.trim();
+  if (value.startsWith('"') || value.startsWith("'")) {
+    const close = value.indexOf(value[0], 1);
+    if (close === -1) throw new Error(`unterminated quote: ${value}`);
+    return value.slice(1, close);
+  }
+  const comment = value.search(/\s#/);
+  return (comment === -1 ? value : value.slice(0, comment)).trim();
+};
+
+function readBlockYaml(text) {
+  const lines = text.split('\n');
+  const KEY = /^("[^"]*"|'[^']*'|[^:#]+):(?:\s+(.*))?$/;
+  const indentOf = (line) => line.length - line.trimStart().length;
+  const ignorable = (line) => line.trim() === '' || line.trimStart().startsWith('#');
+  let at = 0;
+
+  for (const [n, line] of lines.entries()) {
+    if (/^ *\t/.test(line)) throw new Error(`line ${n + 1}: a tab in the indentation`);
+  }
+
+  // Everything indented past the key that opened the block, with that block's
+  // own indentation preserved relative to its first line.
+  const blockScalar = (owner) => {
+    const held = [];
+    let base = null;
+    while (at < lines.length && (lines[at].trim() === '' || indentOf(lines[at]) > owner)) {
+      if (lines[at].trim() !== '' && base === null) base = indentOf(lines[at]);
+      held.push(lines[at].trim() === '' ? '' : lines[at].slice(base ?? 0));
+      at += 1;
+    }
+    return held.join('\n');
+  };
+
+  const node = (least) => {
+    while (at < lines.length && ignorable(lines[at])) at += 1;
+    if (at >= lines.length || indentOf(lines[at]) < least) return '';
+    const opener = lines[at].trimStart();
+    return opener === '-' || opener.startsWith('- ')
+      ? sequence(indentOf(lines[at]))
+      : mapping(indentOf(lines[at]));
+  };
+
+  const mapping = (indent) => {
+    const built = {};
+    while (at < lines.length) {
+      if (ignorable(lines[at])) { at += 1; continue; }
+      const here = indentOf(lines[at]);
+      if (here < indent) break;
+      if (here > indent) throw new Error(`line ${at + 1}: indented under no key`);
+      const parts = KEY.exec(lines[at].trim());
+      if (!parts) throw new Error(`line ${at + 1}: not a mapping entry: ${lines[at].trim()}`);
+      const key = scalarValue(parts[1]);
+      if (key in built) throw new Error(`line ${at + 1}: ${key} is declared twice`);
+      const rest = (parts[2] ?? '').trim();
+      at += 1;
+      if (/^[|>][-+]?$/.test(rest)) built[key] = blockScalar(indent);
+      else if (rest === '') built[key] = node(indent + 1);
+      else built[key] = scalarValue(rest);
+    }
+    return built;
+  };
+
+  const sequence = (indent) => {
+    const built = [];
+    while (at < lines.length) {
+      if (ignorable(lines[at])) { at += 1; continue; }
+      const here = indentOf(lines[at]);
+      if (here < indent) break;
+      if (here > indent) throw new Error(`line ${at + 1}: indented under no item`);
+      const line = lines[at].trimStart();
+      if (line !== '-' && !line.startsWith('- ')) {
+        throw new Error(`line ${at + 1}: not a sequence item: ${line}`);
+      }
+      const rest = line === '-' ? '' : line.slice(2).trim();
+      if (rest === '') { at += 1; built.push(node(indent + 1)); continue; }
+      if (/^[|>][-+]?$/.test(rest)) { at += 1; built.push(blockScalar(indent)); continue; }
+      if (KEY.test(rest)) {
+        // An inline `- key: value` opens a mapping two columns in, which is
+        // where its siblings on the following lines already sit.
+        lines[at] = ' '.repeat(indent + 2) + rest;
+        built.push(mapping(indent + 2));
+        continue;
+      }
+      at += 1;
+      built.push(scalarValue(rest));
+    }
+    return built;
+  };
+
+  const document = node(0);
+  while (at < lines.length && ignorable(lines[at])) at += 1;
+  if (at < lines.length) throw new Error(`line ${at + 1}: trailing content`);
+  return document;
+}
+
+/** The first value found under `key`, at any depth. */
+const deepValue = (node, key) => {
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = deepValue(item, key);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+  if (node && typeof node === 'object') {
+    if (typeof node[key] === 'string') return node[key];
+    for (const value of Object.values(node)) {
+      const found = deepValue(value, key);
+      if (found !== null) return found;
+    }
+  }
+  return null;
+};
+
+/** The leading comment block of a file, up to the first line of content. */
+const preamble = (text) => {
+  const held = [];
+  for (const line of text.split('\n')) {
+    if (line.trim() === '' && held.length === 0) continue;
+    if (!line.startsWith('#')) break;
+    held.push(line.replace(/^#\s?/, ''));
+  }
+  return held.join('\n');
+};
+
+// The section heading that makes a seeded reference a tracker reference. One
+// constant, because it is both what the existing assertion looks for and the
+// discriminator the automation requirement keys on, and two copies would let one
+// move without the other.
+const TRACKER_SECTION = '## AEP in this tracker';
+
 // --- §7, §29 the seeds ------------------------------------------------------
 
 section('seeds', () => {
@@ -3016,15 +3216,21 @@ section('seeds', () => {
   // invented per repository.
   for (const forge of ['github', 'gitlab']) {
     assert(`seed/references/${forge}.md carries the section a resolution is recorded in`, () =>
-      readSrc('seed', 'references', `${forge}.md`).includes('## AEP in this tracker'));
+      readSrc('seed', 'references', `${forge}.md`).includes(TRACKER_SECTION));
   }
 
   // A seed file nothing declares ships in the distribution and installs
   // nowhere. Nothing else notices: the tree looks complete, the file reads as
   // authoritative, and no repository ever receives it. Across a catalogue this
   // size that is one forgotten line in the manifest.
+  //
+  // An automation file is declared the same way and by the same catalogue, so it
+  // is reached by the same sweep: it is named by the `automation` field of the
+  // seed it belongs to rather than by an entry of its own, and one nobody named
+  // fails here exactly as an undeclared reference does.
   assert('every file under seed/ is declared in SEEDS', () => {
     const declared = new Set([...SEEDS.map((seed) => seed.source), LABEL_SEED]);
+    for (const seed of SEEDS) if (seed.automation) declared.add(seed.automation);
     const orphans = walk(path.join(SRC, 'seed'))
       .map((file) => toPosix(SRC, file))
       .filter((source) => !declared.has(source));
@@ -3049,10 +3255,276 @@ section('seeds', () => {
     const roots = SEEDS.filter((seed) => seed.root);
     return roots.length === 1 && roots[0].target === 'AGENTS.md';
   });
+  // The seeded rule used to attribute the pull request body to a human, which
+  // stopped being true when the runner started opening it. A rule saying a
+  // human writes the body is not one a runner reads as an instruction to write
+  // the keyword into it. The placement is asserted beside the claim, because
+  // the cheapest way to satisfy the first assertion alone is to delete the row
+  // that says where the keyword goes.
+  const seedVersionControl = flat(readSrc('seed', 'rules', 'version-control.md'));
+  assert('the seeded version-control rule no longer attributes the body to a human', () =>
+    !/pull request\b[^|]*\ba human writes/.test(seedVersionControl));
+  assert('the seeded rule still puts the closing keyword in the pull request body', () =>
+    /The keyword belongs in the pull request body/.test(seedVersionControl));
+
   assert('the always-seeded set is the entrypoint, version control, and a repository context', () => {
     const always = SEEDS.filter((seed) => !seed.detect).map((seed) => seed.target).sort();
     return JSON.stringify(always) ===
       JSON.stringify(['AGENTS.md', 'contexts/repository.md', 'rules/version-control.md']);
+  });
+
+  // --- the merge-time half of a tracker reference ---------------------------
+  //
+  // The label ladder ends at a value no file can derive. Merged is a fact the
+  // forge holds, and every AEP run has finished by the time it becomes true, so
+  // a reference recording how an effort projects onto a tracker ships with a job
+  // that fires at that forge's own merge event or the last row of the ladder has
+  // no owner in that repository.
+  //
+  // Which references those are is read from the references themselves. A list of
+  // forges kept here is the thing this check exists to remove: it would be
+  // correct the day it was written and silent the day somebody added the third
+  // one.
+  const inSrcPath = (source) => path.join(SRC, ...source.split('/'));
+  const trackerSeeds = SEEDS
+    .filter((seed) => seed.source.startsWith('seed/references/'))
+    .filter((seed) => fs.existsSync(inSrcPath(seed.source)))
+    .filter((seed) => fs.readFileSync(inSrcPath(seed.source), 'utf8').includes(TRACKER_SECTION));
+
+  // Without this the check below passes on an empty set the day the heading is
+  // reworded, which is the failure that reads as a clean run.
+  assert('the tracker section still discriminates, so the automation check has subjects', () => {
+    if (trackerSeeds.length === 0) {
+      throw new Error(`no seeded reference carries "${TRACKER_SECTION}"`);
+    }
+    return true;
+  });
+
+  assert('every tracker reference declares a merge-time automation that ships', () => {
+    const bare = trackerSeeds.filter((seed) =>
+      !isNonEmptyString(seed.automation) || !fs.existsSync(inSrcPath(seed.automation)));
+    if (bare.length > 0) {
+      throw new Error(
+        `carries "${TRACKER_SECTION}" with no automation beside it, so it was declared with `
+        + `reference() rather than forge(): ${bare.map((seed) => seed.source).join(', ')}`);
+    }
+    return true;
+  });
+
+  // Requirement 10, twice. An automation file has no `target`, and the installer
+  // copies `source` to `target` for every entry in SEEDS while knowing nothing
+  // about `automation`, so it cannot write one into anybody's repository. That is
+  // also why the per-seed assertion above, that every seed target is a
+  // repository-owned directory, needed no widening: a workflow file lands outside
+  // `.aep/` and has no seed target to be checked against.
+  assert('an automation file is declared beside a seed and never as one', () => {
+    const declared = new Set([...SEEDS.map((seed) => seed.source), ...SEEDS.map((seed) => seed.target)]);
+    const promoted = trackerSeeds.filter((seed) => declared.has(seed.automation));
+    if (promoted.length > 0) {
+      throw new Error(`the installer would write: ${promoted.map((seed) => seed.automation).join(', ')}`);
+    }
+    return true;
+  });
+
+  assert('installing writes no automation file', () => {
+    const fixture = installFixture();
+    const named = trackerSeeds
+      .filter((seed) => isNonEmptyString(seed.automation))
+      .map((seed) => path.basename(seed.automation));
+    const written = walk(fixture.dir, { skip: ['.git'] })
+      .filter((file) => named.includes(path.basename(file)))
+      .map((file) => toPosix(fixture.dir, file));
+    if (written.length > 0) throw new Error(`written on install: ${written.join(', ')}`);
+    return true;
+  });
+
+  // The two names the jobs write, pinned here rather than read off the files
+  // being checked, because a job asserted against its own declaration asserts
+  // nothing. Membership in the seeded vocabulary is the other half: a job may
+  // write only a `status:` value this distribution already ships, so the label a
+  // tracker receives and the label a repository was offered cannot drift apart.
+  const TERMINAL_STATUS = 'status: done';
+  const IN_REVIEW_STATUS = 'status: in review';
+  const statusVocabulary = JSON.parse(readSrc('seed', 'labels.json'))
+    .families.status.labels.map((label) => label.name);
+
+  const parsedAutomation = new Map();
+  for (const seed of trackerSeeds) {
+    const source = seed.automation;
+    if (!isNonEmptyString(source) || !fs.existsSync(inSrcPath(source))) continue;
+    const text = fs.readFileSync(inSrcPath(source), 'utf8');
+
+    let doc = null;
+    assert(`${source} parses as the block YAML this suite reads`, () => {
+      doc = readBlockYaml(text);
+      return true;
+    });
+    if (doc === null) continue;
+    parsedAutomation.set(source, doc);
+
+    const written = [deepValue(doc, 'TERMINAL_LABEL'), deepValue(doc, 'IN_REVIEW_LABEL')];
+
+    assert(`${source} writes the terminal status value and the one it replaces`, () => {
+      if (written[0] !== TERMINAL_STATUS || written[1] !== IN_REVIEW_STATUS) {
+        throw new Error(`declares ${JSON.stringify(written)}`);
+      }
+      return true;
+    });
+
+    assert(`${source} writes only labels the seeded vocabulary declares`, () => {
+      const strangers = written.filter((name) => !statusVocabulary.includes(name));
+      if (strangers.length > 0) {
+        throw new Error(`not in seed/labels.json: ${JSON.stringify(strangers)}`);
+      }
+      return true;
+    });
+
+    assert(`${source} names AEP in no label it writes`, () =>
+      !written.some((name) => /aep/i.test(name ?? '')));
+  }
+
+  // GitHub. The half that needs nothing provisioned, which is why it is checked
+  // for the absence of a stored secret rather than for a promise in its preamble.
+  const githubDoc = parsedAutomation.get('seed/automation/github.yml') ?? {};
+  const githubJob = githubDoc.jobs?.['effort-status'] ?? {};
+  const githubSteps = Array.isArray(githubJob.steps) ? githubJob.steps : [];
+
+  assert('seed/automation/github.yml fires when a change request closes', () => {
+    const types = githubDoc.on?.pull_request?.types;
+    if (!Array.isArray(types) || !types.includes('closed')) {
+      throw new Error(`on.pull_request.types is ${JSON.stringify(types)}`);
+    }
+    return true;
+  });
+
+  assert('seed/automation/github.yml guards on the merge actually having happened', () => {
+    const guards = githubSteps.map((step) => step.if).filter(isNonEmptyString);
+    if (!guards.some((guard) => /github\.event\.pull_request\.merged\s*==\s*true/.test(guard))) {
+      throw new Error('no step reads whether the merge happened');
+    }
+    if (!guards.some((guard) => /github\.event\.pull_request\.merged\s*!=\s*true/.test(guard))) {
+      throw new Error('nothing separates a change request closed without merging');
+    }
+    return true;
+  });
+
+  // Criterion 3, read off the structure rather than out of the prose: the steps
+  // that write the label carry no condition at all, so the merged branch and the
+  // abandoned branch reach the same terminal value. A guard added to one of them
+  // later is exactly what this catches.
+  assert('seed/automation/github.yml moves the label whether or not the merge happened', () => {
+    const writing = githubSteps.filter((step) => /--add-label/.test(step.run ?? ''));
+    if (writing.length === 0) throw new Error('no step adds a label');
+    const conditional = writing.filter((step) => 'if' in step).map((step) => step.name);
+    if (conditional.length > 0) {
+      throw new Error(`a labelling step is conditional on the merge: ${conditional.join(', ')}`);
+    }
+    return true;
+  });
+
+  assert('seed/automation/github.yml moves the change request and the issue it closes', () => {
+    const run = githubSteps.map((step) => step.run ?? '').join('\n');
+    for (const needed of ['gh pr edit', 'gh issue edit', 'closingIssuesReferences']) {
+      if (!run.includes(needed)) throw new Error(`no step runs ${needed}`);
+    }
+    return true;
+  });
+
+  assert('seed/automation/github.yml asks for the two scopes that carry it', () => {
+    const permissions = githubJob.permissions ?? {};
+    if (permissions['pull-requests'] !== 'write' || permissions.issues !== 'write') {
+      throw new Error(`declares ${JSON.stringify(permissions)}`);
+    }
+    return true;
+  });
+
+  assert('seed/automation/github.yml needs no secret created before it runs', () => {
+    const text = readSrc('seed', 'automation', 'github.yml');
+    if (/secrets\./.test(text)) throw new Error('reads a stored secret');
+    if (!text.includes('github.token')) throw new Error('does not run on the built-in token');
+    return true;
+  });
+
+  // GitLab. The half that cannot be self-contained: no pipeline fires at merge
+  // and the job token is read-only against merge requests, so it needs a token a
+  // person creates. Its position in the file is the criterion, not a preference.
+  const gitlabDoc = parsedAutomation.get('seed/automation/gitlab.yml') ?? {};
+  const gitlabText = readSrc('seed', 'automation', 'gitlab.yml');
+  const gitlabJob = gitlabDoc['effort-status'] ?? {};
+  const gitlabScript = Array.isArray(gitlabJob.script) ? gitlabJob.script.join('\n') : '';
+  const gitlabRules = Array.isArray(gitlabJob.rules)
+    ? gitlabJob.rules.map((rule) => rule.if ?? '') : [];
+
+  assert('seed/automation/gitlab.yml names its api-scoped token before anything else', () => {
+    const opening = (preamble(gitlabText).split('\n\n')[0] ?? '').trim();
+    if (opening === '') throw new Error('the file opens with content rather than with what it needs');
+    if (!/`api` scope/.test(opening)) throw new Error(`the opening does not name the scope: ${opening}`);
+    if (!/token/.test(opening)) throw new Error('the opening does not say it is a token');
+    if (!/AEP_STATUS_TOKEN/.test(opening)) throw new Error('the opening does not name the variable');
+    return true;
+  });
+
+  assert('seed/automation/gitlab.yml reads its token from the variable its own text names', () =>
+    gitlabScript.includes('$AEP_STATUS_TOKEN'));
+
+  assert('seed/automation/gitlab.yml runs on the push a merge produced', () => {
+    const push = gitlabRules.some((rule) =>
+      /CI_PIPELINE_SOURCE\s*==\s*"push"/.test(rule)
+      && /CI_COMMIT_BRANCH\s*==\s*\$CI_DEFAULT_BRANCH/.test(rule));
+    if (!push) throw new Error(`rules are ${JSON.stringify(gitlabRules)}`);
+    return true;
+  });
+
+  // Criterion 3 on the forge that has no event for it. A merge request closed
+  // without merging produces no commit and therefore no pipeline, so the file
+  // carries an entry point reached by hand, and the state test that decides what
+  // to write accepts closed as well as merged.
+  assert('seed/automation/gitlab.yml reaches the terminal value for a close without a merge', () => {
+    if (!gitlabRules.some((rule) => /AEP_MERGE_REQUEST/.test(rule))) {
+      throw new Error(`no rule reaches a merge request that produced no pipeline: ${JSON.stringify(gitlabRules)}`);
+    }
+    if (!/merged \| closed/.test(gitlabScript)) {
+      throw new Error('the terminal-state test does not accept a merge request closed without merging');
+    }
+    return true;
+  });
+
+  assert('seed/automation/gitlab.yml guards on the merge request being in a terminal state', () => {
+    if (!/jq -r '\.state'/.test(gitlabScript)) {
+      throw new Error('nothing reads the merge request state, so the pipeline running is the guard');
+    }
+    if (!/exit 0/.test(gitlabScript)) {
+      throw new Error('nothing stops on a merge request that is still open');
+    }
+    return true;
+  });
+
+  // Found by the correctness review of 2026-08-26. `set -e` does not see curl's
+  // exit status through a pipe and `jq` exits 0 on empty input, so every
+  // `curl -sf ... | jq` here turned a refused request into an empty string and
+  // carried on. A token without `api` scope produced a green job that moved no
+  // label and reported the merge request as being in state "". That is the exact
+  // inverse of this file's own opening promise, and of the mitigation `spec.md`
+  // records for shipping the GitLab half unverified: that a failure is legible.
+  assert('seed/automation/gitlab.yml reads nothing through an unchecked pipe', () => {
+    const piped = gitlabText.split('\n')
+      .filter((line) => /curl\s+-/.test(line))
+      .filter((line) => !/-X PUT/.test(line))
+      .filter((line) => !/if ! body=\$\(curl/.test(line));
+    if (piped.length > 0) throw new Error(`unchecked curl: ${piped.join(' | ').trim()}`);
+    return true;
+  });
+  assert('seed/automation/gitlab.yml says which scope is missing when a read is refused', () =>
+    /AEP_STATUS_TOKEN needs api scope/.test(gitlabText)
+    && /exit 1/.test(gitlabText));
+  assert('seed/automation/gitlab.yml refuses to guess at an empty state', () =>
+    /returned no state\. Refusing to guess/.test(gitlabText));
+
+  assert('seed/automation/gitlab.yml moves the merge request and the issues it closes', () => {
+    for (const needed of ['merge_requests/$iid', 'closes_issues', 'add_labels', 'remove_labels']) {
+      if (!gitlabScript.includes(needed)) throw new Error(`the script never reaches ${needed}`);
+    }
+    return true;
   });
 });
 
@@ -3150,7 +3622,16 @@ section('forbidden', () => {
     FORBIDDEN_DIRS.includes('modes'));
   assert('no plan.md ships', !inSrc('plan.md'));
 
-  const all = [...payloadArtifacts(), ...SEEDS.map((s) => path.join(SRC, ...s.source.split('/')))]
+  // Everything shipped, seeds and their automation included. A merge-time job is
+  // read inside whatever repository accepted it, so a citation that resolves only
+  // here is the same defect there as it is in a seeded reference.
+  const shippedText = [
+    ...payloadArtifacts(),
+    ...SEEDS.map((s) => s.source),
+    ...SEEDS.filter((s) => s.automation).map((s) => s.automation),
+  ].map((entry) => (path.isAbsolute(entry) ? entry : path.join(SRC, ...entry.split('/'))));
+
+  const all = shippedText
     .filter((file) => fs.existsSync(file))
     .map((file) => fs.readFileSync(file, 'utf8'))
     .join('\n');
@@ -3164,6 +3645,47 @@ section('forbidden', () => {
     !/canonical[^.\n]{0,40}\.(claude|cursor|codex)\//i.test(all));
   assert('shipped text cites no record that exists only in this repository', () =>
     !/\bADR \d{4}\b/.test(all) && !/\bspecs\.md\b/.test(all));
+
+  // Criterion 47.09, and the reason it is a sweep rather than a line about one
+  // file. `reconcile.mjs` exists so a repository that declined the merge-time
+  // offer still converges, which makes it the one component that must not reach
+  // for a tracker: a `gh` or `glab` call here would be the unconditional
+  // tracker call ticket 45.26 forbids, on the single path meant to be free of
+  // them. Asked of every installed script rather than of that one, so the next
+  // payload script to reach for a forge fails this too.
+  //
+  // Read off the code and not the prose. Every shipped script's header explains
+  // what it does and does not call, so a text scan for `gh` matches the
+  // sentence saying it never runs one. What is swept is the process starts, and
+  // a command assembled from a variable throws rather than passing, because a
+  // call this cannot read is the same hole as not sweeping at all.
+  assert('no installed script starts a forge CLI', () => {
+    const starts = /(?<![.\w])(exec|execSync|execFile|execFileSync|spawn|spawnSync)\s*\(/g;
+    const offending = [];
+    let swept = 0;
+    for (const name of PAYLOAD_SCRIPTS) {
+      const file = path.join(SRC, 'scripts', name);
+      if (!fs.existsSync(file)) throw new Error(`${name} is registered and not shipped`);
+      const source = fs.readFileSync(file, 'utf8');
+      swept += 1;
+      for (const match of source.matchAll(starts)) {
+        const after = source.slice(match.index + match[0].length).trimStart();
+        const literal = /^(['"\`])([^'"\`]*)\1/.exec(after);
+        if (!literal) throw new Error(`${name} calls ${match[1]} with a command this cannot read`);
+        const command = literal[2].trim().split(/\s+/)[0];
+        if (command !== 'git') offending.push(`${name} starts ${command}`);
+      }
+    }
+    if (swept !== PAYLOAD_SCRIPTS.length) throw new Error('the sweep read fewer scripts than ship');
+    if (offending.length > 0) throw new Error(offending.join('; '));
+    return true;
+  });
+  // The sweep above passes trivially on a list that does not contain the script
+  // it was written for, which is how ticket 45.26's version once passed green
+  // after an edit moved its subject out from under it.
+  assert('the sweep covers reconcile.mjs by name', () =>
+    PAYLOAD_SCRIPTS.includes('reconcile.mjs')
+    && fs.existsSync(path.join(SRC, 'scripts', 'reconcile.mjs')));
 });
 
 // --- §15.2 the prohibitions a script can check ------------------------------
@@ -4835,6 +5357,436 @@ section('install fixture', () => {
   assert('install forbids a created label naming AEP', () =>
     installSkill.includes('**Nothing created here names AEP**'));
 
+  // --- the merge-time job, offered once --------------------------------------
+  //
+  // The offer is the skill's, for the reason the label vocabulary's is: a script
+  // cannot propose a write and wait for an answer. What the installer owns is
+  // the write behind the yes, the read of the decision behind a no, and the
+  // judgement about where the job can go. The prose guards below are scoped to
+  // the step that has to carry the instruction, because an instruction that
+  // drifted out of its step still matches a whole-file search and is no longer
+  // read at the moment it applies.
+
+  const step = (text, from, to) => flat(text.slice(text.indexOf(from), text.indexOf(to)));
+  const offerStep = step(installSkill, '9. **Offer the merge-time job', '10. **Validate**');
+  const updateSkill = readSrc('skills', 'update.md');
+  const noticeStep = step(updateSkill, '6. **Act on the notices', '7. **Reconcile the rules');
+  const installerSource = readSrc('scripts', 'install.mjs');
+
+  assert('install offers the merge-time job beside the label vocabulary', () =>
+    installSkill.includes('**Offer the merge-time job') &&
+    installSkill.indexOf('**Offer the merge-time job') >
+      installSkill.indexOf('**Offer the label vocabulary'));
+  assert('the offer step gates on there being a tracker at all', () =>
+    /only where there is a tracker at all/.test(offerStep) &&
+    /Skip this exactly where the step above was skipped/.test(offerStep));
+  assert('the offer step writes only on acceptance, opt-in at the installer', () =>
+    /--automation <forge> --dry-run/.test(offerStep) &&
+    /\*\*On acceptance\*\*/.test(offerStep));
+  assert('the offer step records a refusal as a decision in the repository rule', () =>
+    /\*\*On a refusal, write nothing, and record the decision\*\*/.test(offerStep) &&
+    /in `\[\[rules\/version-control\]\]`/.test(offerStep));
+
+  // The decision is recorded rather than declared as a deviation. A deviation is
+  // variation with nowhere else to enter, and a refusal has somewhere: this step
+  // offers it. Filing it as a deviation would have `[[skills/update]]` report a
+  // settled question as an open fork on every upgrade after it, which is the
+  // opposite of recording it so it is not asked again.
+  assert('the offer step calls a refusal a decision and not a deviation', () =>
+    /\*\*It is a recorded decision and not a deviation\*\*/.test(offerStep));
+  assert('the offer step claims no deviation status anywhere in it', () => {
+    if (/declared deviation/.test(offerStep)) throw new Error('files the refusal as a deviation');
+    return true;
+  });
+  assert('update calls it a recorded decision too', () =>
+    /recorded decision rather than a declared deviation/.test(flat(updateSkill)) &&
+    !/records a declared deviation in `rules\/version-control\.md`/.test(flat(updateSkill)));
+
+  // The one string the skill and the script must agree on. The skill tells a
+  // human what to write; the installer reads what was written. Drift between
+  // them is invisible, because each half still reads perfectly well alone, and
+  // the failure is a recorded decision that silently stops suppressing anything.
+  const declinedSentence = () => {
+    const found = /const DECLINED = '([^']+)'/.exec(installerSource);
+    if (!found) throw new Error('the installer declares no sentence to read');
+    return found[1];
+  };
+  assert('the skill quotes the exact sentence the installer reads', () => {
+    const sentence = declinedSentence();
+    if (!installSkill.includes(`${sentence}.`)) {
+      throw new Error(`the skill does not quote: ${sentence}`);
+    }
+    return true;
+  });
+  assert('the offer step says the record is read before offering again', () =>
+    /\*\*Read `\[\[rules\/version-control\]\]` first\.\*\*/.test(offerStep) &&
+    /\*\*do not offer again\*\*/.test(offerStep));
+  assert('the offer step proposes an addition where a labeler is already there', () =>
+    /\*\*an addition to that file\*\*, quoted exactly, and no second file/.test(offerStep));
+  assert('the offer step covers a file whose shape cannot take the addition', () =>
+    /\*\*Where the file's own shape cannot take the addition\*\*/.test(offerStep) &&
+    /names the obstacle and proposes nothing/.test(offerStep));
+  assert('the offer step says the GitLab offer names its token before anything else', () =>
+    /project access token with `api` scope/.test(offerStep) &&
+    /before it says anything else/.test(offerStep));
+  assert('the offer step adds no tracker call to a path that had none', () =>
+    /Nothing here reads a tracker/.test(offerStep));
+
+  assert('update makes the same offer inside the step that acts on notices', () =>
+    /A notice is acted on, not read/.test(noticeStep) &&
+    /the merge-time job\.\*\*/.test(noticeStep));
+  assert('update reports an offer it cannot settle as outstanding, naming what is left', () =>
+    /Where the offer cannot be settled in this run, report it as outstanding, naming the forge and what is left/
+      .test(noticeStep));
+  assert('update does not re-offer where the record already stands', () =>
+    /\*\*Where that record already stands, say it was read and do not offer again\.\*\*/
+      .test(noticeStep));
+  assert('update reads the tree for this and never a tracker', () =>
+    /never from a tracker/.test(noticeStep));
+
+  // Nothing in the offer reaches for a tracker, asked of the code rather than of
+  // the prose above it. Every way a child process can be started is swept, and
+  // the command has to be a literal: a command built from a variable is one this
+  // check cannot read, which makes it the same hole as not checking at all.
+  assert('the installer starts git and no other process', () => {
+    // Not preceded by a dot: `regex.exec(` matches a string, it starts nothing.
+    const starts = /(?<![.\w])(exec|execSync|execFile|execFileSync|spawn|spawnSync)\s*\(/g;
+    const found = [];
+    for (const match of installerSource.matchAll(starts)) {
+      const after = installerSource.slice(match.index + match[0].length).trimStart();
+      const literal = /^(['"`])([^'"`]*)\1/.exec(after);
+      if (!literal) throw new Error(`${match[1]} is called with a command this cannot read`);
+      found.push(literal[2].trim().split(/\s+/)[0]);
+    }
+    const other = [...new Set(found.filter((command) => command !== 'git'))];
+    if (other.length > 0) throw new Error(`starts: ${other.join(', ')}`);
+    return found.length > 0;
+  });
+
+  const forgeFixtures = [];
+  const forgeFixture = (files = {}) => {
+    const at = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-forge-'));
+    forgeFixtures.push(at);
+    execFileSync('git', ['init', '--quiet'], { cwd: at, stdio: 'ignore' });
+    for (const [rel, body] of Object.entries(files)) {
+      const target = path.join(at, ...rel.split('/'));
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, body, 'utf8');
+    }
+    return at;
+  };
+  const installInto = (at, ...flags) => String(execFileSync(
+    process.execPath,
+    [path.join(SRC, 'scripts', 'install.mjs'), '--into', at, ...flags],
+    // Piped rather than inherited, so the assertions that expect a refusal read
+    // the message instead of printing it into a passing run's output.
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+  ));
+  const workflowsIn = (at) => {
+    const dir = path.join(at, '.github', 'workflows');
+    return fs.existsSync(dir)
+      ? walk(dir).map((file) => toPosix(dir, file)).sort()
+      : [];
+  };
+  const GITHUB_JOB = readSrc('seed', 'automation', 'github.yml');
+  const written = (at) => fs.readFileSync(
+    path.join(at, '.github', 'workflows', 'effort-status.yml'), 'utf8',
+  );
+
+  // The refusal, which is the absence of the flag: a skill that asked and was
+  // told no runs the installer exactly as it would have run it anyway, so what
+  // this asserts is that there is no default write to leave behind.
+  assert('a refusal leaves no workflow file behind', () => {
+    const at = forgeFixture();
+    installInto(at);
+    if (fs.existsSync(path.join(at, '.github'))) throw new Error('wrote .github/ unasked');
+    if (fs.existsSync(path.join(at, '.gitlab-ci.yml'))) {
+      throw new Error('wrote .gitlab-ci.yml unasked');
+    }
+    return true;
+  });
+
+  // The other half of the same criterion, and the half nothing executable used
+  // to cover: a refusal is written down, and the write is what stops the next
+  // run asking. The sentence comes off the installer, so a fixture pasting its
+  // own wording cannot pass while the two have drifted.
+  assert('a recorded decision withholds the offer, and writes nothing', () => {
+    const at = forgeFixture();
+    installInto(at);
+    const rule = path.join(at, '.aep', 'rules', 'version-control.md');
+    fs.appendFileSync(
+      rule,
+      `\n## The merge-time job\n\n${declinedSentence()}. GitHub, on 2026-08-25, because this\n` +
+      'repository assigns no labels from CI.\n',
+      'utf8',
+    );
+    const output = installInto(at, '--update', '--automation', 'github');
+    if (workflowsIn(at).length > 0) throw new Error('wrote the job over a recorded decision');
+    if (!/Declined here already/.test(output)) {
+      throw new Error(`the run did not say the decision was read:\n${output}`);
+    }
+    if (/Nothing to provision/.test(output)) throw new Error('made the offer anyway');
+    return true;
+  });
+
+  assert('removing the record is what asks again', () => {
+    const at = forgeFixture();
+    installInto(at);
+    const rule = path.join(at, '.aep', 'rules', 'version-control.md');
+    const before = fs.readFileSync(rule, 'utf8');
+    fs.appendFileSync(rule, `\n${declinedSentence()}. GitHub.\n`, 'utf8');
+    installInto(at, '--update', '--automation', 'github');
+    fs.writeFileSync(rule, before, 'utf8');
+    installInto(at, '--update', '--automation', 'github');
+    return workflowsIn(at).join(', ') === 'effort-status.yml';
+  });
+
+  assert('the exact text is shown before anything is written', () => {
+    const at = forgeFixture();
+    const output = installInto(at, '--automation', 'github', '--dry-run');
+    if (!output.includes(GITHUB_JOB.trimEnd())) throw new Error('the offer did not quote the job');
+    if (workflowsIn(at).length > 0) throw new Error('a dry run wrote the workflow');
+    return true;
+  });
+
+  assert('accepting writes the job, byte for byte what ships', () => {
+    const at = forgeFixture();
+    installInto(at, '--automation', 'github');
+    return written(at) === GITHUB_JOB;
+  });
+
+  // The command the step actually documents, run as documented rather than as
+  // this file would have called it. Step 1 has already installed by the time
+  // step 9 runs, so a command that works on an empty directory and not on that
+  // tree is a command no real install can use, and a guard matching the prose
+  // rather than the behaviour is what let that through.
+  assert('the command the offer step documents runs on a tree step 1 installed', () => {
+    const at = forgeFixture();
+    installInto(at);
+    const fenced = /```\n\s*(node [^\n]+)\n\s*```/.exec(
+      installSkill.slice(
+        installSkill.indexOf('9. **Offer the merge-time job'),
+        installSkill.indexOf('10. **Validate**'),
+      ),
+    );
+    if (!fenced) throw new Error('the step documents no command');
+    const argv = fenced[1].split(/\s+/).slice(1).map((token) => token
+      .replace('<distribution>/scripts/install.mjs', path.join(SRC, 'scripts', 'install.mjs'))
+      .replace('<repository>', at)
+      .replace('<forge>', 'github'));
+    const output = String(execFileSync(process.execPath, argv, {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    }));
+    if (!/merge-time job/.test(output)) throw new Error(`the documented command made no offer:\n${output}`);
+    if (workflowsIn(at).length > 0) throw new Error('the documented preview wrote a file');
+    return true;
+  });
+
+  // Criterion 6's update half. A repository that reached 3.x before any of this
+  // existed is a tree with no workflow and every other thing an install writes,
+  // which is exactly what a plain install leaves behind.
+  assert('a tree that predates the job gets the same offer on update', () => {
+    const at = forgeFixture();
+    installInto(at);
+    if (workflowsIn(at).length > 0) throw new Error('the install wrote one after all');
+    installInto(at, '--update', '--automation', 'github');
+    return written(at) === GITHUB_JOB;
+  });
+
+  assert('a second run reads what is already there and proposes nothing again', () => {
+    const at = forgeFixture();
+    installInto(at, '--automation', 'github');
+    const output = installInto(at, '--update', '--automation', 'github');
+    if (!/Already carried by/.test(output)) throw new Error(`offered twice:\n${output}`);
+    if (workflowsIn(at).length !== 1) throw new Error(`wrote ${workflowsIn(at).join(', ')}`);
+    return true;
+  });
+
+  // The one edit the shipped file asks for. Both automation files tell the
+  // reader to change the two label values so the job matches the vocabulary the
+  // tracker already uses, so a repository that complied must not then be offered
+  // the job it is already running.
+  assert('the edit the shipped file invites does not make it a different job', () => {
+    const at = forgeFixture();
+    installInto(at, '--automation', 'github');
+    const file = path.join(at, '.github', 'workflows', 'effort-status.yml');
+    const customised = fs.readFileSync(file, 'utf8')
+      .replace('"status: done"', '"\u2705 status :: done"')
+      .replace('"status: in review"', '"\u{1F440} status :: in review"');
+    if (customised === fs.readFileSync(file, 'utf8')) {
+      throw new Error('the fixture changed nothing, so it proves nothing');
+    }
+    fs.writeFileSync(file, customised, 'utf8');
+    const output = installInto(at, '--update', '--automation', 'github');
+    if (!/Already carried by/.test(output)) {
+      throw new Error(`proposed the job into the file already running it:\n${output}`);
+    }
+    return workflowsIn(at).length === 1;
+  });
+
+  // A workflow in a subdirectory. `.github/workflows/` is read recursively, and
+  // a path rebuilt from the filename names a file that is not there: the read
+  // throws, the run dies with `.aep/` already written, and nothing at all is
+  // reported.
+  assert('a workflow in a subdirectory is read where it actually is', () => {
+    const at = forgeFixture({
+      '.github/workflows/sub/helper.yml': 'name: helper\non:\n  push:\njobs:\n  h:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo\n',
+    });
+    const output = installInto(at, '--automation', 'github');
+    if (!/merge-time job/.test(output)) throw new Error('the run reported nothing');
+    return written(at) === GITHUB_JOB;
+  });
+
+  // The shape the research found on ten repositories, cut down to the two things
+  // that decide this branch: it assigns labels, and its trigger is a block map
+  // with no `pull_request` key of its own.
+  const LABELER = [
+    'name: labeler', 'on:', '  pull_request_target:', "    branches: ['*']", '',
+    'jobs:', '  labeler:', '    runs-on: ubuntu-latest', '    steps:',
+    '      - uses: actions/labeler@v7', '        with:', '          sync-labels: true', '',
+  ].join('\n');
+
+  assert('a repository already running a labeler gets a proposal, not a second file', () => {
+    const at = forgeFixture({ '.github/workflows/labeler.yml': LABELER });
+    const output = installInto(at, '--automation', 'github');
+    const workflows = workflowsIn(at);
+    if (workflows.join(', ') !== 'labeler.yml') throw new Error(`wrote ${workflows.join(', ')}`);
+    const after = fs.readFileSync(path.join(at, '.github', 'workflows', 'labeler.yml'), 'utf8');
+    if (after !== LABELER) throw new Error('edited a file the repository owns');
+    if (!output.includes('labeler.yml')) throw new Error('the proposal named no file');
+    return true;
+  });
+
+  // With the exact text, and the exact text is the addition rather than the
+  // file: a workflow has one `on:` map and one `jobs:` map, so quoting the
+  // shipped file whole would be quoting something nobody can paste. Derived from
+  // the shipped file, so a job that grows a step is covered without this being
+  // remembered.
+  assert('the proposal quotes every line of the job, and no key the file already has', () => {
+    const at = forgeFixture({ '.github/workflows/labeler.yml': LABELER });
+    const output = installInto(at, '--automation', 'github');
+    const proposal = output.slice(output.indexOf('merge-time job'));
+    const substance = GITHUB_JOB.split('\n')
+      .filter((line) => line.startsWith('  ') && line.trim() !== '');
+    const missing = substance.filter((line) => !proposal.includes(line));
+    if (missing.length > 0) throw new Error(`left out: ${missing[0].trim()}`);
+    for (const key of ['name: effort status', 'on:', 'jobs:']) {
+      if (proposal.split('\n').includes(key)) {
+        throw new Error(`proposed a duplicate top-level key: ${key}`);
+      }
+    }
+    return true;
+  });
+
+  // The worst thing a proposal can do. `on:` is the workflow's and not the
+  // job's, so a job pasted into a file that triggers on `pull_request_target`
+  // runs on every push to every open change request unless the job guards
+  // itself. The guard therefore lives on the job, and the proposal carries it
+  // because the proposal is cut from the file that has it.
+  const jobGuard = () => {
+    const jobs = GITHUB_JOB.slice(GITHUB_JOB.indexOf('\njobs:\n') + '\njobs:\n'.length);
+    const line = jobs.split('\n').find((entry) => /^ {4}if:/.test(entry));
+    if (!line) throw new Error('the shipped job carries no guard of its own');
+    return line;
+  };
+  assert('the shipped job guards itself rather than relying on the file it sits in', () => {
+    const guard = jobGuard();
+    if (!/github\.event_name/.test(guard)) {
+      throw new Error(`the guard does not read which event fired: ${guard.trim()}`);
+    }
+    if (!/closed/.test(guard)) throw new Error(`the guard does not read closed: ${guard.trim()}`);
+    return true;
+  });
+  assert('the proposal carries that guard into the file it joins', () => {
+    const at = forgeFixture({ '.github/workflows/labeler.yml': LABELER });
+    const output = installInto(at, '--automation', 'github');
+    if (!output.includes(jobGuard())) {
+      throw new Error('the job would be pasted into another trigger without its guard');
+    }
+    return true;
+  });
+
+  // Where the host's own shape cannot take the addition, nothing is proposed.
+  // Handing somebody a paste that does not parse breaks a workflow this
+  // repository owns, which is worse than making no offer at all.
+  for (const [shape, host, obstacle] of [
+    ['a trigger written inline', 'name: labeler\non: [pull_request_target]\njobs:\n  labeler:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/labeler@v7\n', /written inline/],
+    ['a trigger that already names pull_request', 'name: labeler\non:\n  pull_request:\n    types: [opened]\njobs:\n  labeler:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/labeler@v7\n', /declare that key twice/],
+  ]) {
+    assert(`${shape} gets the obstacle named and no paste`, () => {
+      const at = forgeFixture({ '.github/workflows/labeler.yml': host });
+      const output = installInto(at, '--automation', 'github');
+      if (workflowsIn(at).join(', ') !== 'labeler.yml') {
+        throw new Error(`wrote ${workflowsIn(at).join(', ')}`);
+      }
+      if (!obstacle.test(output)) throw new Error(`the obstacle was not named:\n${output}`);
+      if (/Into its `jobs:` map/.test(output)) throw new Error('proposed a paste anyway');
+      return true;
+    });
+  }
+
+  assert('several workflows assigning labels are all named, and the one read is said', () => {
+    const at = forgeFixture({
+      '.github/workflows/labeler.yml': LABELER,
+      '.github/workflows/assign.yml': LABELER.replace('actions/labeler@v7', 'mauroalderete/action-assign-labels@v1'),
+    });
+    const output = installInto(at, '--automation', 'github');
+    for (const named of ['assign.yml', 'labeler.yml']) {
+      if (!output.includes(named)) throw new Error(`did not name ${named}`);
+    }
+    if (!/files here assign labels/.test(output)) throw new Error('did not say there were several');
+    return true;
+  });
+
+  // Requirement 4. Not that the text mentions the token somewhere, but that the
+  // token is the first thing the offer says: a repository declining has to know
+  // what it declined, and GitLab is the one that costs something to accept.
+  assert('the GitLab offer states its api-scoped token before anything else', () => {
+    const at = forgeFixture({ '.gitlab-ci.yml': 'stages:\n  - test\n' });
+    const output = installInto(at, '--automation', 'gitlab');
+    const offer = flat(output.slice(output.indexOf('merge-time job')));
+    if (!/gitlab Provision this first: a project access token with `api` scope/.test(offer)) {
+      throw new Error(`the offer said something before its token: ${offer.slice(0, 160)}`);
+    }
+    if (offer.indexOf('`api` scope') > offer.indexOf('.gitlab-ci.yml')) {
+      throw new Error('the token came after where the job would land');
+    }
+    if (fs.readFileSync(path.join(at, '.gitlab-ci.yml'), 'utf8') !== 'stages:\n  - test\n') {
+      throw new Error('wrote into the pipeline file the repository owns');
+    }
+    return true;
+  });
+
+  // And that the two are not the same offer twice. GitHub's whole first
+  // paragraph is that there is nothing to provision, which is the sentence a
+  // reader needs to tell one decision from the other.
+  assert('the GitHub offer is the other offer, needing nothing provisioned', () => {
+    const at = forgeFixture();
+    const output = installInto(at, '--automation', 'github', '--dry-run');
+    const offer = flat(output.slice(output.indexOf('merge-time job')));
+    if (!/github Nothing to provision\./.test(offer)) {
+      throw new Error(`the offer did not lead with what it needs: ${offer.slice(0, 160)}`);
+    }
+    if (/access token/.test(offer)) throw new Error('asked GitHub for a credential');
+    return true;
+  });
+
+  assert('a forge with no shipped job is refused rather than guessed at', () => {
+    const at = forgeFixture();
+    try {
+      installInto(at, '--automation', 'bitbucket');
+    } catch (error) {
+      const message = String(error.stderr ?? '');
+      if (!/no merge-time job ships for: bitbucket/.test(message)) {
+        throw new Error(`refused for some other reason: ${message}`);
+      }
+      return true;
+    }
+    throw new Error('accepted a forge nothing ships a job for');
+  });
+
+  for (const at of forgeFixtures) fs.rmSync(at, { recursive: true, force: true });
+
   // The entrypoint step, now describing what the installer does rather than
   // what a human is asked to do by hand.
   assert('install states which entrypoints the installer writes', () =>
@@ -5024,6 +5976,126 @@ section('install fixture', () => {
     RETIRED_DIRS.every(({ dir, since, was }) =>
       isNonEmptyString(dir) && release(since) !== null && isNonEmptyString(was)));
 
+
+  // --- ticket 47.07: the no-tracker posture survives all of this -------------
+  //
+  // A repository with no forge is not a degraded case of one that has a forge.
+  // It is a posture with its own procedure, and this effort added three paths
+  // that could each have quietly broken it: the offer at install, the offer at
+  // update, and the drift script. One fixture, all three, and each assertion
+  // proves the path ran rather than only that nothing happened. A guard passing
+  // because the code never executed reads exactly like one passing because the
+  // code behaved, and this whole block is guards.
+  //
+  // `forgeFixture()` is a `git init` with no remote, which is the whole of what
+  // makes it tracker-less: seed detection asks the remote, finds none, and
+  // installs neither forge reference. Nothing here goes near a network.
+  const NO_FORGE = ['references/github.md', 'references/gitlab.md'];
+
+  assert('the fixture genuinely has no tracker, and the absence is stated', () => {
+    const at = forgeFixture();
+    const output = installInto(at);
+    for (const seed of NO_FORGE) {
+      if (!output.includes(`${seed} (not detected)`)) {
+        throw new Error(`${seed} was skipped silently, or not skipped`);
+      }
+      if (fs.existsSync(path.join(at, '.aep', ...seed.split('/')))) {
+        throw new Error(`${seed} was installed into a repository with no forge`);
+      }
+    }
+    return true;
+  });
+
+  assert('install on a no-tracker fixture offers no automation and writes none', () => {
+    const at = forgeFixture();
+    const output = installInto(at);
+    // The path ran. Without this the three checks below pass on an install that
+    // never happened.
+    //
+    // What this proves is that nothing is written by default, and that is all it
+    // proves. It is not a tracker gate in the installer: `--automation <forge>`
+    // writes the job on a tree with no forge detected, because the flag is a
+    // human saying do it and the installer does not second-guess that. Criterion
+    // 10 for install therefore rests on `skills/install` step 9 skipping where
+    // step 8 skipped, which is asserted separately as prose and is not the same
+    // guarantee. Named here because the earlier wording of this comment claimed
+    // the gate existed.
+    if (!/protocol files written/.test(output)) throw new Error(`install did not run:\n${output}`);
+    if (workflowsIn(at).length > 0) throw new Error(`wrote ${workflowsIn(at).join(', ')}`);
+    if (fs.existsSync(path.join(at, '.gitlab-ci.yml'))) throw new Error('wrote .gitlab-ci.yml');
+    if (/merge-time job/i.test(output)) throw new Error('offered a job with no tracker to offer it against');
+    return true;
+  });
+
+    assert('--observed without a file is refused rather than answered', () => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'reconcile.mjs'), '--root', path.join(REPO, '.aep'), '--observed'],
+      { encoding: 'utf8' },
+    );
+    if (result.status !== 2) throw new Error(`exited ${result.status}: ${result.stdout}`);
+    if (result.stdout.trim().length > 0) throw new Error(`answered anyway: ${result.stdout}`);
+    return true;
+  });
+
+  assert('update on a no-tracker fixture gains nothing it can never settle', () => {
+    const at = forgeFixture();
+    installInto(at);
+    const output = installInto(at, '--update');
+    if (!/seeds skipped/.test(output)) throw new Error(`update did not run:\n${output}`);
+    if (workflowsIn(at).length > 0) throw new Error(`wrote ${workflowsIn(at).join(', ')}`);
+    // An outstanding item with no path to being closed is the failure mode: an
+    // upgrade that hands a tracker-less repository a job it can never accept
+    // would report the same thing on every run for ever.
+    if (/outstanding/i.test(output)) throw new Error(`left something outstanding:\n${output}`);
+    if (/merge-time job/i.test(output)) throw new Error('offered a job with no tracker to offer it against');
+    return true;
+  });
+
+  assert('reconcile runs in that fixture and is exit 0 with every effort unobserved', () => {
+    const at = forgeFixture();
+    installInto(at);
+    const effort = path.join(at, '.aep', 'efforts', '01-probe');
+    fs.mkdirSync(effort, { recursive: true });
+    fs.writeFileSync(
+      path.join(effort, 'spec.md'),
+      ['---', 'status: accepted', '---', '', '# Problem', '', 'p', ''].join('\n'),
+      'utf8',
+    );
+    const result = spawnSync(
+      process.execPath,
+      [path.join(SRC, 'scripts', 'reconcile.mjs'), '--root', path.join(at, '.aep')],
+      { encoding: 'utf8' },
+    );
+    const lines = result.stdout.split('\n').filter(Boolean);
+    // Printed something, so the comparison ran rather than the tree being empty.
+    if (lines.length === 0) throw new Error('printed nothing, so nothing was compared');
+    const other = lines.filter((line) => !line.startsWith('unobserved'));
+    if (other.length > 0) throw new Error(other.join(' / '));
+    if (result.status !== 0) throw new Error(`exited ${result.status}; learning nothing is not a fault`);
+    return true;
+  });
+
+  // Requirement 10, asked of the shipped code rather than of the fixture. The
+  // fixture shows these paths did not reach a tracker on one run; this shows
+  // there is no branch on which they could. `install.mjs` is the only executable
+  // in the three, and the sweep over its process starts already stands above;
+  // what is added here is that neither offer nor the drift script names a forge
+  // CLI in a position to be run.
+  assert('no path this effort added can reach a forge CLI', () => {
+    const starts = /(?<![.\w])(exec|execSync|execFile|execFileSync|spawn|spawnSync)\s*\(\s*(['"`])([^'"`]*)\2/g;
+    const offending = [];
+    for (const name of ['install.mjs', 'reconcile.mjs']) {
+      const source = fs.readFileSync(path.join(SRC, 'scripts', name), 'utf8');
+      for (const match of source.matchAll(starts)) {
+        const command = match[3].trim().split(/\s+/)[0];
+        if (command !== 'git') offending.push(`${name} starts ${command}`);
+      }
+    }
+    if (offending.length > 0) throw new Error(offending.join('; '));
+    return true;
+  });
+
   fs.rmSync(twoX, { recursive: true, force: true });
 });
 
@@ -5120,6 +6192,319 @@ section('frontier', () => {
   });
 
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// The reconciliation, which is the terminal row's slow owner. It is checked
+// against this repository's own tree rather than a fixture, because the tree is
+// the case the criterion names and because a fixture built to agree with a
+// script proves only that both were written by the same hand. The observation is
+// recorded here and never fetched: the first fixture that reaches for `gh` is
+// the one that makes the suite fail offline.
+section('reconcile', () => {
+  const RECONCILE = path.join(SRC, 'scripts', 'reconcile.mjs');
+  const AEP = path.join(REPO, '.aep');
+
+  const run = (observation, ...extra) => {
+    const args = [RECONCILE, '--root', AEP, ...extra];
+    if (observation !== null) args.push('--observed', '-');
+    const result = spawnSync(process.execPath, args, {
+      encoding: 'utf8',
+      input: observation === null ? '' : JSON.stringify(observation),
+    });
+    return { out: result.stdout, err: result.stderr, code: result.status };
+  };
+  const lineFor = (out, effort) => out.split('\n').filter((line) => line.includes(` ${effort}  `));
+
+  // GitHub's own shapes, as `gh issue list --json number,state,labels` and
+  // `gh pr list --json number,state,labels,closingIssuesReferences` emit them.
+  // The emoji prefix is this repository's, and it is here deliberately: a
+  // comparison blind to it reports every effort in this repository as drift.
+  const issue = (number, state, status) =>
+    ({ number, state, labels: status === null ? [] : [{ name: `✔️ ${status}` }] });
+  const pull = (number, state, status, closes) => ({
+    number,
+    state,
+    labels: status === null ? [] : [{ name: `✔️ ${status}` }],
+    closingIssuesReferences: closes.map((n) => ({ number: n })),
+  });
+
+  // Criterion 8. Effort 45 merged, and its objects and its spec agree.
+  const AGREES = {
+    issues: [issue(45, 'CLOSED', 'status: done')],
+    changeRequests: [pull(46, 'MERGED', 'status: done', [45])],
+  };
+  assert('effort 45 agrees against a recorded observation of its own objects', () => {
+    const { out, code } = run(AGREES);
+    const lines = lineFor(out, '45-aep-3');
+    if (lines.length !== 1) throw new Error(`45-aep-3 got ${lines.length} lines: ${lines.join(' / ')}`);
+    if (!lines[0].startsWith('agree')) throw new Error(lines[0]);
+    if (code !== 0) throw new Error(`agreement exited ${code}`);
+    return true;
+  });
+
+  // The same criterion's other half, and the one that makes the first mean
+  // something: move a label in the observation and the drift is printed. Only
+  // the label moves, so nothing else can account for the change in verdict.
+  assert('moving a label in the observation prints the drift', () => {
+    const moved = {
+      issues: [issue(45, 'CLOSED', 'status: in review')],
+      changeRequests: [pull(46, 'MERGED', 'status: done', [45])],
+    };
+    const { out, code } = run(moved);
+    const lines = lineFor(out, '45-aep-3');
+    if (!lines.some((line) => /^drift .*issue 45 status: in review want status: done/.test(line))) {
+      throw new Error(lines.join(' / '));
+    }
+    if (code !== 1) throw new Error(`drift exited ${code}, and disagreement is exit 1`);
+    return true;
+  });
+
+  // Criterion 3. A change request closed without merging reaches the same
+  // terminal value, so `in review` does not survive an abandoned effort either.
+  assert('a change request closed without merging expects the terminal value', () => {
+    const { out } = run({
+      issues: [issue(45, 'CLOSED', 'status: in review')],
+      changeRequests: [pull(46, 'CLOSED', 'status: in review', [45])],
+    });
+    const lines = lineFor(out, '45-aep-3');
+    const wanted = lines.filter((line) => /want status: done$/.test(line));
+    if (wanted.length !== 2) throw new Error(lines.join(' / '));
+    if (lines.some((line) => /^agree/.test(line))) throw new Error('in review survived a close');
+    return true;
+  });
+
+  // Requirement 8. `accepted` reaches two rows, because taking the first ticket
+  // moves the label without moving the field, so both labels are legitimate and
+  // neither is drift. A consumer taking the first matching row would report every
+  // run in flight as drift.
+  //
+  // Against a tree built for it, not against this repository's. These two ran on
+  // effort 47 while effort 47 was the mid-run case, and then effort 47 closed:
+  // the spec moved to `implemented`, the projection moved with it, and both
+  // assertions failed on a tree that was entirely correct. An assertion keyed on
+  // a live effort's status has a shelf life measured in one close.
+  const midRun = (() => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-midrun-'));
+    const aep = path.join(dir, '.aep');
+    fs.mkdirSync(path.join(aep, 'efforts', '77-mid-run'), { recursive: true });
+    fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(aep, 'protocol.md'));
+    fs.writeFileSync(
+      path.join(aep, 'efforts', '77-mid-run', 'spec.md'),
+      ['---', 'status: accepted', '---', '', '# Problem', '', 'p', ''].join('\n'),
+      'utf8',
+    );
+    return aep;
+  })();
+
+  for (const status of ['status: ready', 'status: in progress']) {
+    assert(`an effort mid-run showing ${status} is not drift`, () => {
+      const result = spawnSync(
+        process.execPath,
+        [RECONCILE, '--root', midRun, '--observed', '-'],
+        {
+          encoding: 'utf8',
+          input: JSON.stringify({
+            issues: [issue(77, 'OPEN', status)],
+            changeRequests: [pull(78, 'OPEN', status, [77])],
+          }),
+        },
+      );
+      const lines = result.stdout.split('\n').filter((line) => line.includes(' 77-mid-run  '));
+      if (lines.length !== 1 || !lines[0].startsWith('agree')) {
+        throw new Error(lines.join(' / ') || result.stdout || result.stderr);
+      }
+      if (result.status !== 0) throw new Error(`exited ${result.status}`);
+      return true;
+    });
+  }
+  assert('the two labels accepted reaches are the two the ladder gives it', () => {
+    const reached = expectedFor('accepted', null, 'issue');
+    return reached.join(' or ') === 'status: ready or status: in progress';
+  });
+
+  // Criterion 11. Recorded as #51 and #52 stood on 2026-08-24, after the merge
+  // and before a person closed the issue by hand. The commit carried the
+  // referencing form of the keyword rather than the closing one, which is
+  // exactly how an issue survives its own merge, and it is the case requirement
+  // 11 exists to remove going forward and this line exists to catch meanwhile.
+  assert('an issue still open after its change request merged is its own finding', () => {
+    const { out, code } = run({
+      issues: [issue(51, 'OPEN', 'status: done')],
+      changeRequests: [pull(52, 'MERGED', 'status: done', [51])],
+    });
+    const lines = lineFor(out, '51-branch-scope');
+    if (!lines.some((line) => line.includes('issue 51 open after change-request 52 merged'))) {
+      throw new Error(lines.join(' / '));
+    }
+    if (code !== 1) throw new Error(`exited ${code}`);
+    return true;
+  });
+  assert('an issue closed behind its merged change request is not that finding', () => {
+    const { out } = run({
+      issues: [issue(51, 'CLOSED', 'status: done')],
+      changeRequests: [pull(52, 'MERGED', 'status: done', [51])],
+    });
+    return !out.includes('open after change-request');
+  });
+
+  // Requirement 10 and criterion 10. A repository with no tracker runs this and
+  // learns nothing, which is the answer rather than a fault, so it is exit 0.
+  assert('no observation is exit 0 with every effort unobserved', () => {
+    const { out, code } = run(null);
+    const lines = out.split('\n').filter(Boolean);
+    if (lines.length === 0) throw new Error('printed nothing at all');
+    const other = lines.filter((line) => !line.startsWith('unobserved'));
+    if (other.length > 0) throw new Error(other.join(' / '));
+    if (code !== 0) throw new Error(`exited ${code}, and learning nothing is not a fault`);
+    return true;
+  });
+  assert('an effort with no observed object is unobserved rather than agreeing', () => {
+    const { out } = run(AGREES);
+    return lineFor(out, '47-post-merge-labels')[0]?.startsWith('unobserved') === true;
+  });
+
+  // Requirement 8, the interface. Matching `frontier.mjs`: `--root`, one line
+  // per finding, and an exit code that means something. Exit 2 is the one worth
+  // pinning, because a tree that could not be read must not look like a tree
+  // that agreed.
+  // Two ways a tree fails to be readable, pinned apart, because they leave from
+  // different lines and a check written for one passes while the other returns
+  // exit 0. A root that resolves to nothing is refused before any tree is read;
+  // a root that resolves to an AEP tree with no efforts in it is refused after.
+  assert('a root that resolves to no tree is exit 2 and not exit 0', () => {
+    const result = spawnSync(
+      process.execPath,
+      [RECONCILE, '--root', path.join(os.tmpdir(), 'aep-no-such-tree')],
+      { encoding: 'utf8' },
+    );
+    return result.status === 2 && /no \.aep\/ found/.test(result.stderr);
+  });
+  assert('a tree with no efforts directory is exit 2 and not exit 0', () => {
+    const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-bare-'));
+    fs.copyFileSync(path.join(SRC, 'protocol.md'), path.join(bare, 'protocol.md'));
+    const result = spawnSync(process.execPath, [RECONCILE, '--root', bare], { encoding: 'utf8' });
+    fs.rmSync(bare, { recursive: true, force: true });
+    if (result.status !== 2) throw new Error(`exited ${result.status} on a tree it cannot read`);
+    if (!/no efforts directory/.test(result.stderr)) throw new Error(result.stderr);
+    if (result.stdout.trim().length > 0) throw new Error(`answered anyway: ${result.stdout}`);
+    return true;
+  });
+  assert('an observation that is not JSON is exit 2', () => {
+    const result = spawnSync(process.execPath, [RECONCILE, '--root', AEP, '--observed', '-'], {
+      encoding: 'utf8', input: 'not json at all',
+    });
+    return result.status === 2 && /not JSON/.test(result.stderr);
+  });
+
+  // Requirement 8, the parser. It says which shape it read, and a shape it does
+  // not recognise is an error rather than a confident empty answer: a caller
+  // reading no drift cannot otherwise tell it from nothing understood.
+  assert('the parser says it read GitHub, and counts what it read', () => {
+    const { out } = run(AGREES);
+    return out.startsWith('read       github  1 issues, 1 change requests\n');
+  });
+  assert('the parser reads GitLab shapes and says so', () => {
+    const { out } = run({
+      issues: [{ iid: 45, state: 'closed', labels: ['status: done'] }],
+      changeRequests: [{
+        iid: 46, state: 'merged', labels: ['status: done'], closesIssues: [{ iid: 45 }],
+      }],
+    });
+    if (!out.startsWith('read       gitlab')) throw new Error(out.split('\n')[0]);
+    const lines = lineFor(out, '45-aep-3');
+    if (lines.length !== 1 || !lines[0].startsWith('agree')) throw new Error(lines.join(' / '));
+    return true;
+  });
+  assert('a shape matching neither forge reports that it recognised nothing', () => {
+    const result = spawnSync(process.execPath, [RECONCILE, '--root', AEP, '--observed', '-'], {
+      encoding: 'utf8',
+      input: JSON.stringify({ issues: [{ id: 45, state: 'open' }], changeRequests: [] }),
+    });
+    if (result.status !== 2) throw new Error(`exited ${result.status} on a shape it cannot read`);
+    if (!/matches neither forge/.test(result.stderr)) throw new Error(result.stderr);
+    if (result.stdout.trim().length > 0) throw new Error(`answered anyway: ${result.stdout}`);
+    return true;
+  });
+
+  // The derived families only. `priority:` was set by a person when the effort
+  // opened, and a reconciliation that reported on it would be proposing to
+  // overwrite them, which is the failure the derived and initial split exists to
+  // prevent.
+  assert('a priority label is not compared and not reported', () => {
+    const { out, code } = run({
+      issues: [{
+        number: 45,
+        state: 'CLOSED',
+        labels: [{ name: '\u{1F3D4}️ priority: high' }, { name: '✔️ status: done' }],
+      }],
+      changeRequests: [pull(46, 'MERGED', 'status: done', [45])],
+    });
+    if (code !== 0) throw new Error(out);
+    return lineFor(out, '45-aep-3')[0].startsWith('agree');
+  });
+
+  // Ticket 47.04, corrected after review. Two defects, both found by running the
+  // script rather than reading it, and neither visible to any assertion above.
+  //
+  // The first: the open-after-merge finding tested `state === 'OPEN'`, and
+  // GitLab says `opened`. Upper-casing gave `OPENED`, which is not open to that
+  // test, so on GitLab the finding could never fire. It failed silently, which is
+  // why the only GitLab fixture here did not catch it: that one used a closed
+  // issue, where the right answer and the wrong answer agree.
+  assert('the open-after-merge finding fires on GitLab too, where the word differs', () => {
+    const { out, code } = run({
+      issues: [{ iid: 51, state: 'opened', labels: ['status: done'] }],
+      changeRequests: [{
+        iid: 52, state: 'merged', labels: ['status: done'], closesIssues: [{ iid: 51 }],
+      }],
+    });
+    const lines = lineFor(out, '51-branch-scope');
+    if (!lines.some((line) => line.includes('issue 51 open after change-request 52 merged'))) {
+      throw new Error(lines.join(' / ') || 'no line for the effort at all');
+    }
+    if (code !== 1) throw new Error(`exited ${code}`);
+    return true;
+  });
+  assert('an issue state neither forge uses is not quietly read as open', () => {
+    const { out } = run({
+      issues: [{ number: 51, state: 'ARCHIVED', labels: [{ name: 'status: done' }] }],
+      changeRequests: [pull(52, 'MERGED', 'status: done', [51])],
+    });
+    return !out.includes('open after change-request');
+  });
+
+  // The second: a field the caller never fetched was defaulted to empty, and
+  // empty is the opposite answer. Without `closingIssuesReferences` the change
+  // request stops selecting a terminal row, the expectation falls back to
+  // projecting `spec.md`, and the script instructs its caller to move a correct
+  // `status: done` back to `status: in review`. The file wins, so a run acts on
+  // that. It has to be an error, and the file's own doc comment already said so.
+  for (const [what, observation] of [
+    ['closing links', {
+      issues: [issue(45, 'CLOSED', 'status: done')],
+      changeRequests: [{ number: 46, state: 'MERGED', labels: [{ name: 'status: done' }] }],
+    }],
+    ['labels', {
+      issues: [{ number: 45, state: 'CLOSED' }],
+      changeRequests: [pull(46, 'MERGED', 'status: done', [45])],
+    }],
+  ]) {
+    assert(`an observation fetched without ${what} is exit 2, not an answer`, () => {
+      const { out, err, code } = run(observation);
+      if (code !== 2) throw new Error(`exited ${code} and said: ${out.trim()}`);
+      if (!/absent is not the same as empty|is not an array/.test(err)) throw new Error(err);
+      if (out.trim().length > 0) throw new Error(`answered anyway: ${out}`);
+      return true;
+    });
+  }
+
+  // The registration, which is what makes the rest of this reach a repository.
+  assert('reconcile.mjs is a payload script and not a build-only one', () =>
+    PAYLOAD_SCRIPTS.includes('reconcile.mjs') && !BUILD_ONLY_SCRIPTS.includes('reconcile.mjs'));
+  assert('reconcile.mjs is in the shipped manifest', () =>
+    PROTOCOL_FILES.includes('scripts/reconcile.mjs'));
+
+  fs.rmSync(path.dirname(midRun), { recursive: true, force: true });
 });
 
 // A ticket that traces to no requirement is an error. This is what the split of
@@ -5610,15 +6995,225 @@ section('labels', () => {
 
   // The status projection, as a table with a row per effort state. A missing row
   // is a state whose label nobody sets, and the effort then sits at whatever the
-  // previous state left behind.
-  const rows = policy.split('\n').filter((line) =>
-    line.startsWith('| ') && line.endsWith('|') && line.includes('status: '));
-  assert('the status projection covers every effort state', () => rows.length === 5);
-  if (rows.length !== 5) process.stdout.write(`        projection rows: ${rows.length}\n`);
+  // previous state left behind. The count is six rather than five, and it moved
+  // deliberately: the ladder gained a row for a change request closed without
+  // merging, and every row gained an owner column. Both change what a filter
+  // counting lines sees, so the number is re-derived from the ladder rather than
+  // relaxed, and a deleted row still fails here.
+  // Ticket 47.03. Read out of the ladder's own table rather than swept from the
+  // whole section. The sweep matched any line anywhere below that looked like a
+  // ladder row, so a row moved out of the ladder and into a second table kept
+  // every count and every comparison here passing while the table a person reads
+  // had one row fewer.
+  const LADDER_HEADER = '| The effort | Issue | Pull request | What moves it |';
+  const policyLines = policy.split('\n');
+  const ladderHead = policyLines.indexOf(LADDER_HEADER);
+  assert('the ladder stands under its own header', () => {
+    if (ladderHead === -1) throw new Error(`no line reads: ${LADDER_HEADER}`);
+    return true;
+  });
+  // The parse takes the first match, so one header is part of the anchor rather
+  // than a detail of it: a second table under the same header carrying a
+  // contradicting row would stand in the policy unread, and every comparison
+  // below would report the pair equal.
+  assert('the policy states the ladder once', () => {
+    const heads = policyLines.filter((line) => line === LADDER_HEADER).length;
+    if (heads !== 1) throw new Error(`${heads} tables stand under the ladder's header`);
+    return true;
+  });
+  assert('the ladder header is followed by its separator', () =>
+    /^\|( -+ \|)+$/.test(policyLines[ladderHead + 1] ?? ''));
+  const rows = [];
+  for (let i = ladderHead + 2; ladderHead !== -1 && i < policyLines.length; i += 1) {
+    if (!policyLines[i].startsWith('| ')) break;
+    rows.push(policyLines[i]);
+  }
+  assert('the status projection covers every effort state', () => rows.length === 6);
+  if (rows.length !== 6) process.stdout.write(`        projection rows: ${rows.length}\n`);
   for (const state of ['backlog', 'ready', 'in progress', 'in review', 'done']) {
     assert(`the projection reaches status: ${state}`, () =>
       policy.includes(`status: ${state}`));
   }
+
+  // Ticket 47.02. A row whose label nothing moves is the failure this section
+  // could not see: the terminal row named a state and no owner, so both objects
+  // stayed at `status: in review` after every merge until a person noticed. The
+  // owner is read out of the row's own last cell, positionally, so a row left
+  // empty fails rather than falling back to the cell beside it.
+  const cells = (row) => row.split('|').slice(1, -1).map((cell) => cell.trim());
+  assert('every ladder row carries an owner column', () =>
+    rows.every((row) => cells(row).length === 4));
+  const unowned = rows.filter((row) => (cells(row)[3] ?? '') === '');
+  assert('every ladder row names what moves it', () => unowned.length === 0);
+  if (unowned.length > 0) {
+    process.stdout.write(`        unowned: ${unowned.map((row) => cells(row)[0]).join(', ')}\n`);
+  }
+  assert('the policy states that every row names its owner', () =>
+    /\*\*Every row names what moves it\.\*\*/.test(policy));
+
+  // The terminal value and its two owners. Two rows reach it now, merged and
+  // closed without merging, and each names both mechanisms: a repository that
+  // declined the merge-time job still has to converge, so the reconciliation is
+  // never the optional half.
+  const terminal = rows.filter((row) => cells(row)[2] === '`status: done`');
+  assert('two rows reach the terminal value', () => terminal.length === 2);
+  assert('the ladder reaches the terminal value on a merge', () =>
+    terminal.some((row) => cells(row)[0] === 'merged'));
+  assert('the ladder reaches the terminal value closed without merging', () =>
+    terminal.some((row) => cells(row)[0] === 'closed without merging'
+      && cells(row)[1] === '`status: done`'));
+  assert('the merged row still says the pull request closes the issue', () =>
+    terminal.some((row) => cells(row)[0] === 'merged' && /closes it/.test(cells(row)[1])));
+  for (const row of terminal) {
+    const owner = cells(row)[3] ?? '';
+    assert(`the ${cells(row)[0]} row names the job that fires at merge`, () =>
+      /merge-time job/.test(owner));
+    assert(`the ${cells(row)[0]} row names the reconciliation that corrects it late`, () =>
+      /`reconcile\.mjs`/.test(owner));
+  }
+  assert('the policy says why the terminal value needs two owners', () =>
+    /\*\*a job the forge fires on its own merge event\*\*/.test(policy)
+    && /\*\*a reconciliation the next run computes\*\*/.test(policy));
+  assert('the policy states its own reason for keeping the terminal value', () =>
+    /a projection of the effort's state rather than a second copy of\nthe forge's/.test(policy)
+    && /keeps the family whole enough to filter on/.test(policy));
+  assert('the policy says an abandoned effort reaches the same value', () =>
+    /\*\*Closed without merging reaches the same value\.\*\*/.test(policy)
+    && /`flag: wontfix` says why it ended; `status: done` says/.test(policy));
+
+  // Ticket 47.03. The ladder now stands in two places: this table, which a
+  // person reads, and `STATUS_LADDER` in contract.mjs, which a script projects
+  // from. Nothing but this comparison holds the pair together, so it is written
+  // to fail from either side: a row in the policy with no row in the value fails
+  // here, and a row in the value with no row in the policy fails here too. The
+  // label is pulled out of the cell rather than compared against the whole of
+  // it, because the merged row's cell carries a clause about the closing keyword
+  // as well as the label, and that clause is checked above. A cell carrying no
+  // backticked label says so rather than falling back to its own text, which
+  // would let an unbackticked status in the policy normalise onto the value it
+  // is supposed to be checked against.
+  const labelIn = (cell) => (/`(status: [^`]+)`/.exec(cell) ?? [])[1]
+    ?? `no backticked label in "${cell}"`;
+  const asRow = ({ effort, issue, pullRequest }) => `${effort} | ${issue} | ${pullRequest}`;
+  const fromPolicy = rows.map((row) => {
+    const cell = cells(row);
+    return asRow({ effort: cell[0], issue: labelIn(cell[1]), pullRequest: labelIn(cell[2]) });
+  });
+  const fromContract = STATUS_LADDER.map(asRow);
+  const absent = fromPolicy.filter((row) => !fromContract.includes(row));
+  const invented = fromContract.filter((row) => !fromPolicy.includes(row));
+  assert('contract.mjs carries the ladder row for row', () => {
+    if (absent.length > 0 || invented.length > 0) {
+      throw new Error([
+        ...absent.map((row) => `in the policy, missing from STATUS_LADDER: ${row}`),
+        ...invented.map((row) => `in STATUS_LADDER, missing from the policy: ${row}`),
+      ].join('; '));
+    }
+    return true;
+  });
+  // Gated on the comparison above rather than merely written after it, which is
+  // what makes the next sentence true: its reader already knows every row is
+  // present and needs the one thing a bare false withholds, which row moved.
+  // Ungated it ran on a ladder missing a row and reported four rows moved,
+  // beside the check that had just named the real cause.
+  if (absent.length === 0 && invented.length === 0) {
+    assert('the policy and STATUS_LADDER state the rows in the same order', () => {
+      const moved = Array.from({ length: Math.max(fromPolicy.length, fromContract.length) })
+        .map((_, i) => (fromPolicy[i] === fromContract[i]
+          ? null
+          : `row ${i + 1}: the policy has "${fromPolicy[i] ?? 'nothing'}", `
+            + `STATUS_LADDER has "${fromContract[i] ?? 'nothing'}"`))
+        .filter(Boolean);
+      if (moved.length > 0) throw new Error(moved.join('; '));
+      return true;
+    });
+  }
+
+  // The two columns the value holds and the policy's table does not. Checking
+  // them for membership and cardinality is what a swapped pair survives: two
+  // rows can trade their `spec` values, or the terminal rows their
+  // `changeRequest`, and a check asking only which values appear sees an
+  // unchanged set. So each value is tied to the row carrying it.
+  //
+  // `spec` is read back out of the policy rather than restated here, which is
+  // what keeps the policy the single source: three of the four projecting rows
+  // name their status in their own wording, and `effort` is that wording, held
+  // equal to the policy's by the comparison above. The fourth, `the runner is
+  // working`, names none, because taking the first ticket moves the label
+  // without moving the field, so it is pinned in NAMES_NO_STATUS below.
+  //
+  // That pin is a stated gap rather than a hole, and one property is why: a row
+  // naming exactly one status takes the one it names, so the pin is reached only
+  // for a row naming none. A wrong pin for a row that states its own status is
+  // inert, and so is a key for a row that no longer exists, which is what stops
+  // this map from being widened to silence a failure.
+  //
+  // `changeRequest` is not derived, and cannot be: the state that selects a
+  // terminal row is exactly what the ladder has no column for. So
+  // SELECTS_A_TERMINAL_ROW is a pin, a flat second copy of that column, and it
+  // is written to fail closed. A terminal row it does not know throws rather
+  // than passing, so rewording a terminal row in the policy takes the pin down
+  // with it instead of quietly excusing the row.
+  const projecting = STATUS_LADDER.filter((row) => row.changeRequest === null);
+  const terminalRows = STATUS_LADDER.filter((row) => row.changeRequest !== null);
+  const NAMES_NO_STATUS = { 'the runner is working': 'accepted' };
+  const SELECTS_A_TERMINAL_ROW = { merged: 'merged', 'closed without merging': 'closed' };
+
+  assert('every projecting row names a spec status', () =>
+    projecting.length > 0 && projecting.every((row) => SPEC_STATUSES.includes(row.spec)));
+  assert('every spec status reaches a row', () =>
+    SPEC_STATUSES.every((status) => STATUS_LADDER.some((row) => row.spec === status)));
+
+  // The one claim the value's doc comment makes that its own rows could stop
+  // supporting. Rewording the policy's third row so it names a status, moving
+  // the value's `effort` to match and its `spec` with it, satisfies every check
+  // above: the rows still agree, every status still reaches a row, and the
+  // ladder now says `status: in progress` projects from something other than
+  // `accepted`. That is the association the value warns a consumer to respect,
+  // so it is pinned here rather than left to the coverage check, which notices a
+  // misread only when it strands a status with no row at all.
+  assert('accepted reaches ready and in progress, and no other row', () => {
+    const reached = STATUS_LADDER.filter((row) => row.spec === 'accepted').map((row) => row.issue);
+    const want = ['status: ready', 'status: in progress'];
+    if (JSON.stringify(reached) !== JSON.stringify(want)) {
+      throw new Error(`accepted reaches ${JSON.stringify(reached)}, and the ladder says ${JSON.stringify(want)}`);
+    }
+    return true;
+  });
+  for (const row of projecting) {
+    assert(`the ladder row "${row.effort}" projects the spec status it states`, () => {
+      const named = SPEC_STATUSES.filter((status) => row.effort.includes(status));
+      if (named.length > 1) throw new Error(`"${row.effort}" names ${named.join(' and ')}`);
+      const want = named.length === 1 ? named[0] : NAMES_NO_STATUS[row.effort];
+      if (want === undefined) {
+        throw new Error(`"${row.effort}" names no spec status and is pinned nowhere`);
+      }
+      if (row.spec !== want) {
+        throw new Error(`carries ${JSON.stringify(row.spec)}, and its row says ${want}`);
+      }
+      return true;
+    });
+  }
+
+  assert('the terminal rows turn on the change request and not on a file', () =>
+    terminalRows.length === Object.keys(SELECTS_A_TERMINAL_ROW).length
+    && terminalRows.every((row) => row.spec === null));
+  for (const row of terminalRows) {
+    assert(`the ladder row "${row.effort}" names the state that selects it`, () => {
+      const want = SELECTS_A_TERMINAL_ROW[row.effort];
+      if (want === undefined) {
+        throw new Error(`"${row.effort}" is a terminal row this check does not know`);
+      }
+      if (row.changeRequest !== want) {
+        throw new Error(`carries ${JSON.stringify(row.changeRequest)}, and it is the ${want} row`);
+      }
+      return true;
+    });
+  }
+  assert('nothing but a terminal row reaches the terminal value', () =>
+    STATUS_LADDER.filter((row) => row.issue === 'status: done').length === terminalRows.length
+    && terminalRows.every((row) => row.issue === 'status: done'
+      && row.pullRequest === 'status: done'));
 
   // size:, and where its thresholds live. A size label whose thresholds are
   // stated somewhere else is one nobody reading the tracker can check.
@@ -5894,6 +7489,45 @@ section('the specification', () => {
       "**Where the repository has no tracker, the effort is a branch and merging it is the human's.**",
     )
     && /MUST NOT merge\*\*, with a tracker or without/.test(ticketing));
+
+  // Ticket 47.02. Read literally, the prohibition on labelling a natively
+  // modelled fact and the ladder's terminal value contradicted each other: every
+  // forge models merged, and `status: done` is the value the ladder ends on. The
+  // clause is narrowed rather than dropped, so both halves are asserted here.
+  // Without the first, an amendment that read as general permission to add
+  // labels would pass this section unremarked.
+  assert('specs.md still forbids a label for a fact the tracker models natively', () =>
+    ticketing.includes(
+      '**A conforming implementation MUST NOT create a label for a fact the tracker already models.**',
+    ));
+  assert('specs.md exempts the terminal value of a status family AEP maintains', () =>
+    ticketing.includes(
+      '**The one exception is the terminal value of a `status:` family AEP maintains.**',
+    ));
+  assert('the exception states that a family with a hole cannot be filtered on', () =>
+    /a family with a hole in it cannot be filtered on/.test(ticketing));
+  assert('the exception states the value projects the effort rather than the forge', () =>
+    /a projection of the effort's own state rather than a second copy of the forge's/
+      .test(ticketing));
+  assert('the exception narrows the prohibition rather than lifting it', () =>
+    /This narrows the prohibition rather than lifting it/.test(ticketing)
+    && /outside a family AEP maintains, a label for a natively modelled fact stays forbidden/
+      .test(ticketing));
+  assert('the conformance list carries the narrowed clause too', () =>
+    /already models, save the terminal value of a `status:` family AEP maintains/.test(specText));
+
+  // The ladder asserted against the amended clause rather than against the old
+  // one: what the exception preserves is the value the policy's ladder actually
+  // ends on, so neither document can move without the other going red.
+  const ladder = readSrc('policies', 'execution.md').split(String.fromCharCode(13)).join('');
+  const ladderRows = ladder.split('\n').filter((line) =>
+    line.startsWith('| ') && line.endsWith('|') && line.includes('status: '));
+  const endsOn = ladderRows.length > 0
+    ? ladderRows.at(-1).split('|').slice(1, -1).map((cell) => cell.trim())[2]
+    : '';
+  assert('the ladder ends on exactly the value the amended clause preserves', () =>
+    endsOn === '`status: done`'
+    && ticketing.includes('the terminal value of a `status:` family AEP maintains'));
 
   // Requirement 61. The upgrade grew a numbered duty, so the list has to carry
   // it: a procedure described in prose below a list that does not name it is a

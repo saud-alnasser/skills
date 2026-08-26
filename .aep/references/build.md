@@ -25,7 +25,14 @@ node src/scripts/install.mjs --into <dir>      # install a distribution into a r
 node .aep/scripts/index.mjs                    # regenerate .aep/index.md
 node .aep/scripts/validate.mjs                 # check an installed tree
 node .aep/scripts/frontier.mjs <effort>        # what can start now, and what waits on what
+node .aep/scripts/reconcile.mjs --observed -   # which efforts tracker labels disagree with
 ```
+
+`reconcile.mjs` fetches nothing. It reads an observation the caller already
+fetched, on stdin or from a file, and exits 1 where anything disagrees. With no
+observation it reports every effort `unobserved` and exits 0, which is the answer
+for a repository with no tracker rather than a fault. `.aep/references/github.md`
+carries the fetch that produces the observation.
 
 `frontier.mjs` exits 0 while work remains, 1 when nothing is unresolved, and 2
 when the effort or its tickets cannot be read. The third is deliberate: an
