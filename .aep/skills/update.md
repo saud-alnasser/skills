@@ -32,8 +32,8 @@ directory *outside* `.aep/` says 1.x.
 
 ## Procedure
 
-1. **Read the declared release** — the `aep:` field on `.aep/protocol.md` — and
-   compare it with the running distribution's. Equal, with a clean tree, means
+1. **Read the declared release** — the `version:` field on `.aep/protocol.md` —
+   and compare it with the running distribution's. Equal, with a clean tree, means
    there is nothing to do; say so and stop.
 2. **Classify every file under `.aep/`** against the manifest the running
    release carries (`[[policies/artifacts]]`). Protocol-owned means *named by the

@@ -76,33 +76,37 @@ the repository actually documented.
 
 ## 2 — Convert
 
+Which directory 1.x lived in is the one thing about a 1.x tree that varied, so
+where a row names a path, the column names a placeholder rather than a directory: `<runtime>` is whichever
+one the runtime owns — `.claude`, `.cursor`, `.codex`.
+
 | 1.x | 2.0 | Outcome |
 | --- | --- | --- |
-| `contexts/repository.md` | `contexts/repository.md` | converted — replaces the seeded draft |
-| `contexts/<domain>.md` | `contexts/<domain>.md` | converted |
-| the entrypoint's repository-describing prose | `contexts/repository.md` | **converted** — 2.0's entrypoint only points, so this content moves rather than dying with the file |
+| `<runtime>/contexts/repository.md` | `.aep/contexts/repository.md` | converted — replaces the seeded draft |
+| `<runtime>/contexts/<domain>.md` | `.aep/contexts/<domain>.md` | converted |
+| the entrypoint's repository-describing prose | `.aep/contexts/repository.md` | **converted** — 2.0's entrypoint only points, so this content moves rather than dying with the file |
 | the entrypoint file itself | a pointer at `.aep/protocol.md` | **converted, and not optional** — the runtime auto-loads it, so a 1.x entrypoint left in place keeps describing 1.x on every turn. Install writes `AGENTS.md`; a runtime's own entrypoint is rewritten to point, never deleted |
-| `tools/<tool>.md` | `references/<tool>.md` | converted — wins over any seed for the same tool |
-| `policies/version-control.md`, `policies/tracker.md` | `rules/version-control.md`, a rule or `references/` | converted — these two were derived per repository |
-| other `policies/<concern>.md` | a **rule**, or nothing | see below — never a policy |
-| `rules/<name>.md`, repository-authored | `rules/<name>.md` | converted |
-| `rules/<name>.md`, framework | — | superseded by the shipped `policies/` and the bootstrap's invariants |
-| `protocol.md` § Deviations entries | a repository rule per deviation | **converted** — each keeps its reason and the release it was declared under |
-| `protocol.md`, the rest | `.aep/protocol.md`, installed | superseded |
-| `decisions/NNNN-*.md` | a rule, or left in place | see below |
-| `designs/<slug>.md` | `efforts/<slug>/spec.md` | converted |
-| `tickets/<effort>/spec.md` | `efforts/<effort>/spec.md` | converted — collides with the row above where both exist |
-| `tickets/<effort>/issues/NN-*.md` | `efforts/<effort>/tickets/NN-*.md` | converted, fields and all |
-| `evidence/research/*.md` | `efforts/<effort>/evidence/research/*.md` | converted once an effort is known |
-| `evidence/prototypes/*.md` | `efforts/<effort>/evidence/prototypes/*.md` | converted once an effort is known |
-| `evidence/out-of-scope/*.md` | a `[[contexts]]` entry | converted — `[[skills/specify/out-of-scope]]` has the shape |
-| `evidence/discussions/*.md` | the spec it concluded into | converted where it concluded something; a conclusion nobody applied is a finding |
-| `evidence/drift/*.md` | — | unrepresented. Drift is read live now |
-| `*/map.md` | `index.md` | superseded — every index is derived |
-| `modes/*.md` | — | superseded by 2.0's eight |
-| `scripts/*` serving AEP | `.aep/scripts/` | superseded |
-| `scripts/*` serving the repository | wherever the repository keeps its own | **moved, never claimed** — it was never AEP's |
-| `settings.json` | runtime configuration | unrepresented here; it stays the runtime's |
+| `<runtime>/tools/<tool>.md` | `.aep/references/<tool>.md` | converted — wins over any seed for the same tool |
+| `<runtime>/policies/version-control.md`, `<runtime>/policies/tracker.md` | `.aep/rules/version-control.md`, a rule or `references/` | converted — these two were derived per repository |
+| other `<runtime>/policies/<concern>.md` | a **rule**, or nothing | see below — never a policy |
+| `<runtime>/rules/<name>.md`, repository-authored | `.aep/rules/<name>.md` | converted |
+| `<runtime>/rules/<name>.md`, framework | — | superseded by the shipped `policies/` and the bootstrap's invariants |
+| `<runtime>/protocol.md` § Deviations entries | a repository rule per deviation | **converted** — each keeps its reason and the release it was declared under |
+| `<runtime>/protocol.md`, the rest | `.aep/protocol.md`, installed | superseded |
+| `<runtime>/decisions/NNNN-*.md` | a rule, or left in place | see below |
+| `<runtime>/designs/<slug>.md` | `.aep/efforts/<slug>/spec.md` | converted |
+| `<runtime>/tickets/<effort>/spec.md` | `.aep/efforts/<effort>/spec.md` | converted — collides with the row above where both exist |
+| `<runtime>/tickets/<effort>/issues/NN-*.md` | `.aep/efforts/<effort>/tickets/NN-*.md` | converted, fields and all |
+| `<runtime>/evidence/research/*.md` | `.aep/efforts/<effort>/evidence/research/*.md` | converted once an effort is known |
+| `<runtime>/evidence/prototypes/*.md` | `.aep/efforts/<effort>/evidence/prototypes/*.md` | converted once an effort is known |
+| `<runtime>/evidence/out-of-scope/*.md` | a `[[contexts]]` entry | converted — `[[skills/specify/out-of-scope]]` has the shape |
+| `<runtime>/evidence/discussions/*.md` | the spec it concluded into | converted where it concluded something; a conclusion nobody applied is a finding |
+| `<runtime>/evidence/drift/*.md` | — | unrepresented. Drift is read live now |
+| `<runtime>/*/map.md` | `.aep/index.md` | superseded — every index is derived |
+| `<runtime>/modes/*.md` | — | superseded by 2.0's eight |
+| `<runtime>/scripts/*` serving AEP | `.aep/scripts/` | superseded |
+| `<runtime>/scripts/*` serving the repository | wherever the repository keeps its own | **moved, never claimed** — it was never AEP's |
+| `<runtime>/settings.json` | runtime configuration | unrepresented here; it stays the runtime's |
 | `position/`, `worktrees/` | recreated, gitignored | superseded. Per-clone; nothing carries |
 
 ### Policies
@@ -115,11 +119,12 @@ means the opposite of what it meant here:
 | whose | this repository's, derived per repository | AEP's, identical everywhere |
 | may the repository edit it | yes — that was the point | **never** |
 
-So everything in `policies/` is the repository's knowledge, and the destination
-for repository knowledge is `rules/`. **Converting one into `policies/` would
-hand the repository's own decisions to the protocol, and the next upgrade would
-overwrite them.** That is the single worst outcome available in this operation,
-and the matching name is what makes it reachable.
+So everything in a 1.x `policies/` is the repository's knowledge, and the
+destination for repository knowledge is `rules/` in the new tree. **Converting
+one into a shipped policy would hand the repository's own decisions to the
+protocol, and the next upgrade would overwrite them.** That is the single worst
+outcome available in this operation, and the matching name is what makes it
+reachable.
 
 Each policy resolves three ways:
 

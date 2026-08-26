@@ -79,6 +79,21 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '3.4.0',
+    check:
+      'validate.mjs now looks one level outside the tree. Until this release an artifact ' +
+      'written to your repository root instead of into .aep/ was not wrong to the check, ' +
+      'it was absent, so a whole effort could sit beside .aep/ while validate reported no ' +
+      'failures. It now reads the root\'s immediate children and reports a directory ' +
+      'holding AEP artifacts, naming what it found, where it sits, and where it belongs. ' +
+      'A tree that validated yesterday can fail today, and what changed is that a defect ' +
+      'you already had became visible. The fix is to move the directory under .aep/ and ' +
+      'run validate again. AEP will not move it for you: relocating your files is a write ' +
+      'nobody asked for and the right destination is not always the obvious one. Your own ' +
+      'templates/, references/, or contexts/ at the root is not a finding, because ' +
+      'recognition is by what the files are and never by the name of the directory.',
+  },
+  {
     since: '3.0.0',
     check:
       'Two skills are gone and one moved. /commit is no longer a command: landing is ' +

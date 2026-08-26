@@ -21,8 +21,8 @@ is happening and like foresight afterwards.
 ## Procedure
 
 1. **Read the scope, then the spec.** `node .aep/scripts/scope.mjs read`, quoted:
-   it names the effort whose `efforts/<effort>/spec.md` this reads in full, and a
-   non-empty claim confines the run to the efforts it names
+   it names the effort whose `.aep/efforts/<effort>/spec.md` this reads in full,
+   and a non-empty claim confines the run to the efforts it names
    (`[[policies/execution]]`). The claim and the isolation go in the `Position` of
    the turn this is a stage of (`[[policies/reporting]]`).
 2. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]` and

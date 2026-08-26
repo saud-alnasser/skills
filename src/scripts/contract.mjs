@@ -124,6 +124,30 @@ export function isProtocolPath(relative) {
   return PROTOCOL_FILES.includes(relative);
 }
 
+/**
+ * A note the repository wrote beside a skill the release ships.
+ *
+ * The one file a repository may add inside a protocol directory. A skill's own
+ * file is paid for on every invocation, so knowledge that applies only to one
+ * branch of a run lives beside it and is reached by a link; that is the shape
+ * that keeps *this is how we prototype here* out of a file an upgrade
+ * replaces. Ownership is a lookup on the path, so a note the release does not
+ * ship is not on the manifest and an upgrade preserves it exactly as it
+ * preserves any other file the repository owns.
+ *
+ * Exactly one level deep, and beside a **shipped** skill. A note is a branch of
+ * a skill, so a directory answering to no skill is not one, and nesting deeper
+ * would be depth reached from nothing. The skill set itself is fixed: a
+ * top-level file here that the manifest does not name is still refused.
+ */
+export function isRepositoryNote(relative) {
+  const parts = relative.split('/');
+  return parts.length === 3
+    && parts[0] === 'skills'
+    && relative.endsWith('.md')
+    && isProtocolPath(`skills/${parts[1]}.md`);
+}
+
 /** The top-level directory of a path under `.aep/`, or null for a root file. */
 export function topDirOf(relative) {
   const parts = relative.split('/');
@@ -284,8 +308,16 @@ export const SKILLS = [
   'prose',
 ];
 
-/** Files whose `kind` requires a `use-when`, by the directory they live in. */
-export const USE_WHEN_REQUIRED_DIRS = ['policies', 'rules', 'references', 'contexts'];
+/**
+ * Files whose `kind` requires a `use-when`, by the directory they live in.
+ *
+ * `skills` is here for the note a repository may write beside a shipped skill.
+ * A note is selected on exactly the terms every other conditionally-loaded
+ * artifact is, and until that path was permitted at all the requirement was
+ * enforced by refusing it outright. Every shipped skill carries one already, so
+ * the directory costs the payload nothing.
+ */
+export const USE_WHEN_REQUIRED_DIRS = ['policies', 'rules', 'references', 'contexts', 'skills'];
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
 
@@ -387,21 +419,39 @@ export function readArtifact(file) {
 }
 
 /**
- * Every `[[wiki-link]]` target in a body, in order of appearance.
+ * A body with its fenced blocks removed, and nothing else touched.
  *
- * Only fenced blocks are stripped. A link inside a fence is the syntax being
- * *shown*, in a template or in an example, rather than a reference to a file
- * that must exist.
+ * Fenced content is being *shown*, in a template or in an example, so a check
+ * reading a body for claims about the tree reads it through this first.
  *
  * Inline code spans are deliberately NOT stripped, even though they also hold
  * examples occasionally. The convention throughout the payload is to wrap real
  * links in backticks so they render as monospace, so stripping inline code
  * silently excused almost every link in the corpus from being checked, a
  * checker that passes by not looking. Generic placeholders are written without
- * bracket syntax instead, which costs a word and keeps the check honest.
+ * bracket syntax instead, which costs a word and keeps the check honest. A
+ * caller wanting spans gone too is asking for that trade a second time, from a
+ * call site where none of it is visible.
+ *
+ * The opening and closing fences may be indented, which is not decoration: this
+ * corpus puts most of its examples inside numbered list items, where the fence
+ * is indented to the item's content. Anchored at column zero the strip skipped
+ * every one of them, so a path or a field name being *shown* was read as one
+ * being written. A tilde fence and four backticks wrapping three are still read
+ * as prose, and neither appears in the corpus.
+ */
+export function outsideFences(body) {
+  return body.replace(/^[ 	]*```[\s\S]*?^[ 	]*```/gm, '');
+}
+
+/**
+ * Every `[[wiki-link]]` target in a body, in order of appearance.
+ *
+ * Read outside fences: a link inside one is the syntax being *shown* rather
+ * than a reference to a file that must exist.
  */
 export function wikiLinks(body) {
-  const prose = body.replace(/^```[\s\S]*?^```/gm, '');
+  const prose = outsideFences(body);
   const links = [];
   const pattern = /\[\[([^\]|#]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
   let match;

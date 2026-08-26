@@ -4,7 +4,7 @@ use-when: "auditing what the bootstrap must contain, or porting AEP to a runtime
 
 # Template — protocol.md
 
-**You do not write this file.** `protocol.md` is `owner: protocol`, installed
+**You do not write this file.** `protocol.md` is the protocol's, installed
 verbatim, and replaced by every upgrade (`[[policies/artifacts]]`). This template
 records the shape it must hold — so an audit can check it, and so a port to
 another runtime knows what the bootstrap is obliged to answer.

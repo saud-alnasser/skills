@@ -1,10 +1,10 @@
 ---
-use-when: "writing a local task under efforts/<effort>/tickets/"
+use-when: "writing a local task under .aep/efforts/<effort>/tickets/"
 ---
 
 # Template — local task
 
-Copy to `efforts/<effort>/tickets/<NN>-<slug>.md`. **Every task is a file
+Copy to `.aep/efforts/<effort>/tickets/<NN>-<slug>.md`. **Every task is a file
 here**, whatever tracker the repository uses: the tracker carries the effort,
 and a task's `blocked-by` is an edge a script reads rather than prose somebody
 maintains.

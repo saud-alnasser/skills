@@ -44,7 +44,7 @@ delete, and the human disposes.
    | **orphaned effort** | `status: implemented`, no open tasks, nothing references it | keep; it is the record |
    | **abandoned effort** | `status: draft`, untouched for long, superseded | **ask** — draft is not the same as dead |
    | **dead reference** | describes a tool the repository no longer uses | **ask** |
-   | **unreachable note** | a file under `skills/<skill>/` that no skill, rule, or context links to | **repair** — add the link, or ask. Depth nothing reaches is depth nobody has |
+   | **unreachable note** | a file under `.aep/skills/<skill>/` that no skill, rule, or context links to | **repair** — add the link, or ask. Depth nothing reaches is depth nobody has |
    | **empty scaffolding** | `evidence/` or `tickets/` with nothing in them | **remove** |
 
 3. **Verify each candidate against the repository before proposing it.** A
@@ -71,7 +71,8 @@ delete, and the human disposes.
   when its effort is gone entirely.
 - **Never delete an effort's `spec.md`.** An implemented spec is the record of
   why the code looks like this.
-- **Never delete a `owner: repository` artifact without the human's word.**
+- **Never delete an artifact the repository owns without the human's word** —
+  anything under `rules/`, `contexts/`, `references/`, or `efforts/`.
 - Repair beats removal wherever the artifact still has a subject. A broken link
   usually means something moved, not that the relationship ended.
 

@@ -20,7 +20,7 @@ It is both the protocol's source and one of its consumers.
 | Path | Is |
 | --- | --- |
 | `specs.md` | the **normative specification**. It defines the protocol; the implementation conforms to it or amends it in the same change |
-| `src/` | what ships — the payload, the seeds, the templates, the scripts, and the Claude adapter |
+| `src/` | what ships: the payload, the seeds, the templates, the scripts, and the committed runtime adapters |
 | `.aep/` | this repository's own installation, produced by running the installer on `src/` |
 | `.claude-plugin/` | the marketplace, publishing the adapter in `src/` as the plugin |
 
@@ -39,11 +39,14 @@ repository to prove the result validates. **A change that adds a checkable claim
 without an assertion is untested by construction** — move the suite in the same
 pass.
 
-Regenerate the Claude adapter whenever a skill or agent changes:
+Regenerate the runtime adapters whenever a skill or agent changes:
 
 ```
 node src/scripts/adapters.mjs
 ```
+
+It writes every committed target. `TARGETS` in that file is the list, and
+`--target <runtime>` narrows it to one.
 
 Cutting a release is one command, and it stamps only what changed:
 
@@ -51,5 +54,7 @@ Cutting a release is one command, and it stamps only what changed:
 node src/scripts/release.mjs <version>
 ```
 
-**`aep:` is the release an artifact's content last changed in.** Never restamp by
-hand — a sweep destroys the only information the field carries.
+**What changed is decided by `src/stamps.json`, one content hash per shipped
+artifact.** Never hand-edit it. The `aep:` frontmatter field this used to work
+through was retired in 3.0.0, so an artifact no longer carries the release it
+last changed in; the baseline does.

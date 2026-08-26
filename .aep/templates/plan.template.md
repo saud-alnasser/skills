@@ -4,7 +4,7 @@ use-when: "writing an effort's plan.md, the technical approach behind a settled 
 
 # Template — effort plan
 
-Copy to `efforts/<effort>/plan.md`. Written by `/plan`, and **only where the
+Copy to `.aep/efforts/<effort>/plan.md`. Written by `/plan`, and **only where the
 approach is not obvious** — a change with one reasonable shape does not need a
 file saying so.
 

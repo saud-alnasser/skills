@@ -1,5 +1,95 @@
 # Changelog
 
+## 3.4.0
+
+Shipped text made claims about the implementation and nothing tied the two
+together. Three failed in one week, each caught by a person, each with a green
+suite: a path with no root, an entrypoint describing a frontmatter field a
+release had retired, and a skill sending its output to a file the specification
+had reassigned two releases earlier.
+
+A path with no root is the sharpest of the three, because following the
+instruction literally writes a protocol artifact outside the protocol tree,
+where nothing indexes it, nothing validates it, and the ownership rules reach
+no opinion about it at all.
+
+### Added
+
+- **An artifact written outside `.aep/` fails validation.** `validate.mjs` reads
+  the repository root's immediate children and reports a directory holding AEP
+  artifacts, naming what it found, where it sits, and where it belongs. Until
+  now such an artifact was not wrong to the check, it was absent, and absent is
+  indistinguishable from never having existed.
+
+  Recognition is by what a file is and never by the name of the directory
+  holding it. Your own `templates/`, `references/`, `contexts/`, or `scripts/`
+  at the root is not a finding, because a check that fires on ordinary
+  repositories teaches people it is noise and after that it catches nothing. It
+  reports and moves nothing: relocating your files is a write nobody asked for
+  and the right destination is not always the obvious one.
+
+- **The bootstrap states the convention for paths as well as for links.** A
+  filesystem path naming an AEP artifact carries the `.aep/` root where it has
+  two segments or more; a single-segment area name such as `policies/` stays
+  bare. The reason for that split, rather than a uniform prefix or a leading
+  slash, is recorded in the artifacts policy where an author will meet it.
+
+- **A retired frontmatter field cannot be described as one a file carries.** The
+  check reads the list a release already edits when it retires something, so the
+  next retirement is covered without a new assertion. Its unit is the sentence,
+  because a field is named legitimately in order to say it is gone and
+  illegitimately in order to say what it holds, and only the words around it
+  separate the two.
+
+- **A skill's declared output is checked against the specification's own table.**
+  A release that reassigns an output edits that table, and the table is then what
+  fails the skill.
+
+### Changed
+
+- **Thirty files now say where their paths start from.** Sixty-five sites across
+  the skills, the policies, the templates, the agents, the bootstrap, the seeds,
+  and the generated adapters. The migration table's 1.x column takes `<runtime>/`
+  rather than `.aep/`, because 1.x lived in whichever directory the runtime
+  owned and this repository's own text names three of them.
+
+- **Ten sites stopped describing the retired `owner:` field as current.** Five
+  templates, two skills, an agent, and the version-control seed. Ownership has
+  been a fact about location since 3.0.0, and each of these now names the
+  directory that answers the question instead of a field nothing carries. The
+  seed mattered most: it is written once into a repository and never touched
+  again, so a stale claim there had no route by which it would ever be corrected.
+
+- **A repository's own note beside a shipped skill validates.** The
+  specification has said since 3.0.0 that a repository may add one, calling it
+  the extension point that keeps *this is how we prototype here* out of a file
+  an upgrade replaces, and the validator refused it for exactly as long. It is
+  accepted now at `.aep/skills/<skill>/<note>.md`, one level deep and beside a
+  skill the release ships. The skill set itself is unchanged: a top-level file
+  under `skills/` that the manifest does not name is still refused, and no other
+  protocol directory gains anything.
+
+- **The skill template stops offering an extension point that does not exist.**
+  The conforming skill set is fixed, and `validate.mjs` has refused a file under
+  `skills/` that the release does not ship since 3.0.0, but the template's own
+  trigger read "adding a capability this repository wants alongside the shipped
+  skills". It now says what a repository may actually add: a note beside a
+  shipped skill, with governance under `rules/`, orientation under `contexts/`,
+  and tool operation under `references/`.
+
+- **The entrypoint is checked rather than excused.** It kept one exemption, from
+  the prohibitions the reporting policy fixes for prose, and had inherited from
+  it a pass on every claim it made about the implementation. Every backticked
+  path an entrypoint names must now exist, every command it shows must name a
+  script that exists, and every flag it documents must be one that command
+  accepts.
+
+### Upgrading
+
+A tree that validated before this release can fail after it, and what changed is
+that a defect you already had became visible. The fix is to move the directory
+under `.aep/` and run validate again. Nothing here moves it for you.
+
 ## 3.3.0
 
 3.2.0 moved the work into surfaces. `/specify` creates the effort branch into a
@@ -148,7 +238,7 @@ identity is not exclusion and 3.1.0 shipped identity.
 
 - **`position.mjs` carried a raw NUL byte** as its fingerprint separator, so grep
   treated the file as binary and refused to read it. Every guard sweeping the
-  shipped tree was passing on this file by not looking at it. Written `' '`
+  shipped tree was passing on this file by not looking at it. Written `'\u0000'`
   instead, and the hashed byte is unchanged.
 
 - **Argument parsing took a flag's value as the command**, so

@@ -135,7 +135,7 @@ no other tracker object — not per ticket, not per wave, not per review.
 | Lives in the tracker | Lives in the repository |
 | --- | --- |
 | the issue, whose body is `spec.md` | `spec.md` and `plan.md` themselves |
-| the pull request, carrying the approach, the tickets, and the run log | the tickets, under `efforts/<effort>/tickets/` |
+| the pull request, carrying the approach, the tickets, and the run log | the tickets, under `.aep/efforts/<effort>/tickets/` |
 | labels, as a projection of what those files say | the dependency graph, as `blocked-by` |
 
 **A ticket is never a tracker object, and the dependency graph never leaves the

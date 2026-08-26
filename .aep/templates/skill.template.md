@@ -1,10 +1,14 @@
 ---
-use-when: "adding a capability this repository wants alongside the shipped skills"
+use-when: "authoring a skill for the protocol, or a note beside a shipped one"
 ---
 
 # Template — skill
 
-Copy to `skills/<name>.md`. A skill the repository adds is `owner: repository`.
+**The conforming skill set is fixed, and a repository does not add to it.** What
+a repository may add is a **note** beside a shipped skill, whose shape is below;
+its own governance goes under `rules/`, orientation under `contexts/`, and how a
+tool is operated here under `references/`. A skill is authored in the protocol,
+at `.aep/skills/<name>.md`, and this records the shape it takes.
 
 ```markdown
 ---
@@ -39,7 +43,7 @@ The skill that usually follows.
 ## Depth goes beside it, not in it
 
 Knowledge needed only when a run takes a particular branch goes in
-`skills/<name>/<note>.md`, linked from the skill. The skill file is read on
+`.aep/skills/<name>/<note>.md`, linked from the skill. The skill file is read on
 **every** invocation; a note is read only by the run that needs it.
 
 ```markdown
@@ -52,11 +56,11 @@ use-when: "<the branch this is for — not its topic>"
 What this covers, and the neighbouring branch it is not.
 ```
 
-A note declares no `mode` — the skill reaching it has already entered one — and
-**no `report`**, because it is reached from inside a run rather than invoked and
-opens no report of its own (`[[policies/reporting]]`). It never governs. **An unlinked note is unreachable**, so add the link in the same
-change. A repository may add one beside a shipped skill: declare
-`owner: repository`, and link it from a rule or context the repository owns.
+A note **opens no report of its own**: it is reached from inside a run rather
+than invoked, so it is a stage of that run (`[[policies/reporting]]`). It never
+governs. **An unlinked note is unreachable**, so add the link in the same
+change. A repository may add one beside a shipped skill, and link it from a rule
+or context the repository owns.
 
 ## What a skill is not
 

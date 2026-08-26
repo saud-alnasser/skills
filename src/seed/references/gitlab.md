@@ -25,8 +25,8 @@ Reading is always allowed; `[[policies/authority]]` still governs writing.
 ## An effort here: one issue, one merge request
 
 **AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
-tickets stay in the repository under `efforts/<effort>/tickets/`, and so does the
-dependency graph.
+tickets stay in the repository under `.aep/efforts/<effort>/tickets/`, and so
+does the dependency graph.
 
 | The fact | Carried by | Never |
 | --- | --- | --- |
@@ -36,9 +36,9 @@ dependency graph.
 | draft, accepted, implemented | **`spec.md`'s `status:`**, projected onto a label | a label that is the source of truth |
 
 ```sh
-glab issue create --title "<effort>" --description "$(cat efforts/<effort>/spec.md)"
+glab issue create --title "<effort>" --description "$(cat .aep/efforts/<effort>/spec.md)"
 glab mr create --draft --title "<effort>" --description "$(cat <file>)"
-glab issue update <id> --description "$(cat efforts/<effort>/spec.md)"
+glab issue update <id> --description "$(cat .aep/efforts/<effort>/spec.md)"
 glab mr update <id> --description "$(cat <file>)"
 glab mr update <id> --ready                  # converge found no gap
 
@@ -114,7 +114,7 @@ every project in the group, so creating one there reaches further than it looks.
 | --- | --- | --- |
 | what the effort is | one issue per effort, description `spec.md` | native |
 | what it will land as | one draft merge request per effort | native |
-| which tickets exist, and what gates each | files under `efforts/<effort>/tickets/` | **not in this tracker** |
+| which tickets exist, and what gates each | files under `.aep/efforts/<effort>/tickets/` | **not in this tracker** |
 | the effort's state | `spec.md`'s `status:`, projected onto a label | projection |
 
 ## Referencing a task from a commit

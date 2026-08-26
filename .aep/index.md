@@ -82,15 +82,16 @@ Start at [[protocol]].
 | [[templates/reference.template]] | recording how a tool is actually operated in this repository | — |
 | [[templates/research.template]] | recording what an investigation established | — |
 | [[templates/rule.template]] | adding a rule this repository discovered about how work must be done here | — |
-| [[templates/skill.template]] | adding a capability this repository wants alongside the shipped skills | — |
+| [[templates/skill.template]] | authoring a skill for the protocol, or a note beside a shipped one | — |
 | [[templates/spec.template]] | writing or extending an effort's spec.md | — |
-| [[templates/ticket.template]] | writing a local task under efforts/<effort>/tickets/ | — |
+| [[templates/ticket.template]] | writing a local task under .aep/efforts/<effort>/tickets/ | — |
 
 ## Efforts
 
 | Effort | Status | Spec | Research | Prototypes | Tickets |
 | --- | --- | --- | --- | --- | --- |
 | 45-aep-3 | implemented | [[efforts/45-aep-3/spec]] | 0 | 0 | 26 |
+| 48-artifact-paths | implemented | [[efforts/48-artifact-paths/spec]] | 2 | 0 | 11 |
 | 51-branch-scope | implemented | [[efforts/51-branch-scope/spec]] | 1 | 0 | 10 |
 | 54-working-surface | implemented | [[efforts/54-working-surface/spec]] | 2 | 0 | 16 |
 | 56-surface-position | accepted | [[efforts/56-surface-position/spec]] | 0 | 0 | 17 |
@@ -135,6 +136,17 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/45-aep-3/tickets/24-update-reconciles-rules]] feat(protocol): an upgrade reconciles rules against the law that changed under them | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/25-the-two-tracker-postures]] feat(protocol): a tracker makes the issue and the pull request required, and its absence makes the merge the human's | 45-aep-3 | resolved | — |
 | [[efforts/45-aep-3/tickets/26-no-unconditional-tracker-call]] fix(protocol): nothing shipped reaches for a tracker before establishing there is one | 45-aep-3 | resolved | — |
+| [[efforts/48-artifact-paths/tickets/01-shared-fence-stripper]] refactor(scripts): the fence stripper becomes shared | 48-artifact-paths | resolved | — |
+| [[efforts/48-artifact-paths/tickets/02-stray-artifacts]] feat(validate): an artifact outside the tree stops being invisible | 48-artifact-paths | resolved | — |
+| [[efforts/48-artifact-paths/tickets/03-the-convention]] docs(protocol): a path in shipped text says where it starts from | 48-artifact-paths | resolved | — |
+| [[efforts/48-artifact-paths/tickets/04-path-guard]] test(verify): a bare artifact path fails the suite | 48-artifact-paths | resolved | 01, 03 |
+| [[efforts/48-artifact-paths/tickets/05-the-sweep]] refactor(payload): every artifact path says where it starts from | 48-artifact-paths | resolved | 04 |
+| [[efforts/48-artifact-paths/tickets/06-skill-output]] feat(verify): a skill's declared output is checked against the specification | 48-artifact-paths | resolved | 05 |
+| [[efforts/48-artifact-paths/tickets/07-retired-fields]] feat(verify): a retired field cannot be described as live | 48-artifact-paths | resolved | 06 |
+| [[efforts/48-artifact-paths/tickets/08-entrypoint-claims]] feat(verify): the entrypoint's claims are asserted | 48-artifact-paths | resolved | 10 |
+| [[efforts/48-artifact-paths/tickets/09-release]] chore(dist): release 3.4.0 and reinstall this repository's tree | 48-artifact-paths | resolved | 02, 05, 06, 08, 10 |
+| [[efforts/48-artifact-paths/tickets/10-the-owner-sweep]] fix(payload): the retired owner field stops being described as live | 48-artifact-paths | resolved | 07 |
+| [[efforts/48-artifact-paths/tickets/11-the-extension-point]] fix(validate): a repository's own skill note stops being refused | 48-artifact-paths | resolved | 09 |
 | [[efforts/51-branch-scope/tickets/01-scope-script]] feat(scripts): the claim, the working set, and the isolation are computed | 51-branch-scope | resolved | — |
 | [[efforts/51-branch-scope/tickets/02-specification]] docs(specs): the specification says what a run is scoped by | 51-branch-scope | resolved | — |
 | [[efforts/51-branch-scope/tickets/03-execution-policy]] feat(policies): the claim is read before the work, and confinement has no exemptions | 51-branch-scope | resolved | 02 |

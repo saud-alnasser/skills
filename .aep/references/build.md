@@ -49,9 +49,9 @@ After changing anything under `src/`, the sequence is:
 node src/scripts/manifest.mjs && node src/scripts/adapters.mjs && node src/scripts/verify.mjs
 ```
 
-Regenerating first, because the suite asserts both the manifest and the committed
-adapter are current and will otherwise fail on a file the command you are about to
-run would have fixed. The manifest goes first: it decides what the installer
+Regenerating first, because the suite asserts that the manifest and every
+committed adapter are current, and will otherwise fail on a file the command you
+are about to run would have fixed. The manifest goes first: it decides what the installer
 treats as the protocol's, so anything generated against a stale one is generated
 from the wrong set.
 

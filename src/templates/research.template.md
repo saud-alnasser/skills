@@ -4,7 +4,7 @@ use-when: "recording what an investigation established"
 
 # Template — research
 
-Copy to `efforts/<effort>/evidence/research/<question-slug>.md`.
+Copy to `.aep/efforts/<effort>/evidence/research/<question-slug>.md`.
 
 ```markdown
 ---

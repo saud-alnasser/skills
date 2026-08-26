@@ -22,6 +22,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   CANONICAL_ENTRYPOINT, RETIRED_FIELDS, readArtifact, walk, toPosix, isProtocolPath,
+  isRepositoryNote,
 } from './contract.mjs';
 import { contentHash } from './release.mjs';
 import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
@@ -93,10 +94,16 @@ function copyDir(sourceDir, targetDir, aep, dryRun) {
   // The manifest names what ships now and so cannot tell them apart, and neither
   // is deleted here: deciding a file is obsolete is /prune's job and the human's
   // call, and a misplaced repository file is /validate's to name.
+  //
+  // A note the repository wrote beside a shipped skill is neither, and it is
+  // the one file here the manifest will never name. Reported, it would be
+  // offered to the human as protocol residue to prune, so an upgrade would
+  // advise deleting the extension point it is required to preserve.
   if (fs.existsSync(targetDir)) {
     for (const existing of walk(targetDir)) {
       const relative = path.relative(targetDir, existing).split(path.sep).join('/');
       if (shipped.has(relative)) continue;
+      if (isRepositoryNote(path.relative(aep, existing).split(path.sep).join('/'))) continue;
       report.retired.push(existing);
     }
   }
