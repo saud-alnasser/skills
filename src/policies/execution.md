@@ -37,11 +37,11 @@ Exactly three; no fourth:
 1. **evidence invalidates the technical plan:** stop, record the evidence,
    `[[skills/plan]]`, update `spec.md`, update the tasks, continue. Never patch
    the architecture in place;
-2. **the work touches a public contract or data at rest;**
+2. **the work alters an existing public contract, or touches data at rest;**
 3. **a task contradicts `spec.md`.**
 
-Anything else, including a review that passed after its fix, is recorded in
-`log.md` and carried to the close.
+Anything else, including a review that passed after its fix, goes in `log.md`,
+carried to the close.
 
 ## Scope stays where it was put
 
@@ -107,7 +107,7 @@ an unnamed concept is a finding, never a licence.
 | an approach that cannot satisfy a requirement | trip-wire 1. Never ticket around it |
 
 **Converge never edits `spec.md` or `plan.md`,** except `status: implemented` at
-the close. The lane caps the rounds, and the cap is fixed. A review finding's ticket
+the close. The lane's cap on rounds is fixed. A review finding's ticket
 spends none. At the cap with gaps left, name them; the effort ends
 not ready.
 

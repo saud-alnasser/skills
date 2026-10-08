@@ -1,5 +1,12 @@
 ---
 use-when: "committing, branching, or preparing work to land"
+# none, github, or gitlab. none: no issue, pull request, label, or forge call;
+# the effort's log.md is the whole record. The rest: policies/tracker.
+tracker: none
+# Run in every new worktree before work starts, e.g. pnpm install --frozen-lockfile.
+setup: ""
+# true where changes are stacked by a stacking tool (see below).
+stack: false
 ---
 
 # Rule — version control
@@ -8,7 +15,7 @@ use-when: "committing, branching, or preparing work to land"
 lands is specific to this repository, and nothing under `rules/` is ever
 replaced by an upgrade. Correct anything below that this repository does
 differently — what is here was detected or assumed at install, and detection is
-not certainty.
+not certainty. The settings above are read by `.aep/scripts/aep.mjs`.
 
 ## The line an agent does not cross
 
@@ -39,7 +46,10 @@ Conventional Commits — `type(scope): summary`.
 
 ## Branches
 
-One branch per ticket, cut from the branch its effort is on and named
+In the quick and standard lanes, work lands on the effort's own branch: one
+commit per ticket, and none of its own. In the full lane, a ticket a child
+builds gets one branch, cut from the branch its effort is on by `aep dispatch`
+and named
 `<effort>--<ticket-id>-<slug>`, where `<effort>` is the effort directory's own
 name: `51-branch-scope--03-execution-policy`. The separator is `--`, not `/`,
 because git cannot create `<effort>/...` while the effort branch `<effort>`
@@ -81,7 +91,7 @@ whatever `HEAD` happens to be checked out:
 | a branch merged by a pull request | the default branch's tip, fetched first. An effort opened from another effort's branch carries that effort's unmerged commits, and its pull request then asks for a review of work nobody in it wrote |
 | stacked changes | the current branch, which is what stacking means. The parent change is reviewed on its own branch and lands through its own pull request |
 
-**Confirm which applies rather than assuming.** With stacked changes,
+**Confirm which applies rather than assuming**, and set `stack:` above to match. With stacked changes,
 `blocked-by` means *stack on top of*, not *wait for* — assume plain git on a
 stacking repository and the frontier empties; assume stacking on a plain one and
 branches get built on unmerged work that was supposed to wait.

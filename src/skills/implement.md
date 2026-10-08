@@ -129,7 +129,7 @@ nothing ends review.
 node .aep/scripts/aep.mjs close <effort> [--friction "<line>"]
 ```
 
-It refuses while a ticket is unresolved, stamps `status: implemented`, detaches,
+Run it from the main checkout, never from inside the surface it removes. It refuses while a ticket is unresolved, stamps `status: implemented`, detaches,
 then removes the surface. With the cap reached and gaps or findings open, close
 with `--stop "<what is open>"` instead: the branch is released, the surface
 kept, and the effort ends not ready. Up to three `--friction` lines record what

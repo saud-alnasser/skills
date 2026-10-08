@@ -359,6 +359,78 @@ export function renderAdapter(distributionRoot, target, shape) {
 }
 
 /** Writes the adapter under `targetDir`, returning the paths written. */
+/**
+ * Claude Code guardrails behind the protocol's write boundary.
+ *
+ * No documented rule denies "everything outside the project", and a project
+ * usually lives under the home folder, so `Edit(~/**)` would deny the project
+ * too. What is denied instead is a list of named places that never hold a
+ * project: shell profiles, global git config, keys, and system directories.
+ * `Edit` rules cover every built-in tool that writes, and also feed the
+ * sandbox's write deny list. The sandbox confines shell commands to the
+ * working directory and a per-user temp directory on macOS, Linux, and WSL2,
+ * and is skipped where the platform has none (native Windows), which is why
+ * `failIfUnavailable` is never set here: it would stop the runtime starting.
+ */
+export const CLAUDE_GUARDRAILS = {
+  sandbox: { enabled: true },
+  deny: [
+    'Edit(~/.bashrc)',
+    'Edit(~/.bash_profile)',
+    'Edit(~/.zshrc)',
+    'Edit(~/.zprofile)',
+    'Edit(~/.profile)',
+    'Edit(~/.gitconfig)',
+    'Edit(~/.config/git/**)',
+    'Edit(~/.ssh/**)',
+    'Edit(~/.npmrc)',
+    'Edit(//etc/**)',
+    'Edit(//usr/**)',
+    'Edit(//c/Windows/**)',
+    'Edit(~/Documents/PowerShell/**)',
+    'Edit(~/Documents/WindowsPowerShell/**)',
+  ],
+};
+
+/**
+ * Merges the guardrails into `<targetDir>/settings.json`, never replacing it.
+ *
+ * Existing keys win: a sandbox setting the repository chose is kept, and deny
+ * rules are only added. A file that is not JSON is left alone and reported.
+ * Returns what happened, for the installer's report.
+ */
+export function mergeGuardrails(targetDir, { dryRun = false } = {}) {
+  const file = path.join(targetDir, 'settings.json');
+  const existed = fs.existsSync(file);
+  let settings = {};
+  if (existed) {
+    try {
+      settings = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch {
+      return { file, outcome: 'unparsed', added: [] };
+    }
+    if (settings === null || typeof settings !== 'object' || Array.isArray(settings)) {
+      return { file, outcome: 'unparsed', added: [] };
+    }
+  }
+  const permissions = settings.permissions && typeof settings.permissions === 'object' ? settings.permissions : {};
+  const deny = Array.isArray(permissions.deny) ? permissions.deny : [];
+  const added = CLAUDE_GUARDRAILS.deny.filter((rule) => !deny.includes(rule));
+  const sandboxSet = settings.sandbox && typeof settings.sandbox === 'object' && 'enabled' in settings.sandbox;
+  if (added.length === 0 && sandboxSet) return { file, outcome: 'present', added };
+
+  const next = {
+    ...settings,
+    sandbox: sandboxSet ? settings.sandbox : { ...(settings.sandbox ?? {}), ...CLAUDE_GUARDRAILS.sandbox },
+    permissions: { ...permissions, deny: [...deny, ...added] },
+  };
+  if (!dryRun) {
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
+  }
+  return { file, outcome: existed ? 'merged' : 'written', added };
+}
+
 export function writeAdapter(distributionRoot, target, targetDir, shape) {
   const written = [];
   for (const { relativePath, contents } of renderAdapter(distributionRoot, target, shape)) {

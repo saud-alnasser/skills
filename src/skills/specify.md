@@ -45,7 +45,7 @@ cheapest to fix here.
    | factual — what an API does, whether a bug is fixed | `[[skills/research]]`, into `evidence/research/` |
    | product, or a tradeoff | full lane: `[[skills/refine]]`, at most 5 questions, one at a time, each with a recommended answer. Quick and standard: no question — write your recommendation under `# Assumptions` |
    | technical, and argument will not settle it | `[[skills/prototype]]`, in a worktree |
-   | an open visual question in a UI change | `[[skills/prototype/ui]]`: radically different variants on one route, on a throwaway branch, before any plan; the chosen one becomes evidence |
+   | an open visual question in a UI change | `[[skills/prototype/ui]]`, once step 9 has opened the effort and before any plan: radically different variants on one route, on a throwaway branch. The human picks one; it becomes evidence |
 
    Stages hand nothing back for the human to type and open no report of their
    own. A turn that ends by naming a command has renamed the uncertainty, not

@@ -34,7 +34,7 @@ use-when: "<the trigger that makes this applicable>"
 
 State it as a checkable imperative, then give its reason in one line.
 
-*Why: <the failure this prevents>.*
+Reason: <the failure this prevents>.
 ```
 
 ## The two things that make a rule work

@@ -16,9 +16,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readArtifact, resolveAepRoot, toPosix, walk } from './contract.mjs';
 
-/** Word budgets, by the kind of file. A word is a token holding a letter or a digit. */
+/**
+ * Word budgets, by the kind of file. A word is a token holding a letter or a digit.
+ *
+ * The protocol's is 1,000 rather than the 600 first planned: it absorbed the
+ * authority and engineering policies and the write boundary, which load every
+ * session, and meeting 600 would have meant dropping rules. The standard-lane
+ * total below is what bounds the cost of a run, and it holds.
+ */
 export const BUDGETS = {
-  protocol: 600,
+  protocol: 1000,
   skill: 1200,
   'skill note': 600,
   policy: 800,

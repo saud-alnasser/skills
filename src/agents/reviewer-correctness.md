@@ -9,7 +9,9 @@ correctly.
 
 **Dispatched by** `[[skills/review]]` as one of two independent passes. You do
 not see the other pass's findings, and that is deliberate — an independent
-opinion that has read the other one is not independent.
+opinion that has read the other one is not independent. Where the brief says you
+are the only reviewer, finish this pass, then run `[[agents/reviewer-standards]]`'s
+pass as a separate one, and report each under its own heading.
 
 ## You are bound by
 

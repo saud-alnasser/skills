@@ -644,12 +644,17 @@ function land(root, args) {
     fs.writeFileSync(spec.file, setField(fs.readFileSync(spec.file, 'utf8'), 'status', 'implemented'), 'utf8');
     appendToLog(effortDir, effort, 'Ledger', `[x] spec ${effort.replace(/^\d+-/, '')} ${checks.ticked}/${checks.total}`);
     writeIndex(aepIn(here, where));
+    // The quick lane lands as one commit by construction: whatever the branch
+    // gathered since it forked (the opening commit, a revised Check item) is
+    // folded into the one commit that lands, never left beside it.
     const base = resolveBase(where.repo);
-    const own = base ? Number(git(here, ['rev-list', '--count', `${base}..HEAD`])) : 0;
+    const fork = base ? git(here, ['merge-base', base, 'HEAD'], { allowFail: true }) : '';
+    const own = fork ? Number(git(here, ['rev-list', '--count', `${fork}..HEAD`])) : 0;
+    if (own > 1) git(here, ['reset', '--quiet', '--soft', fork]);
     const sha = commitAll(here, message, { amend: own === 1 });
     stampMarker(aepIn(here, where), args.flags.session ?? null);
     return {
-      effort, landed: sha, amended: own === 1, ledger: `[x] spec ${checks.ticked}/${checks.total}`,
+      effort, landed: sha, amended: own >= 1, ledger: `[x] spec ${checks.ticked}/${checks.total}`,
       summary: `landed ${effort} as one commit ${sha}`,
     };
   }

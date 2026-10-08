@@ -106,6 +106,8 @@ export const PROTOCOL_FILES = [
   'skills/tdd/mocking.md',
   'skills/tdd/tests.md',
   'skills/update.md',
+  'skills/update/conversion.md',
+  'skills/update/from-2.md',
   'skills/update/migration.md',
   'templates/agent.template.md',
   'templates/agents.template.md',

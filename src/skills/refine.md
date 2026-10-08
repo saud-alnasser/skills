@@ -21,8 +21,9 @@ is happening and like foresight afterwards.
 ## Procedure
 
 1. **Read the scope, then the spec.** `node .aep/scripts/scope.mjs read`, quoted:
-   it names the effort whose `.aep/efforts/<effort>/spec.md` this reads in full,
-   and a non-empty claim confines the run to the efforts it names
+   it names the effort whose `.aep/efforts/<effort>/spec.md` this reads in full.
+   Run from `[[skills/specify]]` before the effort opens, the spec is the draft at
+   `.aep/scratch/<slug>/spec.md`, and answers are written there. A non-empty claim confines the run to the efforts it names
    (`[[policies/execution]]`). The claim and the isolation go in the `Position` of
    the turn this is a stage of (`[[policies/reporting]]`).
 2. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]` and
@@ -40,8 +41,12 @@ is happening and like foresight afterwards.
    | an assumption written as a fact | how do we know? |
    | a dependency on something not yet true | what if it never becomes true? |
 
-4. **Ask one question at a time**, with real options and their consequences. A
-   list of eight questions gets one answer to the easiest.
+4. **Ask at most 5 questions per effort, one at a time**, each with real
+   options, their consequences, and **your recommended answer**, so the human
+   can reply "yes" or "b". A list of eight questions gets one answer to the
+   easiest. Rank the weak points by cost and ask about the top five; everything
+   not worth one of the five goes under `# Assumptions` with your
+   recommendation as the assumption.
 5. **Reach for the right instrument.** Where discussion cannot settle it:
    `[[skills/research]]` for a fact, `[[skills/prototype]]` for a feel,
    `[[skills/domain]]` when the disagreement is really about words.
@@ -65,4 +70,5 @@ worse than one that admits it.
 
 ## Done when
 
-The remaining questions are ones only code can answer, and the human agrees.
+Five questions are answered, or the remaining ones are cheaper to settle in
+code; every answer and every assumption is in the spec.

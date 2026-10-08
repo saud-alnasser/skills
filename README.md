@@ -8,38 +8,47 @@ humans are all consumers; what a runtime provides is an *adapter*, never AEP.
 The guiding principle: **make correct engineering behaviour easy to discover,
 hard to violate, and cheap for an agent to understand.**
 
-`specs.md` is the normative specification.
+`specs.md` is the normative specification, with the reasoning behind each rule.
+It is for people: an agent running AEP never loads it.
 
 ## The model
+
+Seven primitives, the same seven `.aep/protocol.md` defines:
 
 ```
 policies    what MUST be done. AEP's, protocol-owned, never edited here
 rules       what MUST be done here. Yours, and an upgrade preserves them
-references  how a tool is operated here
+references  how a tool or procedure is operated here
 contexts    what to know about an area, and where to look
-evidence    what has been discovered: research, prototypes
-efforts     what change is being made; spec.md is its truth
-tasks       executable work derived from the spec
-modes       how to think during an activity
+efforts     what change is being made: spec.md, plan.md, evidence/, tickets/, log.md
 agents      who does the work, in what role
 skills      reusable capabilities
-worktrees   isolated execution, never knowledge
-position    lightweight operational state, never truth
 ```
 
-Every artifact declares **when it applies** (`use-when`, `paths`, `mode`), so
-knowledge loads by relevance rather than by stage. Nothing tells an agent to read
-the whole governance layer before starting. A policy is rigid in authority, not
-in when it loads.
+Every artifact declares **when it applies** (`use-when`, `paths`), so knowledge
+loads by relevance rather than by stage. Nothing tells an agent to read the whole
+governance layer before starting. A policy is rigid in authority, not in when it
+loads.
+
+Each effort carries a **lane** in its spec (`quick`, `standard`, or `full`), and
+the lane sets the ceremony: a typo fix is one commit with no tickets and no
+questions, a migration gets waves of parallel children and two review rounds.
+Every git and worktree step runs through one script, `node .aep/scripts/aep.mjs`,
+which prints JSON the agent acts on. `aep status` is the board: every open
+effort, and what is waiting on you.
+
+The issue tracker is opt-in. With `tracker: none` (the default) nothing touches
+a forge, and each effort's `log.md` is the whole record of the run.
 
 ## The workflow
 
 ```
-/specify → /refine? → /plan? → /tasks → /implement → /review → /commit
+/specify → /plan? → /tasks → /implement
 ```
 
-`research`, `prototype`, `survey`, and grill are **capabilities, not stages**.
-Pick the smallest process that produces a reliable result.
+Four commands. `refine`, `research`, `review`, and `converge` are stages those
+four run for you; `prototype`, `survey`, and `prune` are capabilities. Pick the
+smallest process that produces a reliable result.
 
 ## Install
 

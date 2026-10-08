@@ -1,24 +1,22 @@
 ---
-use-when: "about to emit text a human will read, or editing text that reads as though nobody wrote it"
+use-when: "writing a README, a pull request body, a changelog, or docs, or editing text that reads as though nobody wrote it"
 ---
 
 # /prose — make it read as though a person wrote it
 
-A sub-skill. Reached from inside whichever skill is emitting text a human will
-read, and reached that way it is **a stage of that turn**, opening no report of
-its own (`[[policies/reporting]]`). Invoked directly on a file, it is the turn's
-outermost skill and reports like any other.
-
-**What is governed, and what the four prohibitions are, is
-`[[policies/reporting]]`'s.** This file is the craft: the patterns that mark
-writing as machine-made, how to spot each one, and what to do about it.
+Loaded for human documents only, never on an ordinary turn. Reached from inside
+another skill it is **a stage of that turn**, with no report of its own;
+invoked on a file, it reports like any other. What is governed is
+`[[policies/reporting]]`'s, and the four prohibitions are `[[protocol]]`'s.
+This file is the craft: the patterns that mark writing as machine-made, and
+what to do about each.
 
 ## Procedure
 
 1. **Scan for the patterns below.** Work the groups in order. Content tells are
    the expensive ones because they survive a rewrite of the sentence they live
    in.
-2. **Rewrite, preserving meaning.** Match the tone the text was aiming at. A pass
+2. **Rewrite, preserving meaning.** Match the tone the text aimed at. A pass
    that flattens an argument into neutrality has traded one failure for another.
 3. **Give it a voice.** Removing patterns is half the job, and sterile is as
    obvious as slop. React to what you found instead of listing it. Vary the
@@ -27,8 +25,7 @@ writing as machine-made, how to spot each one, and what to do about it.
    structure be slightly uneven, because perfect structure looks machine-made.
 4. **Audit what is left.** Ask the one question that finds the rest: *what about
    this still reads as generated?* Fix what the answer names. Then check the
-   prohibitions the policy fixes, because they are the four that a script will
-   catch if you do not.
+   four prohibitions, which a script will catch if you do not.
 
 ## The catalogue
 
@@ -149,9 +146,9 @@ verb up means the verb is wrong.
 becomes *use*. *Facilitate* becomes *help*. *Numerous* becomes *many*. *In the
 event that* becomes *if*.
 
-## Repairing the four the policy prohibits
+## Repairing the four the protocol prohibits
 
-The rules are `[[policies/reporting]]`'s. The technique is here, because knowing
+The rules are `[[protocol]]`'s. The technique is here, because knowing
 a dash is forbidden does not tell you what the sentence becomes.
 
 | Tell | The repair |
@@ -175,4 +172,4 @@ a dash is forbidden does not tell you what the sentence becomes.
 ## Done when
 
 Nothing in the text answers *what makes this read as generated?*, the argument it
-carried is intact, and the four the policy prohibits are absent.
+carried is intact, and the four the protocol prohibits are absent.

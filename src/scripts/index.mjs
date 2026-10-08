@@ -232,6 +232,15 @@ function main() {
   const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
   const check = args.includes('--check');
 
+  // An unknown flag is refused rather than ignored: `--help` used to fall
+  // through to the write, so asking how to use it rewrote the index.
+  const unknown = args.filter((arg, i) => arg.startsWith('-') && !['--root', '--check'].includes(arg)
+    && args[i - 1] !== '--root');
+  if (unknown.length > 0) {
+    process.stderr.write(`unknown option: ${unknown.join(' ')}\nusage: node .aep/scripts/index.mjs [--root <.aep dir>] [--check]\n`);
+    process.exit(2);
+  }
+
   const root = resolveAepRoot(rootArg, import.meta.url);
   if (!root) {
     process.stderr.write('no .aep/ found. Pass --root, or run from a repository that has one\n');

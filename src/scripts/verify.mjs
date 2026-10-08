@@ -408,6 +408,7 @@ const RETIREMENT_SAID = /retire|removed|removal|used to|1\.x|2\.x/i;
 const EXEMPT_FROM_RETIREMENT_SCAN = {
   'src/skills/update.md': 'the upgrade skill, which reads a 2.x tree where owner: is still live',
   'src/skills/update/migration.md': 'the 1.x migration, converting trees that still carry them',
+  'src/skills/update/from-2.md': 'the 2.x note, which names each retired field it drops from a 2.x tree',
 };
 
 /**
@@ -924,10 +925,8 @@ section('protocol.md', () => {
 
   const body = artifact.body;
   for (const heading of [
-    'What AEP is',
     'The primitives',
-    'Where state is',
-    'How to discover what matters',
+    'Discovery',
     'The workflow',
     'The invariants',
     'Governance that loads when it applies',
@@ -949,25 +948,16 @@ section('protocol.md', () => {
     return end < 0 ? rest : rest.slice(0, end + 1);
   };
 
-  // Both conventions for `.aep/`, in the one section that states either. The
-  // link rule reads as though it covered paths too and does not: a path inside
-  // backticks in an instruction to write a file is not a link, and an agent
-  // following one literally built a whole effort at the repository root.
-  //
-  // Scoped to the section rather than to the file, because a sentence that
-  // drifts away from its sibling is one the reader meets on a different page
-  // from the rule it qualifies, which is the state this assertion exists to end.
-  assert('the bootstrap states the path convention beside the link convention', () => {
-    const discovery = flat(sectionOf('How to discover what matters'));
-    if (!/double-bracketed, relative to `\.aep\/`/.test(discovery)) {
-      throw new Error('the link convention is no longer in this section');
+  // 4.0: the link and path conventions are stated together in
+  // policies/artifacts, which loads whenever anything under .aep/ is written
+  // (asserted in the policies section). The bootstrap keeps the half every
+  // reader needs: an unresolved link is repaired or reported, never invented.
+  assert('the bootstrap keeps the rule for a link that does not resolve', () => {
+    const discovery = flat(sectionOf('Discovery'));
+    if (!/does\s+not resolve is repaired or reported, \*\*never invented\*\*/.test(discovery)) {
+      throw new Error('the unresolved-link rule is no longer in Discovery');
     }
-    if (!/two segments or more carries `\.aep\/`/.test(discovery)) {
-      throw new Error('nothing says when a filesystem path carries the root');
-    }
-    if (!/bare area name does not/.test(discovery)) {
-      throw new Error('the single-segment case is left to be guessed');
-    }
+    if (!/\[\[policies\/artifacts\]\]/.test(body)) throw new Error('nothing points at where the conventions live');
     return true;
   });
 
@@ -981,6 +971,17 @@ section('protocol.md', () => {
     if (rows.length !== PRIMITIVES.length || rows.some((row, i) => row !== PRIMITIVES[i])) {
       throw new Error(`${rows.length} rows: ${rows.join(', ')}`);
     }
+    return true;
+  });
+
+  // P2-13, one vocabulary: the README's model names the same seven, in order,
+  // and no eighth. Read off the fenced block under its heading.
+  assert('the README model lists exactly the seven primitives', () => {
+    const readme = fs.readFileSync(path.join(REPO, 'README.md'), 'utf8').replace(/\r/g, '');
+    const block = /## The model[\s\S]*?```\n([\s\S]*?)```/.exec(readme)?.[1] ?? '';
+    const names = block.split('\n').filter(Boolean).map((line) => line.split(/\s+/)[0]);
+    const expected = PRIMITIVES.map((name) => name.toLowerCase());
+    if (JSON.stringify(names) !== JSON.stringify(expected)) throw new Error(names.join(', '));
     return true;
   });
 
@@ -1003,28 +1004,34 @@ section('protocol.md', () => {
   // Ownership is stated once, here, for every directory the lookup knows. A
   // directory the code classifies and the bootstrap never mentions is a reader
   // who has to guess, which is the situation `owner:` was removed to end.
-  // Read from the ownership invariant alone, up to the next invariant, so a
-  // directory another invariant names in passing (`node_modules/`, as a place a
-  // tool writes) is not read as a claim of ownership.
+  // Read from the ownership invariant alone, up to the next invariant, and split
+  // at "Yours" so each directory is read on the side that claims it.
   const invariants = sectionOf('The invariants');
   const ownStart = invariants.indexOf('**Ownership is where a file sits.**');
   const ownEnd = ownStart < 0 ? -1 : invariants.slice(ownStart + 1).search(/\n\*\*[^*\n]+\.\*\* /);
   const ownership = ownStart < 0 ? ''
     : invariants.slice(ownStart, ownEnd < 0 ? undefined : ownStart + 1 + ownEnd);
+  const yoursAt = ownership.indexOf('Yours');
+  const protocolSide = yoursAt < 0 ? '' : ownership.slice(0, yoursAt);
+  const repositorySide = yoursAt < 0 ? '' : ownership.slice(yoursAt);
   assert('the bootstrap states ownership as a fact about location', () =>
     /\*\*Ownership is where a file sits\.\*\*/.test(ownership));
   for (const dir of PROTOCOL_DIRS) {
-    assert(`the ownership table names ${dir}/ as the protocol's`, () =>
-      new RegExp(`\`${dir}/\`[^|]*\\|`).test(ownership));
+    assert(`the ownership invariant names ${dir}/ as the protocol's`, () =>
+      protocolSide.includes(`\`${dir}/\``));
   }
   for (const dir of REPOSITORY_DIRS) {
-    assert(`the ownership table names ${dir}/ as the repository's`, () =>
-      ownership.includes(`\`${dir}/\``));
+    assert(`the ownership invariant names ${dir}/ as the repository's`, () =>
+      repositorySide.includes(`\`${dir}/\``));
   }
   // Named individually, because no directory rule reaches a file at the root.
-  for (const file of [...PROTOCOL_ROOT_FILES, ...REPOSITORY_ROOT_FILES]) {
-    assert(`the ownership table names ${file} individually`, () =>
-      new RegExp(`\`${file.replace('.', '\\.')}\``).test(ownership));
+  for (const file of PROTOCOL_ROOT_FILES) {
+    assert(`the ownership invariant names ${file} as the protocol's`, () =>
+      protocolSide.includes(`\`${file}\``));
+  }
+  for (const file of REPOSITORY_ROOT_FILES) {
+    assert(`the ownership invariant names ${file} individually`, () =>
+      repositorySide.includes(`\`${file}\``));
   }
 
   // And the other direction, which the loop above cannot see: a directory the
@@ -1057,7 +1064,7 @@ section('protocol.md', () => {
     return true;
   });
   assert('the capability sentence names what became a stage', () =>
-    /\*\*stages those\s+four\s+run for you\*\*/.test(workflow) &&
+    /are stages those\s+four run/.test(workflow) &&
     ['refine', 'research', 'review', 'converge'].every((stage) => workflow.includes(`\`${stage}\``)));
 
   // The single release of record. Asserted over the payload rather than over
@@ -1179,7 +1186,7 @@ section('skills', () => {
   });
 
   const reviewSkill = readSrc('skills', 'review.md');
-  assert('skills/review runs two independent axes', /two sub-agents|two independent/i.test(reviewSkill));
+  assert('skills/review runs two independent axes', /Two axes, judged \*\*independently\*\*/.test(reviewSkill));
   assert('skills/review names both reviewer agents', () =>
     reviewSkill.includes('agents/reviewer-correctness') &&
     reviewSkill.includes('agents/reviewer-standards'));
@@ -1273,7 +1280,7 @@ section('skills', () => {
   assert('a finding is closed by a fix, a ticket, or the human accepting it, never asked mid-run', () =>
     /A finding is fixed, ticketed, or left in `## Needs you` for the human to accept, never asked mid-run/.test(policyFlat));
   assert('a review that passed after its fix still does not stop the run', () =>
-    /including a review that passed after its fix, is recorded/.test(policyFlat));
+    /including a review that passed after its fix, goes in `log\.md`/.test(policyFlat));
 
   // Review runs once, after converge, over the effort branch -- never per ticket.
   const runnerStep = (number) => {
@@ -1303,23 +1310,39 @@ section('skills', () => {
   assert("review resolves to the effort's spec before anything else", () => {
     const step = /^## 2 [\s\S]*?(?=^## )/m.exec(reviewSkill);
     if (!step) throw new Error('skills/review has no step 2');
-    const rows = [...step[0].matchAll(/^\d+\. (.+)$/gm)].map((row) => row[1]);
-    if (rows.length === 0) throw new Error('step 2 lists nothing to resolve the requirements against');
-    if (!/effort's `spec\.md`/.test(rows[0])) throw new Error(`step 2 leads with: ${rows[0]}`);
-    if (rows.some((row) => /the task the caller is holding/.test(row))) {
+    const first = /The first that answers: ([^;]+);/.exec(flatten(step[0]));
+    if (!first) throw new Error('step 2 lists nothing to resolve the requirements against');
+    if (!/effort's `spec\.md`/.test(first[1])) throw new Error(`step 2 leads with: ${first[1]}`);
+    if (/the task the caller is holding/.test(step[0])) {
       throw new Error('step 2 still offers the task the caller is holding');
     }
     return true;
   });
   assert('review says an effort-level subject is the ordinary case', () =>
-    /\*\*Row 1 is what an effort-level review resolves to, and that is the ordinary case\.\*\*/
+    /An effort-level review \(`\[\[skills\/implement\]\]`'s close\) is the ordinary case/
       .test(flatten(reviewSkill)));
+  // The lane sets the reviewers: one in standard, covering both axes as two
+  // separate passes, and two in parallel in full.
+  assert('review sets its reviewers by lane, and the axes stay independent', () => {
+    const text = flatten(reviewSkill);
+    if (!/\| standard, or a review outside an effort \| one `\[\[agents\/reviewer-correctness\]\]`/.test(text)) {
+      throw new Error('no single reviewer for standard');
+    }
+    if (!/\| full \| `\[\[agents\/reviewer-correctness\]\]` and `\[\[agents\/reviewer-standards\]\]`, in parallel/.test(text)) {
+      throw new Error('no pair for full');
+    }
+    if (!/An axis never sees the other's findings/.test(text)) throw new Error('independence is gone');
+    return /run the `\[\[agents\/reviewer-standards\]\]` pass after its own/.test(text)
+      && /run `\[\[agents\/reviewer-standards\]\]`'s\s+pass as a separate one/.test(flatten(readSrc('agents', 'reviewer-correctness.md')));
+  });
 
   // The trip-wire set lives in the policy now; the runner links it.
   assert('the run says there is no fourth trip-wire', () => /Exactly three; no fourth/.test(policyFlat));
   assert('the three trip-wires are the plan, the public contract, and the contradiction', () =>
     /evidence invalidates the technical plan/.test(policyFlat) &&
-    /the work touches a public contract or data at rest/.test(policyFlat) &&
+    // 4.0: "alters an existing" contract, so an addition the spec asks for (the
+    // standard lane's API addition) is not a stop, and a removal still is.
+    /the work alters an existing public contract, or touches data at rest/.test(policyFlat) &&
     /a task contradicts `spec\.md`/.test(policyFlat));
   assert('the runner stops only on the three trip-wires, and links them', () =>
     /## Stop only for The three trip-wires \(`\[\[policies\/execution\]\]`\)/.test(runnerFlat));
@@ -1346,60 +1369,61 @@ section('skills', () => {
 
   // §30.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
-  // success, so nothing downstream notices.
+  // success, so nothing downstream notices. 4.0: the conversion map is its own
+  // note, and it writes only the current contract's fields, so no 1.x tree is
+  // given fields the 2.x note would then have to drop.
   const migration = readSrc('skills', 'update', 'migration.md');
+  const conversion = readSrc('skills', 'update', 'conversion.md');
   assert('the migration resolves every 1.x file to one of the three outcomes', () =>
-    ['converted', 'superseded', 'unrepresented'].every((word) => migration.includes(word)));
+    ['Converted', 'Superseded', 'Unrepresented'].every((word) => migration.includes(word)));
   assert('the migration does not treat owner: framework as grounds to drop a file', () =>
     /`owner: framework` does not mean superseded/.test(migration));
-  assert('the migration derives date from history rather than stamping today', () =>
-    /git log -1 --format=%ad/.test(migration) && /Never today's date/.test(migration));
+  assert('the migration links its conversion map', () =>
+    /\[\[skills\/update\/conversion\]\]/.test(migration));
+  assert('the conversion writes only the current contract, dropping every 1.x field', () =>
+    /Only the current contract's fields are written/.test(conversion)
+    && ['version:', 'owner:', 'date:', 'kind:', 'mode:', 'part-of:'].every((field) => conversion.includes(`\`${field}\``))
+    && /is dropped/.test(conversion));
   assert('the migration proposes use-when rather than inventing it', () =>
-    /proposed from the content and marked unconfirmed/i.test(migration));
+    /proposed from the content, marked unconfirmed/i.test(conversion));
   assert('the migration converts every 1.x ticket state', () =>
-    ['blocked', 'superseded', 'obsolete', 'resolved'].every((state) => migration.includes(state)));
-  assert('the migration deletes nothing', () => /Nothing is deleted here/.test(migration));
+    ['blocked', 'superseded', 'obsolete', 'resolved'].every((state) => conversion.includes(state)));
+  assert('the migration deletes nothing', () => /\*\*Nothing is deleted\*\*/.test(migration));
   assert('the migration requires the converted tree to validate', () =>
-    /validate\.mjs` must pass with no exemption/.test(migration));
+    /`validate\.mjs` passes with no exemption/.test(migration));
+  assert('a 1.x policy becomes a rule, never a policy', () =>
+    /A 1\.x policy becomes a rule, never a policy/.test(conversion));
 
   // §30.1. Three layouts reach `/update` and only one of them is the one this
   // release writes. Every assertion here is about the classifier, because
   // routing a tree to the wrong branch is not a wrong answer -- it installs a
   // second governance layer beside a live one, or reconverts a current tree.
-  //
-  // Line endings are stripped first: these read table rows and prose that wraps,
-  // and a CRLF checkout would otherwise fail them for a reason that has nothing
-  // to do with what they assert.
   const noCR = (text) => text.split(String.fromCharCode(13)).join('');
-  // Prose here wraps at 80 columns and is indented under numbered steps, so a
-  // phrase that reads as one sentence is several lines with leading spaces.
   const flat = (text) => text.split(/\s+/).join(' ');
   const update = noCR(readSrc('skills', 'update.md'));
   const routing = headingBlock(update, 'First: which layout is this?');
 
   assert('the upgrade routes every layout it can meet', () =>
-    ['3', '2.x', '1.x'].every((layout) => routing.includes(`| ${layout} |`))
+    ['3 or later', '2.x', '1.x'].every((layout) => routing.includes(`| ${layout} |`))
     && routing.includes('skills/install'));
   assert('a 2.x tree is recognised by the field that declared ownership', () =>
     /carrying `owner:`/.test(routing)
     && /no artifact under `\.aep\/` carrying `owner:`/.test(routing));
-
-  // The two ways this classifier is got wrong, and both read as reasonable.
   assert('the upgrade classifies by layout rather than by declared version', () =>
-    /Read the tree before the version/.test(routing));
+    /Read the tree, not the version field/.test(routing));
   assert('the upgrade does not read .aep/policies/ as a 1.x layout', () =>
     /`\.aep\/policies\/` is not evidence of 1\.x/.test(routing));
   assert('the 1.x migration no longer reads a bare version: as evidence', () =>
-    /A bare `version:` is not evidence of anything/.test(migration)
+    /A\s+bare `version:` is evidence of nothing/.test(flat(migration))
     && !/or a bare `version:`/.test(migration));
 
-  // The 2.x branch. It exists because a shrinking contract left content behind,
-  // and it has to say when it stops existing.
-  const twoXBranch = headingBlock(update, 'Coming from 2.x');
-  assert('the upgrade carries a 2.x branch', () => twoXBranch.length > 0);
+  // The 2.x branch, now its own note. It exists because a shrinking contract
+  // left content behind, and it has to say when it stops existing.
+  const twoXBranch = noCR(readSrc('skills', 'update', 'from-2.md'));
+  assert('the upgrade carries a 2.x branch', () =>
+    /\[\[skills\/update\/from-2\]\]/.test(routing) && twoXBranch.length > 0);
   assert('the 2.x branch states its removal condition in the file', () =>
-    /removal condition/.test(twoXBranch)
-    && /no repository the maintainer knows of/.test(flat(twoXBranch)));
+    /This note goes when no repository the maintainer knows of/.test(flat(twoXBranch)));
   assert('the 2.x branch drops every retired field rather than converting it', () =>
     /dropped, never converted/.test(twoXBranch)
     && RETIRED_FIELDS.every((field) => twoXBranch.includes(`\`${field}:\``)));
@@ -1410,81 +1434,62 @@ section('skills', () => {
   // everyone in it, and a merged pull request is the record of what was
   // reviewed -- so the rules here are mostly about what is *not* written.
   assert('the 2.x branch reshapes no tracker artifact of a landed effort', () =>
-    /An effort that has landed is a record/.test(twoXBranch)
-    && /still in flight/.test(twoXBranch));
+    /A landed effort is a record/.test(twoXBranch)
+    && /in flight/.test(twoXBranch));
   assert("the 2.x branch deletes milestones entirely AEP's and keeps labels", () =>
     /milestone \*\*entirely AEP's\*\*/.test(twoXBranch)
-    && /\*\*any label\*\* \| \*\*keep\*\*/.test(twoXBranch));
-  assert('the 2.x branch says why a label is kept even where AEP created it', () =>
-    /strips it from every closed issue/.test(flat(twoXBranch)));
+    && /\*\*any label\*\* \| \*\*keep\*\*, even where AEP created it/.test(twoXBranch));
   assert('the 2.x branch shows every tracker write before making one', () =>
     /exact string it will be/.test(twoXBranch)
-    && /before the first one is made/.test(flat(twoXBranch)));
+    && /before the first is made/.test(flat(twoXBranch)));
   assert('the 2.x branch writes nothing at all on a refusal', () =>
-    /On a refusal, write nothing/.test(twoXBranch));
+    /On a\s+refusal, write nothing\*\*, not even the uncontroversial subset/.test(flat(twoXBranch)));
+  assert('the 2.x tracker half runs only where the tracker is on', () =>
+    /Only where `tracker:` is on/.test(twoXBranch));
 
   // Requirement 61. `rules/` is the one directory the upgrade preserves and
   // never reads, which is exactly where a rule and the policy under it stop
-  // agreeing: the rule was legal against the release it was written under, and
-  // the release just moved. This repository is the instance -- 3 gives the
-  // runner permission to push the effort branch, and its version-control rule
-  // said never push until somebody edited it by hand.
+  // agreeing.
   const reconcileStart = update.indexOf('7. **Reconcile');
   const reconcileEnd = update.indexOf('8. **Report declared');
   assert('the upgrade reconciles rules against the law that changed under them', () =>
     reconcileStart > 0 && reconcileEnd > reconcileStart);
   const reconcile = flat(update.slice(reconcileStart, reconcileEnd));
 
-  // "Computed, not chosen" is the whole reason this step is reproducible: the
-  // citations select the candidates, so the same tree raises the same list.
   assert('the reconciliation computes its candidates rather than judging them', () =>
-    /candidates are computed, not chosen/.test(reconcile)
-    && /every rule citing a policy whose text changed/.test(reconcile));
-
-  // Three outcomes, and the third has to be "nothing". A step that always finds
-  // something to rewrite is one that rewrites rules the release never touched.
+    /The candidates are computed\*\*/.test(reconcile)
+    && /every rule citing a policy whose text changed between the declared release and the running one/.test(reconcile));
   assert('the reconciliation classifies three cases, and one of them writes nothing', () =>
     /restates law the release changed/.test(reconcile)
     && /contradicts the new law/.test(reconcile)
     && /did not touch \| \*\*nothing\*\*/.test(reconcile));
-
-  // The same gate a tracker write passes, because it is the same act: a write
-  // into governance somebody else owns.
   assert('the reconciliation shows every edit before making one', () =>
-    /exact before-and-after strings, as one list, before the first one is made/.test(reconcile));
+    /exact before-and-after strings, as one list, before the first is made/.test(reconcile));
   assert('the reconciliation writes nothing at all on a refusal', () =>
-    /On a refusal, write nothing/.test(reconcile)
-    && /not the ones that only remove a restatement/.test(reconcile));
-
-  // The way out of a contradiction is a deviation, never a deletion -- which is
-  // the constraint this step would otherwise be the first to break.
+    /On a refusal, write nothing\./.test(reconcile));
   assert('a rule is never deleted to settle a contradiction', () =>
     /\*\*Never delete a rule\*\*/.test(reconcile)
     && /declared deviation/.test(reconcile)
-    && /never removed/.test(flat(update)));
-
-  // Stated as law rather than as one skill's procedure, so a second reader of
-  // the same question finds the same answer.
-  // 4.0: authority folded into the bootstrap, and this rule into the step that
-  // rechecks it, which is the only place standing on both sides of a release.
-  assert('the upgrade rechecks a rule against the release it was written under', () => {
-    const reconciling = flat(noCR(readSrc('skills', 'update.md')));
-    return /that judgement was made against the release the rule was written under/.test(reconciling)
-      && /every rule citing a policy whose text changed between the declared release and the running one/.test(reconciling);
-  });
+    && /never settle a contradiction by removing the side that lost/.test(reconcile));
 
   // A step with no closing condition is a step that gets skipped quietly.
   assert('the close names the reconciliation, so skipping it is not free', () =>
-    /Every rule citing a policy the crossed releases changed has been reconciled or reported/
-      .test(flat(update))
+    /Every rule citing a changed policy is reconciled or reported/.test(flat(update))
     && /a refusal left every rule byte-identical/.test(flat(update)));
 
-  // The upgrade's own steps had read ownership off the same field that is now
-  // the 2.x marker. A step still saying "classify by declared owner" would
-  // classify a 3 tree, where the field is absent, as owning nothing at all.
+  // A step still saying "classify by declared owner" would classify a current
+  // tree, where the field is absent, as owning nothing at all.
   assert('the upgrade classifies ownership by the manifest rather than a field', () =>
-    /against the manifest the running release carries/.test(flat(update))
-    && !/by its declared `owner`/.test(update));
+    /against the release's manifest/.test(flat(update))
+    && /\*\*Never read an `owner:` field\*\* to decide/.test(flat(update)));
+
+  // P2-14: the 4.0 crossing sets the tracker from what is there and pins
+  // in-flight efforts to the lane whose rules they started under.
+  assert('crossing 4.0.0 sets tracker from the forge the repository used', () =>
+    /Crossing 4\.0\.0/.test(update)
+    && /set `github`\s+or `gitlab` where `references\/` names that forge/.test(flat(update)));
+  assert('crossing 4.0.0 puts lane: full on every in-flight effort', () =>
+    /\*\*`lane: full`\*\* on every in-flight effort's `spec\.md`/.test(flat(update)));
 
   // The closing keyword, which is what makes an issue close on its own merge.
   // Nothing shipped used to put one anywhere, so the issue closed when somebody
@@ -1754,15 +1759,15 @@ section('policies', () => {
   // Both directions: it states the rule that holds, and denies the one that did.
   const artifacts = flat(readSrc('policies', 'artifacts.md'));
   assert('policies/artifacts makes ownership a fact about location', () =>
-    /Ownership is a fact about location, and no artifact declares it/.test(artifacts));
+    /Ownership is where a file sits; no artifact declares it/.test(artifacts));
   assert('policies/artifacts no longer says the owner is read off a field', () =>
     !/the owner is read off that field/.test(artifacts) &&
     !/never inferred from a directory/.test(artifacts));
   assert('policies/artifacts names the release once, in the bootstrap', () =>
     /The release is named once/.test(artifacts) &&
-    /No artifact\s+carries a stamp of its own/.test(artifacts));
+    /No artifact\s+carries its own stamp/.test(artifacts));
   assert('policies/artifacts establishes provenance by comparing content', () =>
-    /establishes provenance by comparing content/.test(artifacts));
+    /establishes provenance by \*\*comparing content\*\*/.test(artifacts));
   // Matched with the colon optional, because the field table writes the name
   // bare and the prose writes it with one. Requiring the colon missed every row
   // in the table, which is the half of this file most likely to keep a dead
@@ -1805,14 +1810,16 @@ section('policies', () => {
     }
     return true;
   });
-  assert('policies/artifacts says why the convention takes this form', () => {
-    if (!/Why the split falls there/.test(placement)) {
+  // 4.0: the reason lives in specs.md, which a run never loads; the policy
+  // keeps the rule, including the rejected sigil.
+  assert('policies/artifacts rejects a leading slash, and specs.md says why the convention takes this form', () => {
+    if (!/Never a leading slash/.test(placement)) throw new Error('the root sigil is not rejected in the policy');
+    const specs = fs.readFileSync(path.join(REPO, 'specs.md'), 'utf8');
+    if (!/Why the split rather than a uniform prefix/.test(specs)) {
       throw new Error('nothing says why the rule turns on the segment count');
     }
-    if (!/Why not a leading slash/.test(placement)) {
-      throw new Error('the root sigil is not recorded as rejected');
-    }
-    if (!/read from the middle/.test(placement)) {
+    if (!/A leading-slash sigil is rejected/.test(specs)) throw new Error('the root sigil is not recorded as rejected');
+    if (!/read from the middle/.test(specs)) {
       throw new Error('stating the root once at the top is not recorded as rejected');
     }
     return true;
@@ -1848,7 +1855,7 @@ section('policies', () => {
     return true;
   });
   assert('policies/execution records everything else rather than raising it', () =>
-    /is recorded in `log\.md` and carried to the close/.test(execution));
+    /goes in `log\.md`, carried to the close/.test(execution));
 
   assert('policies/execution/parallel forbids splitting one ticket across children', () =>
     /\*\*A ticket is never split across sub-agents\.\*\*/.test(parallel));
@@ -1909,7 +1916,7 @@ section('policies', () => {
   assert('the bootstrap places policies above rules', () =>
     /Down the chain policies → rules → effort rules → task constraints/.test(bootstrap));
   assert('the bootstrap forbids a rule softening a policy', () =>
-    /never softens, contradicts, or opts out of one/.test(bootstrap));
+    /may tighten a policy, never soften, contradict, or opt out of one/.test(bootstrap));
 });
 
 // A run that outlives its session needs its memory somewhere the session does
@@ -2010,8 +2017,8 @@ section('the run log', () => {
     /## Resume Run step 1 again\. It re-enters the same surface/.test(runner));
 
   assert('the ledger is emitted in the turn and kept in the run log', () =>
-    /### It is emitted in the turn and kept in the run log/.test(reporting) &&
-    /\*\*Same lines, same order, same columns\.\*\*/.test(reporting));
+    /written by `aep land` into the effort's `log\.md`/.test(flat(reporting)) &&
+    /The report shows the same lines, in the same\s+order/.test(reporting));
 
   // Compaction: the run does not stop for it, and nothing may wait on it.
   assert('the run never stops for auto-compaction, nor depends on triggering it', () =>
@@ -2060,7 +2067,7 @@ section('converge', () => {
 
   // The cap is the lane's, and the CLI refuses one past it.
   assert('the cap is per lane and fixed', () =>
-    /The lane caps the rounds, and the cap is fixed/.test(execution)
+    /The lane's cap on rounds is fixed/.test(execution)
     && LANE_RULES.quick.converge === 0 && LANE_RULES.standard.converge === 1 && LANE_RULES.full.converge === 2);
   assert('aep record refuses a round past the cap', () =>
     /at most \$\{cap\} \$\{kind\} round/.test(cli));
@@ -2080,7 +2087,7 @@ section('converge', () => {
   assert('aep close stamps implemented', () =>
     /setField\(fs\.readFileSync\(spec\.file, 'utf8'\), 'status', 'implemented'\)/.test(cli));
   assert('the frontmatter contract says who writes implemented and when', () =>
-    /`implemented` is written by the run that closed the effort, never by hand ahead of it/.test(artifacts));
+    /`implemented` is written by the run that closed the effort \(`aep close`\), never by hand ahead of it/.test(artifacts));
   assert('aep close refuses while a ticket is unresolved', () =>
     /unresolved tickets remain/.test(cli));
   assert('the projection table names the spec reaching implemented', () =>
@@ -2097,8 +2104,9 @@ section('converge', () => {
 // --- §15.2 what a turn tells the human --------------------------------------
 
 /** The two slots before the work, in the order the contract fixes, then the two after. */
-const OPENING_SLOTS = ['Position', 'Assuming'];
-const CLOSING_SLOTS = ['State', 'Next'];
+const TURN_SLOTS = [
+  'Doing', 'Lane', 'Position', 'Assuming', 'Done', 'Stopped on', 'Needs you', 'Outside writes', 'Next',
+];
 
 
 // Ticket 14. The opening step is the one place AEP publishes, and the one place
@@ -2241,13 +2249,13 @@ section('the effort opens', () => {
     text.split(String.fromCharCode(13)).join('').split(/\s+/).join(' ');
   assert('install skips the label offer where there is no tracker', () => {
     const install = oneLine(readSrc('skills', 'install.md'));
-    return /\*\*Where the repository has no tracker, skip this step and say it was skipped\.\*\*/
-      .test(install) && /not a smaller offer, it is no offer/.test(install);
+    return /\*\*Tracker steps: only where `tracker:` is on\.\*\* With `tracker: none`, skip\s+both and say they were skipped\./
+      .test(install);
   });
   assert('the 2.x reshape still runs its tree half without a tracker', () => {
-    const twoX = oneLine(headingBlock(readSrc('skills', 'update.md'), 'Coming from 2.x'));
-    return /\*\*Where the repository has no tracker there is nothing to reshape\*\*/.test(twoX)
-      && /the tree half of this migration still runs in full/.test(twoX);
+    const twoX = oneLine(readSrc('skills', 'update', 'from-2.md'));
+    return /Only where `tracker:` is on\. Otherwise say the section was skipped and why\./.test(twoX)
+      && /The frontmatter and the specs halves run in full either way\./.test(twoX);
   });
 
   const github = readSrc('seed', 'references', 'github.md');
@@ -2280,104 +2288,83 @@ section('reporting', () => {
     /commit message/i.test(trigger) && /code comment/i.test(trigger));
 
   assert('the policy states the reader test in one sentence', () =>
-    /A human reads it, it is governed\.\s+A protocol agent reads it, it is\s+exempt/.test(prose));
+    /A human reads it: governed\. A protocol agent reads it: exempt\*\*/.test(prose));
   assert('the reader test says exempt means written for that reader', () =>
-    /exempt means written for that reader instead, never written\s+carelessly/.test(prose));
+    /which means\s+written for that reader, never carelessly/.test(prose));
   assert('the policy carries both worked lists', () =>
     /\|\s*Governed\s*\|\s*Exempt\s*\|/.test(policy) &&
     /a commit message, a pull request title or body/.test(prose) &&
     /prose inside `\.aep\/` artifacts/.test(prose));
-  assert('the policy says the lists are examples rather than the definition', () =>
-    /worked examples of that test rather than the definition/.test(prose));
+  assert('the policy settles a case on neither list by asking who reads it', () =>
+    /A case on neither list is settled by\s+asking who reads it/.test(prose));
   assert('the policy exempts normative protocol text wherever it lives', () =>
-    /normative protocol text, wherever it lives/.test(prose) &&
-    /exempt even at a repository root/.test(prose));
+    /normative protocol text, wherever it lives, even at a repository root/.test(prose));
 
-  // The four the policy owns, each named separately: a single assertion over all
-  // four passes while three of them are missing.
+  // 4.0: the four checkable prohibitions are one line in the bootstrap, which
+  // loads every session; the policy points at them rather than repeating them.
+  const bootstrapText = flat(readSrc('protocol.md'));
   for (const [name, pattern] of [
-    ['em dashes', /No em dashes/],
-    ['curly quotes', /No curly quotes/],
-    ['decorative emoji', /No decorative emoji/],
-    ['title-case headings', /No title-case headings/],
+    ['em dashes', /no em dashes/],
+    ['curly quotes', /no curly\s+quotes/],
+    ['decorative emoji', /no decorative emoji/],
+    ['title-case headings', /no title-case headings/],
   ]) {
-    assert(`the policy prohibits ${name} by name`, () => pattern.test(prose));
+    assert(`the bootstrap prohibits ${name} by name`, () => pattern.test(bootstrapText));
   }
-  assert('the em dash prohibition rules out the three substitutes for one', () =>
-    /Parentheses, an en dash, and a hyphen standing in for one do\s+not\s+satisfy this/.test(prose));
+  assert('the policy points at the prohibitions rather than restating them', () =>
+    /four prohibitions are in the protocol/.test(prose) && !/No em dashes/.test(prose));
 
-  // The split between law and craft. Without the link the catalogue is
-  // unreachable from the only artifact that requires it.
+  // The split between law and craft, and when the craft loads.
   assert('the policy sends the craft to skills/prose', () =>
     /\[\[skills\/prose\]\]/.test(policy));
-  assert('the policy says the prohibitions are its own rather than the catalogue\'s', () =>
-    /they are here rather than in the catalogue/.test(prose));
+  assert('the policy loads skills/prose only for human documents', () =>
+    /Load `\[\[skills\/prose\]\]` only when writing\s+a README, a pull request body, a changelog, or docs/.test(prose));
 
-  for (const slot of OPENING_SLOTS) {
-    assert(`the contract names the opening slot ${slot}`, () => policy.includes(`**${slot}**`));
-  }
-  for (const slot of CLOSING_SLOTS) {
-    assert(`the contract names the closing slot ${slot}`, () => policy.includes(`**${slot}**`));
-  }
-  assert('the contract fixes the opening slots in order', () => {
-    const at = OPENING_SLOTS.map((slot) => policy.indexOf(`**${slot}**`));
-    return at.every((position, i) => position > -1 && (i === 0 || position > at[i - 1]));
+  // The nine-line report, in order, each slot named at the start of its line.
+  const reportBlock = /```\n(Doing[\s\S]*?)```/.exec(policy)?.[1] ?? '';
+  const slotLines = reportBlock.split('\n').filter(Boolean).map((line) => line.split(/\s{2,}/)[0]);
+  assert('the turn report is the nine slots, in order', () => {
+    if (JSON.stringify(slotLines) !== JSON.stringify(TURN_SLOTS)) throw new Error(slotLines.join(' / '));
+    return true;
   });
-  assert('the contract fixes the closing slots in order', () => {
-    const at = CLOSING_SLOTS.map((slot) => policy.indexOf(`**${slot}**`));
-    return at.every((position, i) => position > -1 && (i === 0 || position > at[i - 1]));
-  });
+  assert('the turn report is at most nine lines', () => slotLines.length <= 9);
+  assert('Outside writes says none or names each path', () =>
+    /Outside writes\s+"none", or each path outside the project and why/.test(reportBlock));
 
   assert('the contract forbids omitting a slot that has nothing in it', () =>
-    /A slot with nothing to put in it says so/.test(prose) && /never dropped/i.test(prose));
-  assert('the contract makes the turn the unit, not the skill entry', () =>
-    /The unit is the turn/i.test(prose));
+    /A slot with nothing to say says so/.test(prose) && /never dropped/i.test(prose));
+  assert('the contract makes the request the unit, not the skill entry', () =>
+    /One request, one report/.test(prose));
   assert('the contract makes a nested skill a stage rather than a second report', () =>
-    /opens no report of its own/.test(prose));
+    /stage of that run and reports nothing of its own/.test(prose));
   assert('the contract holds every slot to one line', () =>
-    /\*\*Four slots, one line each\*\*/.test(prose) &&
-    /One line each is the whole constraint/.test(prose));
+    /\*\*One line each\.\*\*/.test(prose));
   assert('the contract keeps the work out of the slots rather than shortening it', () =>
-    /the work goes between them/.test(prose));
+    /the work goes\s+above/.test(prose) && /comes first, uncut/.test(prose));
   assert('the contract fills Position with what a skill already verifies', () =>
-    /Never with a new check/i.test(prose));
-  assert('the contract requires a turn that stops early to close', () =>
-    /stops early closes with the same four slots/.test(prose));
+    /holds only what the skill already verifies\*\*, never a new check/.test(prose));
   assert('the contract puts what would clear a stop in Next', () =>
-    /names in `Next`\s+what would clear it/.test(prose) &&
-    /a stop with nothing to act on is\s+the failure/i.test(prose));
+    /A stop names its remedy in `Next`/.test(prose));
+  assert('Needs you is what aep status shows, recorded through aep record', () =>
+    /`Needs you` is what `aep status` shows the human/.test(prose) &&
+    /aep record <effort> --needs-you/.test(prose));
 
-  // The ledger, and the narrowing it costs. Each half separately: a policy
-  // describing the ledger without narrowing the exemption leaves it exempt from
-  // how governed text reads, which is the half a reader would never notice.
-  assert('the contract puts a ledger between the slots', () =>
-    /## The ledger/.test(policy) &&
-    /One line per unit of work, marked as it is crossed/.test(prose));
-  assert('a ledger line carries the unit, its verified criteria, and its commit', () =>
-    /carries the unit,\s+how many of its acceptance criteria are verified, and the commit/.test(prose));
-  assert('the ledger is written for the human and for the run that wrote it', () =>
-    /written for two readers at once/i.test(prose) &&
-    /re-reads its own lines to\s+recover where it is/.test(prose));
-  assert('the ledger forfeits the exemption for text a protocol agent reads', () =>
-    /the one narrowing of the exemption/i.test(prose));
-  assert('the narrowing says which side wins where the two readers disagree', () =>
-    /stability\s+wins on the structure and the prose wins inside a cell/.test(prose));
-  assert('the ledger is one artifact rather than a report and a state file', () =>
-    /Why not two artifacts/.test(prose));
-
-  // The count. A ten-unit run is four slot lines and ten ledger lines, and the
-  // policy has to say the second number scales while the first does not.
-  assert('the contract fixes the slot count against a growing ledger', () =>
-    /A run that crosses one unit emits one line/.test(prose) &&
-    /crosses ten emits ten, and\s+still four slots/.test(prose));
+  // The ledger: written by the command line, read back on resume, and its
+  // commit computed rather than stored, so the log never holds a SHA to go stale.
+  assert('the contract keeps a ledger, one line per unit of work', () =>
+    /## The ledger/.test(policy) && /One line per unit of work, written by `aep land`/.test(prose));
+  assert('a ledger line shows its commit read from git and never stored', () =>
+    /with the commit beside each, read from git and never stored/.test(prose));
+  assert('the ledger is read back by a resumed run and stays parseable', () =>
+    /A resumed run reads the log copy/.test(prose) &&
+    /stable\s+enough to parse; inside a cell, it reads as a person wrote it/.test(prose));
 
   // One home. A second copy of the slot set is the drift this whole effort is
   // against, so the check is over every shipped artifact rather than the ones
   // that seemed likely.
-  const wholeSet = [...OPENING_SLOTS, ...CLOSING_SLOTS];
   const carriers = payloadArtifacts().filter((file) => {
     const text = fs.readFileSync(file, 'utf8');
-    return wholeSet.every((slot) => text.includes(`**${slot}**`));
+    return TURN_SLOTS.every((slot) => new RegExp(`^${slot}\\s{2,}`, 'm').test(text));
   }).map((file) => toPosix(SRC, file));
   assert('exactly one shipped artifact states the whole slot set', () => carriers.length === 1);
   if (carriers.length !== 1) {
@@ -2390,14 +2377,13 @@ section('reporting', () => {
   const bootstrap = readSrc('protocol.md');
   // The invariant itself, not the file: protocol.md also lists the policy in
   // its governance table, and a check satisfied by that link would pass with
-  // the invariant's own pointer deleted, a guard matching something
-  // travelling with the thing it checks.
-  const invariant = /\*\*Every turn reports\.\*\*[\s\S]*?(?=\n\n)/.exec(bootstrap);
+  // the invariant's own pointer deleted.
+  const invariant = /\*\*Every turn reports\*\*[\s\S]*?(?=\n\n)/.exec(bootstrap);
   assert('protocol.md carries the invariant', () => invariant !== null);
   assert('the invariant points at the contract rather than restating it', () =>
     invariant !== null && flat(invariant[0]).includes('[[policies/reporting]]'));
   assert('the bootstrap does not become a second home for the slots', () =>
-    !wholeSet.every((slot) => bootstrap.includes(slot)));
+    !TURN_SLOTS.every((slot) => new RegExp(`^${slot}\\s{2,}`, 'm').test(bootstrap)));
 
   // Rendering is the runtime's business. A contract that implies one puts every
   // non-terminal consumer out of conformance for reasons unrelated to what it
@@ -2407,9 +2393,7 @@ section('reporting', () => {
     assert(`${name} states the contract without naming a rendering`, () => !rendering.test(text));
   }
 
-  // One shape, so there is no second one to declare. Checked over the whole
-  // payload rather than over skills alone: the field is gone, and a file that
-  // still describes choosing between two forms is the same defect written out.
+  // One shape, so there is no second one to declare.
   assert('no shipped artifact declares a report form', () => {
     const declaring = payloadArtifacts()
       .filter((file) => readArtifact(file).fields.report !== undefined)
@@ -2424,74 +2408,40 @@ section('reporting', () => {
   // decision somebody made rather than a drift nobody noticed. Why each member
   // is in it:
   //
-  //   install   writes the first marker a tree ever has, so every later check
-  //             has something to compare against.
-  //   implement reads the marker on entry to the surface it takes and stamps it
-  //             on the way out, which is both halves in one skill. It lost
-  //             `commit` from this set when landing stopped being a command.
-  //   prune     sweeps the whole tree in the surface it was invoked in, taking
-  //             no surface and entering none, and stamps at its close.
+  //   install   writes the first marker a tree ever has.
+  //   implement reads the marker through `aep start` and stamps on landing.
+  //   prune     sweeps the whole tree in the surface it was invoked in, and
+  //             stamps at its close.
   //   specify   reads the surface it was invoked in, before it opens the effort
   //             into another, and stamps neither.
-  //   survey    reads a bounded part of the codebase in that same surface and
-  //             stamps at its close, despite producing no change.
-  //
-  // `prune` and `survey` stamp because the marker records the tree a run *read*
-  // and not the tree a run committed, so reading is the act that earns a stamp
-  // and a skill that only reads still earns one. `specify` is the exception that
-  // proves it: it reads one surface and commits in another, so stamping the one
-  // it is leaving would be the split this effort removed.
-  const POSITION_SKILLS = ['implement', 'install', 'prune', 'specify', 'survey'];
+  //   survey    reads a bounded part of the codebase and stamps at its close.
+  //   tasks     enters the effort's surface through `aep start`, as implement does.
+  const POSITION_SKILLS = ['implement', 'install', 'prune', 'specify', 'survey', 'tasks'];
   const readsPosition = SKILLS
-    .filter((name) => /position\.mjs/.test(readSrc('skills', `${name}.md`)))
+    .filter((name) => /position\.mjs|aep\.mjs start/.test(readSrc('skills', `${name}.md`)))
     .sort();
-  assert(`exactly ${POSITION_SKILLS.join(', ')} invoke position.mjs`, () =>
+  assert(`exactly ${POSITION_SKILLS.join(', ')} read or write position`, () =>
     JSON.stringify(readsPosition) === JSON.stringify([...POSITION_SKILLS].sort()));
   if (JSON.stringify(readsPosition) !== JSON.stringify([...POSITION_SKILLS].sort())) {
     process.stdout.write(`        on disk: ${readsPosition.join(', ')}\n`);
   }
 
-  // The table above the reason is what a run consults to fill the slot, and it
-  // was written as a description of what was true at the time. Both sides of
-  // this check are computed: the invoker set is `readsPosition`, taken from the
-  // skills themselves just above and never recomputed here, and the rows are
-  // parsed out of the policy. A skill that gains a position read therefore has
-  // to gain a row, without anybody having to remember that it must.
-  const positionRows = (() => {
-    const start = policy.indexOf('### `Position` is filled');
-    if (start < 0) return null;
-    const rest = policy.slice(start);
-    // Past the heading's own line before looking for the next one: `^` under
-    // `/m` matches at offset zero too, so a search over the whole block finds
-    // the heading it started at and returns an empty section that parses to no
-    // rows at all.
-    const body = rest.indexOf('\n') + 1;
-    const end = rest.slice(body).search(/^#{2,4}\s/m);
-    return end < 0 ? rest : rest.slice(0, body + end);
-  })();
-  const tabled = (positionRows ?? '')
+  // Both sides computed: the invoker set from the skills, the rows from the
+  // policy's table. A skill that gains a position read has to gain a row.
+  const tabled = policy
     .split('\n')
     .filter((line) => line.trimStart().startsWith('|'))
-    .map((line) => /\[\[skills\/([a-z-]+)\]\]/.exec(line)?.[1])
-    .filter(Boolean);
-
-  // One direction only, and deliberately. `review` has a row and reads no
-  // marker, so an equality here would force it out of the table or into a
-  // position read it has no reason to take. The table says what a skill that
-  // reads position puts in the slot; it does not say every skill reads one.
-  assert('every skill that invokes position.mjs has a row in the reporting table', () => {
-    if (positionRows === null) throw new Error('the section holding the table is gone');
+    .flatMap((line) => [...(/^\s*\|([^|]*)\|/.exec(line)?.[1] ?? '').matchAll(/\[\[skills\/([a-z-]+)\]\]/g)]
+      .map((match) => match[1]));
+  assert('every skill that reads position has a row in the reporting table', () => {
     const missing = readsPosition.filter((name) => !tabled.includes(name));
     if (missing.length > 0) throw new Error(`no row for ${missing.join(', ')}`);
     return true;
   });
-  assert('the table names what a skill puts in the slot rather than requiring the read', () =>
-    /A row says what that skill puts in the slot\. It never says a skill must read the position/.test(prose));
+  assert('the table says no skill reads position just to fill the slot', () =>
+    /no skill reads position just to fill it/.test(prose));
   assert('the table keeps its answer for a skill that reads no repository state', () =>
-    /\| a skill that reads no repository state \|/.test(policy) &&
-    /the answer for every skill with no row of its own/.test(prose));
-  assert('the table keeps the reason its content is not fixed with its slot', () =>
-    /making every skill read the position would buy uniformity with a behavioural change nobody asked for/.test(prose));
+    /\| a skill that reads no repository state \|/.test(policy));
 
   // Both halves, by name. A skill that checks without stamping leaves its
   // surface's marker as unmaintained as it found it, which is the state this
@@ -2693,6 +2643,18 @@ section('contexts', () => {
     { stdio: 'ignore' });
   assert('the fixture is left as it was found', () =>
     !fs.existsSync(path.join(contextsDir, 'web')) && fs.existsSync(path.join(dir, '.aep')));
+
+  // Asking how to use the script must not run it: `--help` once fell through
+  // to the write and rewrote the index during a review.
+  assert('index.mjs refuses an unknown option and writes nothing', () => {
+    const target = path.join(aep, 'index.md');
+    fs.writeFileSync(target, 'sentinel\n', 'utf8');
+    const run = spawnSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep, '--help'],
+      { encoding: 'utf8' });
+    const untouched = fs.readFileSync(target, 'utf8') === 'sentinel\n';
+    execFileSync(process.execPath, [path.join(aep, 'scripts', 'index.mjs'), '--root', aep], { stdio: 'ignore' });
+    return run.status === 2 && /unknown option: --help/.test(run.stderr) && untouched;
+  });
 });
 
 // --- a reader for the block YAML the automation seeds are written in --------
@@ -3554,8 +3516,8 @@ section('retired fields', () => {
   // failure rather than a quietly wider hole, and each entry is proven to be
   // exercised: an allowlisted file with nothing to excuse is an exemption
   // nobody would notice had stopped meaning anything.
-  assert('the allowlist is two files, each carrying its reason', () =>
-    Object.keys(EXEMPT_FROM_RETIREMENT_SCAN).length === 2
+  assert('the allowlist is three files, each carrying its reason', () =>
+    Object.keys(EXEMPT_FROM_RETIREMENT_SCAN).length === 3
     && Object.values(EXEMPT_FROM_RETIREMENT_SCAN).every(isNonEmptyString));
   assert('the entrypoint is not on the allowlist', () =>
     EXEMPT_FROM_RETIREMENT_SCAN[CANONICAL_ENTRYPOINT] === undefined);
@@ -4058,7 +4020,7 @@ section('release', () => {
   });
   assert("the bootstrap names an effort's parts without a second home for its tasks", () => {
     const bootstrap = readSrc('protocol.md');
-    return /tasks as tickets under `tickets\/`/.test(bootstrap)
+    return /tickets under `tickets\/`/.test(bootstrap)
       && /`plan\.md`/.test(bootstrap);
   });
 
@@ -4833,7 +4795,7 @@ section('install fixture', () => {
 
   assert('skills/update acts on a notice rather than printing it', () => {
     const update = readSrc('skills', 'update.md');
-    return /A notice is acted on, not read/.test(update) &&
+    return /Act on every notice the upgrade printed\*\*, in this run/.test(update) &&
       /report it as outstanding/.test(update);
   });
 
@@ -5043,70 +5005,65 @@ section('install fixture', () => {
   // its own labels is the one where a wrong install is silent, because the set
   // it creates looks reasonable beside what is already there.
   const installSkill = readSrc('skills', 'install.md');
-  assert('install offers the label vocabulary only where the tracker has none', () =>
-    installSkill.includes('**Offer the label vocabulary'));
+  // 4.0: both tracker steps sit under one gate, read off `tracker:`, so a
+  // repository with no tracker is never offered a vocabulary or a job.
+  const trackerStep = flat(installSkill.slice(
+    installSkill.indexOf('9. **Tracker steps'), installSkill.indexOf('10. **Validate**'),
+  ));
+  assert('install offers the label vocabulary only where the tracker is on', () =>
+    /\*\*a\. The label vocabulary\.\*\*/.test(trackerStep)
+    && /Tracker steps: only where `tracker:` is on\./.test(trackerStep));
   assert('install says accepting the seeded set removes the defaults', () =>
-    /only its own defaults \| offer the seeded set, and say that accepting it \*\*removes the defaults\*\*/
+    /only its own defaults \| offer the seeded set, saying that accepting it \*\*removes the defaults\*\*/
       .test(installSkill));
   assert('install creates only what is missing where labels already exist', () =>
     /labels of its own \| create \*\*only what is missing\*\*/.test(installSkill));
   assert('install shows the exact strings before creating anything', () =>
-    installSkill.includes('**Show the exact strings before creating anything**') &&
-    installSkill.includes('create nothing on a refusal'));
+    /\*\*Show the exact names and descriptions before creating anything\*\*/.test(trackerStep) &&
+    /create nothing on a refusal/.test(trackerStep));
   assert('install requires a description that states its trigger', () =>
-    installSkill.includes('**A description states the trigger that puts the label on.**'));
+    /A description states the trigger that puts the\s+label on/.test(trackerStep));
   assert('install forbids a created label naming AEP', () =>
-    installSkill.includes('**Nothing created here names AEP**'));
+    /\*\*Nothing created names\s+AEP\.\*\*/.test(trackerStep));
 
   // --- the merge-time job, offered once --------------------------------------
   //
   // The offer is the skill's, for the reason the label vocabulary's is: a script
   // cannot propose a write and wait for an answer. What the installer owns is
   // the write behind the yes, the read of the decision behind a no, and the
-  // judgement about where the job can go. The prose guards below are scoped to
-  // the step that has to carry the instruction, because an instruction that
-  // drifted out of its step still matches a whole-file search and is no longer
-  // read at the moment it applies.
+  // judgement about where the job can go.
 
-  const step = (text, from, to) => flat(text.slice(text.indexOf(from), text.indexOf(to)));
-  const offerStep = step(installSkill, '9. **Offer the merge-time job', '10. **Validate**');
+  const offerStep = flat(installSkill.slice(
+    installSkill.indexOf('**b. The merge-time job**'), installSkill.indexOf('10. **Validate**'),
+  ));
   const updateSkill = readSrc('skills', 'update.md');
-  const noticeStep = step(updateSkill, '6. **Act on the notices', '7. **Reconcile the rules');
+  const noticeStep = flat(updateSkill.slice(
+    updateSkill.indexOf('6. **Act on every notice'), updateSkill.indexOf('7. **Reconcile the rules'),
+  ));
   const installerSource = readSrc('scripts', 'install.mjs');
 
-  assert('install offers the merge-time job beside the label vocabulary', () =>
-    installSkill.includes('**Offer the merge-time job') &&
-    installSkill.indexOf('**Offer the merge-time job') >
-      installSkill.indexOf('**Offer the label vocabulary'));
+  assert('install offers the merge-time job after the label vocabulary', () =>
+    offerStep.length > 0 &&
+    installSkill.indexOf('**b. The merge-time job**') > installSkill.indexOf('**a. The label vocabulary.**'));
   assert('the offer step gates on there being a tracker at all', () =>
-    /only where there is a tracker at all/.test(offerStep) &&
-    /Skip this exactly where the step above was skipped/.test(offerStep));
+    installSkill.indexOf('9. **Tracker steps') < installSkill.indexOf('**b. The merge-time job**'));
   assert('the offer step writes only on acceptance, opt-in at the installer', () =>
     /--automation <forge> --dry-run/.test(offerStep) &&
     /\*\*On acceptance\*\*/.test(offerStep));
   assert('the offer step records a refusal as a decision in the repository rule', () =>
-    /\*\*On a refusal, write nothing, and record the decision\*\*/.test(offerStep) &&
-    /in `\[\[rules\/version-control\]\]`/.test(offerStep));
+    /\*\*On a refusal\*\*, write nothing, and record it in `\[\[rules\/version-control\]\]`/.test(offerStep));
 
-  // The decision is recorded rather than declared as a deviation. A deviation is
-  // variation with nowhere else to enter, and a refusal has somewhere: this step
-  // offers it. Filing it as a deviation would have `[[skills/update]]` report a
-  // settled question as an open fork on every upgrade after it, which is the
-  // opposite of recording it so it is not asked again.
+  // A refusal is a path this step offers, so it is a recorded decision rather
+  // than a declared deviation, which `[[skills/update]]` would report as an open
+  // fork on every upgrade after it.
   assert('the offer step calls a refusal a decision and not a deviation', () =>
-    /\*\*It is a recorded decision and not a deviation\*\*/.test(offerStep));
+    /It is a recorded decision, not a deviation\./.test(offerStep));
   assert('the offer step claims no deviation status anywhere in it', () => {
     if (/declared deviation/.test(offerStep)) throw new Error('files the refusal as a deviation');
     return true;
   });
-  assert('update calls it a recorded decision too', () =>
-    /recorded decision rather than a declared deviation/.test(flat(updateSkill)) &&
-    !/records a declared deviation in `rules\/version-control\.md`/.test(flat(updateSkill)));
 
-  // The one string the skill and the script must agree on. The skill tells a
-  // human what to write; the installer reads what was written. Drift between
-  // them is invisible, because each half still reads perfectly well alone, and
-  // the failure is a recorded decision that silently stops suppressing anything.
+  // The one string the skill and the script must agree on.
   const declinedSentence = () => {
     const found = /const DECLINED = '([^']+)'/.exec(installerSource);
     if (!found) throw new Error('the installer declares no sentence to read');
@@ -5120,30 +5077,30 @@ section('install fixture', () => {
     return true;
   });
   assert('the offer step says the record is read before offering again', () =>
-    /\*\*Read `\[\[rules\/version-control\]\]` first\.\*\*/.test(offerStep) &&
+    /\*\*Read `\[\[rules\/version-control\]\]` first\*\*/.test(offerStep) &&
     /\*\*do not offer again\*\*/.test(offerStep));
   assert('the offer step proposes an addition where a labeler is already there', () =>
-    /\*\*an addition to that file\*\*, quoted exactly, and no second file/.test(offerStep));
+    /the offer is \*\*an addition to that file\*\*, quoted exactly/.test(offerStep));
   assert('the offer step covers a file whose shape cannot take the addition', () =>
-    /\*\*Where the file's own shape cannot take the addition\*\*/.test(offerStep) &&
-    /names the obstacle and proposes nothing/.test(offerStep));
+    /where that file's shape cannot take it, the installer names the obstacle and proposes nothing/.test(offerStep));
   assert('the offer step says the GitLab offer names its token before anything else', () =>
-    /project access token with `api` scope/.test(offerStep) &&
-    /before it says anything else/.test(offerStep));
-  assert('the offer step adds no tracker call to a path that had none', () =>
-    /Nothing here reads a tracker/.test(offerStep));
+    /It prints what the forge needs provisioned first \(GitLab: a project access token with `api` scope/.test(offerStep));
+  assert('the offer step changes nothing but adding the job', () =>
+    /The offer adds a job and changes nothing else\./.test(offerStep));
 
   assert('update makes the same offer inside the step that acts on notices', () =>
-    /A notice is acted on, not read/.test(noticeStep) &&
-    /the merge-time job\.\*\*/.test(noticeStep));
+    /Act on every notice the upgrade printed\*\*, in this run/.test(noticeStep) &&
+    /the merge-time job\./.test(noticeStep) &&
+    /`\[\[skills\/install\]\]`'s offer: the same text, the same two shapes, the same refusal path/.test(noticeStep));
+  assert('update makes the offer only where the tracker is on', () =>
+    /Standing, every run, where `tracker:` is on:\*\* the merge-time job/.test(noticeStep));
   assert('update reports an offer it cannot settle as outstanding, naming what is left', () =>
-    /Where the offer cannot be settled in this run, report it as outstanding, naming the forge and what is left/
+    /An offer that cannot be settled here \(GitLab's token is the human's to create\) is reported as outstanding, naming the forge and what is left/
       .test(noticeStep));
   assert('update does not re-offer where the record already stands', () =>
-    /\*\*Where that record already stands, say it was read and do not offer again\.\*\*/
-      .test(noticeStep));
+    /records it as declined, say so and \*\*do not offer again\*\*/.test(noticeStep));
   assert('update reads the tree for this and never a tracker', () =>
-    /never from a tracker/.test(noticeStep));
+    /read from the tree, never from a tracker/.test(noticeStep));
 
   // Nothing in the offer reaches for a tracker, asked of the code rather than of
   // the prose above it. Every way a child process can be started is swept, and
@@ -5266,7 +5223,7 @@ section('install fixture', () => {
     installInto(at);
     const fenced = /```\n\s*(node [^\n]+)\n\s*```/.exec(
       installSkill.slice(
-        installSkill.indexOf('9. **Offer the merge-time job'),
+        installSkill.indexOf('**b. The merge-time job**'),
         installSkill.indexOf('10. **Validate**'),
       ),
     );
@@ -5495,7 +5452,44 @@ section('install fixture', () => {
   assert('install says which file a runtime reads comes from the target table', () =>
     /\*\*Which file a runtime reads is the installer's to know\*\*/.test(installSkill));
   assert('install says a pointer names the canonical entry and nothing else', () =>
-    /\*\*A pointer names `AGENTS\.md` and nothing under `\.aep\/`\.\*\*/.test(installSkill));
+    /\*\*A pointer\s+names `AGENTS\.md` and nothing under `\.aep\/`; never restate `protocol\.md` in\s+any entrypoint\.\*\*/.test(installSkill));
+  assert('update calls a recorded refusal a decision too', () =>
+    /A recorded refusal is a decision,\s+not a deviation, so step 8 does not report it/.test(readSrc('skills', 'update.md')));
+  // P0-6 item 7: the Claude adapter backs the write boundary up where the
+  // runtime can, and never claims more than it does.
+  assert('the claude adapter writes guardrails, merged and never replaced', () =>
+    /`\.claude\/settings\.json` guardrails/.test(installSkill)
+    && /A `\.claude\/settings\.json`\s+that exists is merged into, never replaced\./.test(installSkill));
+  assert('installing the claude adapter merges the guardrails into existing settings', () => {
+    const at = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-guard-'));
+    try {
+      execFileSync('git', ['init', '--quiet'], { cwd: at, stdio: 'ignore' });
+      fs.mkdirSync(path.join(at, '.claude'), { recursive: true });
+      const own = { permissions: { deny: ['Read(./secrets/**)'] }, sandbox: { enabled: false } };
+      fs.writeFileSync(path.join(at, '.claude', 'settings.json'), JSON.stringify(own), 'utf8');
+      execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', at, '--adapters', 'claude'],
+        { stdio: 'ignore' });
+      const merged = JSON.parse(fs.readFileSync(path.join(at, '.claude', 'settings.json'), 'utf8'));
+      if (!merged.permissions.deny.includes('Read(./secrets/**)')) throw new Error('dropped a rule the repository had');
+      if (merged.sandbox.enabled !== false) throw new Error('overrode the repository\'s own sandbox choice');
+      if (!merged.permissions.deny.includes('Edit(~/.gitconfig)')) throw new Error('added no edit-deny rule');
+      if (merged.permissions.deny.some((rule) => /^Edit\(~\/\*\*\)$|^Edit\(\/\/\*\*\)$/.test(rule))) {
+        throw new Error('a deny rule covers the whole home folder or drive, and so the project');
+      }
+      const fresh = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-guard-'));
+      try {
+        execFileSync('git', ['init', '--quiet'], { cwd: fresh, stdio: 'ignore' });
+        execFileSync(process.execPath, [path.join(SRC, 'scripts', 'install.mjs'), '--into', fresh, '--adapters', 'claude'],
+          { stdio: 'ignore' });
+        const written = JSON.parse(fs.readFileSync(path.join(fresh, '.claude', 'settings.json'), 'utf8'));
+        return written.sandbox.enabled === true && !('failIfUnavailable' in written.sandbox);
+      } finally {
+        fs.rmSync(fresh, { recursive: true, force: true });
+      }
+    } finally {
+      fs.rmSync(at, { recursive: true, force: true });
+    }
+  });
 
   assert('a runtime entrypoint that predates AEP keeps its content', () => {
     const older = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-entry-'));
@@ -7019,8 +7013,8 @@ section('the specification', () => {
   // Two axes, and still two. Moving review's unit is the moment a third axis or
   // a collapsed pair would travel in unnoticed, since the paragraph naming them
   // is the paragraph being rewritten.
-  assert('the spine keeps review at two independent passes', () =>
-    /\*\*two independent passes\*\*/.test(spine)
+  assert('the spine keeps review at two independent axes, reviewers set by lane', () =>
+    /\*\*two independent axes\*\* \(in the standard lane one reviewer runs them as separate passes; in the full lane two reviewers run them in parallel/.test(spine)
     && /one on correctness and behaviour, one on style, standards, and governance/.test(spine));
 
   // The frontmatter contract, and the fields it lost. The migration and the
@@ -8223,8 +8217,8 @@ section('filesystem boundary', () => {
   for (const zone of ['`.aep/worktrees/<effort>/…`', '`.aep/scratch/`', 'the language\'s temp API']) {
     assert(`the boundary names ${zone} as a zone`, () => protocol.includes(zone));
   }
-  assert('the bootstrap lists scratch/ in its layout', () =>
-    /├── scratch\/\s+per working tree, gitignored/.test(readSrc('protocol.md')));
+  assert('the bootstrap lists scratch/ in its layout, per working tree', () =>
+    /scratch\/\s+worktrees\/\s+per working tree, gitignored/.test(readSrc('protocol.md')));
   assert('src/gitignore excludes scratch/', () =>
     readSrc('gitignore').split(/\r?\n/).some((line) => line.trim() === 'scratch/'));
 
@@ -8299,8 +8293,22 @@ section('check', () => {
   assert('a word is a token holding a letter or a digit', () =>
     countWords('| --- | two words |  -> 3') === 3);
 
-  // Enforced from the step that removed the last hit. Budgets and rationale are
-  // reported until the rewrite brings them under, then enforced the same way.
+  assert('every budgeted file is within its budget', () => {
+    if (result.budgets.over.length > 0) {
+      throw new Error(result.budgets.over.map((entry) => `${entry.file} ${entry.words}/${entry.limit}`).join('; '));
+    }
+    return true;
+  });
+  assert('the standard-lane /implement load is within 4,000 words', () => {
+    if (HOT_PATH.budget !== 4000) throw new Error(`the hot-path budget moved to ${HOT_PATH.budget}`);
+    if (result.budgets.hotPath.over) throw new Error(`${result.budgets.hotPath.words}/${result.budgets.hotPath.limit}`);
+    return true;
+  });
+  assert('no agent-facing text carries a *Why rationale sentence', () => {
+    if (result.why.length > 0) throw new Error(result.why.map((hit) => `${hit.file}:${hit.line}`).join('; '));
+    return true;
+  });
+  assert('the whole tree passes the check', () => result.ok);
   assert('no agent-facing text sends a write outside the project', () => {
     if (result.outside.length > 0) {
       throw new Error(result.outside.map((hit) => `${hit.file}:${hit.line} ${hit.wording}`).join('; '));

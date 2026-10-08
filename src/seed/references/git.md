@@ -66,6 +66,15 @@ git commit --fixup=<commit>                                  # stage the fix fir
 GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <commit>~1  # fold it in, unattended
 ```
 
+To reword the landed commit's message as well, write the message to a file in
+`.aep/scratch/` whose first line is `amend! <the old subject>`, then a blank line,
+then the new message, and make the fixup with it (`-m` is refused with
+`--fixup=amend:`); the same rebase folds it in:
+
+```sh
+GIT_EDITOR='cp .aep/scratch/<message-file>' git commit --fixup=amend:<commit>
+```
+
 ## Worktrees
 
 ```sh

@@ -26,7 +26,7 @@ import {
   isRepositoryNote,
 } from './contract.mjs';
 import { contentHash } from './release.mjs';
-import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
+import { mergeGuardrails, renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
   MOVES,
@@ -905,6 +905,15 @@ function main() {
     // directory outside `.aep/` that the repository now owns, and a reader
     // deciding whether that was what they asked for cannot see it in a total.
     report.adapters.push(`${target.dir}/, ${files.length} wrappers`);
+    if (name === 'claude') {
+      const guard = mergeGuardrails(into, { dryRun });
+      if (guard.outcome === 'unparsed') {
+        report.warnings.push(`${toPosix(repo, guard.file)} is not a JSON object, so the write guardrails were not merged into it. Add them by hand, or fix the file and install again`);
+      } else if (guard.outcome !== 'present') {
+        report.written.push(guard.file);
+        report.adapters.push(`${target.dir}/settings.json, ${guard.outcome}: sandbox where supported, ${guard.added.length} edit-deny rules outside the project`);
+      }
+    }
   }
 
   // Asked for by name, never by default. A workflow is executable and lands

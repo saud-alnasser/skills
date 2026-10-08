@@ -318,6 +318,10 @@ test('the quick lane lands as exactly one commit on its branch', (t) => {
   const spec = path.join(surface, '.aep', 'efforts', effort, 'spec.md');
   const early = aep(surface, 'land', effort, '--message', 'docs: fix typo');
   assert.equal(early.code, 1, 'an unticked Check stops the land');
+  // A revised Check item committed on its own, as specify says a revision is:
+  // it is still folded into the one commit that lands.
+  fs.writeFileSync(spec, fs.readFileSync(spec, 'utf8').replace('README reads', 'The README reads'), 'utf8');
+  git(surface, 'commit', '--quiet', '-am', 'docs: sharpen the check');
   fs.writeFileSync(spec, fs.readFileSync(spec, 'utf8').replace('- [ ]', '- [x]'), 'utf8');
   const landed = aep(surface, 'land', effort, '--message', 'docs: fix typo');
   assert.equal(landed.code, 0, JSON.stringify(landed.json));
