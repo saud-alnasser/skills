@@ -115,11 +115,37 @@ const PROJECT = {
   '.gitignore': 'node_modules/\n',
 };
 
-/** The installed protocol's major version, read from the tree it installed. */
+/**
+ * The installed protocol's major version, read from the tree it installed. The
+ * command line is what 4.0 adds, so a tree carrying it is 4 whatever the
+ * bootstrap's version line says before the release is cut.
+ */
 export function protocolMajor(repo) {
   const text = read(repo, '.aep/protocol.md') ?? '';
   const match = /^version:\s*(\d+)\./m.exec(text);
-  return match ? Number(match[1]) : 0;
+  const declared = match ? Number(match[1]) : 0;
+  return fs.existsSync(path.join(repo, '.aep', 'scripts', 'aep.mjs')) ? Math.max(declared, 4) : declared;
+}
+
+function logText(name, ledger) {
+  return [
+    '---',
+    'use-when: "resuming this effort, or asking where it stands"',
+    '---',
+    '',
+    `# Run log: ${name}`,
+    '',
+    '## Ledger',
+    '',
+    ...ledger,
+    ...(ledger.length ? [''] : []),
+    '## Rounds',
+    '',
+    '## Recorded',
+    '',
+    '## Needs you',
+    '',
+  ].join('\n');
 }
 
 /**
@@ -213,6 +239,7 @@ export function seedEffort(repo, major, effort) {
   for (const ticket of tickets) {
     write(repo, `${dir}/tickets/${ticket.id}-${ticket.slug}.md`, ticketText({ ...ticket, status: 'open' }));
   }
+  if (major >= 4) write(repo, `${dir}/log.md`, logText(name, []));
   reindex(repo);
   git(repo, 'add', '-A');
   git(repo, 'commit', '--quiet', '-m', `docs(${name}): open the effort`);
@@ -221,6 +248,13 @@ export function seedEffort(repo, major, effort) {
     const ticket = tickets.find((entry) => entry.id === id);
     for (const [rel, content] of Object.entries(ticket.code ?? {})) write(repo, rel, content);
     write(repo, `${dir}/tickets/${ticket.id}-${ticket.slug}.md`, ticketText({ ...ticket, status: 'resolved', ticked: true }));
+    if (major >= 4) {
+      const ledger = landed.slice(0, landed.indexOf(id) + 1).map((each) => {
+        const done = tickets.find((entry) => entry.id === each);
+        return `[x] ${done.id} ${done.slug} ${done.criteria.length}/${done.criteria.length}`;
+      });
+      write(repo, `${dir}/log.md`, logText(name, ledger));
+    }
     reindex(repo);
     git(repo, 'add', '-A');
     git(repo, 'commit', '--quiet', '-m', ticket.title);

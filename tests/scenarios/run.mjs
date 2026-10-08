@@ -137,6 +137,14 @@ function judge(harness) {
 }
 
 function clean(harness) {
+  // Only ever a harness this script made: a scenario directory directly under
+  // the OS temp dir. Anything else is refused rather than removed.
+  const temp = fs.realpathSync.native(os.tmpdir());
+  const resolved = harness ? path.resolve(harness) : '';
+  if (!resolved || path.dirname(resolved).toLowerCase() !== temp.toLowerCase()
+    || !path.basename(resolved).startsWith('aep-scn-')) {
+    throw new Error(`refusing to clean ${JSON.stringify(harness)}: not a scenario harness under ${temp}`);
+  }
   const repo = path.join(harness, 'repo');
   if (fs.existsSync(repo)) {
     for (const line of (tryGit(repo, 'worktree', 'list', '--porcelain') ?? '').split(/\r?\n/)) {

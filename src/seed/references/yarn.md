@@ -24,7 +24,7 @@ yarn workspaces foreach run <script>   # Berry only
 | lint | `yarn lint` |
 | types | `yarn typecheck` |
 
-**Do not invent a script.** Read `package.json` (`[[policies/engineering]]`).
+**Do not invent a script.** Read `package.json` (`[[protocol]]`).
 
 ## Failure handling
 

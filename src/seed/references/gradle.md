@@ -32,7 +32,7 @@ build expects; a different one fails in ways that read as build-script errors.
 
 Gradle reports tasks as `UP-TO-DATE` or `FROM-CACHE` and skips them. **A green
 `./gradlew test` may have run no tests at all.** When the run is the evidence,
-check the output or force it (`[[policies/engineering]]`).
+check the output or force it (`[[protocol]]`).
 
 ## Failure handling
 

@@ -72,6 +72,28 @@ import { BUDGETS, HOT_PATH, budgetOf, countWords, runChecks } from './check.mjs'
 
 /** `src/`, the distribution. */
 const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+
+// Every fixture the suite makes goes through the temp API, and the boundary
+// says such a directory is removed before the run ends. Recorded as each is
+// made and removed on exit, so a fixture whose own cleanup was skipped by a
+// failing assertion is not left behind either.
+const madeTemp = [];
+const mkdtempSync = fs.mkdtempSync.bind(fs);
+fs.mkdtempSync = (...args) => {
+  const dir = mkdtempSync(...args);
+  madeTemp.push(dir);
+  return dir;
+};
+process.on('exit', () => {
+  for (const dir of madeTemp) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    } catch {
+      // A directory a child process still holds is reported by the leak check
+      // on the next run rather than failing this one at exit.
+    }
+  }
+});
 /** The repository that builds it. */
 const REPO = path.dirname(SRC);
 
@@ -119,6 +141,8 @@ const PRE_MOVE_RELEASE = '2.1.1';
 // commit is permanent, and a search that found the wrong one would build a
 // fixture that silently tests nothing.
 const PRE_MOVE_COMMIT = '8752757^';
+// The 3.5.0 release, the last to ship policies/authority.md and engineering.md.
+const RELEASE_350_COMMIT = 'd1635d2';
 
 const args = process.argv.slice(2);
 const only = args.includes('--section') ? args[args.indexOf('--section') + 1] : null;
@@ -605,8 +629,10 @@ section('manifest', () => {
   assert('each was matches the protocol text at the commit that moved it', () => {
     for (const move of MOVES) {
       const name = path.basename(move.from);
-      const text = execFileSync('git', ['show', `${PRE_MOVE_COMMIT}:src/rules/${name}`],
-        { encoding: 'utf8', cwd: REPO });
+      // 2.2.0 moved rules/ into policies/; 4.0.0 moved two policies into the
+      // bootstrap, and 3.5.0 is the text a tree upgrading to it carries.
+      const at = move.since === '4.0.0' ? `${RELEASE_350_COMMIT}:src/${move.from}` : `${PRE_MOVE_COMMIT}:src/rules/${name}`;
+      const text = execFileSync('git', ['show', at], { encoding: 'utf8', cwd: REPO });
       if (contentHash(text) !== move.was) {
         throw new Error(`${move.from}: was does not match the text at ${PRE_MOVE_COMMIT}`);
       }
@@ -1031,7 +1057,7 @@ section('protocol.md', () => {
     return true;
   });
   assert('the capability sentence names what became a stage', () =>
-    /\*\*stages those four\s+run for you\*\*/.test(workflow) &&
+    /\*\*stages those\s+four\s+run for you\*\*/.test(workflow) &&
     ['refine', 'research', 'review', 'converge'].every((stage) => workflow.includes(`\`${stage}\``)));
 
   // The single release of record. Asserted over the payload rather than over
@@ -1167,119 +1193,89 @@ section('skills', () => {
   assert('skills/tasks/labels.md is gone with its ladder', () =>
     !fs.existsSync(path.join(SRC, 'skills', 'tasks', 'labels.md')));
 
-  // Landing is the part of /implement that used to be a command, so what the
-  // command guaranteed is now guaranteed there or nowhere.
+  // Landing is the part of /implement that used to be a command. In 4.0 the
+  // command line does its git, so what landing guarantees is asserted where it
+  // now lives: the runner's step, and `aep land` itself.
   const runner = readSrc('skills', 'implement.md');
-  assert('the runner lands the work without a command to type', () =>
-    /without prompting/i.test(runner));
-  assert('the runner forbids pushing and publishing', () =>
-    /[Nn]ever push, never publish/.test(runner));
-  assert('the runner stamps the marker after the commit exists', () =>
-    /position\.mjs stamp/.test(runner) && /cannot contain its own hash/.test(runner));
-  assert('the runner regenerates the index as part of landing', () =>
-    /index\.mjs/.test(runner));
+  const runnerFlat = runner.split(/\s+/).join(' ');
+  const cliSource = readSrc('scripts', 'aep.mjs');
+  const policyFlat = readSrc('policies', 'execution.md').split(/\s+/).join(' ');
+  const parallelFlat = readSrc('policies', 'execution', 'parallel.md').split(/\s+/).join(' ');
+  assert('the runner lands the work through aep land, with nothing for a human to type', () =>
+    /aep\.mjs land <effort> <ticket> --message/.test(runnerFlat));
+  assert('the bootstrap forbids pushing and publishing unasked', () =>
+    /Never push, publish, or open a pull request unasked/.test(readSrc('protocol.md').split(/\s+/).join(' ')));
+  assert('aep land stamps the marker after the commit exists', () => {
+    const body = cliSource.slice(cliSource.indexOf('function land('), cliSource.indexOf('function close('));
+    const commit = body.lastIndexOf('commitAll(here, message)');
+    const stamp = body.lastIndexOf('stampMarker(');
+    return commit > 0 && stamp > commit;
+  });
+  assert('aep land regenerates the index as part of landing', () =>
+    /writeIndex\(aepIn\(here, where\)\)/.test(cliSource));
   assert('the runner detects the message convention rather than asserting one', () =>
-    /git log --oneline -30/.test(runner));
+    /git log\s+--oneline -30/.test(runner));
   assert('the runner reads the conflict note where landing hits one', () =>
     runner.includes('skills/implement/conflicts'));
 
-  // The loop. Each of these is a sentence whose absence leaves a runner that
-  // still reads as one, which is why they are pinned individually rather than by
-  // one check for the word "loop".
-  assert('the unit of an invocation is the effort rather than the wave', () =>
-    /The unit of an invocation is the effort, not the wave/.test(runner));
-  assert('an exhausted ticket list does not end the run', () =>
-    /An exhausted ticket list is not the end of the run/.test(runner));
+  // The loop: start, build, start again, until next is not build.
+  assert('a named effort is the whole effort, a named ticket that one alone', () =>
+    /Named a ticket: build that one, and the run ends there\. Named an effort, or nothing: the whole effort/.test(runnerFlat));
+  assert('tickets running out does not end the run', () =>
+    /Tickets running out is not the spec met/.test(policyFlat));
   assert('the runner schedules from the computed frontier rather than its own graph', () =>
-    /frontier\.mjs/.test(runner) && /quotes it rather than holding\s+the graph/.test(runner));
+    /For each ticket in `frontier`/.test(runnerFlat) && /frontier\(tickets, \[\]\)/.test(cliSource));
   assert('an empty frontier with work left means building what blocks it', () =>
-    /the blocking work is\s+what to build/.test(runner));
-  assert('an empty frontier sends the run to converge rather than ending it', () =>
-    /When nothing unresolved remains\s+at all/.test(runner) && /go to step 5 and converge/.test(runner));
-  assert('the runner returns to scheduling after each wave lands', () =>
-    /Then schedule again/.test(runner));
+    /`blocked` means the blocking ticket is what to build/.test(runnerFlat));
+  assert('the runner starts again until next is not build, then converges', () =>
+    /Then `start` again, until `next` is not `build`/.test(runnerFlat));
 
-  // Wave-based integration, and the two halves that make it work: where a child
-  // branches from, and who merges. Dropping either produces a run that still
-  // finishes, with conflicts nobody can attribute.
-  // Matched over a flattened copy: these are shipped prose wrapped at eighty
-  // columns, so a phrase straddling a line break would fail on the wrap rather
-  // than on the claim. The module-level `flat` is shadowed further down this
-  // block, so flattening happens here rather than through it.
-  const runnerFlat = runner.split(/\s+/).join(' ');
+  // Wave-based integration: where a child branches from, and who merges.
   assert('a wave branches from the effort branch tip and the next from the new tip', () =>
-    /branch from the effort branch's current tip/.test(runnerFlat) &&
-    /next wave branches from the new tip/.test(runnerFlat));
-  assert("every wave lands in the run's own worktree rather than a shared checkout", () =>
-    /every wave lands on it, \*\*in the run's own worktree and never in a shared checkout\*\*/.test(runnerFlat));
-  assert('the orchestrator integrates each child as it returns', () =>
-    /Integrate each child as it returns/.test(runner) &&
-    /Not all of them at the end/.test(runner));
+    /from the effort branch's current tip/.test(parallelFlat) && /The next wave branches from the new tip/.test(parallelFlat));
+  assert('aep dispatch creates every surface under the main checkout', () =>
+    /git\(where\.main, \['worktree', 'add', '--quiet', '-b', branch, at, tip\]\)/.test(cliSource));
+  assert('the orchestrator integrates each child as it returns, one at a time', () =>
+    /integrate \*\*each child as it returns, one at a time\*\*/.test(parallelFlat));
   assert('a conflict is named against the ticket whose integration raised it', () =>
-    /named against that ticket/.test(runner));
+    /a conflict then surfaces at that ticket and is named against it/.test(parallelFlat));
   assert('the orchestrator is the only integrator', () =>
-    /The orchestrator is the only integrator/.test(runner));
+    /\*\*The orchestrator is the only integrator, in the surface it holds\.\*\*/.test(parallelFlat));
 
-  // Ticket 23. `resolved` is a claim and the ticks are its evidence, so the
-  // gate has to sit where the status is written rather than in a policy the
-  // runner reads once. The two ways out matter as much as the gate: without
-  // them the cheapest way to satisfy it is to tick an unverified box.
-  assert('the runner gates resolved on every criterion being ticked', () =>
-    /\*\*Every criterion is ticked, or the ticket is not resolved\.\*\*/.test(runner));
+  // `resolved` is a claim and the ticks are its evidence; the gate sits where
+  // the status is written, which is aep land.
+  assert('the policy gates resolved on every criterion being ticked', () =>
+    /\*\*Every criterion ticked, or the ticket is not resolved\.\*\*/.test(policyFlat));
   assert('the gate names the two ways out, and neither is ticking it', () =>
-    /\*\*The way out is never to tick it\*\*/.test(runner) &&
-    /parks the ticket unresolved/.test(runner) &&
-    /marks\s+it `obsolete` where the spec moved on/.test(runner));
-  assert('the gate says what enforces it, so it is not advice', () =>
-    /`validate\.mjs` fails\s+the ticket by name/.test(runner));
+    /parks the ticket with what blocked it, or marks it `obsolete` with a reason; it is never ticked to get past/.test(policyFlat));
+  assert('aep land enforces the gate, so it is not advice', () =>
+    /criteria of \$\{stem\} are not ticked/.test(cliSource));
 
-  // One commit per ticket, including the ticket with nothing to commit. This is
-  // the one an implementation quietly skips, because an empty commit feels like
-  // noise right up until a bisect needs it.
+  // One commit per ticket, including the ticket with nothing to commit.
   assert('each ticket lands as one commit with no exception for an empty diff', () =>
-    /one commit per ticket, with no exception/i.test(runner));
+    /one commit per ticket; where the ticket only verified something, an empty one/.test(runnerFlat));
   assert('a ticket with no diff lands an empty commit carrying what was checked', () =>
-    /\*\*empty commit\*\* whose message carries what was checked/.test(runner));
+    /an empty one whose message carries what was checked and what it printed/.test(runnerFlat));
 
-  // Review judges the effort now, so the per-ticket cap it used to carry names
-  // no ticket and has gone. Swept over every shipped document rather than the
-  // runner alone: a rule that moved into a policy while its old home was
-  // cleaned reads as removed and still binds.
   assert('no rule parks a ticket after two review rejections, anywhere shipped', () => {
     const parking = /rejects twice parks the ticket|parked after two rejections|Two fix attempts/;
     const holding = walk(SRC)
       .filter((file) => file.endsWith('.md') && parking.test(fs.readFileSync(file, 'utf8')))
       .map((file) => toPosix(SRC, file));
-    if (holding.length > 0) {
-      throw new Error(`the parking rule survives in ${holding.join(', ')}`);
-    }
+    if (holding.length > 0) throw new Error(`the parking rule survives in ${holding.join(', ')}`);
     return true;
   });
 
-  // What replaces it. The gate is the handover rather than the commit, because
-  // review's subject is the branch every commit already sits on.
-  //
-  // Matched over a flattened copy: this is shipped prose wrapped at eighty
-  // columns, so a phrase straddling a line break would fail on the wrap rather
-  // than on the claim. The module-level `flat` is shadowed later in this same
-  // block, which puts it in the temporal dead zone here, so this block carries
-  // its own flattener rather than reaching for one it cannot see yet.
   const flatten = (text) => text.split(/\s+/).join(' ');
-
+  const trackerFlat = flatten(readSrc('policies', 'tracker.md'));
   assert('an open finding blocks the pull request being marked ready', () =>
-    /\*\*An open finding blocks the handover\.\*\*/.test(flatten(runner))
-    && /the pull request is never marked ready while one is still open/.test(flatten(runner)));
-  assert('a finding is closed by a fix, a ticket, or the human accepting it', () =>
-    /closed by being fixed, by becoming a ticket the run schedules, or by the human accepting it/
-      .test(flatten(runner)));
+    /mark the pull request ready \u2014 only with every review finding closed/.test(trackerFlat));
+  assert('a finding is closed by a fix, a ticket, or the human accepting it, never asked mid-run', () =>
+    /A finding is fixed, ticketed, or left in `## Needs you` for the human to accept, never asked mid-run/.test(policyFlat));
   assert('a review that passed after its fix still does not stop the run', () =>
-    /A review that rejected once and passed after the fix does\s+not stop the run/.test(runner)
-    && /ends the\s+run at the close rather than interrupting it/.test(runner));
+    /including a review that passed after its fix, is recorded/.test(policyFlat));
 
-  // Where review runs, in two halves. Either half alone is satisfied by a
-  // document that runs review twice, which is exactly the half-finished move
-  // this pair exists to catch: named after converge, and named nowhere in the
-  // per-ticket landing sequence.
+  // Review runs once, after converge, over the effort branch -- never per ticket.
   const runnerStep = (number) => {
     const start = runner.search(new RegExp(`^## ${number} `, 'm'));
     if (start < 0) throw new Error(`the runner has no step ${number}`);
@@ -1287,55 +1283,23 @@ section('skills', () => {
     const end = rest.slice(1).search(/^## /m);
     return end < 0 ? rest : rest.slice(0, end + 1);
   };
-  const landing = runnerStep(4);
-  const closing = runnerStep(5);
-
-  assert('the runner names review after converge finds no gap', () => {
-    const noGap = closing.indexOf('### When a round finds no gap');
-    if (noGap < 0) throw new Error('the converge step no longer names a round that finds no gap');
-    const named = closing.indexOf('[[skills/review]]');
-    if (named < 0) throw new Error('the converge step never reaches review');
-    return named > noGap;
-  });
-  assert('the runner runs no review in the per-ticket landing sequence', () => {
-    if (landing.includes('[[skills/review]]')) {
-      throw new Error('review is still named in the step that integrates and lands a ticket');
-    }
-    return /\*\*No review runs here\.\*\*/.test(landing)
-      && /It runs once at the close, over the effort branch, after\s+converge finds no gap/.test(landing);
+  const building = runnerStep(2);
+  const reviewing = runnerStep(4);
+  assert('the runner names review after converge finds no gap', () =>
+    /once converge found no gap/.test(flatten(reviewing)) && reviewing.includes('[[skills/review]]'));
+  assert('the runner runs no review in the per-ticket build sequence', () => {
+    if (building.includes('[[skills/review]]')) throw new Error('review is still named in the build step');
+    return true;
   });
   assert('review stays a stage of the turn where it now runs', () =>
-    /Review runs \*\*as a stage of this turn\*\* and opens no report of its own/.test(flatten(closing)));
-
-  // The correction path and its bound, asserted together on purpose. A path
-  // with no stated end is review-to-ticket-to-review forever, which is the
-  // failure the parking rule above existed to prevent, so a document stating
-  // the path alone has to fail here rather than pass on the half it kept.
-  assert('a validated finding becomes a ticket, bounded at two rounds', () => {
-    const close = flatten(closing);
-    if (!/write it as a ticket, which reaches the frontier like any other work/.test(close)) {
-      throw new Error('the close never sends a validated finding to the frontier as a ticket');
-    }
-    if (!/\*\*Two review rounds, and no third\.\*\*/.test(close)) {
-      throw new Error('the correction path is stated with no bound on the rounds');
-    }
-    return /recorded unresolved with what the review said/.test(close)
-      && /the pull request is left \*\*not ready\*\*/.test(close);
-  });
-  assert('the close says why correcting a finding costs the run nothing extra', () => {
-    const close = flatten(closing);
-    return /costs nothing extra, because nothing has left the run's reach/.test(close)
-      && /held in the run's own surface/.test(close)
-      && /pull request is a draft/.test(close)
-      && /`main` is untouched/.test(close);
-  });
+    /as a stage of this turn/.test(flatten(reviewing)));
+  assert('a validated finding is fixed or ticketed, bounded by the lane', () =>
+    /Validate each finding, then fix it, ticket it, or record it with `--needs-you` for the human to accept \u2014 never stop to ask/.test(flatten(reviewing))
+    && /up to the lane's cap/.test(flatten(reviewing))
+    && /at most \$\{cap\} \$\{kind\} round/.test(cliSource));
   assert('ticketing a finding needs no human, and accepting one does', () =>
-    /outcome table already makes \*\*Ticketed\*\* available without the human; only \*\*Accepted\*\* is reserved to them/
-      .test(flatten(closing)));
+    /for the human to accept/.test(policyFlat) && /Ticketed/.test(reviewSkill) && /Accepted/.test(reviewSkill));
 
-  // Review's subject is the effort, so step 2 may not lead with a task the
-  // caller happens to hold: an effort's diff spans every task in it, and the
-  // first row that answers is the one that decides what was asked for.
   assert("review resolves to the effort's spec before anything else", () => {
     const step = /^## 2 [\s\S]*?(?=^## )/m.exec(reviewSkill);
     if (!step) throw new Error('skills/review has no step 2');
@@ -1351,59 +1315,34 @@ section('skills', () => {
     /\*\*Row 1 is what an effort-level review resolves to, and that is the ordinary case\.\*\*/
       .test(flatten(reviewSkill)));
 
-  // The trip-wire set. Counted from the table rather than matched as prose: a
-  // fourth row is exactly how this grows, and a regex for three names passes
-  // while a fourth sits beside them.
-  assert('exactly three conditions may stop the run', () => {
-    const table = /## What may stop the run([\s\S]*?)(?=\n## |$)/.exec(runner);
-    if (!table) throw new Error('the run names no stopping conditions at all');
-    const rows = [...table[1].matchAll(/^\| \*\*(.+?)\*\* \|/gm)].map((m) => m[1]);
-    if (rows.length !== 3) {
-      throw new Error(`${rows.length} trip-wires: ${rows.join(' / ')}`);
-    }
-    return true;
-  });
-  assert('the run says there is no fourth trip-wire', () =>
-    /\*\*There is no fourth\.\*\*/.test(runner));
+  // The trip-wire set lives in the policy now; the runner links it.
+  assert('the run says there is no fourth trip-wire', () => /Exactly three; no fourth/.test(policyFlat));
   assert('the three trip-wires are the plan, the public contract, and the contradiction', () =>
-    /evidence invalidates the technical plan/.test(runner) &&
-    /touches a public contract or data at rest/.test(runner) &&
-    /contradicts `spec\.md`/.test(runner));
+    /evidence invalidates the technical plan/.test(policyFlat) &&
+    /the work touches a public contract or data at rest/.test(policyFlat) &&
+    /a task contradicts `spec\.md`/.test(policyFlat));
+  assert('the runner stops only on the three trip-wires, and links them', () =>
+    /## Stop only for The three trip-wires \(`\[\[policies\/execution\]\]`\)/.test(runnerFlat));
+  assert('a trip-wire stop releases the branch and keeps the surface', () =>
+    /aep\.mjs close <effort> --stop "<the trip-wire>"`: the branch is released and the surface kept/.test(runnerFlat));
 
-  // The session boundary. A runner that assumed its own context survives is one
-  // that writes a confident close over work it has forgotten.
-  assert('the run treats its own session as disposable', () =>
-    /The session is disposable/.test(runner));
-  assert('the run reconstructs from the durable record and nothing else', () =>
-    /from the durable record and from nothing else/.test(runner));
-  assert('nothing in the run depends on triggering compaction', () =>
-    /may depend on triggering compaction/.test(runner) &&
-    /An agent cannot invoke\s+it/.test(runner));
+  // The session boundary.
+  assert('the run is written to survive a cleared context', () =>
+    /context can be cleared between any two steps/.test(runnerFlat));
+  assert('a resumed run reads the disk and nothing else', () =>
+    /A resumed run reads only these/.test(policyFlat));
 
-  // The two judgements a single task's diff cannot support. They live under
-  // converge now, and the `converge` section asserts both halves; what is
-  // asserted here is that the runner still routes to them, since a runner whose
-  // step 5 went missing reads exactly like one whose tickets ran out.
-  assert('the runner reaches converge as its own step', () =>
-    /^## 5 .*Converge$/m.test(runner));
-
-  assert('skills/implement forbids splitting a task across sub-agents', () =>
-    /never split across sub-agents/i.test(readSrc('skills', 'implement.md')));
+  assert('the runner reaches converge as its own step', () => /^## 3 \u2014 Converge$/m.test(runner));
+  assert('the parallel policy forbids splitting a ticket across sub-agents', () =>
+    /never split across sub-agents/i.test(parallelFlat));
 
   assert('skills/update branches to the 1.x migration rather than upgrading in place', () =>
     readSrc('skills', 'update.md').includes('skills/update/migration'));
 
-  // The path carries its root (§9.1), so this fails on a convention change as
-  // well as on a frontier one. `path convention` names the first; this names the
-  // second, and the literal is why both land here.
-  assert('skills/implement computes the frontier from the local ticket files', () => {
-    const runner = readSrc('skills', 'implement.md');
-    return runner.includes('frontier.mjs')
-      && runner.includes('tickets are files under `.aep/efforts/<effort>/tickets/`')
-      && !runner.includes('frontier comes from the recorded query');
-  });
-  assert('skills/implement states that neither tracker object carries a ticket', () =>
-    /neither carries a ticket/.test(readSrc('skills', 'implement.md')));
+  assert('the frontier is computed from the local ticket files', () =>
+    /readTickets\(/.test(cliSource) && /Tickets are files under `\.aep\/efforts\/<effort>\/tickets\/`/.test(flatten(readSrc('skills', 'tasks.md'))));
+  assert('no tracker object carries a ticket', () =>
+    /A ticket is never a tracker object/.test(trackerFlat));
 
   // §30.1, the migration's five rules, each pinned by the thing that goes wrong
   // when it is dropped. A migration that quietly loses knowledge still reports
@@ -1526,10 +1465,12 @@ section('skills', () => {
 
   // Stated as law rather than as one skill's procedure, so a second reader of
   // the same question finds the same answer.
-  assert('the policy says a rule is legal against the release it was written under', () => {
-    const authority = flat(noCR(readSrc('policies', 'authority.md')));
-    return /A rule is legal against the release it was written under/.test(authority)
-      && /`\[\[skills\/update\]\]` reconciles the two/.test(authority);
+  // 4.0: authority folded into the bootstrap, and this rule into the step that
+  // rechecks it, which is the only place standing on both sides of a release.
+  assert('the upgrade rechecks a rule against the release it was written under', () => {
+    const reconciling = flat(noCR(readSrc('skills', 'update.md')));
+    return /that judgement was made against the release the rule was written under/.test(reconciling)
+      && /every rule citing a policy whose text changed between the declared release and the running one/.test(reconciling);
   });
 
   // A step with no closing condition is a step that gets skipped quietly.
@@ -1560,28 +1501,20 @@ section('skills', () => {
   // sentence that governs and pick the other up from a neighbour that governs
   // nothing: a green light for the exact defect the last assertion exists to
   // catch. Requiring exactly one paragraph is what keeps the surface that narrow.
-  const keywordParagraphs = (name, heading) =>
-    headingBlock(noCR(readSrc('skills', `${name}.md`)), heading)
-      .split(/\n\s*\n/)
-      .map(flat)
-      .filter((paragraph) => /closing keyword/.test(paragraph));
-  const KEYWORD_HALVES = [
-    ['specify', 'Opening the effort', /the keyword belongs in the body/],
-    ['implement', '4 ', /carries `Closes/],
-  ];
-  for (const [name, heading, half] of KEYWORD_HALVES) {
-    const paragraphs = keywordParagraphs(name, heading);
-    const stated = paragraphs.length === 1 ? paragraphs[0] : '';
-    assert(`skills/${name} states the closing keyword in exactly one paragraph`, () =>
-      paragraphs.length === 1);
-    assert(`skills/${name} states which half of the closing keyword it writes`, () =>
-      half.test(stated));
-    assert(`skills/${name} routes which half applies to the version-control rule`, () =>
-      stated.includes('[[rules/version-control]]'));
-    assert(`skills/${name} names neither repository shape as the only one`, () =>
-      /merges a branch through a pull request/.test(stated)
-      && /the repository stacks/.test(stated));
-  }
+  // 4.0: the closing keyword is a tracker concern, stated once in the tracker
+  // policy's opening section, both shapes in one paragraph.
+  const keywordParagraphs = headingBlock(noCR(readSrc('policies', 'tracker.md')), 'Opening')
+    .split(/\n\s*\n/)
+    .map(flat)
+    .filter((paragraph) => /closing keyword/.test(paragraph));
+  const stated = keywordParagraphs.length === 1 ? keywordParagraphs[0] : '';
+  assert('policies/tracker states the closing keyword in exactly one paragraph', () =>
+    keywordParagraphs.length === 1);
+  assert('policies/tracker routes which shape applies to the version-control rule', () =>
+    stated.includes('[[rules/version-control]]'));
+  assert('policies/tracker names both repository shapes and neither as the only one', () =>
+    /Merged through a pull request: `Closes #<issue>` in the pull request body/.test(stated)
+    && /Stacked: every commit carries `Refs #<issue>` except the change that merges last/.test(stated));
 });
 
 // --- §15.1 skill notes ------------------------------------------------------
@@ -1793,8 +1726,12 @@ section('policies', () => {
       isNonEmptyString(artifact.fields['use-when']));
   }
 
-  for (const expected of ['authority', 'engineering', 'execution', 'artifacts']) {
-    assert(`policies/${expected}.md ships`, inSrc('policies', `${expected}.md`));
+  for (const expected of ['execution', 'execution/parallel', 'tracker', 'artifacts', 'reporting']) {
+    assert(`policies/${expected}.md ships`, inSrc('policies', ...`${expected}.md`.split('/')));
+  }
+  // Folded into the bootstrap at 4.0.0, and moved there for an upgrading tree.
+  for (const retired of ['authority', 'engineering']) {
+    assert(`policies/${retired}.md no longer ships`, !inSrc('policies', `${retired}.md`));
   }
 
   // The consolidation is the point: a governance layer that grows a file per
@@ -1881,129 +1818,83 @@ section('policies', () => {
     return true;
   });
 
-  // Two statements from the absorbed rules that carry the most weight, pinned by
-  // name so a rewrite of the surrounding prose cannot quietly drop them.
-  const execution = readSrc('policies', 'execution.md');
+  // The statements that carry the most weight, pinned by name so a rewrite of
+  // the surrounding prose cannot quietly drop them.
+  const execution = flat(readSrc('policies', 'execution.md'));
+  const parallel = flat(readSrc('policies', 'execution', 'parallel.md'));
+  const tracker = flat(readSrc('policies', 'tracker.md'));
 
-  // Superseded, and the reason it existed is carried by the check that replaced
-  // it. Asserting only the absence would pass on a policy that dropped the rule
-  // and said nothing, which is how a protection disappears without a trace.
   assert('policies/execution no longer forbids plan.md', () =>
     !/NEVER create `plan\.md`/.test(execution));
-  assert('policies/execution names both files and forbids a claim in both', () =>
-    /`spec\.md`/.test(execution) && /`plan\.md`/.test(execution) &&
-    /no claim in both/i.test(execution));
-  assert('policies/execution replaces the rule with the traceability check', () =>
-    /traces to nothing/.test(execution) && /skills\/tasks/.test(execution));
-  assert('policies/execution says why the check replaced the ban', () =>
-    /Why the check and not the ban/.test(execution));
+  assert('policies/execution keeps a claim in one file: the spec, and plan.md holds how', () =>
+    /A requirement, criterion, or scope boundary lives only in `spec\.md`; `plan\.md` holds how/.test(execution));
+  assert('policies/execution replaces the ban with the traceability check', () =>
+    /`validate\.mjs` fails one that traces to no numbered requirement or criterion/.test(execution));
 
-  // The loop's half of the policy. The cap is what keeps an orchestrator running
-  // a whole effort from growing with the work inside each task rather than with
-  // the number of them, and it degrades silently when it is missing.
-  assert('policies/execution caps what a child returns', () =>
-    /What a child returns is capped/.test(execution) &&
-    /the cap is on the return rather than on\s+the work/.test(execution));
-  assert('policies/execution integrates each child as it returns', () =>
-    /integrated as it returns, one at a time/.test(execution) &&
-    /Not the batch at the\s+end/.test(execution));
-  assert('policies/execution makes the orchestrator the only integrator', () =>
-    /The orchestrator is the only integrator/.test(execution));
+  // The loop's half, now the parallel policy's.
+  assert('policies/execution/parallel caps what a child returns', () =>
+    /a summary capped in size whatever the work was/.test(parallel));
+  assert('policies/execution/parallel integrates each child as it returns', () =>
+    /integrate \*\*each child as it returns, one at a time\*\*/.test(parallel));
+  assert('policies/execution/parallel makes the orchestrator the only integrator', () =>
+    /\*\*The orchestrator is the only integrator, in the surface it holds\.\*\*/.test(parallel));
 
-  // Counted, not matched. A fourth condition is exactly how this grows, and a
-  // regex naming three passes with a fourth sitting beside them.
+  // Counted, not matched. A fourth condition is exactly how this grows.
   assert('policies/execution names exactly three conditions that may stop a run', () => {
-    const block = /three conditions that may stop a run([\s\S]*?)(?=\n## )/.exec(execution);
+    const block = /## What stops a run([\s\S]*?)(?=\n## )/.exec(readSrc('policies', 'execution.md'));
     if (!block) throw new Error('the policy names no stopping conditions');
     const items = [...block[1].matchAll(/^\d+\. /gm)];
     if (items.length !== 3) throw new Error(`${items.length} conditions listed`);
     return true;
   });
   assert('policies/execution records everything else rather than raising it', () =>
-    /recorded and carried to the close, never\s+raised mid-run/.test(execution));
+    /is recorded in `log\.md` and carried to the close/.test(execution));
 
-  assert('policies/execution forbids splitting one task across children', () =>
-    /never split across sub-agents/i.test(execution));
-  assert('policies/execution requires independence to be read, not inferred', () =>
-    /never infer independence/i.test(execution));
+  assert('policies/execution/parallel forbids splitting one ticket across children', () =>
+    /\*\*A ticket is never split across sub-agents\.\*\*/.test(parallel));
+  assert('policies/execution/parallel requires independence to be read, not inferred', () =>
+    /## Independence is read, never inferred/.test(parallel)
+    && /never inferred from a guess about which files each touches/.test(parallel));
 
-  // §14.4, the external half of the same rule. Without these, a repository whose
-  // work lives in a tracker is governed by the frontier rule and given no way to
-  // satisfy it, which reads exactly like being governed.
-  // Pinned with `\s+` between words rather than literal spaces: the payload is
-  // wrapped at 80 columns, so any phrase long enough to be worth pinning is long
-  // enough to have a newline land in the middle of it.
-  // Two tracker objects per effort, and no third. The old shape put a task in
-  // the tracker too, which is what put the dependency graph behind a paginated
-  // fetch.
-  assert('policies/execution fixes exactly one issue and one pull request per effort', () =>
-    /\*\*Exactly two objects per effort: one issue and one pull request\.\*\*/.test(execution) &&
-    /creates\s+no other tracker object/.test(execution));
-  assert('policies/execution keeps the ticket and its graph in the repository', () =>
-    /\*\*A ticket is never a tracker object, and the dependency graph never leaves the\s+repository\.\*\*/
-      .test(execution));
-  assert('policies/execution says why the graph stays local', () =>
-    /read on every scheduling pass/.test(execution) &&
-    /fetch, paginate, and interpret/.test(execution));
-  assert('policies/execution says why one issue and not one per ticket', () =>
-    /Why one issue rather than one per ticket/.test(execution) &&
-    /fifteen things to close/.test(execution));
-  assert('policies/execution keeps the tracker read-only into .aep/', () =>
-    /\*\*The tracker is read, and never mirrored into `\.aep\/`\*\*/.test(execution));
-  assert('policies/execution proposes a tracker write before making it', () =>
-    /proposed before it happens\*\*, with exact\s+strings/.test(execution));
+  // Two tracker objects per effort, and no third; the graph stays local.
+  assert('policies/tracker fixes exactly one issue and one pull request per effort', () =>
+    /\*\*One issue and one pull request\*\*, and no other tracker object/.test(tracker));
+  assert('policies/tracker keeps the ticket and its graph in the repository', () =>
+    /A ticket is never a tracker object, and the dependency graph never leaves the repository/.test(tracker));
+  assert('policies/tracker keeps the tracker read-only into .aep/', () =>
+    /The tracker is read, never mirrored into `\.aep\/`/.test(tracker));
+  assert('policies/tracker proposes a tracker write before making it', () =>
+    /A write to shared tracker data is proposed first, with the exact strings/.test(tracker));
 
-  const reconciliation = flat(execution);
-
-  // §19 the three things a child structurally could not do. Each is asserted on
-  // its own, because a reconciliation section that states two of them reads as
-  // complete: the missing one is invisible from inside the file.
+  // The three things a child structurally could not do, each on its own.
   for (const [name, pattern] of [
     ['the seams between children\'s diffs', /\*\*The seams\*\*/],
-    ['the decisions a child stopped on', /\*\*Every decision a child recorded and stopped on\.\*\*/],
+    ['the decisions a child stopped on', /\*\*Every decision a child recorded and stopped on\*\*/],
     ['one account of the work', /\*\*One account of the work\*\*/],
   ]) {
-    assert(`policies/execution makes the orchestrator own ${name}`, () =>
-      pattern.test(reconciliation));
+    assert(`policies/execution/parallel makes the orchestrator own ${name}`, () => pattern.test(parallel));
   }
+  assert('policies/execution/parallel bounds the seam pass at the shared surfaces', () =>
+    /\*\*The seam is the bound:\*\*/.test(parallel) && /is raised and returns to the frontier as a ticket/.test(parallel));
+  assert('policies/execution/parallel says the account describes the work, not the workers', () =>
+    /It describes the work, not the workers/.test(parallel));
+  assert('policies/execution/parallel surfaces sub-agent structure where it changed the outcome', () =>
+    /sub-agent structure appears only where it changed the outcome/.test(parallel)
+    && /A lost ticket always changed the outcome; it is never hidden/.test(parallel));
 
-  // The bound, and its reason. An unbounded seam pass and a bounded one read
-  // identically until a parent uses the difference, so the words that draw the
-  // line are the whole assertion.
-  assert('policies/execution bounds the seam pass at the shared surfaces', () =>
-    /The seam is the bound\./.test(reconciliation) &&
-    /raised, not taken/.test(reconciliation));
-  assert('policies/execution says why the bound is the diffs and not the effort', () =>
-    /cannot distinguish reconciling a seam from rebuilding a task/.test(reconciliation));
+  // The question a child stopped on: wording may move, substance may not.
+  assert('policies/execution/parallel has the child record the question with its options', () =>
+    /a question for the human, recorded plainly with its options/.test(parallel));
+  assert('policies/execution/parallel keeps substance out of what may be reshaped', () =>
+    /may reshape a question's wording, never its substance: no option dropped, merged, or narrowed/.test(parallel));
+  assert('policies/execution/parallel attributes the question to its source, not its author', () =>
+    /The question is the child's; the words the human reads are the orchestrator's/.test(parallel));
 
-  // Both halves of the account clause. The first half alone reads as permission
-  // to hide a lost task, which is the version this pins against.
-  assert('policies/execution says the account describes the work, not the workers', () =>
-    /describes the work rather than the workers/.test(reconciliation));
-  assert('policies/execution surfaces sub-agent structure where it changed the outcome', () =>
-    /Sub-agent structure surfaces where it changed the outcome/.test(reconciliation) &&
-    /not permission to suppress a failure/.test(reconciliation));
-
-  // The presentation clause needs its substance half for the same reason: on its
-  // own it licenses a rewritten question wearing the child's name.
-  assert('policies/execution has the orchestrator present the child\'s question', () =>
-    /The child writes the question plainly and the orchestrator presents it\./.test(reconciliation));
-  assert('policies/execution keeps substance out of what may be reshaped', () =>
-    /Wording may be reshaped\. Substance never is\./.test(reconciliation) &&
-    /which options are offered, survive unchanged/.test(reconciliation));
-  assert('policies/execution attributes the question to its source, not its author', () =>
-    /Attribution names the source, not the author of the words/.test(reconciliation));
-
-  // Reachable from the skill that dispatches, not only from the policy that
-  // states it.
+  // Reachable from the skill that dispatches.
   const implementSkill = readSrc('skills', 'implement.md');
-  assert('skills/implement routes its close-out to the reconciliation section', () =>
-    /What the orchestrator owns once the last child returns/.test(implementSkill) &&
-    /\[\[policies\/execution\]\]/.test(implementSkill));
+  assert('skills/implement routes a wave to the parallel policy', () =>
+    /`wave: dispatch`[\s\S]{0,80}`\[\[policies\/execution\/parallel\]\]`/.test(implementSkill));
 
-  // The obligation is the orchestrator's. A child brief that named the catalogue
-  // would be the version where it drifted downward, which is the shape the human
-  // rejected rather than one nobody thought of.
   const agentBriefs = topLevel(path.join(SRC, 'agents'))
     .filter((f) => /skills\/prose|catalogue of tells/.test(fs.readFileSync(f, 'utf8')))
     .map((f) => toPosix(SRC, f));
@@ -2013,138 +1904,62 @@ section('policies', () => {
     process.stdout.write(`        carried by: ${agentBriefs.join(', ')}\n`);
   }
 
-  const authority = readSrc('policies', 'authority.md');
-  assert('policies/authority places policies above rules', () =>
-    /policies\s+→\s+rules/.test(authority));
-  assert('policies/authority forbids a rule softening a policy', () =>
-    /never soften it/i.test(authority));
+  // Authority now lives in the bootstrap.
+  const bootstrap = flat(readSrc('protocol.md'));
+  assert('the bootstrap places policies above rules', () =>
+    /Down the chain policies → rules → effort rules → task constraints/.test(bootstrap));
+  assert('the bootstrap forbids a rule softening a policy', () =>
+    /never softens, contradicts, or opts out of one/.test(bootstrap));
 });
 
 // A run that outlives its session needs its memory somewhere the session does
 // not own. Every assertion here is one sentence whose absence leaves a runner
 // that reads exactly the same and forgets everything on the first kill.
 section('the run log', () => {
-  const execution = readSrc('policies', 'execution.md');
+  const execution = flat(readSrc('policies', 'execution.md'));
+  const parallel = flat(readSrc('policies', 'execution', 'parallel.md'));
   const reporting = readSrc('policies', 'reporting.md');
-  const runner = readSrc('skills', 'implement.md');
+  const runner = flat(readSrc('skills', 'implement.md'));
   const correctness = readSrc('agents', 'reviewer-correctness.md');
+  const cli = readSrc('scripts', 'aep.mjs');
 
-  assert('the policy states that the session is disposable', () =>
-    /\*\*The session is disposable\. Nothing the run needs lives only in its context\.\*\*/.test(execution));
-
-  // Where each thing is durable, asserted per row. One assertion over the table
-  // passes while any single row is missing, and the row that goes is whichever
-  // was least convenient to write.
+  // 4.0: log.md is the run's memory in every mode; a tracker only mirrors it.
+  assert('the policy states the run memory is on disk', () =>
+    /## The run's memory is on disk/.test(readSrc('policies', 'execution.md')));
   for (const [what, pattern] of [
-    ['commits carry which tickets are done', /which tickets are done \| commits on the effort branch/],
-    ['the pull request body carries which criteria are verified', /ticked checkboxes in the pull request body\*\*, inline/],
-    ['the run log carries the ledger, the converge round and the review round', /the ledger, the converge round, the review round and what it found/],
-    ['the run log carries what was recorded and not acted on', /items recorded but not acted on/],
-    ['the run log carries what a child raised short of a trip-wire', /anything a child raised that was not a trip-wire/],
+    ['commits and the ledger carry which tickets landed', /\| tickets landed \| commits on the effort branch; `log\.md` `## Ledger` \|/],
+    ['the ticket carries which criteria are verified, and by what', /\| criteria verified, and by what \| ticks in the ticket \(quick: in `spec\.md`\) \|/],
+    ['log.md carries the rounds, through aep record', /\| converge and review rounds \| `log\.md` `## Rounds`, via `aep record` \|/],
+    ['log.md carries what was recorded and what waits on the human', /\| recorded, not acted on; waiting on the human \| `## Recorded`; `## Needs you` \|/],
   ]) {
     assert(what, () => pattern.test(execution));
   }
+  assert('the log is written as the run goes: land and record write it', () =>
+    /appendToLog\(effortDir, effort, 'Ledger'/.test(cli) && /function record\(root, args\)/.test(cli));
+  assert('a failed write to log.md is reported rather than continued past', () =>
+    /A failed `log\.md` write is reported, never continued past/.test(execution));
+  assert('the tracker mirrors log.md and is never mirrored into .aep/', () =>
+    /The tracker is read, never mirrored into `\.aep\/`\. `log\.md` is canonical; the pull request mirrors it/
+      .test(flat(readSrc('policies', 'tracker.md'))));
 
-  assert('the run log is written as the run proceeds, not at the end', () =>
-    /writes the run log as the run proceeds\*\*, not at the end/.test(execution) &&
-    /before taking the next ticket/.test(runner));
-  assert('a failed write to the run log is reported rather than continued past', () =>
-    /\*\*A failed write to the run log is a defect to report\*\*/.test(execution) &&
-    /never continued past\*\*/.test(runner));
-
-  // The run log counted review attempts per ticket, which a review running once
-  // over the effort makes uncountable. What is worth carrying across a kill is
-  // which round the effort is on and what that round said.
-  // Both files, and the bare phrase rather than either file's full sentence.
-  // The first version of this guard checked one wording in the policy and a
-  // different one in the runner, and the runner's resumption table said plainly
-  // "review attempts" with neither trailing clause. It slipped through both
-  // halves and a review found it, which is why the sweep is over the phrase.
-  // Both files, and the bare phrase rather than either file's full sentence.
-  // The first version of this guard checked one wording in the policy and a
-  // different one in the runner, and the runner's resumption table said plainly
-  // "review attempts" with neither trailing clause. It slipped through both
-  // halves and a review found it, which is why the sweep is over the phrase.
   assert('no shipped file still counts review attempts in the run log', () => {
     const holding = [];
     for (const file of walk(SRC).filter((f) => f.endsWith('.md'))) {
       const text = fs.readFileSync(file, 'utf8').split(/\s+/).join(' ');
-      // Not `[^.|]`: the runner states this in a table row, so the gap between
-      // the two phrases is full of pipes. The first version of this sweep
-      // excluded them and could never reach its own subject.
       if (/run log[^.]{0,140}review attempts|review attempts[^.]{0,140}run log/i.test(text)) {
         holding.push(toPosix(SRC, file));
       }
     }
-    if (holding.length > 0) {
-      throw new Error(`the run log still counts review attempts in ${holding.join(', ')}`);
-    }
-    return /the review round and\s+what it found/.test(runner);
+    if (holding.length > 0) throw new Error(`the run log still counts review attempts in ${holding.join(', ')}`);
+    return true;
   });
 
-  // The rationale under the converge rule called converge the only stage with
-  // the whole diff in view and nobody reviewing it. This effort put a review
-  // after converge over that same diff, which made the sentence false while it
-  // still stood as the reason for a rule that is still right. The rule is
-  // pinned here with a reason the change did not falsify.
-  assert('the converge rule keeps a reason this effort did not falsify', () =>
-    execution.includes('**Converge MUST NOT edit `spec.md` or `plan.md`.**')
-    && !/only stage with both the whole diff in view and nobody reviewing it/.test(execution)
-    && execution.includes('close every gap it found by narrowing')
-    && /decides whether the spec is\s+met/.test(execution));
-
-  // The tick, and who owns it. Review's unit is the effort now, so no non-author
-  // stands at a ticket when it lands, and the orchestrator ticks what it checked.
-  // Sliced to the section, because part of the claim is that the reasoning lives
-  // where the rule does: a compensation sentence three headings away is not what
-  // criterion 13 asks for.
-  const tickingAt = execution.indexOf('### Ticking a criterion');
-  const ticking = tickingAt < 0 ? '' : execution.slice(tickingAt).split(/\n### /)[0];
-
-  assert('the orchestrator ticks a criterion at the moment it verifies it', () =>
-    /\*\*The orchestrator ticks a criterion at the moment it verifies it\*\*, carrying\s+inline what verified it/.test(ticking));
+  // The tick: made at the moment of verifying, with its evidence inline, and
+  // never by a dispatched child for its own work.
+  assert('a criterion is ticked at the moment it is verified, with its evidence inline', () =>
+    /tick it then, with what verified it inline/.test(execution));
   assert('a dispatched child never ticks its own criteria', () =>
-    /\*\*A dispatched child never ticks its own criteria\.\*\*/.test(ticking));
-
-  // Criterion 13, and both halves are one assertion on purpose. The narrowed
-  // rule being present is the easy half. The half that matters is that the
-  // unqualified rule it replaces is gone, because two rules disagreeing over who
-  // may tick is worse than the weaker one alone: each reader stops at whichever
-  // they reach first, and the tree argues for both.
-  assert('the unqualified ticking rule does not survive beside the narrowed one', () =>
-    /\*\*A dispatched child never ticks its own criteria\.\*\*/.test(ticking) &&
-    !/The agent that wrote the code never ticks its own/.test(execution) &&
-    !/checkbox is ticked by/.test(execution));
-
-  // A narrowing is a guarantee traded, so the file says which case it gave up and
-  // what covers that case instead. Without the second clause the diff reads as a
-  // rule dropped for convenience, which is the misreading this section exists to
-  // pre-empt.
-  assert('the narrowing names the case it gives up and what compensates for it', () =>
-    /a wave of\s+one is built inline by `\[\[skills\/implement\]\]`/.test(ticking) &&
-    /the whole of what this section gives up/.test(ticking) &&
-    /`\[\[skills\/review\]\]` is now guaranteed to run over the whole\s+effort branch/.test(ticking));
-
-  // The reason survives the narrowing. A diff that took the reason out along with
-  // the rule would leave a tick meaning nothing, and resumption is built on a
-  // tick meaning somebody checked.
-  assert('the ticking rule still gives resumption as its reason', () =>
-    /a tick is the claim\s+that somebody checked/.test(ticking) &&
-    /a resumed run trusts a tick without re-deriving it/.test(ticking));
-
-  // Criterion 13 does not stop at the file it was written against. Two other
-  // shipped surfaces stated the old rule in their own words, and the narrowing
-  // reached neither, so the tree argued three ways with two of them false. That
-  // is the same defect the assertion above catches inside one section, one and
-  // two files over, and it is worse than the old rule alone: each reader stops
-  // at whichever statement they reach first.
-  //
-  // Swept over the whole shipped tree rather than the two known files, because
-  // the next document to restate the rule is the one nobody thinks to check.
-  // Matched over flattened text: this prose wraps at eighty columns, so a claim
-  // straddling a line break slips a line-oriented pattern while reading fine to
-  // a human. Each shape is named, so a failure says which claim it found and
-  // not merely that something matched.
+    /\*\*A child never ticks its own criteria\.\*\*/.test(parallel));
   const exclusiveTick = [
     ['a tick belongs to the reviewer and to nobody else',
       /tick[^.]{0,60}and only (?:you|the reviewer|the correctness reviewer)\b/i],
@@ -2154,18 +1969,10 @@ section('the run log', () => {
       /only `?\[\[agents\/reviewer-correctness\]\]`?[^.]{0,60}tick/i],
     ['the orchestrator is written out of ticking',
       /the orchestrator (?:never|does not|cannot|may not|must not) ticks?\b/i],
-    // The authorship phrasing, which is the same claim from the other side
-    // and which the four shapes above do not reach. A wave of one is built
-    // inline, so the orchestrator that verifies it is its author and that
-    // tick is the author's own. A file saying otherwise tells a resumed run
-    // and the effort reviewer to trust a tick that nothing re-derives.
     ['a tick is claimed never to come from its author',
       /tick[^.]{0,80}never by the agent that wrote the code/i],
     ['a ticked box is claimed to have been checked by a non-author',
       /ticked[^.]{0,80}(?:by somebody|by someone) who did not write the code/i],
-    // The exact sentence this effort removed from the policy. A file-scoped
-    // guard forbids it there; anyone restating the old rule anywhere else
-    // reaches for these words, and the sweep could not see them.
     ['the removed rule is restated verbatim',
       /the agent that wrote the code never ticks/i],
   ];
@@ -2177,18 +1984,9 @@ section('the run log', () => {
         if (pattern.test(text)) holding.push(`${toPosix(SRC, file)} (${claim})`);
       }
     }
-    if (holding.length > 0) {
-      throw new Error(`the exclusive ticking rule survives in ${holding.join(', ')}`);
-    }
+    if (holding.length > 0) throw new Error(`the exclusive ticking rule survives in ${holding.join(', ')}`);
     return true;
   });
-
-  // The reviewer still ticks what it verifies, and the discipline it states is
-  // still the one a tick it makes carries. Only the exclusivity went: the
-  // heading is asserted to name what the reviewer ticks rather than who else may
-  // not, and the file is asserted to point at the orchestrator's tick as well,
-  // because a heading that merely stopped claiming exclusivity leaves a reader
-  // to infer it from the silence.
   assert('the correctness reviewer keeps its own tick discipline', () =>
     /## You tick what you verify/.test(correctness) &&
     /at the moment you\s+verify it\*\*, carrying inline what verified it/.test(correctness) &&
@@ -2200,35 +1998,24 @@ section('the run log', () => {
     /What is yours is what you verified/.test(flatCorrectness));
   assert('an unverifiable criterion stays unticked rather than being ticked with a caveat', () =>
     /\*\*A criterion you could not verify stays unticked\*\*/.test(correctness));
+  assert('land refuses a ticket with an unticked criterion', () =>
+    /criteria of \$\{stem\} are not ticked/.test(cli));
 
-  // Resumption. Both halves: a run that re-verifies ticks is slow, and a run
+  // Resumption: both halves. A run that re-verifies ticks is slow, and a run
   // that trusts blanks is wrong.
-  assert('a resumed run reads the pull request, the issue, and the repository only', () =>
-    /from the pull request, the issue, and\s+the repository, \*\*and from nothing else\.\*\*/.test(execution));
   assert('a resumed run re-verifies nothing ticked and trusts nothing unticked', () =>
-    /\*\*re-verifies nothing already\s+ticked, and trusts nothing that is not\.\*\*/.test(execution) &&
-    /\*\*Re-verify nothing already ticked\. Trust nothing that is not\.\*\*/.test(runner));
-  assert('the runner says what to read to recover each thing', () =>
-    /ticked checkboxes in the pull request\*\* \| which criteria/.test(runner) &&
-    /run log\*\* \| the ledger, the converge round/.test(runner));
-  assert('the tracker is read and never mirrored into the protocol directory', () =>
-    /\*\*The tracker is read\. It is never mirrored into `\.aep\/`\.\*\*/.test(execution));
+    /\*\*re-verify nothing ticked; trust nothing unticked\.\*\*/.test(execution) &&
+    /Re-verify nothing ticked; trust nothing unticked/.test(runner));
+  assert('the runner resumes by starting again, which re-enters the same surface', () =>
+    /## Resume Run step 1 again\. It re-enters the same surface/.test(runner));
 
-  // The ledger has two homes and must not grow two shapes.
   assert('the ledger is emitted in the turn and kept in the run log', () =>
     /### It is emitted in the turn and kept in the run log/.test(reporting) &&
     /\*\*Same lines, same order, same columns\.\*\*/.test(reporting));
 
-  // Compaction. The run does not stop for it, and nothing may wait on it.
-  assert('auto-compaction is harmless and the run does not stop for it', () =>
-    /\*\*Auto-compaction is harmless and the run does not stop for it\.\*\*/.test(execution));
-  assert('the reason nothing may depend on compaction is stated, not just the rule', () =>
-    /An agent cannot\s+invoke it/.test(execution) &&
-    /waiting on something it does not control/.test(execution));
-
-  // Criterion: no AEP text instructs an agent to compact. Swept over the
-  // payload rather than the three files above, because the instruction would
-  // arrive in whichever file nobody thought to check.
+  // Compaction: the run does not stop for it, and nothing may wait on it.
+  assert('the run never stops for auto-compaction, nor depends on triggering it', () =>
+    /Never stop for auto-compaction, and never depend on triggering it/.test(execution));
   assert('no shipped artifact instructs an agent to compact', () => {
     const offenders = shippedArtifacts()
       .filter((file) => file.endsWith('.md'))
@@ -2244,106 +2031,67 @@ section('the run log', () => {
 // with the whole diff in view and nobody reviewing it, so what it may not do is
 // pinned as hard as what it does.
 section('converge', () => {
-  const execution = readSrc('policies', 'execution.md');
-  const engineering = readSrc('policies', 'engineering.md');
-  const runner = readSrc('skills', 'implement.md');
+  const execution = flat(readSrc('policies', 'execution.md'));
+  const runner = flat(readSrc('skills', 'implement.md'));
+  const cli = readSrc('scripts', 'aep.mjs');
 
-  assert('the policy separates an exhausted ticket list from a satisfied spec', () =>
-    /An exhausted ticket list and a satisfied spec are different\s+claims/.test(execution));
-  assert('the runner says an empty frontier is not the end of the run', () =>
-    /go to step 5 and converge/.test(runner) &&
-    /never\s+the end of the run by itself/.test(runner));
-  assert('the effort is complete when a round finds no gap, not when tickets run out', () =>
-    /\*\*The effort is complete when a converge round finds no gap\.\*\*/.test(execution));
+  assert('the policy separates tickets running out from the spec being met', () =>
+    /Tickets running out is not the spec met/.test(execution));
+  assert('the runner converges once start says so, rather than ending', () =>
+    /`next` is not `build`/.test(runner) && /## 3 \u2014 Converge/.test(runner));
+  assert('the effort is done when a round finds no gap: start sends it to review', () =>
+    /next = 'review'/.test(cli) && /clear: kind === 'converge' \? \/\\bno gap\\b\/i/.test(cli));
 
-  // The two findings that look identical from inside one diff. Dropping either
-  // half leaves a converge that still reads complete and quietly builds around
-  // a plan that cannot work.
-  for (const [what, where, pattern] of [
-    ['work that was not built appends tickets', execution, /\*\*work that was not built\*\* \| appends tickets/],
-    ['an approach that cannot satisfy stops', execution, /cannot satisfy a requirement\*\* \| stops on the return-to-plan/],
-    ['converge never builds around the second', execution, /\*\*Converge never builds around the second\.\*\*/],
-    ['the runner asks which of the two a gap is', runner, /was it not built, or does the approach not work/],
-    ['the runner never appends against the second', runner, /Never append a ticket against it/],
-  ]) {
-    assert(what, () => pattern.test(where));
-  }
+  // The two findings that look identical from inside one diff.
+  assert('work nobody built appends tickets', () =>
+    /\| work nobody built \| append tickets and build them/.test(execution));
+  assert('an approach that cannot satisfy a requirement is trip-wire 1, never ticketed around', () =>
+    /an approach that cannot satisfy a requirement \| trip-wire 1\. Never ticket around it/.test(execution));
+  assert('the runner stops on an approach that cannot work', () =>
+    /An approach that cannot work: stop \(trip-wire 1\)/.test(runner));
 
-  // The prohibition. Stated in both places a reader could arrive from, because
-  // a converge that may edit the spec can close any gap by narrowing the ask.
+  // The prohibition, in both places a reader could arrive from.
   assert('the policy forbids converge editing spec.md or plan.md', () =>
-    /\*\*Converge MUST NOT edit `spec\.md` or `plan\.md`\.\*\*/.test(execution));
+    /\*\*Converge never edits `spec\.md` or `plan\.md`,\*\*/.test(execution));
   assert('the runner states the same prohibition where converge runs', () =>
-    /It never edits `spec\.md` or `plan\.md`/.test(runner));
-  assert('the reason for the prohibition is stated, not left as a rule', () =>
-    /close every gap it found by narrowing what was\s+asked/.test(runner) ||
-    /narrowing what the spec asked for/.test(execution));
+    /\*\*Never edit `spec\.md` or `plan\.md` here\.\*\*/.test(runner));
+  assert('the carve-out is one field by name', () =>
+    /except `status: implemented` at the close/.test(execution));
 
-  // A cap with no reason beside it is a magic number, and the next reader
-  // raises it.
-  assert('the cap is two rounds, in both the policy and the runner', () =>
-    /\*\*Converge runs at most twice per effort\.\*\*/.test(execution) &&
-    /### At most twice/.test(runner));
-  assert('the reason for two is stated rather than left as a value', () =>
-    /Why two, and why not configurable/.test(execution) &&
-    /a third round finding new gaps means the plan\s+was wrong/.test(execution));
-  assert('reaching the cap names the gaps and leaves the pull request not ready', () =>
-    /leave the pull request \*\*not\s+ready\*\*/.test(runner) &&
-    /remaining gaps at the close and in the pull request/.test(runner));
+  // The cap is the lane's, and the CLI refuses one past it.
+  assert('the cap is per lane and fixed', () =>
+    /The lane caps the rounds, and the cap is fixed/.test(execution)
+    && LANE_RULES.quick.converge === 0 && LANE_RULES.standard.converge === 1 && LANE_RULES.full.converge === 2);
+  assert('aep record refuses a round past the cap', () =>
+    /at most \$\{cap\} \$\{kind\} round/.test(cli));
+  assert('a review finding spends no converge round', () =>
+    /A review finding's ticket\s+spends none/.test(execution));
+  assert('reaching the cap names the gaps and ends not ready', () =>
+    /At the cap with gaps left, name them; the effort ends\s+not ready/.test(execution));
 
-  // Converge inherited these from the commit skill this release removed. They
-  // are asked once the effort is whole because one ticket's diff cannot support
-  // either.
-  assert('converge owns whether the effort is implemented, criterion by criterion', () =>
-    /Is the effort implemented\?\*\* Every acceptance criterion in `spec\.md` met/.test(execution) &&
-    /Not: is every ticket\s+closed/.test(runner));
-  assert('converge owns whether the change falsified a context or a reference', () =>
-    /falsify a\s+`\[\[contexts\]\]` or a `\[\[references\]\]`/.test(execution) &&
-    /corrected \*\*in\s+this effort\*\*/.test(runner));
+  // The two judgements one ticket's diff cannot support.
+  assert('converge asks whether every criterion is met, not whether every ticket closed', () =>
+    /is every criterion met \u2014 not every\s+ticket closed/.test(execution));
+  assert('converge corrects what the change falsified, in this effort', () =>
+    /falsify a `\[\[contexts\]\]` or `\[\[references\]\]` entry\? Correct what it falsified here/.test(execution));
 
-  assert('a finished round readies the pull request, which the rule permits', () =>
-    /mark the pull\s+request ready/.test(runner) &&
-    /permitted by\s+`\[\[rules\/version-control\]\]`/.test(runner));
-
-  // Ticket 22. Converge is the only stage that ever holds the answer to "is
-  // every criterion met", and before this it was the only stage forbidden to
-  // write it down. Three artifacts read `implemented`; nothing set it.
+  // The stamp: written at the close, by the CLI, and guarded by validate.
   const artifacts = readSrc('policies', 'artifacts.md');
-  assert('the close stamps the spec before it touches the pull request', () => {
-    const closing = headingBlock(runner, 'When a round finds no gap');
-    const stamp = closing.indexOf('Stamp `spec.md` to `status: implemented`');
-    const pr = closing.indexOf('Finalise the pull request description');
-    if (stamp < 0) throw new Error('the close does not stamp the spec');
-    if (pr < 0) throw new Error('the close no longer finalises the pull request');
-    if (stamp > pr) throw new Error('the pull request is finalised before the spec is stamped');
-    return true;
-  });
-  assert('the carve-out is one field by name, in both places the prohibition is', () =>
-    /`status` on\s+`spec\.md`/.test(runner) &&
-    /never read this as permission to touch the frontmatter/i.test(runner) &&
-    /one field of one file: `status` on `spec\.md`/.test(flat(execution)));
-  assert('the carve-out says why status cannot narrow what was asked', () =>
-    /stating a fact about the\s+work rather than a requirement of it/.test(runner) &&
-    /it is the only field that\s+states a fact about the work rather than a requirement of it/.test(execution));
-  assert('the close names what reads the stamp, so skipping it is not free', () =>
-    /`\[\[skills\/tasks\]\]` skips an\s+implemented effort/.test(runner) &&
-    /`\[\[skills\/prune\]\]` tells a finished effort from an\s+abandoned one/.test(runner) &&
-    /`validate\.mjs` stops checking traceability on one/.test(runner));
-  assert('the projection table names the spec reaching implemented', () =>
-    /converge found no gap, and the spec is stamped `implemented`/.test(execution));
+  assert('aep close stamps implemented', () =>
+    /setField\(fs\.readFileSync\(spec\.file, 'utf8'\), 'status', 'implemented'\)/.test(cli));
   assert('the frontmatter contract says who writes implemented and when', () =>
-    /`implemented` is written by the run that closed the effort, never by hand ahead of it/
-      .test(artifacts));
-  assert('the runner names the guard against stamping ahead of the work', () =>
-    /A stamp with an unresolved ticket still under the effort fails\s+validation/.test(runner));
+    /`implemented` is written by the run that closed the effort, never by hand ahead of it/.test(artifacts));
+  assert('aep close refuses while a ticket is unresolved', () =>
+    /unresolved tickets remain/.test(cli));
+  assert('the projection table names the spec reaching implemented', () =>
+    /converge found no gap, and the spec is stamped `implemented`/.test(readSrc('policies', 'tracker.md')));
 
-  // Converge is a stage, not a fourth thing to type, and not a fourth
-  // trip-wire. Both are how it would grow.
+  // A stage, not a fourth thing to type, and not a route around deciding
+  // architecture: the bootstrap's "humans decide" holds inside converge too.
   assert('converge is not invocable and ships no skill of its own', () =>
     !fs.existsSync(path.join(SRC, 'skills', 'converge.md')) && !SKILLS.includes('converge'));
-  assert('engineering.md says converge is not a route around deciding architecture', () =>
-    /\*\*A converge round is not a way around this\.\*\*/.test(engineering) &&
-    /evaded one round at a time/.test(engineering));
+  assert('the bootstrap forbids silently choosing an architecture', () =>
+    /\*\*Never silently\s+choose between reasonable architectures/.test(flat(readSrc('protocol.md'))));
 });
 
 // --- §15.2 what a turn tells the human --------------------------------------
@@ -2359,97 +2107,73 @@ const CLOSING_SLOTS = ['State', 'Next'];
 // does when told no. A refusal that quietly degrades to a local branch is the
 // failure this section exists to catch.
 section('the effort opens', () => {
-  const specify = readSrc('skills', 'specify.md');
-  const execution = readSrc('policies', 'execution.md');
-  const opening = headingBlock(specify, 'Opening the effort');
+  const specify = flat(readSrc('skills', 'specify.md'));
+  const tracker = flat(readSrc('policies', 'tracker.md'));
+  const execution = flat(readSrc('policies', 'execution.md'));
+  const cli = readSrc('scripts', 'aep.mjs');
 
-  assert('specify carries an opening step at all', () => opening.length > 0);
+  // 4.0: the opening is one command. Branch and surface are made in one act,
+  // the draft moves from scratch, and the main checkout is never written first.
+  assert('specify opens the effort with aep open', () =>
+    /node \.aep\/scripts\/aep\.mjs open <slug> --lane <lane>/.test(specify));
+  assert('the draft is written in scratch, never in the main checkout', () =>
+    /Write the draft\*\* at `\.aep\/scratch\/<slug>\/spec\.md`/.test(specify)
+    && /Nothing is written in the main checkout/.test(specify));
+  assert('aep open creates the branch and its surface in one act', () =>
+    /worktree', 'add', '--quiet', '-b', effort, surface, base/.test(cli));
+  assert('aep open moves the draft rather than copying it', () =>
+    /fs\.rmSync\(draft, \{ recursive: true, force: true \}\)/.test(cli));
 
-  // Criterion 1. Size changes the floor above, never the shape of the opening.
-  assert('the opening is the same step for the smallest and largest change', () =>
-    opening.includes('the same step for a one-line fix and a fifteen-ticket feature'));
-  assert('a bug fix still reaches tasks without a plan', () =>
-    specify.includes('docs, config, a bug fix, an isolated refactor | straight to `[[skills/tasks]]`'));
+  // The lane replaces the sizing floor, and only goes up.
+  assert('a bug fix is the quick lane, with no tasks', () =>
+    specify.includes('docs, config, a bug fix, an isolated refactor | `quick` | nothing; no tasks either'));
+  assert('specify raises a lane and never lowers it', () =>
+    /Raise it \u2014 \*\*never lower it\*\*/.test(specify));
+  assert('the human may override the lane, and the override stands', () =>
+    /Report it; never ask it. The human may override either way, and the override stands/.test(specify));
 
-  // Criterion 2. The rename has to precede the first commit or the placeholder
-  // number is in history forever, and every later reader has two names for one
-  // effort.
-  assert('the directory is a literal xxxx until the tracker gives it a number', () =>
-    /a literal `xxxx`, because the number is the\s+tracker's/.test(specify));
-  assert('the rename happens before the first commit, so it never enters history', () =>
-    opening.includes('before the first commit, so the rename never appears in history'));
-
-  // Criterion 3, as five ordered steps. Asserted by position, not by presence:
-  // a set of steps in the wrong order opens a pull request against a branch
-  // that does not exist yet, and every one of these strings would still be
-  // there.
-  const order = [
-    'create the issue',
-    'rename',
-    'create the effort branch',
-    "commit the effort's artifacts",
-    'push, and open a draft pull request',
-  ].map((step) => opening.indexOf(step));
-  assert('every step of the opening is present', () => order.every((at) => at >= 0));
-  assert('the opening steps are in an order that could actually run', () =>
-    order.every((at, i) => i === 0 || at > order[i - 1]));
-
-  // Criterion 6, both bodies. The empty list is called out because it is what
-  // an agent writes when tickets do not exist yet, and it reads as "no work".
-  assert('the issue body carries each requirement criterion as a checkbox', () =>
-    opening.includes("each requirement's acceptance criterion a checkbox"));
-  assert('the pull request says tickets are not yet cut rather than listing none', () =>
-    opening.includes('saying tickets are not yet cut') && opening.includes('never an empty list'));
-
-  // Criterion 4. Revisions land as further commits, or the pull request shows
-  // one drop at the end and the grilling that produced it is invisible.
+  // Later revisions land as further commits on the effort branch.
   assert('later revisions are further docs commits on the effort branch', () =>
-    /is a\s+further `docs` commit/.test(specify));
-  assert('the issue body is rewritten as the spec changes, not copied once', () =>
-    /It is the spec's projection,\s+not a copy taken once/.test(specify));
+    /every revision to `spec\.md`, `plan\.md`, `evidence\/`, or `tickets\/` is a `docs` commit on the effort branch/.test(specify));
 
-  // Criterion 5. An abandoned draft left open reads as work in flight to
-  // everyone who was not in the conversation.
-  assert('abandoning closes both objects', () =>
-    specify.includes('**Abandoning the effort closes both objects**'));
-  assert('the abandoned pair is labelled rather than silently closed', () =>
-    specify.includes('flag: wontfix'));
-
-  // The single ask. Two things, one interruption, and a refusal that stops
-  // rather than sliding to whatever the agent is allowed to do unasked.
-  assert('the ask happens once, at the opening, and nowhere else', () =>
-    specify.includes('### It asks once, and only here'));
+  // The single ask, only where a tracker is on: two things, one interruption,
+  // and a refusal that stops rather than sliding to something quieter.
+  assert('the ask happens once, before aep open, and only with a tracker', () =>
+    /`\/specify` asks \*\*once\*\*, before `aep open`/.test(tracker)
+    && /Where `tracker:` is on and the lane is not quick, first `\[\[policies\/tracker\]\]`'s one ask/.test(specify));
   assert('the ask covers both the push and the priority', () =>
-    specify.includes('permission to push and open a public pull request') &&
-    specify.includes("the effort's `priority:`"));
+    tracker.includes('permission to push and open a public pull request') && tracker.includes("the effort's `priority:`"));
   assert('the ask carries the exact strings it will write', () =>
-    specify.includes('issue title and body, branch name, pull request title'));
-  assert('a refusal stops the opening rather than degrading to something quieter', () =>
-    specify.includes('**A refusal stops the opening.**') &&
-    /does not slide to something the agent is\s+allowed to do instead/.test(specify));
+    tracker.includes('the exact issue title and body, branch name, and pull request title'));
+  assert('a refusal stops the opening', () =>
+    /A refusal stops the opening: the draft stays in scratch and nothing is created/.test(tracker));
+  assert('the issue body carries each criterion as a checkbox', () =>
+    tracker.includes('create the issue (each criterion a checkbox)'));
+  assert('the pull request says tickets are not cut rather than listing none', () =>
+    tracker.includes('or saying tickets are not cut yet'));
+  assert('the issue body is rewritten as the spec changes', () =>
+    tracker.includes('the issue body is rewritten to match the spec'));
+  assert('abandoning closes both objects, labelled', () =>
+    tracker.includes('**Abandoning closes both objects**') && tracker.includes('`flag: wontfix`'));
 
-  // Criterion 30. The stages resolve uncertainty inside the invocation. A turn
-  // that ends by naming a command has renamed the uncertainty, not resolved it,
-  // and that is exactly what this effort exists to remove.
-  assert('specify resolves material uncertainty in the same invocation', () =>
-    /\*\*These run inside this invocation and hand nothing back for the human to\s+type\.\*\*/.test(specify));
-  assert('one specify on a factual unknown produces the spec and the evidence', () =>
-    specify.includes('produces the spec *and* the evidence file'));
-  assert('ambiguity is not offered as a next step', () =>
-    specify.includes('**Ambiguity is not a next step**'));
+  // The stages resolve uncertainty inside the invocation.
+  assert('specify resolves material uncertainty in this turn', () =>
+    /\*\*Resolve material uncertainty here\.\*\*/.test(specify)
+    && /Stages hand nothing back for the human to type/.test(specify));
+  assert('ambiguity is not offered as a next step', () => specify.includes('Ambiguity is never a next step'));
   for (const [kind, target] of [
     ['factual', 'skills/research'],
     ['product, or a tradeoff', 'skills/refine'],
     ['technical', 'skills/prototype'],
+    ['an open visual question', 'skills/prototype/ui'],
   ]) {
     assert('specify routes ' + kind + ' uncertainty to ' + target, () => {
-      const row = specify.split('\n').find((line) => line.includes('| **' + kind));
+      const row = readSrc('skills', 'specify.md').split('\n').find((line) => line.startsWith('   | ' + kind));
       return Boolean(row) && row.includes(target);
     });
   }
 
-  // The stages are not commands. A skill whose heading still reads as a slash
-  // command invites a human to type it, which is the workflow this replaced.
+  // The stages are not commands.
   for (const name of ['refine', 'research']) {
     const stage = readSrc('skills', name + '.md');
     assert('skills/' + name + ' declares itself a stage rather than a command', () =>
@@ -2461,16 +2185,11 @@ section('the effort opens', () => {
       stage.includes('opens no report of its own'));
   }
 
-  // Requirement 35, in the policy and then in both seeds. The seeds are what a
-  // repository actually reads, so a policy that says two objects and a seed
-  // that still says one issue per ticket is the disagreement that ships.
-  assert('the policy states exactly two tracker objects per effort', () =>
-    execution.includes('**Exactly two objects per effort: one issue and one pull request.**'));
-  assert('the policy says a ticket is never a tracker object', () =>
-    /\*\*A ticket is never a tracker object, and the dependency graph never leaves the\s+repository\.\*\*/.test(execution));
-  assert('the policy explains why the graph stays local', () =>
-    execution.includes('nobody schedules by hand'));
-
+  // Two tracker objects per effort, and a ticket is never one.
+  assert('the tracker policy states exactly two objects per effort', () =>
+    tracker.includes('**One issue and one pull request**, and no other tracker object'));
+  assert('a ticket is never a tracker object, and the graph never leaves the repository', () =>
+    tracker.includes('A ticket is never a tracker object, and the dependency graph never leaves the repository'));
   for (const [forge, unit] of [['github', 'pull request'], ['gitlab', 'merge request']]) {
     const seed = readSrc('seed', 'references', forge + '.md');
     assert('the ' + forge + ' seed heads its effort section with one issue and one ' + unit, () =>
@@ -2483,71 +2202,22 @@ section('the effort opens', () => {
       /never comes here|no longer applies/.test(seed));
   }
 
-  // Requirements 62 and 63. Every step that closes an effort was written
-  // against a pull request, so "no tracker" was not a posture with a procedure,
-  // it was the absence of one -- reachable by not asking, and landing the run
-  // in half the shape with nothing to contradict it.
-  const noTracker = headingBlock(execution, 'Where there is no tracker');
-  assert('the policy gives the tracker-less effort a procedure of its own', () =>
-    noTracker.length > 0);
-  assert('the tracker-less effort is a branch the human merges', () =>
-    /\*\*The effort is a branch, and merging it is the human's\.\*\*/.test(noTracker)
-    && /No issue, no pull\s+request, no tracker call at all/.test(noTracker));
+  // With no tracker -- the default -- nothing in the tracker policy runs, and
+  // the repository is the whole record.
+  assert('tracker none is the default, and then nothing tracker-shaped runs', () =>
+    /With `tracker: none`, the default, nothing here runs: no issue, no pull request, no label, no forge call/.test(tracker));
+  assert('the tracker-less effort is a branch the human merges, recorded in log.md', () =>
+    /The effort is a branch a human merges, and `log\.md` is its whole record/.test(tracker));
+  assert('the runner merges in neither shape', () => /\*\*The runner never merges\.\*\*/.test(execution));
+  assert('a tracker run opens what is missing and says so', () =>
+    tracker.includes('opens what is missing and says so'));
+  assert('each tracker object links to the effort both ways', () =>
+    tracker.includes('the effort is numbered for the issue, and both bodies name the effort\'s path'));
+  assert('aep open and aep close make no forge call', () =>
+    !/\b(gh|glab)\b['"]/.test(cli) && !/'push'|'fetch'/.test(cli));
 
-  // The record is what makes the posture survivable: a killed session resumes
-  // off the repository, and it can, because the ticks are in the ticket files
-  // rather than only in a pull request that does not exist here.
-  assert('the tracker-less run has a durable record, and it is the repository', () =>
-    ['commits on the effort branch', 'ticked criteria in the ticket files']
-      .every((row) => noTracker.includes(row)));
-  assert('the tracker-less close is the same close with its second half absent', () =>
-    /stamped\s+`implemented` and the run stops there/.test(noTracker)
-    && /no draft to mark ready/.test(noTracker));
-  assert('the runner merges in neither shape', () =>
-    /The runner never merges .{1,3}with a tracker or without/.test(noTracker));
-
-  // The line this replaced said a repository with no tracker "loses the
-  // projection and nothing else", which was the claim that made the posture
-  // look free. It also lost both objects and the run's memory.
-  assert('the policy no longer says the projection is all a tracker-less repository loses', () =>
-    !/loses the projection and nothing else/.test(execution));
-
-  // The other half. Requirement 6 creates both objects; nothing said they were
-  // required, which is what made not creating them a choice.
-  assert('both tracker objects are required where a tracker exists', () =>
-    /\*\*Where the repository has a tracker, both objects are required\*\*/.test(execution)
-    && /opens what is missing and says so/.test(flat(execution)));
-  assert('each tracker object links to the effort in both directions', () =>
-    /the effort directory is named for the issue\s+number, and both bodies name the effort's path/
-      .test(execution));
-  assert('the policy says why an implied requirement was not enough', () =>
-    /reachable by not asking/.test(flat(execution)));
-
-  // The two skills that would otherwise each assume a tracker.
-  assert('specify names which posture it is in rather than assuming one', () =>
-    /rows 1 and 5 have nowhere to land/.test(flat(specify))
-    && /Not asking is not how a repository ends up in the\s+second shape/.test(specify));
-  assert('specify narrows its one ask when there is nothing public to push', () =>
-    /With no tracker there is nothing public to ask about/.test(specify)
-    && /It stays one ask/.test(specify));
-  assert("the runner's close names the tracker-less shape", () => {
-    const runner = readSrc('skills', 'implement.md');
-    return /steps 2 and 3 have nowhere to land and\s+the close is steps 1 and 4/.test(runner)
-      && /\*\*The runner never merges\*\*, in either shape/.test(runner);
-  });
-  assert('the runner resumes off the repository where there is no pull request', () => {
-    const runner = flat(readSrc('skills', 'implement.md'));
-    return /Where there is no tracker the repository is the whole record/.test(runner)
-      && /projecting them, never storing them/.test(runner);
-  });
-
-  // Asked of every skill at once rather than file by file. install's label
-  // offer and the 2.x reshape both opened with a tracker call and neither was
-  // in the relevant areas of the ticket that gave the tracker-less posture a
-  // procedure: each step is correct for the repository it was written for,
-  // which is the gap a per-ticket check cannot see. The phrases are the
-  // instructions to read or write a tracker, not the word "tracker", which
-  // every one of these files has a reason to use.
+  // Asked of every skill and agent at once: an instruction to read or write a
+  // tracker names the case where there is none.
   const TRACKER_CALLS = [
     'create the issue',
     'open a draft pull request',
@@ -2561,18 +2231,12 @@ section('the effort opens', () => {
       .filter((file) => file.endsWith('.md'))
       .map((file) => [toPosix(SRC, file), fs.readFileSync(file, 'utf8')])
       .filter(([, text]) => TRACKER_CALLS.some((call) => text.includes(call)))
-      .filter(([, text]) => !text.includes('no tracker'))
+      .filter(([, text]) => !text.includes('no tracker') && !text.includes('tracker:'))
       .map(([rel]) => rel);
     if (reaching.length > 0) throw new Error(reaching.join(', '));
     return true;
   });
 
-  // The two the sweep found. A projection with no surface is not a smaller
-  // offer, and a seeded vocabulary nobody can apply reads as work owed.
-  //
-  // Line endings and wrapping are stripped first: these read prose that wraps
-  // at 80 columns, and a CRLF checkout would fail them for a reason unrelated
-  // to what they assert.
   const oneLine = (text) =>
     text.split(String.fromCharCode(13)).join('').split(/\s+/).join(' ');
   assert('install skips the label offer where there is no tracker', () => {
@@ -2586,9 +2250,6 @@ section('the effort opens', () => {
       && /the tree half of this migration still runs in full/.test(twoX);
   });
 
-  // The sub-issue resolution this repository never adopted. It is recorded as a
-  // declined option rather than deleted, because the next reader will find the
-  // feature and wonder why it is unused.
   const github = readSrc('seed', 'references', 'github.md');
   assert('the github seed records why sub-issues are declined', () =>
     /^## Sub-issues, and why they are not used$/m.test(github) &&
@@ -2911,10 +2572,12 @@ section('reporting', () => {
   // The absorbed surfaces: each conforms, and the reasoning that justified the
   // shape it had before survives the absorption.
   const implement = readSrc('skills', 'implement.md');
-  assert('skills/implement fills Position from the position script', () =>
-    /fills `Position`/.test(implement) && /position\.mjs check/.test(implement));
-  assert('skills/implement keeps the reason its position report existed', () =>
-    /Nothing to report is still reported/.test(implement));
+  // 4.0: `aep start` reads the scope and the marker, in that order and in the
+  // surface it enters, so the run quotes one summary rather than two scripts.
+  assert('skills/implement fills Position from aep start', () =>
+    /Quote `summary` in `Position`/.test(implement) && /aep\.mjs start/.test(implement));
+  assert('skills/implement quotes the marker, a match licensing nothing more', () =>
+    /quote the marker/.test(implement) && /skips the drift read and nothing else/.test(implement));
   assert('skills/implement makes review a stage of its own turn', () =>
     /as a stage of this turn/.test(implement));
   for (const name of ['tdd', 'domain']) {
@@ -3603,6 +3266,11 @@ section('templates', () => {
 // to exactly the links most likely to rot.
 
 section('links', () => {
+  // A bracketed literal in a criterion is data. Read as a link, a ticket whose
+  // criterion says `toCsv([["a","b"]])` failed validation for a link to nothing.
+  assert('a nested array literal is not read as a link, and a backticked link still is', () =>
+    JSON.stringify(wikiLinks('`toCsv([["a","b"],["c","d"]])` per `[[policies/execution]]`'))
+      === JSON.stringify(['policies/execution']));
   const fixture = installFixture();
   let count = 0;
   for (const file of walk(fixture.aep, { skip: ['position', 'worktrees'] })) {
@@ -4727,15 +4395,15 @@ section('install fixture', () => {
   // asserted, because replacing without reporting is the silent loss the old
   // check existed to prevent.
   assert('an upgrade replaces a file standing at a shipped path, and says so', () => {
-    const intruder = path.join(aep, 'policies', 'engineering.md');
+    const intruder = path.join(aep, 'policies', 'artifacts.md');
     fs.writeFileSync(intruder, '# Local\n', 'utf8');
     const output = update();
-    const replaced = fs.readFileSync(intruder, 'utf8') === readSrc('policies', 'engineering.md');
+    const replaced = fs.readFileSync(intruder, 'utf8') === readSrc('policies', 'artifacts.md');
     if (!replaced) throw new Error('the shipped file was not restored');
     if (!/locally edited and replaced/.test(output)) {
       throw new Error('the replacement was not reported');
     }
-    if (!/policies\/engineering\.md/.test(output)) {
+    if (!/policies\/artifacts\.md/.test(output)) {
       throw new Error(`the report did not name the file: ${output}`);
     }
     return true;
@@ -4947,16 +4615,21 @@ section('install fixture', () => {
     // `evidence.md` stays invented text on purpose: it stands for the repository
     // that wrote its own file under a name the protocol vacated, and it must
     // survive the upgrade untouched.
-    const preMove = (name) => execFileSync(
-      'git', ['show', `${PRE_MOVE_COMMIT}:src/rules/${name}`], { encoding: 'utf8', cwd: REPO },
+    const preMove = (move) => execFileSync(
+      'git', ['show', move.since === '4.0.0'
+        ? `${RELEASE_350_COMMIT}:src/${move.from}`
+        : `${PRE_MOVE_COMMIT}:src/rules/${path.basename(move.from)}`],
+      { encoding: 'utf8', cwd: REPO },
     );
 
     for (const move of MOVES) {
       const name = path.basename(move.from);
       const body = name === 'evidence.md'
         ? [...frontmatter('repository', 'rule'), `# Rule \u2014 ${name.replace('.md', '')}`, ''].join('\n')
-        : preMove(name);
-      fs.writeFileSync(path.join(tree, 'rules', name), body, 'utf8');
+        : preMove(move);
+      const at = path.join(tree, ...move.from.split('/'));
+      fs.mkdirSync(path.dirname(at), { recursive: true });
+      fs.writeFileSync(at, body, 'utf8');
     }
 
     fs.writeFileSync(
@@ -5014,7 +4687,7 @@ section('install fixture', () => {
 
   assert('links into a vacated path are repaired, and the file is named', () => {
     const text = fs.readFileSync(path.join(upgraded.tree, 'contexts', 'moved.md'), 'utf8');
-    if (!text.includes('[[policies/engineering]]')) throw new Error('the moved link was not repaired');
+    if (!text.includes('[[protocol]]')) throw new Error('the moved link was not repaired');
     if (!upgraded.output.includes('links repaired')) throw new Error('no repair was reported');
     return true;
   });
@@ -5059,7 +4732,7 @@ section('install fixture', () => {
     if (!block.includes('date: 2026-08-16')) {
       throw new Error('the repair edited the frontmatter, which is not its business');
     }
-    if (!text.includes('[[policies/engineering]]')) {
+    if (!text.includes('[[protocol]]')) {
       throw new Error('the link was not repaired');
     }
     return true;
@@ -5887,8 +5560,8 @@ section('install fixture', () => {
 
   // Protocol-owned, edited locally, and declaring itself the repository's --
   // which under 3 it is not, whatever it says.
-  write2x('policies/engineering.md', ['---', 'owner: repository', '---', '',
-    '# Engineering', '', 'Somebody rewrote AEP law in their own tree.', ''].join('\n'));
+  write2x('policies/artifacts.md', ['---', 'owner: repository', '---', '',
+    '# Artifacts', '', 'Somebody rewrote AEP law in their own tree.', ''].join('\n'));
 
   const upgrade = execFileSync(
     process.execPath,
@@ -5913,13 +5586,13 @@ section('install fixture', () => {
   // anyway, and told about. Sparing it is the mistake worth guarding: the tree
   // would go on being governed by one repository's edit of AEP's own law.
   assert('a path the manifest names is replaced whatever it declares it owns', () => {
-    const at = path.join(twoXAep, 'policies', 'engineering.md');
+    const at = path.join(twoXAep, 'policies', 'artifacts.md');
     return fs.readFileSync(at, 'utf8')
-      === fs.readFileSync(path.join(SRC, 'policies', 'engineering.md'), 'utf8');
+      === fs.readFileSync(path.join(SRC, 'policies', 'artifacts.md'), 'utf8');
   });
   assert('replacing a locally edited protocol file is reported rather than silent', () =>
     /locally edited and replaced/.test(upgrade)
-    && upgrade.includes('.aep/policies/engineering.md'));
+    && upgrade.includes('.aep/policies/artifacts.md'));
 
   // And the other direction, which is what `rules/` exists for: a file under a
   // repository directory is the repository's however its frontmatter reads.
@@ -6982,57 +6655,29 @@ section('strays', () => {
 // re-derives and which it must never touch. Getting that backwards overwrites a
 // human, silently, on a run they did not ask for.
 section('labels', () => {
-  // Line endings are normalised here because this section reads structure --
-  // paragraphs, and table rows anchored to the start and end of a line -- rather
-  // than phrases. A CRLF checkout would otherwise fail every one of them for a
-  // reason that has nothing to do with what they assert.
   const CR = String.fromCharCode(13);
   const lf = (text) => text.split(CR).join('');
-  const execution = lf(readSrc('policies', 'execution.md'));
-  const specify = lf(readSrc('skills', 'specify.md'));
-  const runner = lf(readSrc('skills', 'implement.md'));
+  // 4.0: labels are a tracker concern, and live in the tracker policy, which
+  // loads only where `tracker:` is on.
+  const trackerPolicy = lf(readSrc('policies', 'tracker.md'));
   const github = lf(readSrc('seed', 'references', 'github.md'));
-  const policy = headingBlock(execution, 'Labels are markings, never state');
+  const policy = headingBlock(trackerPolicy, 'Labels are projections');
+  const flatPolicy = flat(policy);
 
-  assert('the execution policy states the label rule', () => policy.length > 0);
-  assert('a label is a projection and the file is the source', () =>
-    policy.includes('**`spec.md` and `plan.md` are what the effort is'));
+  assert('the tracker policy states the label rule', () => policy.length > 0);
   assert('the file wins when a label disagrees with it', () =>
-    /\*\*Where a label and the file disagree, the file\s+wins\*\*/.test(policy) &&
-    policy.includes('never by editing the file to match a label'));
-
-  // The split, and the two lists on either side of it. Asserted per family
-  // rather than as prose, because a family that drifts to the wrong side reads
-  // exactly as well as one on the right side.
+    /\*\*The file wins\.\*\* Where a label and `spec\.md` disagree, correct the label, never the file/.test(flatPolicy));
   assert('the policy separates derived from initial', () =>
-    /\| \*\*derived\*\* \| from a file or a diff \|/.test(policy) &&
-    /\| \*\*initial\*\* \| once, when the effort is opened \|/.test(policy));
-  const derivedLine = policy.split('\n\n').find((p) => p.startsWith('**Derived:**')) ?? '';
-  const initialLine = policy.split('\n\n').find((p) => p.startsWith('**Initial:**')) ?? '';
-  assert('the policy names what is derived', () => derivedLine.length > 0);
-  assert('the policy names what is initial', () => initialLine.length > 0);
+    /\| \*\*derived\*\* \u2014 `status:`, `type:`, `size:`, every flag a fact establishes \| from a file or the diff \| re-synced on every write \|/.test(policy)
+    && /\| \*\*initial\*\* \u2014 `priority:`, any flag inviting a person to act \| once, at opening \| never changed by an agent \|/.test(policy));
+  const derivedLine = policy.split('\n').find((line) => line.startsWith('| **derived**')) ?? '';
+  const initialLine = policy.split('\n').find((line) => line.startsWith('| **initial**')) ?? '';
   for (const family of ['`status:`', '`type:`', '`size:`']) {
-    assert(`${family} is derived`, () =>
-      derivedLine.includes(family) && !initialLine.includes(family));
+    assert(`${family} is derived`, () => derivedLine.includes(family) && !initialLine.includes(family));
   }
   assert('`priority:` is initial and not derived', () =>
     initialLine.includes('`priority:`') && !derivedLine.includes('`priority:`'));
-  assert('an initial label is never updated by an agent', () =>
-    /\*\*never updated by an agent\*\*, and a human's change to one is never overwritten\*\*/
-      .test(policy) || policy.includes("a human's change to one is never overwritten"));
 
-  // The status projection, as a table with a row per effort state. A missing row
-  // is a state whose label nobody sets, and the effort then sits at whatever the
-  // previous state left behind. The count is six rather than five, and it moved
-  // deliberately: the ladder gained a row for a change request closed without
-  // merging, and every row gained an owner column. Both change what a filter
-  // counting lines sees, so the number is re-derived from the ladder rather than
-  // relaxed, and a deleted row still fails here.
-  // Ticket 47.03. Read out of the ladder's own table rather than swept from the
-  // whole section. The sweep matched any line anywhere below that looked like a
-  // ladder row, so a row moved out of the ladder and into a second table kept
-  // every count and every comparison here passing while the table a person reads
-  // had one row fewer.
   const LADDER_HEADER = '| The effort | Issue | Pull request | What moves it |';
   const policyLines = policy.split('\n');
   const ladderHead = policyLines.indexOf(LADDER_HEADER);
@@ -7040,10 +6685,6 @@ section('labels', () => {
     if (ladderHead === -1) throw new Error(`no line reads: ${LADDER_HEADER}`);
     return true;
   });
-  // The parse takes the first match, so one header is part of the anchor rather
-  // than a detail of it: a second table under the same header carrying a
-  // contradicting row would stand in the policy unread, and every comparison
-  // below would report the pair equal.
   assert('the policy states the ladder once', () => {
     const heads = policyLines.filter((line) => line === LADDER_HEADER).length;
     if (heads !== 1) throw new Error(`${heads} tables stand under the ladder's header`);
@@ -7059,67 +6700,30 @@ section('labels', () => {
   assert('the status projection covers every effort state', () => rows.length === 6);
   if (rows.length !== 6) process.stdout.write(`        projection rows: ${rows.length}\n`);
   for (const state of ['backlog', 'ready', 'in progress', 'in review', 'done']) {
-    assert(`the projection reaches status: ${state}`, () =>
-      policy.includes(`status: ${state}`));
+    assert(`the projection reaches status: ${state}`, () => policy.includes(`status: ${state}`));
   }
 
-  // Ticket 47.02. A row whose label nothing moves is the failure this section
-  // could not see: the terminal row named a state and no owner, so both objects
-  // stayed at `status: in review` after every merge until a person noticed. The
-  // owner is read out of the row's own last cell, positionally, so a row left
-  // empty fails rather than falling back to the cell beside it.
   const cells = (row) => row.split('|').slice(1, -1).map((cell) => cell.trim());
-  assert('every ladder row carries an owner column', () =>
-    rows.every((row) => cells(row).length === 4));
+  assert('every ladder row carries an owner column', () => rows.every((row) => cells(row).length === 4));
   const unowned = rows.filter((row) => (cells(row)[3] ?? '') === '');
   assert('every ladder row names what moves it', () => unowned.length === 0);
-  if (unowned.length > 0) {
-    process.stdout.write(`        unowned: ${unowned.map((row) => cells(row)[0]).join(', ')}\n`);
-  }
-  assert('the policy states that every row names its owner', () =>
-    /\*\*Every row names what moves it\.\*\*/.test(policy));
 
-  // The terminal value and its two owners. Two rows reach it now, merged and
-  // closed without merging, and each names both mechanisms: a repository that
-  // declined the merge-time job still has to converge, so the reconciliation is
-  // never the optional half.
   const terminal = rows.filter((row) => cells(row)[2] === '`status: done`');
   assert('two rows reach the terminal value', () => terminal.length === 2);
   assert('the ladder reaches the terminal value on a merge', () =>
     terminal.some((row) => cells(row)[0] === 'merged'));
   assert('the ladder reaches the terminal value closed without merging', () =>
-    terminal.some((row) => cells(row)[0] === 'closed without merging'
-      && cells(row)[1] === '`status: done`'));
+    terminal.some((row) => cells(row)[0] === 'closed without merging' && cells(row)[1] === '`status: done`'));
   assert('the merged row still says the pull request closes the issue', () =>
     terminal.some((row) => cells(row)[0] === 'merged' && /closes it/.test(cells(row)[1])));
   for (const row of terminal) {
     const owner = cells(row)[3] ?? '';
-    assert(`the ${cells(row)[0]} row names the job that fires at merge`, () =>
-      /merge-time job/.test(owner));
-    assert(`the ${cells(row)[0]} row names the reconciliation that corrects it late`, () =>
-      /`reconcile\.mjs`/.test(owner));
+    assert(`the ${cells(row)[0]} row names the job that fires at merge`, () => /merge-time job/.test(owner));
+    assert(`the ${cells(row)[0]} row names the reconciliation that corrects it late`, () => /`reconcile\.mjs`/.test(owner));
   }
-  assert('the policy says why the terminal value needs two owners', () =>
-    /\*\*a job the forge fires on its own merge event\*\*/.test(policy)
-    && /\*\*a reconciliation the next run computes\*\*/.test(policy));
-  assert('the policy states its own reason for keeping the terminal value', () =>
-    /a projection of the effort's state rather than a second copy of\nthe forge's/.test(policy)
-    && /keeps the family whole enough to filter on/.test(policy));
-  assert('the policy says an abandoned effort reaches the same value', () =>
-    /\*\*Closed without merging reaches the same value\.\*\*/.test(policy)
-    && /`flag: wontfix` says why it ended; `status: done` says/.test(policy));
+  assert('an abandoned effort is labelled wontfix and closed', () =>
+    /\*\*Abandoning closes both objects\*\*, labelled `flag: wontfix`/.test(flat(trackerPolicy)));
 
-  // Ticket 47.03. The ladder now stands in two places: this table, which a
-  // person reads, and `STATUS_LADDER` in contract.mjs, which a script projects
-  // from. Nothing but this comparison holds the pair together, so it is written
-  // to fail from either side: a row in the policy with no row in the value fails
-  // here, and a row in the value with no row in the policy fails here too. The
-  // label is pulled out of the cell rather than compared against the whole of
-  // it, because the merged row's cell carries a clause about the closing keyword
-  // as well as the label, and that clause is checked above. A cell carrying no
-  // backticked label says so rather than falling back to its own text, which
-  // would let an unbackticked status in the policy normalise onto the value it
-  // is supposed to be checked against.
   const labelIn = (cell) => (/`(status: [^`]+)`/.exec(cell) ?? [])[1]
     ?? `no backticked label in "${cell}"`;
   const asRow = ({ effort, issue, pullRequest }) => `${effort} | ${issue} | ${pullRequest}`;
@@ -7246,53 +6850,26 @@ section('labels', () => {
   // size:, and where its thresholds live. A size label whose thresholds are
   // stated somewhere else is one nobody reading the tracker can check.
   assert('size is computed from the diff at ready', () =>
-    /\*\*`size:` is computed from the diff\*\* when the pull request goes ready/.test(policy));
+    /\*\*`size:` is computed from the diff\*\* at ready-for-review/.test(flatPolicy));
   assert('the thresholds live in the label descriptions', () =>
-    policy.includes("against the thresholds the repository's own label descriptions state") &&
-    policy.includes('A\nsize label whose thresholds live somewhere else is one nobody can check.'));
-
-  // A flag states a fact. Without this, flags become decoration and the two that
-  // actually matter stop being read.
-  assert('a flag with no fact behind it is not set', () =>
-    policy.includes('**A flag with no fact behind it is not set.**'));
+    flatPolicy.includes("against the thresholds the repository's own label descriptions state"));
+  assert('a flag with no fact behind it is not set', () => flatPolicy.includes('**Flags need a fact:**'));
   for (const [flag, fact] of [
     ['breaking changes', 'public-contract trip-wire'],
-    ['dependencies', 'diff'],
+    ['dependencies', 'manifest or lockfile moved'],
     ['discussion', 'open questions'],
   ]) {
-    assert(`the policy says what establishes flag: ${flag}`, () =>
-      policy.includes(flag) && policy.includes(fact));
+    assert(`the policy says what establishes flag: ${flag}`, () => flatPolicy.includes(flag) && flatPolicy.includes(fact));
   }
-
-  // The vocabulary is the repository's, and nothing names AEP. A tracker is read
-  // by people who never installed it.
-  assert('AEP sets every family using labels that already exist', () =>
-    /\*\*AEP sets every family[\s\S]{0,120}using labels that already exist here\.\*\*/.test(policy));
+  assert('AEP uses labels that already exist here', () => flatPolicy.includes('**Use labels that already exist here.**'));
   assert('creating a label is reported with its reason', () =>
-    policy.includes('**Creating a label is reported, with the reason.**'));
-  assert('no label AEP sets names AEP', () =>
-    policy.includes('**No label AEP sets names AEP.**'));
+    flatPolicy.includes('creating it is reported with the reason'));
+  assert('no label AEP sets names AEP', () => flatPolicy.includes('No label names AEP.'));
+  assert('the tracker re-syncs derived labels on every write, and never touches an initial one', () =>
+    /re-synced on every write/.test(policy) && /never changed by an agent/.test(policy));
+  assert('the close computes size and moves both objects to in review', () =>
+    /set `size:`, move both objects to `status: in review`/.test(flat(trackerPolicy)));
 
-  // The two skills that actually write labels, each on its own side of the
-  // split: specify sets the initial ones once, implement re-syncs the derived
-  // ones and must leave priority alone.
-  assert('specify moves both objects when the spec is accepted', () =>
-    /Both objects open at `status: backlog`, and accepting the\s+spec moves both to `status: ready` in the same step/.test(specify));
-  assert('specify keeps the spec field as the source', () =>
-    /`spec\.md` still carrying\s+`status: accepted`/.test(specify));
-  assert('specify corrects the label rather than the file', () =>
-    /corrects \*\*the label to match the file\*\*, never the file to match the\s+label/.test(specify));
-  assert('specify sets priority once and never again', () =>
-    specify.includes('**`priority:` is set once, here, and never touched again.**'));
-  assert('the runner re-syncs the derived labels', () =>
-    runner.includes('**Re-sync the derived labels**'));
-  assert('the runner is told priority is not among them', () =>
-    /\*\*`priority:` is not among them\*\*/.test(runner));
-  assert('the runner computes size against the stated thresholds', () =>
-    /\*\*compute\s+`size:` from the diff\*\* against the thresholds/.test(runner));
-
-  // The seeded vocabulary. Five families, and a description that states a
-  // trigger rather than restating the name.
   const labels = JSON.parse(fs.readFileSync(path.join(SRC, LABEL_SEED), 'utf8'));
   const families = Object.keys(labels.families ?? {});
   assert('the label seed carries five families', () =>
@@ -7331,8 +6908,8 @@ section('labels', () => {
   // The forge seed, which is what an installed repository actually reads.
   assert('the github seed records the five families and how each is maintained', () =>
     github.includes('### The five families, and which of them re-sync'));
-  assert('the github seed routes the decision to the policy', () =>
-    /\[\[policies\/execution\]\]` decides this/.test(github));
+  assert('the github seed routes the decision to the tracker policy', () =>
+    /\[\[policies\/tracker\]\]` decides this/.test(github));
   assert('the github seed says the file wins', () =>
     github.includes('**The file wins when a label disagrees with it.**'));
 });
@@ -7547,7 +7124,7 @@ section('the specification', () => {
   // The ladder asserted against the amended clause rather than against the old
   // one: what the exception preserves is the value the policy's ladder actually
   // ends on, so neither document can move without the other going red.
-  const ladder = readSrc('policies', 'execution.md').split(String.fromCharCode(13)).join('');
+  const ladder = readSrc('policies', 'tracker.md').split(String.fromCharCode(13)).join('');
   const ladderRows = ladder.split('\n').filter((line) =>
     line.startsWith('| ') && line.endsWith('|') && line.includes('status: '));
   const endsOn = ladderRows.length > 0
@@ -8117,32 +7694,31 @@ section('working surface surfaces', () => {
   const marker = readSrc('scripts', 'position.mjs');
   const spec = flatten(specText);
 
-  assert('the execution policy names the working surface as something a run claims', () =>
-    /claims the working surface it writes through as well as the branch/.test(execution));
+  // 4.0: the command line takes and releases surfaces, so the ordering rules
+  // are asserted on aep.mjs, and the law on what a role may do on the policy.
+  const cli = readSrc('scripts', 'aep.mjs');
+  const parallel = flatten(readSrc('policies', 'execution', 'parallel.md'));
+  const body = (name, next) => cli.slice(cli.indexOf(`function ${name}(`), cli.indexOf(`function ${next}(`));
 
-  assert('the execution policy says a run takes a surface where its checkout is not isolated', () =>
-    /where the isolation is `checkout`, the run takes a worktree of its own/.test(execution));
-
-  assert('the execution policy keys the decision on the kind and forbids the enforcement', () =>
-    /keyed on the isolation's kind and \*\*never on its enforcement\*\*/.test(execution));
-
-  assert('the execution policy separates releasing the claim from removing the surface', () =>
-    /Releasing that claim and removing the surface are separate acts/.test(execution));
-
+  assert('the execution policy names the surface as part of the claim', () =>
+    /The claim is a branch and its surface \(a worktree\)/.test(execution));
+  assert('aep open takes a surface unless the runtime supplied one', () =>
+    /const runtime = scope\?\.surface\.kind === 'runtime'/.test(body('open', 'laneRules'))
+    && /worktree', 'add', '--quiet', '-b', effort, surface, base/.test(body('open', 'laneRules')));
+  assert('the surface decision keys on the kind and never on the enforcement', () =>
+    /scope\.isolation\.kind === 'worktree'/.test(body('enterSurface', 'nextNumber'))
+    && !/enforcement/.test(body('enterSurface', 'nextNumber')) && !/enforcement/.test(body('open', 'laneRules')));
+  assert('aep close releases the branch before it removes the surface', () => {
+    const close = body('close', 'raise');
+    const detach = close.indexOf("['switch', '--quiet', '--detach']");
+    const remove = close.indexOf("['worktree', 'remove', surface]");
+    return detach > 0 && remove > detach;
+  });
   assert('the orchestrator integrates in the surface it holds', () =>
-    /only integrator, and it integrates in the surface it holds/.test(execution));
+    /\*\*The orchestrator is the only integrator, in the surface it holds\.\*\*/.test(parallel));
 
-  // The refusals, and what each is keyed on. Both files carried the constraint
-  // as bare prose before this, so a guard that merely finds the constraint
-  // passes on the tree it was written to reject. Each one is therefore located
-  // by its own bold lead and the role is required *inside* that lead: deleting
-  // the keying clause while leaving the sentence has to go red, and a match for
-  // `implementer` anywhere in the file would stay green through exactly that.
   const executionRaw = readSrc('policies', 'execution.md');
   const brief = flatten(readSrc('agents', 'implementer.md'));
-  // The subject pattern admits `do not` as well as `does not`, so the sentence
-  // these files used to carry, "You do not integrate", is found and then
-  // rejected for naming no role, rather than read as no constraint at all.
   const keyedOn = (where, text, named, subject, role) => {
     const lead = new RegExp(`\\*\\*[^*]*${subject}[^*]*\\*\\*`).exec(text);
     if (!lead) throw new Error(`${where} states no constraint that it ${named}`);
@@ -8151,62 +7727,39 @@ section('working surface surfaces', () => {
     }
     return true;
   };
-
   assert("the implementer's brief keys its refusals on the role it computes", () =>
     keyedOn('the brief', brief, 'does not integrate', '\\bdo(?:es)? not integrate\\b', 'implementer')
     && keyedOn('the brief', brief, 'does not dispatch', '\\bdo(?:es)? not dispatch\\b', 'implementer'));
-
   assert('the brief tells a cleared context how to compute that role', () =>
     /keyed on the role you compute/.test(brief) && /scope\.mjs read/.test(brief));
 
-  assert('the execution policy keys the same two refusals on the same role', () =>
-    keyedOn('the policy', execution, 'neither integrates nor dispatches',
-      '\\bneither integrates nor dispatches\\b', 'implementer'));
-
-  assert('the execution policy keys integrating in the held surface on the role', () =>
-    keyedOn('the policy', execution, 'integrates only in the surface it holds',
-      '\\bintegrates only in the surface it holds\\b', 'orchestrator'));
-
-  // Counted off the policy's own table rather than matched as prose: a regex
-  // naming three roles passes while the fourth sits beside them with its
-  // refusal cell emptied, which is the half of the rule that does the work.
-  assert('the policy says what each role may and may not do', () => {
+  // Counted off the policy's own table: every role has a row, with something it
+  // may do and something it may never do -- the half that does the work.
+  const roleRows = (() => {
     const table = /^\| `role` \|[^\n]*\n\|[-| ]+\|\n((?:\|[^\n]*\n)+)/m.exec(executionRaw);
-    if (!table) throw new Error('the policy carries no table of what the roles may do');
-    const rows = [...table[1].matchAll(/^\| `(\w+)` \|([^|\n]*)\|([^|\n]*)\|([^|\n]*)\|\s*$/gm)];
-    const carried = new Map(rows.map((row) => [row[1], { may: row[3].trim(), not: row[4].trim() }]));
+    if (!table) return new Map();
+    return new Map([...table[1].matchAll(/^\| `(\w+)`[^|\n]*\|([^|\n]*)\|([^|\n]*)\|\s*$/gm)]
+      .map((row) => [row[1], { may: row[2].trim(), never: row[3].trim() }]));
+  })();
+  assert('the policy says what each role may and may never do', () => {
     for (const role of ['orchestrator', 'implementer', 'none', 'unknown']) {
-      const said = carried.get(role);
+      const said = roleRows.get(role);
       if (!said) throw new Error(`the policy gives \`${role}\` no row`);
       if (!said.may) throw new Error(`\`${role}\` is told nothing it may do`);
-      if (!said.not) throw new Error(`\`${role}\` is told nothing it may not do`);
+      if (!said.never) throw new Error(`\`${role}\` is told nothing it may never do`);
     }
     return true;
   });
+  assert('an implementer neither integrates nor dispatches', () =>
+    /integrate, dispatch/.test(roleRows.get('implementer')?.never ?? ''));
+  assert('an orchestrator integrates only in the surface it holds', () =>
+    /integrate in the surface it holds/.test(roleRows.get('orchestrator')?.may ?? '')
+    && /integrate anywhere else/.test(roleRows.get('orchestrator')?.never ?? ''));
+  assert('`role: none` is the main checkout, which takes a surface before writing', () =>
+    /take a surface/.test(roleRows.get('none')?.may ?? '') && /write before holding one/.test(roleRows.get('none')?.never ?? ''));
+  assert('`role: unknown` fires nothing: it does what it could already do', () =>
+    /what it could already do/.test(roleRows.get('unknown')?.may ?? ''));
 
-  // `none` is the row most likely to be written as an absence and then read as
-  // a gap in the derivation. The phrase tying it to the act already required
-  // appears elsewhere in this policy, so it is looked for inside this paragraph
-  // rather than in the file, which would pass on the old text alone.
-  assert('the policy reads `role: none` as the state before a surface is taken', () => {
-    const para = /\*\*`role: none` is not a missing answer\.\*\*([\s\S]*?)\n\n/.exec(executionRaw);
-    if (!para) throw new Error('the policy treats `none` as an absence, or says nothing about it');
-    const said = flatten(para[1]);
-    if (!/take a surface/.test(said)) throw new Error('`none` is not tied to taking a surface');
-    if (!/before its\s?first write/.test(said)) {
-      throw new Error('`none` is not tied to the write it precedes');
-    }
-    return true;
-  });
-
-  assert('the policy has `role: unknown` fire nothing', () => {
-    const para = /\*\*`role: unknown` fires nothing\.\*\*([\s\S]*?)\n\n/.exec(executionRaw);
-    if (!para) throw new Error('the policy says nothing about an unresolved role');
-    if (!/every rule keyed on the role declines/.test(flatten(para[1]))) {
-      throw new Error('`unknown` is named but nothing is said to decline');
-    }
-    return true;
-  });
 
   assert('the specification carries the rule as well as the policy', () =>
     /A run whose checkout is \*\*not\*\* isolated MUST take a worktree of AEP's own/.test(spec)
@@ -8278,27 +7831,28 @@ section('working surface surfaces', () => {
     /Which surface that is, and what role it carries, are computed and never recorded here/.test(spec)
     && /The three keys above stay the whole of what AEP writes/.test(spec));
 
-  assert('both skills key the surface decision on the kind', () =>
-    /Never key on the enforcement/.test(opener) && /never on its\s?enforcement/.test(runner));
-
-  assert('the opener creates the branch into the worktree in one act', () =>
-    /git worktree add -b <effort> .aep\/worktrees\/<effort>\/_run <base>/.test(opener));
-
+  assert('the opener opens through aep open, which makes branch and surface in one act', () =>
+    /aep\.mjs open <slug> --lane <lane>/.test(opener)
+    && /creates the branch and its surface in one act/.test(opener));
   assert('the opener takes no second surface where the runtime gave one', () =>
-    /\*\*Take no second one\*\*/.test(opener));
+    /git\(surface, \['switch', '--quiet', '-c', effort, base\]\)/.test(body('open', 'laneRules')));
+  const cliTests = fs.existsSync(path.join(REPO, 'tests', 'aep.test.mjs'))
+    ? fs.readFileSync(path.join(REPO, 'tests', 'aep.test.mjs'), 'utf8') : '';
+  assert('a test pins open in a runtime surface taking no second one', () =>
+    cliTests.includes("test('open in a surface the runtime supplied takes no second one'"));
 
   assert('the runner re-enters an existing surface rather than duplicating it', () =>
-    /re-entered, never duplicated/.test(runner));
-
+    /enters or re-enters the effort's surface \(never a second one\)/.test(runner)
+    && cliTests.includes("test('start re-enters the surface an effort already has, and never makes a second'"));
   assert('the runner stops on a dirty surface rather than guessing whose edits those are', () =>
-    /end the turn naming the uncommitted paths/.test(runner));
-
-  assert('the runner detaches before it removes, and says removal is the optional half', () =>
-    /\*\*Detach first, always:\*\*/.test(runner)
-    && /Removal is best-effort and\s+releasing the branch is not/.test(runner));
-
-  assert('the runner keeps the surface on a stop and removes it on a clean close', () =>
-    /removed on a clean close and kept on a stop or a failure/.test(runner));
+    /a dirty surface names its paths/.test(runner)
+    && cliTests.includes("test('start stops on a dirty surface and names the paths'"));
+  assert('removal is best-effort and releasing the branch is not', () =>
+    /git\(where\.main, \['worktree', 'remove', surface\], \{ allowFail: true \}\)/.test(body('close', 'raise'))
+    && /remove_by_hand/.test(body('close', 'raise')));
+  assert('aep close keeps the surface on a stop and removes it on a clean close', () =>
+    /outcome\.kept = surface/.test(body('close', 'raise'))
+    && cliTests.includes("test('close on a clean finish stamps implemented, releases the branch, and removes the surface'"));
 
   assert('the marker script takes a session identifier and never invents one', () =>
     /--session <id>/.test(marker) && /function recordSession/.test(marker));
@@ -8418,14 +7972,16 @@ section('working surface surfaces', () => {
     }
   });
 
-  assert('the runner releases a ticket branch once its work is on the effort branch', () =>
-    /Release the ticket branch/.test(runner)
-    && /Only after the commit\s+has landed/.test(readSrc('skills', 'implement.md'))
-    && /A parked or\s+failed ticket keeps both/.test(runner));
-
-  assert('the policy says a ticket branch is a build claim rather than a reviewable level', () =>
-    /A ticket branch is a build claim, and it is released once its work reaches the/.test(execution)
-    && /a branch integrated rather than merged is not a level of anything/.test(execution));
+  assert('aep land releases a ticket branch only once its work is on the effort branch', () => {
+    const land = body('land', 'close');
+    const commit = land.lastIndexOf('const sha = commitAll(here, message)');
+    const release = land.lastIndexOf('const released = release()');
+    return commit > 0 && release > commit;
+  });
+  assert('a parked or failed child keeps its branch and surface', () =>
+    /A parked or failed child keeps both/.test(parallel));
+  // 4.0: why a ticket branch is a build claim rather than a reviewable level is
+  // rationale, and lives in specs.md beside the requirement asserted below.
 
   assert('the specification carries the ticket-branch lifecycle as a requirement', () =>
     /A ticket branch is a build claim and MUST be released once its work reaches the effort branch/.test(spec));
@@ -8447,22 +8003,21 @@ section('working surface surfaces', () => {
     return true;
   });
 
-  assert('the runner passes the session identifier when it stamps', () =>
-    /position\.mjs stamp --session <id>/.test(runner)
-    && /the identifier your harness gave this session/.test(runner)
-    && /\*\*Never invent one\.\*\*/.test(runner));
+  assert('the runner passes the session identifier when it lands, and never invents one', () =>
+    /--session <id>/.test(runner)
+    && /Pass the session id your runtime gives you, or none; never invent one/.test(runner));
 
-  assert('the close says where the removal is performed from', () =>
-    /Leave the surface, then remove it from the repository root/.test(runner)
-    && /the second command\s?is run from elsewhere rather than skipped/.test(runner));
+  assert('aep close removes the surface from the main checkout, not from inside it', () =>
+    /git\(where\.main, \['worktree', 'remove', surface\]/.test(body('close', 'raise')));
 
-  assert('the landing step releases the ticket worktree with its branch', () =>
-    /Release the ticket branch and the worktree holding it/.test(runner)
-    && /The directory goes with the branch/.test(runner));
+  assert('aep land releases the ticket worktree with its branch', () => {
+    const land = body('land', 'close');
+    return /\['worktree', 'remove', childTree\.path\]/.test(land) && /\['branch', '-D', branch\]/.test(land);
+  });
 
-  assert("nothing reaps another run's surface, and the text says why", () =>
+  assert("nothing reaps another run's surface", () =>
     /A run removes only its own surface/.test(spec)
-    && /look identical from outside/.test(execution));
+    && /const surface = runSurface\(where, effort\)/.test(body('close', 'raise')));
 
   assert('a surface is removable from the repository root while the process stands elsewhere', () => {
     // What makes the close achievable at all. A run cannot remove the directory
@@ -8509,87 +8064,63 @@ section('scope surfaces', () => {
   // eighty columns and a phrase that happens to straddle a line break would
   // fail an assertion the text actually satisfies.
   const policy = flat(readSrc('policies', 'execution.md'));
+  const cli = readSrc('scripts', 'aep.mjs');
 
-  assert('the policy has a run read its claim, computed rather than judged', () =>
-    /scope\.mjs read/.test(policy) && /computed rather than judged/.test(policy));
+  // 4.0: the claim is read by `aep start` (and `scope.mjs` beneath it), so the
+  // policy states what the claim permits and the CLI computes it.
+  assert('the claim is computed from git and the path, never inferred from a name', () =>
+    /`scope\.mjs` computes claim and role from git and the tree's path; \*\*never infer either from a branch name\*\*/.test(policy)
+    && /const scope = resolveScope\(root\)/.test(cli));
   assert('the policy forbids writing another effort and leaves reading alone', () =>
-    /MUST NOT write a file belonging to an effort outside its claim/.test(policy)
-    && /Reading is unrestricted/.test(policy));
+    /\*\*A scoped run never writes a file or takes a ticket of an effort outside its claim\.\*\* Reading is free/.test(policy));
   assert('confinement has no exemptions, tree-wide subjects included', () =>
-    /There are no exemptions/.test(policy)
-    && /\[\[skills\/prune\]\]/.test(policy)
-    && /unscoped checkout/.test(policy));
-  assert('the policy states the mismatch in both directions', () =>
-    /stops on a dirty tree and moves to it on a\s+clean one/.test(policy)
-    && /uncommitted paths/.test(policy));
+    /No skill is exempt: one that reaches another effort's artifact stops and names it/.test(policy));
+  assert('given another effort while the surface is dirty, the run stops and names the paths', () =>
+    /Given another effort while this surface is dirty: stop, naming claim, effort, and paths/.test(policy));
   assert('the policy says to enter the surface rather than check the branch out', () =>
-    /Entering a surface, rather than checking a branch out/.test(policy));
+    /never `git switch` to an effort branch/.test(policy));
   assert('the policy states the ambiguity stop and what an empty claim permits', () =>
-    /ends the turn listing the set/.test(policy)
-    && /An empty claim is unscoped and takes any effort/.test(policy));
-  assert('the policy requires a ticket branch unique across efforts', () =>
-    /A ticket branch name MUST be unique across efforts/.test(policy));
+    /An empty claim takes any effort; a claim of several, given none, ends the turn listing them/.test(policy)
+    && /claims more than one effort/.test(cli));
+  assert('aep dispatch makes a ticket branch unique across efforts', () =>
+    /return `\$\{effort\}--\$\{stem\}`;/.test(cli));
 
-  // Pinned by name, exactly as the position read is: a ninth skill acquiring one
-  // is a decision, and a decision that arrives as a drift is one nobody made.
-  const EFFORT_SKILLS = ['implement', 'plan', 'prune', 'refine', 'review', 'specify', 'survey', 'tasks'];
+  // Pinned by name: a skill acquiring a scope read is a decision, and one that
+  // arrives as a drift is one nobody made. implement and tasks read it through
+  // `aep start`, which quotes the claim and the isolation in its summary.
+  const EFFORT_SKILLS = ['plan', 'prune', 'refine', 'review', 'specify', 'survey'];
   const readsScope = SKILLS
     .filter((name) => /scope\.mjs read/.test(readSrc('skills', `${name}.md`)))
     .sort();
-  assert('exactly the eight effort skills invoke scope.mjs', () =>
+  assert('exactly the effort skills not on the command line invoke scope.mjs', () =>
     JSON.stringify(readsScope) === JSON.stringify([...EFFORT_SKILLS].sort()));
   if (JSON.stringify(readsScope) !== JSON.stringify([...EFFORT_SKILLS].sort())) {
     process.stdout.write(`        on disk: ${readsScope.join(', ')}\n`);
   }
-
-  assert('each of the eight puts the claim and the isolation in Position', () => {
+  assert('aep start reports the claim and the isolation in its summary', () =>
+    /`claim \$\{claim\}`, `isolation \$\{isolation\}`/.test(cli));
+  assert('implement and tasks quote the start summary in Position', () =>
+    /Quote `summary` in `Position`/.test(flat(readSrc('skills', 'implement.md')))
+    && /aep\.mjs start <effort>`, quoting its `summary`/.test(flat(readSrc('skills', 'tasks.md'))));
+  assert('each other effort skill puts the claim and the isolation in Position', () => {
     const missing = EFFORT_SKILLS.filter((name) => {
       const text = flat(readSrc('skills', `${name}.md`));
-      return !(/claim and the isolation go in/.test(text) && /`Position`/.test(text));
+      return !(/[Cc]laim(?:,| and the) isolation/.test(text) && /`Position`/.test(text));
     });
     if (missing.length > 0) throw new Error(missing.join(', '));
     return true;
   });
 
   const implement = flat(readSrc('skills', 'implement.md'));
-  assert('the runner says an empty claim leaves it unchanged', () =>
-    /An empty claim takes any effort/.test(implement) && /unscoped run is unchanged/.test(implement));
-  assert('the runner states the mismatch it performs', () =>
-    /moves to it on a\s+clean one/.test(implement)
-    && /Clean: \*\*enter that effort's surface\*\*/.test(implement)
-    && /uncommitted paths/.test(implement));
-  assert('the runner says a refused switch is the guard working', () =>
-    /Enter the surface; do not check the branch out/.test(implement));
-  assert('the runner reports the two answers together without merging them', () =>
-    /position\.mjs check/.test(implement) && /never merged/.test(implement));
-
-  // A marker belongs to the surface it sits in, so a run that checks one and
-  // stamps another quotes an answer true of nowhere. Both steps exist either
-  // way, and presence is exactly what the defect looked like, so this pins where
-  // each one sits. The scope read is pinned on the other side of the entry
-  // rather than merely left alone: the isolation is what decides whether a
-  // surface is taken at all, so a run that read it after taking one would be
-  // keying that decision on an answer it did not have yet.
-  // The path decides the role, so where a child's surface is created is part of
-  // the derivation rather than a housekeeping detail. Created relative to the
-  // orchestrator's own surface it nests and reads `unknown`; created outside
-  // `.aep/worktrees/` it reads as a runtime surface, whose occupant is an
-  // orchestrator, and the child computes permissions it must not have. A review
-  // found that second case live, which is why this is asserted and not assumed.
-  // Both counters, and that each names the other. Stated in isolation they
-  // deadlock: a review finding becomes a ticket, the ticket needs a converge
-  // round to reach the second review, and converge is capped independently. A
-  // review found that live, so the exemption is asserted in both files rather
-  // than left to whoever reads only one of them.
-  assert('the converge cap says a review finding does not spend a round', () => {
-    const policy = readSrc('policies', 'execution.md');
-    const runner = readSrc('skills', 'implement.md');
-    const spent = /does not spend a (?:converge )?round/;
-    if (!spent.test(policy)) throw new Error('the policy states the cap without the exemption');
-    if (!spent.test(runner)) throw new Error('the runner states the cap without the exemption');
-    return /already agreed the spec is\s+met/.test(policy + runner);
-  });
-
+  assert('the runner with nothing named and no claim ends the turn saying so', () =>
+    /Nothing named and no claim: end the turn saying so/.test(implement));
+  assert('a claim held elsewhere is not taken', () =>
+    /a claim held elsewhere is not taken/.test(implement) && /A claim held elsewhere is not taken/.test(cli));
+  // Both counters, and that each names the other: a review finding becomes a
+  // ticket, and a ticket that spent a converge round would make the second
+  // review unreachable.
+  assert('the converge cap says a review finding does not spend a round', () =>
+    /A review finding's ticket spends none/.test(policy));
   // The narrowed marker rule, and that the one skill it was narrowed for is
   // named as conforming rather than merely invoking the script. `/specify` at
   // the moment it orients has neither an effort nor a surface to check, so a
@@ -8612,27 +8143,25 @@ section('scope surfaces', () => {
     return true;
   });
 
-  assert('the runner anchors a child surface on the main checkout', () =>
-    /created under the main checkout's\s+`\.aep\/worktrees\/`/.test(implement)
-    && /never relative to the surface you are standing in/.test(implement)
-    && /\*\*The path is what decides the role\*\*/.test(implement));
+  assert('aep dispatch anchors a child surface on the main checkout', () =>
+    /function ticketSurface\(where, effort, stem\) \{\s*return path\.join\(aepIn\(where\.main, where\), 'worktrees', effort, stem\);/.test(cli)
+    && /never relative to the surface you stand in/.test(flat(readSrc('policies', 'execution', 'parallel.md'))));
 
-  assert('the runner checks the marker only once it is in the surface', () => {
-    const scope = implement.indexOf('scope.mjs read');
-    const enter = implement.indexOf("Enter the run's own worktree before anything else");
-    const check = implement.indexOf('position.mjs check');
-    if (scope < 0) throw new Error('the runner no longer reads the scope');
-    if (enter < 0) throw new Error('the runner no longer names entering the surface');
-    if (check < 0) throw new Error('the runner no longer checks the marker');
+  assert('aep start checks the marker only once it is in the surface', () => {
+    const start = cli.slice(cli.indexOf('function start('), cli.indexOf('function dispatch('));
+    const scope = start.indexOf('resolveScope(root)');
+    const enter = start.indexOf('enterSurface(where, effort, scope)');
+    const check = start.indexOf('checkMarker(aepIn(surface, where))');
+    if (scope < 0 || enter < 0 || check < 0) throw new Error('start no longer reads scope, enters, and checks');
     if (scope > enter) throw new Error('the scope read no longer precedes the surface it decides');
     if (check < enter) throw new Error('the marker is checked before the surface it stamps is entered');
     return true;
   });
 
   const specify = flat(readSrc('skills', 'specify.md'));
-  assert('specify reads a new branch base from the repository rule', () =>
-    /`\[\[rules\/version-control\]\]` says which shape this repository is in/.test(specify)
-    && /the base is the default branch's tip/.test(specify));
+  assert('specify takes a new branch base from the repository rule', () =>
+    /from the base `\[\[rules\/version-control\]\]` names/.test(specify)
+    && /settings\.stack\s*\?\s*git\(where\.repo, \['rev-parse', '--abbrev-ref', 'HEAD'\]\)\s*:\s*resolveBase\(where\.repo\)/.test(cli));
 
   for (const name of ['prune', 'survey']) {
     const text = flat(readSrc('skills', name + '.md'));
@@ -8657,9 +8186,8 @@ section('scope surfaces', () => {
   // The runner shows the branch names a run creates, so a bare example there
   // contradicts the rule shipped beside it, and a repository following both
   // gets two answers for one name.
-  assert('the runner shows a ticket branch prefixed with its effort', () =>
-    /ticket branch\s+`?<effort>--<ticket-id>-<slug>/.test(implement)
-    && !/ticket branch\s+`?<ticket-id>-<slug>/.test(implement));
+  assert('the command line builds a ticket branch prefixed with its effort', () =>
+    /function ticketBranch\(effort, stem\)/.test(cli));
   assert('the seeded rule says where a new effort branch is based, both shapes', () =>
     /A new effort's branch is based on/.test(seedRule)
     && /the default branch's tip/.test(seedRule)

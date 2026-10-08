@@ -25,7 +25,7 @@ npx next lint
 
 **`next dev` passing is weak evidence.** Static generation, route-level type
 checking, and server/client boundary violations are enforced at build time, not
-in dev. Build before claiming a change works (`[[policies/engineering]]`).
+in dev. Build before claiming a change works (`[[protocol]]`).
 
 ## Server and client
 

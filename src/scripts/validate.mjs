@@ -350,9 +350,10 @@ function checkStructure(root) {
  * `rules/` and `references/` are repository-wide, so neither has a namespace to
  * nest in and both sit flat. A context takes one project directory, so that two
  * projects of a monorepo can each call an area `auth`. A skill takes one for its
- * notes, so a note is reached from the skill owning it. `policies/`, `agents/`,
- * and `templates/` are flat because none of them namespaces anything: a policy
- * is one file with nothing to sit inside. The gate asks for these depths rather
+ * notes, so a note is reached from the skill owning it. A policy takes one for
+ * the part of it that loads only sometimes, as `execution/parallel` loads only
+ * for a wave of children. `agents/` and `templates/` are flat because neither
+ * namespaces anything. The gate asks for these depths rather
  * than for a file that merely ends in `.md`, because depth is half of what makes
  * a directory AEP's rather than somebody's own folder of notes.
  *
@@ -365,7 +366,7 @@ function checkStructure(root) {
  * would fall quiet, never loud, for a kind that stopped carrying one.
  */
 const USE_WHEN_DEPTHS = {
-  policies: 1,
+  policies: 2,
   skills: 2,
   agents: 1,
   templates: 1,

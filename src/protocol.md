@@ -5,17 +5,13 @@ use-when: "at the start of every session, before doing anything else in a reposi
 
 # AEP — the Agentic Engineering Protocol
 
-The bootstrap. It orients you and gets out of the way. It does not govern —
-governance is `[[policies]]` and `[[rules]]`.
+The bootstrap. It orients; `[[policies]]` and `[[rules]]` govern.
 
 ## What AEP is
 
-A **filesystem protocol** for engineering work. Its state is plain files under
-`.aep/` — no runtime, no database, no resident process. It is agent-agnostic:
-whatever runtime you are, you read the same files.
-
-**The repository is authoritative.** Every AEP artifact describes it and loses
-to it.
+A **filesystem protocol** for engineering work: plain files under `.aep/`, no
+runtime or database, the same for every agent. **The repository is
+authoritative**; every AEP artifact describes it and loses to it.
 
 ## The primitives
 
@@ -29,15 +25,13 @@ to it.
 | **Agents** | who performs work, in what role | `agents/` |
 | **Skills** | reusable capabilities | `skills/` |
 
-An effort holds its own parts: `spec.md`, `plan.md` where the approach is not
-obvious, the `evidence/` behind it, and its tasks as tickets under `tickets/`.
-Worktrees and the position marker are mechanisms, described where used.
-
-Never substitute one for another. A requirement is governance, not a reference.
-An orientation is a context, not a requirement. A discovery is evidence, not a
-decision. **A policy is AEP's and you never edit it; a rule is yours and an
-upgrade never touches it** — a policy outranks a rule, and a rule may tighten one
-but never soften it.
+An effort holds `spec.md`, `plan.md` where the approach is not obvious, its
+`evidence/`, its tasks as tickets under `tickets/`, and `log.md`. Worktrees and the
+position marker are mechanisms the scripts manage. Never substitute one
+primitive for another. **A policy is AEP's and never edited here; a rule is
+yours, may tighten or extend a policy, and never softens, contradicts, or opts
+out of one.** Down the chain policies → rules → effort rules → task
+constraints, each may only tighten what it sits under.
 
 ## Where state is
 
@@ -46,38 +40,28 @@ but never soften it.
 ├── protocol.md    this file
 ├── index.md       derived discovery index — regenerate, never edit
 ├── policies/      AEP's governance      rules/  yours
-├── agents/  contexts/  references/  scripts/  skills/
-├── templates/     skeletons for authoring a new artifact
+├── agents/  contexts/  references/  scripts/  skills/  templates/
 ├── friction.md    what got in the way, appended at close
-├── efforts/<effort>/{spec.md, log.md, evidence/{research,prototypes}/, tickets/}
+├── efforts/<effort>/{spec.md, plan.md, log.md, evidence/, tickets/}
 ├── position/      per working tree, gitignored
 ├── scratch/       per working tree, gitignored
 └── worktrees/     isolated checkouts, gitignored
 ```
 
-Before writing any new artifact, copy its shape from `templates/` — one
-`<kind>.template.md` per artifact kind, listed in `index.md`.
+New artifacts copy their shape from `templates/`.
 
 ## How to discover what matters
 
-**Load by applicability, never by existence.** Never read all policies, all
-rules, all contexts, or all references before starting — a policy is rigid in
-authority, never in when it loads. Each artifact declares when it applies:
-
-- `use-when:` — the trigger that makes it relevant
-- `paths:` — the repository paths it covers, where it covers some
-- wiki links — explicit relationships from what you already loaded
-
-```
-repository state → index.md → current effort → applicable policies and rules
-→ relevant contexts → required references → relevant evidence → task → work
-```
+**Load by applicability, never by existence:** by `use-when:`, by `paths:`, and
+by wiki links from what you already loaded. `index.md` lists them. Read in this
+order: repository state → `index.md` → current effort → applicable policies and
+rules → relevant contexts → required references → relevant evidence → task →
+work.
 
 Links between AEP files are double-bracketed, relative to `.aep/`, without the
-`.md` — as in `[[policies/artifacts]]`, which is one. A filesystem path of two
-segments or more carries `.aep/`; a bare area name does not.
-`[[policies/artifacts]]` says why. A link that does not resolve is repaired or
-reported, **never invented**.
+`.md`, as in `[[policies/artifacts]]`. A filesystem path of two segments or more
+carries `.aep/`; a bare area name does not. A link that does not resolve is
+repaired or reported, **never invented**.
 
 ## The workflow
 
@@ -85,108 +69,94 @@ reported, **never invented**.
 /specify → /plan? → /tasks → /implement
 ```
 
-**Four commands, and nothing else to type.** `plan` runs when the approach is not
-obvious. `refine`, `research`, `review`, and `converge` are **stages those four
-run for you** — you never invoke one. `prototype`, `survey`, and `prune` are
-capabilities: reach for one when uncertainty or the codebase warrants it.
-
-`index.md` lists every skill against the trigger that calls for it, and
-`[[skills/help]]` answers *what do I reach for*. `[[skills/tdd]]`,
-`[[skills/domain]]`, and `[[skills/prose]]` are sub-skills, reached from inside
-another skill. A skill may keep depth beside it in `.aep/skills/<skill>/` — read
-one only when that skill sends you there.
-
-**Pick the smallest process that produces a reliable result.** Not every change
-needs research, a prototype, a grill, sub-agents, or worktrees. A one-line fix
-goes `/specify → /tasks → /implement`, and even that is more
-than some changes deserve.
+**Four commands**, and nothing else to type. `refine`, `research`, `review`, and `converge` are **stages those
+four run for you**. `prototype`, `survey`, and `prune` are capabilities;
+`[[skills/help]]` says which to reach for. `/specify` sets the effort's lane —
+quick, standard, or full — and the lane sets the ceremony
+(`[[policies/execution]]`). Every git and worktree step runs through
+`node .aep/scripts/aep.mjs`; quote the `summary` it prints.
 
 ## The invariants
 
-These hold on every turn, in every skill.
+**Repository wins.** On conflict, trust: the human in this conversation (say
+so, and follow it); the repository's source, config, tests, and build; git
+history and systems it designates; `spec.md`; policies; rules; references;
+contexts; evidence; derived state; your own reasoning. An artifact the source
+contradicts is wrong: correct the artifact where you find it — never the source,
+and never explain the contradiction away. A reference never
+authorises; a context never instructs. Where the order does not settle it, put
+both sides and their costs to the human.
 
-**Repository wins.** Source, config, and tests outrank every AEP artifact. Where
-an artifact contradicts the repository the artifact is wrong — correct it where
-you find it, in the same breath.
+**Claims are checked.** Read the source before any claim about this repository;
+names, memory, and a plausible API are not proof, and a CLI is an API — read its
+reference, never try a flag to see; an operation no reference covers is a gap,
+so say so rather than invent one. Say what you verified and what you assume. Climb only as far as the
+uncertainty warrants: known fact → repository → context and evidence →
+`[[skills/research]]` (factual) → `[[skills/prototype]]` (technical) → grill
+via `[[skills/refine]]` (product).
 
-**Spec outranks tasks.** `spec.md` is the effort's source of truth. A task that
-conflicts with it means: stop, surface the conflict, change no architecture
-silently.
+**Change is small and fits.** The smallest sufficient change; read all of what
+you change; match its idiom; fix the root cause, or record why a workaround
+exists, what else was considered, and when it goes. Obeying a rule means
+letting its check fire: ask what it would catch, and keep that reachable.
 
-**Return to plan.** Evidence found during `/implement` or `/review` that
-invalidates the technical plan: stop → record evidence → `/plan` → update
-`spec.md` → update tasks → continue. Implementation is never a design process.
+**Humans decide.** Merging, releasing, and publishing are theirs. Never push,
+publish, or open a pull request unasked; `[[rules/version-control]]` says
+exactly what that covers. **Never silently
+choose between reasonable architectures:** name each with its costs and risks,
+recommend one, and let the human choose. A sub-agent at a decision it may not
+make records it and stops.
 
-**Don't guess.** When uncertainty is material, climb only as far as it warrants:
-known fact → repository inspection → existing context/evidence → research →
-prototype → grill.
+**Every turn reports.** Once, from the outermost skill, in the shape
+`[[policies/reporting]]` fixes.
 
-**Humans decide.** Merging, releasing, and publishing are theirs. What an agent
-may push is fixed by this repository in `[[rules/version-control]]`, stated there
-rather than inferred here. Never silently choose between two
-reasonable architectures — put both on the table with costs and risks, and let
-the human choose. A sub-agent that reaches a decision it may not make records it
-and stops; the orchestrator raises it.
-
-**Every turn reports.** One opening report and one closing block per thing the
-human asked for, emitted by the outermost skill, in the shape
-`[[policies/reporting]]` fixes. A skill entered from inside another is a stage of
-that run rather than a second report. Everything else a human reads is written
-for that reader by the same policy — a commit message, a pull request, a comment
-left in the code.
-
-**Ownership is where a file sits.** Nothing declares it, and nothing infers it
-from a file's contents.
+**Ownership is where a file sits.**
 
 | AEP's — installed verbatim, replaced by upgrades | Yours — an upgrade never touches it |
 | --- | --- |
 | `policies/` `skills/` `agents/` `templates/` `scripts/` | `rules/` `contexts/` `references/` `efforts/` |
 | `protocol.md`, this file | `index.md`, derived and regenerated in place; `friction.md`, appended by `aep close` |
 
-The root files are named because no directory rule reaches them. Variation with
-nowhere to enter is a **declared deviation**: record it in a repository rule,
-with its reason — never by quietly editing AEP's text.
+Variation is a **declared deviation** in a rule, with its reason, never an edit
+to AEP's text.
 
-**No hidden memory.** Durable knowledge is explicit — in policies, rules,
-contexts, evidence, specs, or the source. Never in session state, task
-descriptions, worktree metadata, or position.
+**No hidden memory.** Durable knowledge lives in files: policies, rules,
+contexts, evidence, specs, `log.md`, the source. Never only in a session.
+Knowledge that outlives its effort graduates into a context, a rule, or a
+reference; the evidence file stays as the record of how it was learned.
 
-**Write only inside the project.** Create or change files only in these zones;
-read anywhere. Anything else is a stop: say what you wanted to write and why.
+**Write only inside the project.** Read anywhere; write only in these zones.
+Anything else is a stop: say what you wanted to write and why.
 
 | Zone | Holds |
 | --- | --- |
 | the main checkout | source, config, tests, docs, `.aep/` artifacts |
 | `.aep/worktrees/<effort>/…` | effort and child surfaces |
-| `.aep/scratch/` | handoffs, notes, drafts, throwaway logs — one per surface, gone with it |
-| where a project tool writes, run the project's way | `node_modules/`, build output, its cache — the tool picks the path |
-| the OS temp dir, through the language's temp API | `mkdtemp`, `mktemp -d` — never a typed path; removed before the run ends |
+| `.aep/scratch/` | handoffs, notes, drafts — one per surface, gone with it |
+| where a project tool writes, run the project's way | `node_modules/`, build output, its cache |
+| the OS temp dir, through the language's temp API | never a typed path; removed before the run ends |
 
-Never, unless the human asked for it in this conversation: a drive root, the
-home folder outside the project, another repository, global config
-(`git config --global`, shell profiles, editor settings, environment
-variables), or a global install (`npm i -g`, `cargo install`).
+Never, unless the human asked in this conversation: a drive root, the home
+folder, another repository, global config, or a global install.
 
-**Nothing is invented.** Where an artifact already defines protocol state, use
-it. Where a script can compute an answer, run it and quote the output. Under
-`.aep/scripts/`, `index.mjs` regenerates `index.md`, `validate.mjs` checks the
-tree, `position.mjs` reads and stamps the marker.
+**One repository.** Another repository may be read, never written, planned, or
+run against. Work for it leaves as a write-up: what was found, what it costs,
+what would close it — never an offer to do it here. Say so when you reach it.
+Being told to fix something is not being told to fix it here; ask if that is
+genuinely unclear. A clean position check never licenses it. This repository's
+own worktrees are not another repository.
+
+**Nothing is invented.** Where an artifact defines protocol state, use it;
+where a script computes an answer, run it and quote it.
 
 ## Governance that loads when it applies
 
-The invariants above hold always, which is why they are here. Everything else
-AEP governs is a policy you load when its trigger fires — read the `use-when:`
-and decide before opening it.
-
 | Load when | Policy |
 | --- | --- |
-| two sources disagree, or the work reaches another repository | `[[policies/authority]]` |
-| writing code, or about to state something you have not verified | `[[policies/engineering]]` |
-| an effort is in progress — tasks, dispatch, implementation, review | `[[policies/execution]]` |
+| an effort is in progress — tasks, implementation, converge, review | `[[policies/execution]]` |
+| a wave of children is dispatched | `[[policies/execution/parallel]]` |
+| `tracker:` is on and an effort opens, lands, or closes | `[[policies/tracker]]` |
 | creating, changing, or removing anything under `.aep/` | `[[policies/artifacts]]` |
-| about to write anything a human will read, or auditing a turn's report | `[[policies/reporting]]` |
+| writing anything a human reads, or auditing a turn's report | `[[policies/reporting]]` |
 
-**Your repository's own rules sit beside these**, in `rules/`, selected the same
-way — `[[index]]` lists them. They are yours to write and an upgrade preserves
-them; version control arrives as one, because how work lands here is a fact about
-this repository rather than about AEP (`[[rules/version-control]]`).
+Your own rules sit beside these in `rules/`, selected the same way.

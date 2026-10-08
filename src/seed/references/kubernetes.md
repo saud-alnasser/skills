@@ -16,7 +16,7 @@ kubectl config get-contexts
 
 **Every command below acts on whichever context happens to be current**, and the
 output gives no hint which cluster that was. Print the context before acting and
-quote it in what you report (`[[policies/engineering]]`).
+quote it in what you report (`[[protocol]]`).
 
 ## Reading and rendering
 

@@ -43,6 +43,6 @@ both before claiming a change compiles.
 - An error in `node_modules` usually means two versions of a type package, not a
   defect in the dependency.
 - `// @ts-expect-error` and `any` silence the checker rather than answer it. Each
-  one added is a finding worth raising (`[[policies/engineering]]`).
+  one added is a finding worth raising (`[[protocol]]`).
 - A stale `tsconfig.tsbuildinfo` produces errors that vanish under `-b --force`.
   That is the diagnosis, not the fix — a build that needs `--force` is a finding.

@@ -37,5 +37,5 @@ environment.
 - `pip freeze > requirements.txt` captures the whole environment, including
   transitive packages and local tooling. It is not a way to add one dependency.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[policies/engineering]]`).
+  its alternatives (`[[protocol]]`).
 - Never install into the system interpreter, and never publish.

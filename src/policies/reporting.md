@@ -193,7 +193,7 @@ invisible until a resumed run acts on the stale one.*
 ### It is emitted in the turn and kept in the run log
 
 The copy in the turn report is what the human reads now. The durable copy lives
-in the pull request's collapsed run log, written as each line is crossed rather
+in the effort's `log.md`, written as each line is crossed rather
 than at the close (`[[policies/execution]]`), which is the copy a resumed run
 reads.
 

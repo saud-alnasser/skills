@@ -4,8 +4,8 @@ use-when: "writing or extending an effort's spec.md"
 
 # Template — effort spec
 
-Copy to `.aep/efforts/<effort>/spec.md`. The `<effort>` segment is a kebab-case
-slug naming the change.
+Copy to `.aep/scratch/<slug>/spec.md`, where `<slug>` is kebab-case and names the
+change. `aep open` moves it to `.aep/efforts/<number>-<slug>/spec.md`.
 
 **What is changing and why.** How it will be built belongs in
 `[[templates/plan.template]]`, written by `/plan` where the approach is not
@@ -18,6 +18,7 @@ considered-and-empty; an absent one reads as not yet reached, which is the truth
 ```markdown
 ---
 status: draft            # draft → accepted → implemented
+lane: standard           # quick | standard | full; only ever raised
 ---
 
 # Problem
@@ -53,6 +54,24 @@ answer is worse than one that admits it.
 
 # Risks
 What could go wrong, and how it would show up.
+```
+
+**A quick-lane spec** has only these three sections, and fits on one screen:
+
+```markdown
+---
+status: draft
+lane: quick
+---
+
+# Problem
+What is wrong, in a sentence or two.
+
+# Change
+What will be different.
+
+# Check
+- [ ] One box per thing someone else could verify, and how.
 ```
 
 **Write no `# Architecture` section here.** The moment a spec starts saying how,

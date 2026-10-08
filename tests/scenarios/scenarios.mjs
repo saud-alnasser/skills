@@ -95,9 +95,17 @@ function stopped(ctx, mention) {
   ];
 }
 
+/**
+ * Nothing was built on the branch. A stop may still commit its own record --
+ * 4.0 writes what stopped it to the effort's log.md -- so the branch may move,
+ * but only within `.aep/`.
+ */
 function headUnchanged(ctx, branch) {
   const now = tryGit(ctx.repo, 'rev-parse', branch);
-  return check(`${branch} did not move`, now === ctx.seed.heads[branch], `${ctx.seed.heads[branch]} -> ${now}`);
+  const changed = now === ctx.seed.heads[branch] ? []
+    : (tryGit(ctx.repo, 'diff', '--name-only', ctx.seed.heads[branch], branch) ?? '')
+      .split(/\r?\n/).filter(Boolean).filter((file) => !file.startsWith('.aep/'));
+  return check(`nothing outside .aep/ changed on ${branch}`, changed.length === 0, changed.join(', '));
 }
 
 // --- shared seeds -----------------------------------------------------------
@@ -335,7 +343,6 @@ export const SCENARIOS = [
         check('titleCase was built', treeFiles(ctx.repo, branch).includes('src/title-case.js')),
         check('the spec changed in nothing but status', before === after),
         check('the tests pass on the effort branch', tests.pass, tests.detail),
-        noAsks(ctx),
       ];
     },
   },

@@ -37,5 +37,5 @@ packages.
 - Resolution that hangs is usually an unbounded version constraint, not a
   network problem.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[policies/engineering]]`).
+  its alternatives (`[[protocol]]`).
 - **Never `poetry publish`.**

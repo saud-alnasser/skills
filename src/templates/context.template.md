@@ -52,7 +52,7 @@ exist there. *Why: the claim goes stale silently while the pointer stays useful,
 and a stale claim is trusted exactly as a fresh one is.*
 
 **The repository wins.** A context contradicted by source is wrong, and is
-corrected the moment the contradiction is found (`[[policies/authority]]`).
+corrected the moment the contradiction is found (`[[protocol]]`).
 
 ## Keep it small
 

@@ -34,4 +34,4 @@ vendor/bin/phpunit
 - The installed PHP version constrains resolution. A dependency that "cannot be
   installed" is often a platform requirement, and `--ignore-platform-reqs` hides
   a real incompatibility rather than resolving it.
-- Adding a dependency is an architectural decision (`[[policies/engineering]]`).
+- Adding a dependency is an architectural decision (`[[protocol]]`).

@@ -25,7 +25,7 @@ just --dry-run <recipe>          # print what would run
 
 **Do not invent a recipe.** `just` fails loudly on an unknown name, but a recipe
 that exists and does something other than what this table claims fails quietly
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 ## Failure handling
 

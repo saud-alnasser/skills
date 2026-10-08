@@ -20,7 +20,7 @@ gh pr checks <number>
 gh repo view --json nameWithOwner,defaultBranchRef
 ```
 
-Reading is always allowed. `[[policies/authority]]` still applies: read another
+Reading is always allowed. `[[protocol]]` still applies: read another
 repository freely, write to none.
 
 ### The observation `reconcile.mjs` reads
@@ -63,7 +63,7 @@ by hand.
 
 ## An effort here: one issue, one pull request
 
-**AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
+**AEP creates exactly two objects per effort** (`[[policies/tracker]]`). The
 tickets stay in the repository under `.aep/efforts/<effort>/tickets/`, and so
 does the dependency graph.
 
@@ -176,7 +176,7 @@ explanation is one nobody can tell from a mistake.
 
 ### The five families, and which of them re-sync
 
-`[[policies/execution]]` decides this; what belongs here is the vocabulary *this
+`[[policies/tracker]]` decides this; what belongs here is the vocabulary *this
 tracker* uses for each, so no later session has to work it out again.
 
 | Family | Set from | Maintained |

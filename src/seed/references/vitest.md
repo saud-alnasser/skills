@@ -31,7 +31,7 @@ context that is a hang, not a slow suite.
 
 A run that reports **no test files found** exits zero. Read the count, not the
 exit status — a filter that matches nothing looks exactly like a suite that
-passed (`[[policies/engineering]]`).
+passed (`[[protocol]]`).
 
 ## Failure handling
 
@@ -40,4 +40,4 @@ passed (`[[policies/engineering]]`).
 - Workspace or project configs mean the root run and a package run cover
   different files. Check which one CI uses.
 - Never delete or skip a failing test to reach green. A skipped test is a
-  finding to raise (`[[policies/engineering]]`).
+  finding to raise (`[[protocol]]`).

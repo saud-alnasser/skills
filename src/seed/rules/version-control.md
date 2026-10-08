@@ -46,7 +46,7 @@ because git cannot create `<effort>/...` while the effort branch `<effort>`
 exists.
 
 **The prefix is what makes the name unique**, and uniqueness across efforts
-is required (`[[policies/execution]]`). Ticket ids restart at `01` in every
+is required: `aep dispatch` builds every ticket branch this way. Ticket ids restart at `01` in every
 effort, so two efforts each holding a ticket `03` want one bare `03-<slug>` for
 two different claims. Under a runtime that gives each thread its own worktree,
 git refuses the second outright; without one, the second run quietly takes a
@@ -70,7 +70,7 @@ expensive. The first is how a commit references its task:
 | This repository | Then |
 | --- | --- |
 | a branch merged by a pull request | the commit references the task but **closes nothing** — a closing keyword in a commit fires on a later cherry-pick or rebase, closing something nobody merged. The keyword belongs in the pull request body, and `[[skills/specify]]` writes it there as it opens the effort |
-| stacked changes, submitted by a stacking tool | the commit **carries the closing keyword** — it reaches the default branch only through its own branch's pull request, so the hazard above cannot arise. A stack merges bottom-first, so the keyword goes on the change that merges **last** and everything under it carries a plain reference — `[[skills/implement]]` writes it there |
+| stacked changes, submitted by a stacking tool | the commit **carries the closing keyword** — it reaches the default branch only through its own branch's pull request, so the hazard above cannot arise. A stack merges bottom-first, so the keyword goes on the change that merges **last** and everything under it carries a plain reference — `[[policies/tracker]]` says so |
 
 The second is where a new effort's branch starts, and it is the same row that
 answers it. `[[skills/specify]]` reads this rule rather than branching from

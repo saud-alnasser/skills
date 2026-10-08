@@ -58,6 +58,14 @@ git commit --amend -F <message-file>
 Prefer `-F` over `-m` for anything multi-line: quoting rules differ between
 shells and mangle the body silently.
 
+A fix to a commit that has already landed amends it in place, in the run's own
+surface and never after a push:
+
+```sh
+git commit --fixup=<commit>                                  # stage the fix first
+GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <commit>~1  # fold it in, unattended
+```
+
 ## Worktrees
 
 ```sh
@@ -136,4 +144,4 @@ Two things it does not cover:
   in the run, not as the answer to the question you were asking.
 - A detached HEAD holds no claim. Do not guess the task from the diff.
 - An operation no section above covers is a gap: say so rather than guessing a
-  flag (`[[policies/engineering]]`).
+  flag (`[[protocol]]`).

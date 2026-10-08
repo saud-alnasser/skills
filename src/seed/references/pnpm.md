@@ -30,7 +30,7 @@ Fill these in from `package.json`, and delete any that do not exist:
 | types | `pnpm run typecheck` |
 
 **Do not invent a script.** A command named here that `package.json` does not
-define will be trusted and will fail (`[[policies/engineering]]`).
+define will be trusted and will fail (`[[protocol]]`).
 
 ## Adding a dependency
 
@@ -41,7 +41,7 @@ pnpm add -w <pkg>                # workspace root
 ```
 
 Adding a dependency is an architectural decision, not a mechanical one — it is
-put to the human with its alternatives (`[[policies/engineering]]`).
+put to the human with its alternatives (`[[protocol]]`).
 
 ## Failure handling
 

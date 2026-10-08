@@ -10,6 +10,7 @@
 //   node .aep/scripts/aep.mjs land <effort> [<ticket>] --message <text> [--session <id>]
 //   node .aep/scripts/aep.mjs close <effort> [--stop <reason>] [--friction <line>]... [--session <id>]
 //   node .aep/scripts/aep.mjs raise <effort> <lane> --reason <text>
+//   node .aep/scripts/aep.mjs record <effort> --converge|--review|--note|--needs-you <line>
 //   node .aep/scripts/aep.mjs check [--root <tree>]
 //
 // Every command but status and check prints one JSON object carrying a
@@ -277,7 +278,8 @@ export function logSection(text, heading) {
 
 /**
  * The rounds the log records. A line reads `converge 1: no gap`,
- * `converge 1: gap, tickets 05 06`, `review 1: 3 findings, 0 open`.
+ * `converge 1: gap, tickets 05 06`, `review 1: 3 findings, 3 fixed`,
+ * `review 2: no findings`.
  */
 export function readRounds(text) {
   const rounds = { converge: [], review: [] };
@@ -289,7 +291,9 @@ export function readRounds(text) {
     rounds[kind].push({
       round: Number(match[2]),
       result,
-      clear: kind === 'converge' ? /\bno gap\b/i.test(result) : /\b0 open\b/i.test(result),
+      // A review round is clear only when it found nothing: fixes made in a
+      // round are reviewed again, within the lane's cap.
+      clear: kind === 'converge' ? /\bno gap\b/i.test(result) : /\b(?:0|no) findings\b/i.test(result),
     });
   }
   return rounds;
@@ -407,6 +411,10 @@ function open(root, args) {
   const draft = candidates.find((dir) => fs.existsSync(path.join(dir, 'spec.md')));
   if (!draft) throw new Stop(`no draft spec at ${toPosix(path.dirname(root), path.join(candidates[0], 'spec.md'))}. Write it there first`);
 
+  if (settings.tracker !== 'none'
+    && git(where.repo, ['ls-remote', '--heads', 'origin', `${args.flags.number ?? ''}-${slug}`], { allowFail: true })) {
+    throw new Stop(`a remote branch for ${slug} already exists. A claim held elsewhere is not taken`);
+  }
   const number = args.flags.number ? Number(args.flags.number) : nextNumber(where);
   if (!Number.isInteger(number) || number < 1) throw new Stop('--number must be a positive integer');
   const effort = `${number}-${slug}`;
@@ -417,9 +425,22 @@ function open(root, args) {
     : resolveBase(where.repo);
   if (!base || base === 'HEAD') throw new Stop('no base to branch from: no default branch was found, and HEAD is detached');
 
-  const surface = runSurface(where, effort);
-  if (fs.existsSync(surface)) throw new Stop(`${rel(where, surface)} already exists. Inspect it, then remove it`);
-  git(where.main, ['worktree', 'add', '--quiet', '-b', effort, surface, base]);
+  // A surface the runtime supplied is the run's already: the branch is created
+  // in it, and no second surface is taken. Anywhere else, branch and surface
+  // are created together, so the branch never exists unheld.
+  const scope = resolveScope(root);
+  const runtime = scope?.surface.kind === 'runtime';
+  let surface;
+  if (runtime) {
+    surface = where.repo;
+    const dirty = dirtyPaths(surface);
+    if (dirty.length > 0) throw new Stop(`this surface has uncommitted changes: ${dirty.join(', ')}. Commit, move, or discard them, then open again`);
+    git(surface, ['switch', '--quiet', '-c', effort, base]);
+  } else {
+    surface = runSurface(where, effort);
+    if (fs.existsSync(surface)) throw new Stop(`${rel(where, surface)} already exists. Inspect it, then remove it`);
+    git(where.main, ['worktree', 'add', '--quiet', '-b', effort, surface, base]);
+  }
 
   const into = path.join(aepIn(surface, where), 'efforts', effort);
   fs.mkdirSync(path.dirname(into), { recursive: true });
@@ -428,7 +449,8 @@ function open(root, args) {
   if (!fs.existsSync(specFile)) throw new Stop(`the draft has no spec.md: ${draft}`);
   fs.writeFileSync(specFile, setField(fs.readFileSync(specFile, 'utf8'), 'lane', lane), 'utf8');
   ensureLog(into, effort);
-  appendToLog(into, effort, 'Recorded', `- opened in the ${lane} lane, from ${base}`);
+  const basis = settings.stack ? `${base}, the current branch, because rules/version-control sets stack: true` : base;
+  appendToLog(into, effort, 'Recorded', `- opened in the ${lane} lane, from ${basis}`);
   writeIndex(aepIn(surface, where));
   git(surface, ['add', '-A']);
   git(surface, ['commit', '--quiet', '-m', `docs(${effort}): open the effort`]);
@@ -442,7 +464,9 @@ function open(root, args) {
   ];
   return {
     effort, lane, number, base, branch: effort, surface, opened: 'created', setup, tracker,
-    summary: `opened ${effort} (${lane}) on a new surface at ${rel(where, surface)}, from ${base}`,
+    summary: runtime
+      ? `opened ${effort} (${lane}) in the surface the runtime supplied, from ${basis}; no second surface taken`
+      : `opened ${effort} (${lane}) on a new surface at ${rel(where, surface)}, from ${basis}`,
   };
 }
 
@@ -525,12 +549,14 @@ function start(root, args) {
   const stop = dirty.length > 0
     ? `the surface has uncommitted changes nobody can attribute: ${dirty.join(', ')}. Commit, move, or discard them, then start again`
     : null;
-  const parts = [`${effort} (${spec.lane})`, `${entered} ${dirty.length ? 'dirty' : 'clean'} surface`];
+  const claim = scope.claim.length ? scope.claim.join(' ') : 'unscoped';
+  const isolation = `${scope.isolation.kind}, ${scope.isolation.enforcement}`;
+  const parts = [`${effort} (${spec.lane}, ${spec.status})`, `claim ${claim}`, `isolation ${isolation}`, `${entered} ${dirty.length ? 'dirty' : 'clean'} surface`];
   if (state.ready.length) parts.push(`${state.ready.length} ready`);
   if (Object.keys(state.blocked).length) parts.push(`${Object.keys(state.blocked).length} blocked`);
   parts.push(`next: ${stop ? 'stop' : state.next}`);
   return {
-    effort, lane: spec.lane, status: spec.status, surface, entered, role: 'orchestrator',
+    effort, lane: spec.lane, status: spec.status, surface, entered, role: 'orchestrator', claim: scope.claim, isolation,
     dirty, drift: !marker.matches, marker: marker.message,
     frontier: state.ready, blocked: state.blocked, parked: state.parked, wave: state.build,
     rounds: state.rounds, next: stop ? 'stop' : state.next, needs_you: state.needsYou,
@@ -751,6 +777,10 @@ function close(root, args) {
       const removed = git(where.main, ['worktree', 'remove', surface], { allowFail: true });
       outcome.removed = removed !== null;
       if (removed === null) outcome.remove_by_hand = `git worktree remove "${surface}"  (run from ${where.main})`;
+      // The effort's directory under worktrees/ held only this surface and any
+      // children, all released by now. Left empty, it is litter.
+      const holder = path.dirname(surface);
+      if (removed !== null && fs.existsSync(holder) && fs.readdirSync(holder).length === 0) fs.rmdirSync(holder);
     }
   }
   outcome.tracker = settings.tracker === 'none' ? [] : stopReason
@@ -778,6 +808,55 @@ function raise(root, args) {
   fs.writeFileSync(spec.file, setField(fs.readFileSync(spec.file, 'utf8'), 'lane', lane), 'utf8');
   appendToLog(effortDir, effort, 'Recorded', `- lane raised ${spec.lane} -> ${lane}: ${args.flags.reason ?? 'no reason given'}`);
   return { effort, from: spec.lane, lane, raised: true, summary: `raised ${effort} from ${spec.lane} to ${lane}` };
+}
+
+const RECORDS = {
+  converge: 'Rounds',
+  review: 'Rounds',
+  note: 'Recorded',
+  'needs-you': 'Needs you',
+};
+
+/**
+ * Writes one line to the effort's log and commits only that file, so the
+ * surface stays clean for the next `start`. A round is numbered here, and a
+ * round past the lane's cap is refused.
+ */
+function record(root, args) {
+  const where = locate(root);
+  const [effortArg] = args.positional;
+  const kinds = Object.keys(RECORDS).filter((kind) => args.flags[kind] !== undefined);
+  if (!effortArg || kinds.length !== 1) {
+    throw new Stop('usage: aep record <effort> --converge|--review|--note|--needs-you "<line>"');
+  }
+  const [kind] = kinds;
+  const text = String(args.flags[kind]).trim();
+  if (!text) throw new Stop(`--${kind} needs a line`);
+  const effort = resolveEffort(where, effortArg);
+  const surface = runSurface(where, effort);
+  const here = fs.existsSync(surface) ? surface : where.repo;
+  const effortDir = path.join(aepIn(here, where), 'efforts', effort);
+  const spec = readSpec(effortDir);
+  const file = ensureLog(effortDir, effort);
+
+  let line;
+  if (kind === 'converge' || kind === 'review') {
+    const cap = laneRules(spec.lane)[kind];
+    const done = readRounds(fs.readFileSync(file, 'utf8'))[kind].length;
+    if (done >= cap) {
+      throw new Stop(`${effort} is ${spec.lane}: at most ${cap} ${kind} round(s), and ${done} ran. Close it, with --stop where anything is open`);
+    }
+    line = `${kind} ${done + 1}: ${text}`;
+  } else {
+    line = `- ${text}`;
+  }
+  appendToLog(effortDir, effort, RECORDS[kind], line);
+  const relLog = path.relative(here, file).replace(/\\/g, '/');
+  git(here, ['add', '--', relLog]);
+  // A short summary, and the whole line in the body: a note can run long.
+  const subject = kind === 'converge' || kind === 'review' ? line.slice(0, line.indexOf(':')) : `record ${kind}`;
+  git(here, ['commit', '--quiet', '-m', `docs(${effort}): ${subject}`, '-m', line.replace(/^- /, ''), '--', relLog]);
+  return { effort, section: RECORDS[kind], line, summary: `recorded in ${effort}: ${line}` };
 }
 
 // --- status ------------------------------------------------------------------------------
@@ -913,7 +992,7 @@ export function parseArgs(argv) {
   return { positional, flags };
 }
 
-const COMMANDS = { status, open, start, dispatch, land, close, raise, check };
+const COMMANDS = { status, open, start, dispatch, land, close, raise, record, check };
 
 export function run(argv, { cwdRoot = null } = {}) {
   const [command, ...rest] = argv;

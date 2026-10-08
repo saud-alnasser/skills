@@ -20,7 +20,7 @@ glab mr view <id>
 glab ci status
 ```
 
-Reading is always allowed; `[[policies/authority]]` still governs writing.
+Reading is always allowed; `[[protocol]]` still governs writing.
 
 ### The observation `reconcile.mjs` reads
 
@@ -68,7 +68,7 @@ recognise reports that rather than answering with an empty list of findings.
 
 ## An effort here: one issue, one merge request
 
-**AEP creates exactly two objects per effort** (`[[policies/execution]]`). The
+**AEP creates exactly two objects per effort** (`[[policies/tracker]]`). The
 tickets stay in the repository under `.aep/efforts/<effort>/tickets/`, and so
 does the dependency graph.
 

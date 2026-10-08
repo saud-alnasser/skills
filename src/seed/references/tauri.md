@@ -39,7 +39,7 @@ frontend may reach is what `tauri.conf.json` and the capability files allow.
 a fix.** A command that fails because the capability does not grant it is the
 model working. Raise it with what it would open up; never widen a scope, add a
 capability, or relax the CSP to make an error go away
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 A `#[tauri::command]` is a public entry point reachable by any code running in
 the webview. Validate its arguments there, not in the caller.

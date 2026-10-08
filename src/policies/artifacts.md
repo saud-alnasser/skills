@@ -175,7 +175,7 @@ A reference to another AEP artifact MUST use double-bracket wiki-link syntax,
 relative to `.aep/`, without `.md`:
 
 ```
-[[policies/authority]]   [[contexts/authentication]]   [[efforts/auth/spec]]
+[[policies/execution]]   [[contexts/authentication]]   [[efforts/auth/spec]]
 ```
 
 - A link is a **relationship, not a copy**. Never follow a link with a summary of

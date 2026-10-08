@@ -36,13 +36,17 @@ restacks together.
 
 ## Creating a stacked branch
 
-The branch name is still AEP's convention (`<task-id>-<slug>`), not the one the
-tool would generate — two tools must produce the same name for a task or the
-branch stops working as a claim.
+An effort branch is created by `aep open`, which bases it on the current
+branch when `stack: true` is set in `[[rules/version-control]]`. Register it
+with the tool rather than letting the tool create and name it — two tools must
+produce the same name or the branch stops working as a claim. Ticket branches
+(`<effort>--<ticket>`) are never stacked: `aep dispatch` creates them and
+`aep land` deletes them.
 
 ```sh
-git switch <blocker-branch>
-gt create -m "<message>"         # then rename if the tool chose the name
+git switch <blocker-effort-branch>
+node .aep/scripts/aep.mjs open <slug> --lane <lane>
+gt track <effort>                # register the branch aep open created
 ```
 
 ## Referencing a task from a commit

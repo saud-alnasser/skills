@@ -36,7 +36,7 @@ directly rather than by inference.
 - **Never silence a rule to make a run green.** An inline `eslint-disable`, a
   widened `ignores`, or a rule downgraded in the config is a change to what this
   repository enforces — that is the human's call, and it is raised, not taken
-  (`[[policies/engineering]]`).
+  (`[[protocol]]`).
 - A rule firing on untouched files means the config changed, or the files were
   never clean. Say which; do not fix both silently.
 - Formatting rules that fight Prettier mean the two are configured

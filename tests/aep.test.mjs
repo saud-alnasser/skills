@@ -138,6 +138,21 @@ test('open makes the branch and the surface in one act, and moves the draft in',
   assert.equal(again.json.opened, 'already');
 });
 
+test('open in a surface the runtime supplied takes no second one', (t) => {
+  const dir = fixture(t);
+  const supplied = fs.mkdtempSync(path.join(path.dirname(dir), 'aep-runtime-'));
+  fs.rmSync(supplied, { recursive: true });
+  t.after(() => fs.rmSync(supplied, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
+  git(dir, 'worktree', 'add', '--quiet', '--detach', supplied, 'main');
+  draft(supplied, 'from-runtime');
+  const { code, json } = aep(supplied, 'open', 'from-runtime', '--lane', 'standard');
+  assert.equal(code, 0, JSON.stringify(json));
+  assert.equal(path.resolve(json.surface), path.resolve(supplied));
+  assert.equal(git(supplied, 'rev-parse', '--abbrev-ref', 'HEAD'), json.effort);
+  assert.ok(!fs.existsSync(path.join(dir, '.aep', 'worktrees', json.effort)), 'no surface under .aep/worktrees');
+  git(dir, 'worktree', 'remove', '--force', supplied);
+});
+
 test('open numbers past every effort a branch or a surface already holds', (t) => {
   const dir = fixture(t);
   draft(dir, 'one');
@@ -311,7 +326,41 @@ test('the quick lane lands as exactly one commit on its branch', (t) => {
   const closed = aep(dir, 'close', effort);
   assert.equal(closed.code, 0, JSON.stringify(closed.json));
   assert.equal(git(dir, 'rev-list', '--count', `main..${effort}`), '1', 'close adds no commit in the quick lane');
+  assert.ok(!fs.existsSync(path.join(dir, '.aep', 'worktrees', effort)), 'no empty effort directory is left behind');
   assert.ok(!git(dir, 'ls-tree', '-r', '--name-only', effort).includes('tickets/'));
+});
+
+test('record numbers the rounds, keeps the surface clean, and refuses one past the lane\'s cap', (t) => {
+  const dir = fixture(t);
+  const { surface, effort } = openWithTickets(t, dir, 'standard', ['01-a']);
+  tick(surface, effort, '01-a');
+  assert.equal(aep(surface, 'land', effort, '01', '--message', 'feat: a').code, 0);
+  assert.equal(aep(dir, 'start', effort).json.next, 'converge');
+  const converged = aep(surface, 'record', effort, '--converge', 'no gap');
+  assert.equal(converged.code, 0, JSON.stringify(converged.json));
+  assert.equal(converged.json.line, 'converge 1: no gap');
+  assert.equal(git(surface, 'status', '--porcelain'), '', 'the record is committed');
+  assert.equal(aep(dir, 'start', effort).json.next, 'review');
+  const again = aep(surface, 'record', effort, '--converge', 'gap, tickets 02');
+  assert.equal(again.code, 1, 'a standard effort converges once');
+  assert.match(again.json.stop, /at most 1 converge/);
+  aep(surface, 'record', effort, '--review', '2 findings, 2 fixed');
+  assert.equal(aep(dir, 'start', effort).json.next, 'close', 'a standard effort reviews once');
+  aep(surface, 'record', effort, '--needs-you', 'decide the export');
+  const board = aep(dir, 'status', '--json');
+  assert.match(JSON.stringify(board.json), /decide the export/);
+});
+
+test('a full-lane review that fixed findings is reviewed again; one that found nothing ends review', (t) => {
+  const dir = fixture(t);
+  const { surface, effort } = openWithTickets(t, dir, 'full', ['01-a']);
+  tick(surface, effort, '01-a');
+  assert.equal(aep(surface, 'land', effort, '01', '--message', 'feat: a').code, 0);
+  aep(surface, 'record', effort, '--converge', 'no gap');
+  aep(surface, 'record', effort, '--review', '3 findings, 3 fixed');
+  assert.equal(aep(dir, 'start', effort).json.next, 'review', 'the fixes are reviewed again');
+  aep(surface, 'record', effort, '--review', 'no findings');
+  assert.equal(aep(dir, 'start', effort).json.next, 'close');
 });
 
 test('lanes only go up', (t) => {

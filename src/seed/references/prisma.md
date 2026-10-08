@@ -43,5 +43,5 @@ looks tidy — read the generated SQL before applying it.
   since the last edit.
 - Drift detected on a shared database means something changed outside the
   migration history. That is a finding to raise, never something to resolve by
-  resetting (`[[policies/engineering]]`).
+  resetting (`[[protocol]]`).
 - Never run any of these against production.

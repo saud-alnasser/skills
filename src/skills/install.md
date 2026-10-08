@@ -67,7 +67,7 @@ whichever runtime adapters the repository asks for.
    actually reaches the default branch.
 
    **A seeded command that this repository does not have is worse than no
-   reference**, because it will be trusted (`[[policies/engineering]]`). Delete what
+   reference**, because it will be trusted (`[[protocol]]`). Delete what
    you cannot confirm.
 
    **Delete a reference outright where the tool is configured but not used.** A
@@ -146,7 +146,7 @@ whichever runtime adapters the repository asks for.
 
    **Show the exact strings before creating anything**, names and descriptions
    both, and create nothing on a refusal. It lands in other people's workspace
-   (`[[policies/authority]]`).
+   (`[[protocol]]`).
 
    **A description states the trigger that puts the label on.** The seeded set is
    written that way, and a `size:` label in particular is unusable without its

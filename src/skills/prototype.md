@@ -17,7 +17,7 @@ exists to produce an answer and is deleted once it has.
 
 The uncertainty is **technical or experiential**: will this approach hold up,
 does this state model survive real interaction, is this fast enough, does this
-API behave as documented under our load. `[[policies/engineering]]` routes facts to
+API behave as documented under our load. `[[protocol]]` routes facts to
 `[[skills/research]]` and product ambiguity to `[[skills/refine]]`.
 
 ## Procedure

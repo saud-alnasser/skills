@@ -63,10 +63,10 @@ export const PROTOCOL_FILES = [
   'agents/reviewer-correctness.md',
   'agents/reviewer-standards.md',
   'policies/artifacts.md',
-  'policies/authority.md',
-  'policies/engineering.md',
   'policies/execution.md',
+  'policies/execution/parallel.md',
   'policies/reporting.md',
+  'policies/tracker.md',
   'protocol.md',
   'scripts/aep.mjs',
   'scripts/check.mjs',
@@ -560,12 +560,14 @@ export function outsideFences(body) {
  * Every `[[wiki-link]]` target in a body, in order of appearance.
  *
  * Read outside fences: a link inside one is the syntax being *shown* rather
- * than a reference to a file that must exist.
+ * than a reference to a file that must exist. A target is a path, so a
+ * bracketed literal carrying quotes, commas, or brackets -- a nested array in a
+ * criterion such as `toCsv([["a","b"]])` -- is data, not a link.
  */
 export function wikiLinks(body) {
   const prose = outsideFences(body);
   const links = [];
-  const pattern = /\[\[([^\]|#]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
+  const pattern = /\[\[([^\]|#"',[]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
   let match;
   while ((match = pattern.exec(prose)) !== null) {
     links.push(match[1].trim());

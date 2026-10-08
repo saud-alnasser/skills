@@ -28,7 +28,7 @@ app — loading, empty, error — is already set up.
 
 **A story is not a test.** Rendering without throwing proves very little; unless
 this repository runs the test-runner, a green Storybook says nothing about
-behaviour (`[[policies/engineering]]`).
+behaviour (`[[protocol]]`).
 
 ## Failure handling
 

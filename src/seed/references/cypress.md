@@ -33,5 +33,5 @@ a failed visit, which reads like a routing bug.
 - A test that passes in `open` and fails in `run` is usually viewport size or
   animation timing, both of which the GUI hides.
 - Retries configured in `cypress.config` turn a flaky test green. Check whether
-  a passing run used them before trusting it (`[[policies/engineering]]`).
+  a passing run used them before trusting it (`[[protocol]]`).
 - Never run against anything but a local or designated test environment.

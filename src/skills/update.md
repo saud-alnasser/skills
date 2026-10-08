@@ -113,7 +113,7 @@ directory *outside* `.aep/` says 1.x.
    the repository's and the installer does not touch it — which is why nothing
    has ever read a rule against the policy it tightens. A rule may tighten or
    extend a policy and may never soften, contradict, or opt out of one
-   (`[[policies/authority]]`), and that judgement was made against the release
+   (`[[protocol]]`), and that judgement was made against the release
    the rule was written under. The releases just crossed may have moved the
    policy out from under it.
 
@@ -235,7 +235,7 @@ made. Then ask.
 
 **On a refusal, write nothing.** Not the uncontroversial subset, not the ones
 that were listed first, not the deletions "since they were AEP's anyway." A
-tracker is other people's workspace (`[[policies/authority]]`), the writes are
+tracker is other people's workspace (`[[protocol]]`), the writes are
 visible to everyone in it, and a deleted milestone does not come back.
 
 ## Constraints

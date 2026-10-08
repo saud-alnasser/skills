@@ -29,7 +29,7 @@ A task reported as **cached** did not run. That is the point, and it is also the
 trap: a passing `turbo run test` may have executed nothing at all.
 
 **When a result matters as evidence, say whether it was cached** — and re-run
-with `--force` if it was (`[[policies/engineering]]`). A task whose `inputs` are
+with `--force` if it was (`[[protocol]]`). A task whose `inputs` are
 declared too narrowly caches across a change that should have invalidated it,
 which is a finding about `turbo.json`, not about the run.
 

@@ -217,7 +217,7 @@ function applyMoves(aep, declared, dryRun) {
  *
  * - repository-owned Markdown only. Protocol-owned files are replaced wholesale
  *   by the copy above, and the generated index is regenerated straight after;
- * - only the nine declared targets, never a pattern;
+ * - only the declared targets, never a pattern;
  * - **outside fenced blocks only.** A link inside a fence is the syntax being
  *   shown rather than a reference being made, which is why the link checker
  *   strips fences before looking. Rewriting one edits somebody's example;
@@ -855,7 +855,12 @@ function main() {
   // the guard is here so that is a stated fact rather than a coincidence.
   if (args.includes('--update')) {
     const today = new Date().toISOString().slice(0, 10);
-    rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
+    const vacated = applyMoves(aep, declared, dryRun);
+    rewriteMovedLinks(aep, vacated, today, dryRun);
+    // The copy above ran first and saw a moved file as one this release no
+    // longer ships. It is reported as moved, so it is not offered for pruning too.
+    const movedFrom = new Set(vacated.map((move) => path.join(aep, ...move.from.split('/'))));
+    report.retired = report.retired.filter((file) => !movedFrom.has(file));
     collectNotices(declared);
 
     // A directory a past release owned and this one does not ship. Reported
