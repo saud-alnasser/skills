@@ -15,7 +15,7 @@ The same gap runs through everything else the agent authors for a human. A commi
 message, a pull request title, a code comment, and a line printed by a script are
 each read by a person and each governed by nothing that says how to write it.
 `[[rules/version-control]]` fixes the commit format and stops there.
-`[[policies/engineering]]` governs writing code and says nothing about the prose
+`[[protocol]]` governs writing code and says nothing about the prose
 inside it.
 
 The second half of the problem shows up only under sub-agents. Today

@@ -20,7 +20,7 @@ gh pr checks <number>
 gh repo view --json nameWithOwner,defaultBranchRef
 ```
 
-Reading is always allowed. `[[policies/authority]]` still applies: read another
+Reading is always allowed. `[[protocol]]` still applies: read another
 repository freely, write to none.
 
 ### The observation `reconcile.mjs` reads

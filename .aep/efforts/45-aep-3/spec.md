@@ -289,7 +289,7 @@ trimmed to look smaller than it is.
 11. Labels are **markings, not state.** `spec.md` and `plan.md` are the source of
     truth for what an effort is and where it stands; the labels project that onto
     the tracker. Where a label and the file disagree, **the file wins**
-    (`[[policies/authority]]`) and the label is corrected.
+    (`[[protocol]]`) and the label is corrected.
 
 12. `spec.md` keeps its `status:` frontmatter field. A repository with no tracker
     loses the projection and nothing else.
@@ -662,7 +662,7 @@ trimmed to look smaller than it is.
 
 61. **An upgrade reconciles this repository's rules against the law that changed
     under them.** A rule may tighten or extend a policy and may never soften,
-    contradict, or opt out of one (`[[policies/authority]]`) — and that judgement
+    contradict, or opt out of one (`[[protocol]]`) — and that judgement
     was made against the release the rule was written under. When a crossed
     release changes the policy, the rule does not move with it.
 
@@ -926,7 +926,7 @@ trimmed to look smaller than it is.
 - **Human authority is never delegated downward** (`[[policies/execution]]`).
   Requirement 15's initial class is this constraint applied to labels: the agent
   may open with a judgement, and may never revise the human's.
-- **Never silently decide architecture** (`[[policies/engineering]]`). Autonomy
+- **Never silently decide architecture** (`[[protocol]]`). Autonomy
   below the plan is the point of this change; requirement 30 is what stops
   converge from becoming a back door above it.
 - **Converge assesses; it does not redefine.** It appends tickets and never edits
@@ -935,7 +935,7 @@ trimmed to look smaller than it is.
 - **The tracker is never mirrored into `.aep/`.** Requirement 27 reads the pull
   request; it does not copy it.
 - **The repository outranks its projection.** Requirement 11 is
-  `[[policies/authority]]` applied to labels. A label is a marking of what the
+  `[[protocol]]` applied to labels. A label is a marking of what the
   files say, and it never becomes the thing that says it.
 - **The orchestrator is the only integrator.** A child never merges into the
   effort branch.

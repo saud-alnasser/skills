@@ -1,5 +1,127 @@
 # Changelog
 
+## 4.0.0
+
+AEP 3 made every change pay for the largest one. A typo fix loaded about 15,100
+words of process before it touched a file, opened an issue and a draft pull
+request, cut a ticket, ran two review agents, and asked the human about the
+lane, the priority, the spec's acceptance, and every finding. One run invented a
+path at a drive root because a skill told it to write "outside the repository"
+and never said where.
+
+4.0 sizes the ceremony to the change, moves the git and worktree choreography
+out of prose and into one tested script, makes the tracker opt-in, and keeps
+every write inside the project.
+
+### Added
+
+- **Lanes.** `spec.md` declares `lane: quick`, `standard`, or `full`, and the
+  lane sets the ceremony. Quick is one commit with no tickets, tracker, review
+  agents, or questions. Standard builds tickets in order, with one converge round
+  and one review round run by a single reviewer covering both axes. Full adds
+  parallel waves of children and two of each. `/specify` picks the lane and
+  reports it; the human may override it. Lanes only go up: a quick change that
+  reaches a public contract, data at rest, or a second area is raised to
+  standard, and nothing lowers one.
+- **One command line, `node .aep/scripts/aep.mjs`.** `status` (the board, and
+  what waits on you, across repositories with `--repos`), `open`, `start`,
+  `dispatch`, `land`, `record`, `raise`, `close`, and `check`. Each prints JSON
+  the agent acts on and quotes. The orderings 3.x had to explain in prose (commit
+  before release, detach before remove) live there once, and every command is
+  idempotent, so a crashed run re-runs its last step. 19 tests under
+  `node --test`.
+- **Warm worktrees.** `setup:` in the version-control rule runs in each new
+  worktree, and `aep start` reruns it only when a lockfile changed.
+- **A write boundary.** The protocol names where a run may write (the main
+  checkout, the effort's worktrees, `.aep/scratch/`, where a project tool writes,
+  and the OS temp directory through the temp API) and makes anything else a
+  stop. Every turn report carries `Outside writes`. `aep check` rejects wording
+  that sends a write elsewhere. The Claude adapter merges guardrails into
+  `.claude/settings.json`: the sandbox where the platform has one, and edit-deny
+  rules for places that never hold a project. No documented rule can deny
+  everything outside the project, and native Windows has no sandbox, so there
+  the protocol's rule is the safeguard and the settings are the backup.
+- **`.aep/scratch/`**, gitignored, for handoffs, notes, and drafts. `/specify`
+  drafts there and `aep open` moves the draft in.
+- **A friction log.** `aep close` appends up to three lines to
+  `.aep/friction.md`: what got in the way, read between projects.
+- **Word budgets, enforced.** `aep check` holds each skill to 1,200 words, a
+  skill's note to 600, a policy to 800, and the protocol to 1,000, and the
+  standard-lane `/implement` load to 4,000. It also rejects a rationale
+  sentence in an agent-facing file.
+- **A scenario suite**, `tests/scenarios/`: twelve short prompts run against a
+  fixture repository, judged by checks that read the repository and the run's
+  report rather than its transcript.
+
+### Changed
+
+- **The standard-lane `/implement` load is 3,923 words, from about 15,100.**
+  `policies/execution` (6,268 words) is split into `execution` (797, every lane)
+  and `execution/parallel` (waves and integration, full lane only).
+  `policies/authority` and `policies/engineering` are folded into the
+  protocol's invariants. `reporting` is 605 words, `review` 497.
+- **The tracker is opt-in.** `tracker: none`, `github`, or `gitlab` in the
+  version-control rule, `none` by default. With `none` there is no issue, pull
+  request, label, milestone, or forge call, and the effort's `log.md` is the
+  whole run log. Everything tracker-shaped (the issue, the draft pull request,
+  the label ladder, the merge-time job) lives in the new `policies/tracker` and
+  loads only when the tracker is on.
+- **The turn report is nine lines**, emitted once at the end of the turn:
+  `Doing`, `Lane`, `Position`, `Assuming`, `Done`, `Stopped on`, `Needs you`,
+  `Outside writes`, `Next`. `aep status` reads `Needs you` from the run log. The
+  four prose prohibitions are one line in the protocol, and `skills/prose` loads
+  only for a README, a pull request body, a changelog, or docs.
+- **Fewer questions.** In the quick and standard lanes a product question
+  becomes an assumption in the spec rather than an ask. `refine` runs in the full
+  lane, at most five questions, one at a time, each with a recommended answer.
+  The run accepts its own spec unless an architecture choice is pending. A
+  review finding is fixed, ticketed, or recorded for the human to accept, and
+  never stops the run to ask.
+- **Trip-wire 2 reads "the work alters an existing public contract, or touches
+  data at rest".** An addition the spec asks for is the standard lane's API
+  addition, not a stop; renaming or removing what callers rely on still is.
+- **Tickets are vertical slices**, each a thin path through every layer that can
+  be checked on its own, and a wide rename goes expand, migrate in batches,
+  contract. Dispatch briefs point at the spec, the ticket, and the notes instead
+  of restating them.
+- **An open visual question runs `prototype/ui` as a stage** once `/specify` has
+  opened the effort, on a throwaway branch, and the human picks a variant.
+- **A child's ticket branch is `<effort>--<ticket>`.** Git cannot create
+  `<effort>/<ticket>` beside a branch named `<effort>`. Existing branches keep
+  their names.
+- **Rationale moved to `specs.md`**, Part VII, which no run loads. Each entry
+  names the shipped rule it explains.
+- **`/aep:update`** splits its 2.x branch into `update/from-2` and the 1.x
+  conversion map into `update/conversion`, and a 1.x tree is converted straight
+  to the current contract.
+- `index.mjs` refuses an unknown option instead of writing the index on `--help`.
+
+### Removed
+
+- `policies/authority.md` and `policies/engineering.md`. Their law is in
+  `protocol.md`; an upgrade removes the old files and repairs links to them.
+- The opening and closing four-slot report, replaced by the nine lines above.
+
+### Measured
+
+| Target | Result |
+| --- | --- |
+| standard-lane `/implement` process text, at most 4,000 words | 3,923 |
+| scenario suite, 12 of 12 | 12 of 12 (`tests/scenarios/results/4.0.0.md`; 3.5.0 was 6 of 12) |
+| outside writes in any test run: none | one: a scenario agent wrote and deleted `/tmp/x.js` through a typed path, against the rule |
+| quick lane at least 3x faster than the 3.x baseline | not yet measured: the baseline and the comparison are run on real items |
+| no asks after the request in quick and standard, tracker off, except architecture | 0 in every quick and standard scenario; to be confirmed on real items |
+
+### Upgrading
+
+`/aep:update` prints what to do. Set `tracker:` in
+`.aep/rules/version-control.md` to the forge you used under 3.x (`github` or
+`gitlab`), or issues and pull requests stop being made; add `setup:` and
+`stack:` where they apply. Put `lane: full` on every effort whose spec is still
+`draft` or `accepted`, so it finishes under the rules it started with (a spec
+with no lane is read as full already). Repository-owned files are untouched, as
+before.
+
 ## 3.5.0
 
 The status ladder ended on a row nothing executed. Every row above it projects

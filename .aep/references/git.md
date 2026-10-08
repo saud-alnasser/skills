@@ -147,4 +147,4 @@ worse off than one who knows:
   in the run, not as the answer to the question you were asking.
 - A detached HEAD holds no claim. Do not guess the task from the diff.
 - An operation no section above covers is a gap: say so rather than guessing a
-  flag (`[[policies/engineering]]`).
+  flag (`[[protocol]]`).

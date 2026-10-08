@@ -139,8 +139,11 @@ function judge(harness) {
 function clean(harness) {
   // Only ever a harness this script made: a scenario directory directly under
   // the OS temp dir. Anything else is refused rather than removed.
+  // Both sides are resolved to their real paths: on Windows the temp dir can be
+  // spelled in its 8.3 short form (SAUD-A~1) by one process and in full by
+  // another, and a string comparison of the two refuses a real harness.
   const temp = fs.realpathSync.native(os.tmpdir());
-  const resolved = harness ? path.resolve(harness) : '';
+  const resolved = harness && fs.existsSync(harness) ? fs.realpathSync.native(path.resolve(harness)) : '';
   if (!resolved || path.dirname(resolved).toLowerCase() !== temp.toLowerCase()
     || !path.basename(resolved).startsWith('aep-scn-')) {
     throw new Error(`refusing to clean ${JSON.stringify(harness)}: not a scenario harness under ${temp}`);

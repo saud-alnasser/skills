@@ -188,7 +188,7 @@ one merged.
   thing to write into someone's repository than a reference file.
 - **The file wins when a label disagrees with it.** Reconciliation corrects the
   label to match `spec.md`, never the reverse, including when the drift was a
-  human's edit (`[[policies/authority]]`).
+  human's edit (`[[protocol]]`).
 - **`priority:` and the inviting flags stay initial.** The drift script reports
   on derived families only. Re-deriving an initial label overwrites the person
   who set it, which is the failure the derived and initial split exists to

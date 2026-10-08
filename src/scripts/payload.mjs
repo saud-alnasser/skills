@@ -83,6 +83,22 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '4.0.0',
+    check:
+      'The tracker is now opt-in. Your .aep/rules/version-control.md takes three settings in ' +
+      'its frontmatter: tracker (none, github, or gitlab), setup (a command that readies a ' +
+      'fresh worktree), and stack (true where a stacking tool submits changes). Read with no ' +
+      'tracker field, a repository gets none: no issue, pull request, label, or forge call, ' +
+      'and the log.md of each effort is the whole run log. If you used issues and pull requests ' +
+      'under 3.x, set tracker to the forge your references/ names (github.md or gitlab.md), ' +
+      'or it stops. Efforts already in flight finish under the rules they started with: put ' +
+      'lane: full in the frontmatter of every spec.md that is draft or accepted (a spec with ' +
+      'no lane is read as full, so this makes visible what already holds). A new effort ' +
+      'picks quick, standard, or full when /specify opens it. The ticket branch is now ' +
+      '<effort>--<ticket>; existing branches keep their names. Every git and worktree step ' +
+      'runs through node .aep/scripts/aep.mjs.',
+  },
+  {
     since: '3.5.0',
     check:
       'The status label ladder now reaches its terminal value without anybody remembering ' +

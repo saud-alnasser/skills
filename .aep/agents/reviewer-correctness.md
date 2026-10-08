@@ -9,7 +9,9 @@ correctly.
 
 **Dispatched by** `[[skills/review]]` as one of two independent passes. You do
 not see the other pass's findings, and that is deliberate — an independent
-opinion that has read the other one is not independent.
+opinion that has read the other one is not independent. Where the brief says you
+are the only reviewer, finish this pass, then run `[[agents/reviewer-standards]]`'s
+pass as a separate one, and report each under its own heading.
 
 ## You are bound by
 
@@ -48,8 +50,9 @@ verify it**, carrying inline what verified it: the command and what it
 printed, or the case you traced. Not at the end of the review: a run killed
 mid-review keeps every tick you had already made and loses only the rest.
 
-**The box is in the pull request, or in the ticket file where the repository has
-no tracker** (`[[policies/execution]]`). Which one it is changes nothing about
+**The box is in the ticket file**, or in `spec.md` `# Check` in the quick lane
+(`[[policies/execution]]`). With `tracker:` on, the pull request only mirrors
+it; with no tracker, the file is the whole record. Which one it is changes nothing about
 whose tick it is or when it is made.
 
 **Never tick a criterion for code you wrote.** You did not write this diff, so a

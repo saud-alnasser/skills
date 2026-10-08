@@ -302,7 +302,7 @@ shipping.
   tracker and the tree. `[[skills/help]]` states there is no synchronization
   command and this does not add one.
 - **Writing to a tracker belonging to another repository** — already
-  `[[policies/authority]]`'s, and unchanged.
+  `[[protocol]]`'s, and unchanged.
 - **Renaming, merging, or deleting a label that already exists.** The tracker's
   vocabulary is read and extended, never reorganized.
 

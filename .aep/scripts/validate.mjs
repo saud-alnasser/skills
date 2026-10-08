@@ -14,10 +14,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   PROTOCOL_DIRS,
   REPOSITORY_DIRS,
+  PER_CLONE_DIRS,
   FORBIDDEN_DIRS,
+  LANES,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
@@ -33,7 +36,7 @@ import {
   useWhenProblems,
 } from './contract.mjs';
 
-const PROTOCOL_BUDGET_BYTES = 8192;
+const PROTOCOL_BUDGET_BYTES = 10240;
 
 const failures = [];
 const skippedEfforts = [];
@@ -142,6 +145,10 @@ function checkArtifact(root, file) {
     }
   } else if (isSpec) {
     fail(rel, 'an effort spec.md must declare status');
+  }
+  if (fields.lane !== undefined) {
+    if (!isSpec) fail(rel, 'lane is legal only on an effort spec.md');
+    else if (!LANES.includes(fields.lane)) fail(rel, `lane is "${fields.lane}", must be one of: ${LANES.join(', ')}`);
   }
   if (fields['blocked-by'] !== undefined && !isTicket) {
     fail(rel, 'blocked-by is legal only on a local ticket');
@@ -298,7 +305,9 @@ function checkStructure(root) {
   if (!fs.existsSync(protocolFile)) {
     fail('protocol.md', 'missing. It is the bootstrap and everything starts there');
   } else {
-    const size = fs.statSync(protocolFile).size;
+    // Counted with LF endings, so a checkout that converts them to CRLF does
+    // not fail a budget the committed file meets.
+    const size = Buffer.byteLength(fs.readFileSync(protocolFile, 'utf8').replace(/\r\n/g, '\n'), 'utf8');
     if (size > PROTOCOL_BUDGET_BYTES) {
       fail('protocol.md', `${size} bytes exceeds the ${PROTOCOL_BUDGET_BYTES}-byte bootstrap budget`);
     }
@@ -306,10 +315,10 @@ function checkStructure(root) {
 
   const ignoreFile = path.join(root, '.gitignore');
   if (!fs.existsSync(ignoreFile)) {
-    fail('.gitignore', 'missing. position/ and worktrees/ must never be committed');
+    fail('.gitignore', `missing. ${PER_CLONE_DIRS.map((dir) => `${dir}/`).join(', ')} must never be committed`);
   } else {
     const ignored = fs.readFileSync(ignoreFile, 'utf8');
-    for (const entry of ['position/', 'worktrees/']) {
+    for (const entry of PER_CLONE_DIRS.map((dir) => `${dir}/`)) {
       if (!ignored.split(/\r?\n/).some((line) => line.trim() === entry)) {
         fail('.gitignore', `does not exclude ${entry}`);
       }
@@ -341,9 +350,10 @@ function checkStructure(root) {
  * `rules/` and `references/` are repository-wide, so neither has a namespace to
  * nest in and both sit flat. A context takes one project directory, so that two
  * projects of a monorepo can each call an area `auth`. A skill takes one for its
- * notes, so a note is reached from the skill owning it. `policies/`, `agents/`,
- * and `templates/` are flat because none of them namespaces anything: a policy
- * is one file with nothing to sit inside. The gate asks for these depths rather
+ * notes, so a note is reached from the skill owning it. A policy takes one for
+ * the part of it that loads only sometimes, as `execution/parallel` loads only
+ * for a wave of children. `agents/` and `templates/` are flat because neither
+ * namespaces anything. The gate asks for these depths rather
  * than for a file that merely ends in `.md`, because depth is half of what makes
  * a directory AEP's rather than somebody's own folder of notes.
  *
@@ -356,7 +366,7 @@ function checkStructure(root) {
  * would fall quiet, never loud, for a kind that stopped carrying one.
  */
 const USE_WHEN_DEPTHS = {
-  policies: 1,
+  policies: 2,
   skills: 2,
   agents: 1,
   templates: 1,
@@ -528,6 +538,32 @@ function checkStrays(root) {
   }
 }
 
+/**
+ * Validates the tree at `root` (a `.aep/` directory). Returns what failed, how
+ * many artifacts were checked, and which implemented efforts traceability
+ * skipped. Safe to call more than once in a process.
+ */
+export function validateTree(root) {
+  failures.length = 0;
+  skippedEfforts.length = 0;
+  checked = 0;
+
+  checkStructure(root);
+  checkStrays(root);
+  checkTraceability(root);
+
+  const artifacts = walk(root, { skip: PER_CLONE_DIRS })
+    .filter((file) => file.endsWith('.md') && path.basename(file) !== 'index.md');
+  for (const file of artifacts) checkArtifact(root, file);
+
+  // The index is derived, so staleness is a defect in the tree, not a warning.
+  const indexFile = path.join(root, 'index.md');
+  if (!fs.existsSync(indexFile)) {
+    fail('index.md', 'missing. Run: node .aep/scripts/index.mjs');
+  }
+  return { failures: [...failures], checked, skippedEfforts: [...skippedEfforts] };
+}
+
 function main() {
   const args = process.argv.slice(2);
   const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
@@ -539,19 +575,7 @@ function main() {
     process.exit(2);
   }
 
-  checkStructure(root);
-  checkStrays(root);
-  checkTraceability(root);
-
-  const artifacts = walk(root, { skip: ['position', 'worktrees'] })
-    .filter((file) => file.endsWith('.md') && path.basename(file) !== 'index.md');
-  for (const file of artifacts) checkArtifact(root, file);
-
-  // The index is derived, so staleness is a defect in the tree, not a warning.
-  const indexFile = path.join(root, 'index.md');
-  if (!fs.existsSync(indexFile)) {
-    fail('index.md', 'missing. Run: node .aep/scripts/index.mjs');
-  }
+  validateTree(root);
 
   if (failures.length === 0) {
     if (!quiet) {
@@ -578,4 +602,4 @@ function main() {
   process.exit(1);
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();

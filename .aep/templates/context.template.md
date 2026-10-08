@@ -48,11 +48,10 @@ found* — never *what should be done*. An instruction here is a rule in the wro
 file.
 
 **A pointer says where to start reading.** It never claims what APIs or behaviour
-exist there. *Why: the claim goes stale silently while the pointer stays useful,
-and a stale claim is trusted exactly as a fresh one is.*
+exist there.
 
 **The repository wins.** A context contradicted by source is wrong, and is
-corrected the moment the contradiction is found (`[[policies/authority]]`).
+corrected the moment the contradiction is found (`[[protocol]]`).
 
 ## Keep it small
 

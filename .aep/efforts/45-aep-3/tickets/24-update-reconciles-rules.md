@@ -56,7 +56,7 @@ would have found that. The rule was legal against 2.x and illegal against 3, and
 the only moment the two texts are read together is the upgrade.
 
 **Built.** One step in `[[skills/update]]`, one paragraph of law in
-`[[policies/authority]]`, the normative form in `specs.md` §30, and eight guards.
+`[[protocol]]`, the normative form in `specs.md` §30, and eight guards.
 
 **The step is numbered, not appended.** It sits at 7, between acting on the
 notices and reporting deviations, and the steps after it renumbered. That

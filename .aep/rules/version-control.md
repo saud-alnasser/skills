@@ -1,5 +1,10 @@
 ---
 use-when: "committing, branching, or preparing work to land"
+# Read by .aep/scripts/aep.mjs. This repository uses GitHub issues and pull
+# requests, and stacks with Graphite (below).
+tracker: github
+setup: ""
+stack: true
 ---
 
 # Rule — version control

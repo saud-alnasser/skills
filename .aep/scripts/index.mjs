@@ -14,6 +14,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   readArtifact,
   resolveAepRoot,
@@ -129,7 +130,7 @@ function collectEfforts(root) {
     });
 }
 
-function render(root) {
+export function render(root) {
   const sections = SECTIONS.map((section) => ({
     ...section,
     rows: collect(root, section.dir, { flat: section.flat }),
@@ -219,10 +220,26 @@ function render(root) {
   return out.join('\n');
 }
 
+/** Writes `index.md` for the tree at `root`, and returns the path it wrote. */
+export function writeIndex(root) {
+  const target = path.join(root, 'index.md');
+  fs.writeFileSync(target, render(root), 'utf8');
+  return target;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
   const check = args.includes('--check');
+
+  // An unknown flag is refused rather than ignored: `--help` used to fall
+  // through to the write, so asking how to use it rewrote the index.
+  const unknown = args.filter((arg, i) => arg.startsWith('-') && !['--root', '--check'].includes(arg)
+    && args[i - 1] !== '--root');
+  if (unknown.length > 0) {
+    process.stderr.write(`unknown option: ${unknown.join(' ')}\nusage: node .aep/scripts/index.mjs [--root <.aep dir>] [--check]\n`);
+    process.exit(2);
+  }
 
   const root = resolveAepRoot(rootArg, import.meta.url);
   if (!root) {
@@ -247,8 +264,8 @@ function main() {
     process.exit(1);
   }
 
-  fs.writeFileSync(target, rendered, 'utf8');
+  writeIndex(root);
   process.stdout.write(`wrote ${toPosix(path.dirname(root), target)}\n`);
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();
