@@ -4,264 +4,107 @@ use-when: "the running AEP release differs from the one this repository declares
 
 # /update — move a repository to the running release
 
-Replaces protocol-owned artifacts with the running release's versions, preserves
+Replaces protocol-owned artifacts with the running release's, preserves
 everything the repository owns, and reports what needs a human.
 
 ## First: which layout is this?
 
-Read the tree before the version. A layout is a fact about which files exist; a
-version field is a claim, and a tree written before the field existed, or one
-whose bootstrap somebody hand-edited, makes it a wrong one.
+Read the tree, not the version field: a layout is a fact, a version a claim.
 
 | The repository has | Written under | Do |
 | --- | --- | --- |
-| `.aep/protocol.md`, and no artifact under `.aep/` carrying `owner:` | 3 | the upgrade below |
-| `.aep/protocol.md`, and artifacts carrying `owner:` | 2.x | the upgrade below, **then the 2.x section after it** — one operation, not two |
-| a protocol file, `policies/`, `decisions/`, or `designs/` **under the runtime's own directory** — `.claude/`, `.cursor/`, `.codex/` — or a `map.md` in several directories | 1.x | `[[skills/update/migration]]` — a carry-across, not an upgrade |
+| `.aep/protocol.md`, and no artifact under `.aep/` carrying `owner:` | 3 or later | the procedure below |
+| `.aep/protocol.md`, and artifacts carrying `owner:` | 2.x | the procedure, **then `[[skills/update/from-2]]`**, as one operation |
+| a protocol file, `policies/`, `decisions/`, or `designs/` **under the runtime's own directory** (`.claude/`, `.cursor/`, `.codex/`), or a `map.md` in several directories | 1.x | `[[skills/update/migration]]`, with `[[skills/update/conversion]]`: a carry-across, not an upgrade |
 | none of these | nothing | `[[skills/install]]` |
 
-**`owner:` is what identifies a 2.x tree, because declaring ownership per file
-is exactly what that field was for.** Ownership is a lookup now
-(`[[policies/artifacts]]`), so a tree still declaring it per file is telling you
-which contract wrote it.
-
-**`.aep/policies/` is not evidence of 1.x.** The word is used by both versions
-and means opposite things: 1.x policies were the repository's, derived per
-repository; AEP's are protocol law, identical everywhere. Only a `policies/`
-directory *outside* `.aep/` says 1.x.
+**`.aep/policies/` is not evidence of 1.x**: AEP's policies are protocol law.
+Only a `policies/` directory *outside* `.aep/` says 1.x.
 
 ## Procedure
 
-1. **Read the declared release** — the `version:` field on `.aep/protocol.md` —
-   and compare it with the running distribution's. Equal, with a clean tree, means
-   there is nothing to do; say so and stop.
-2. **Classify every file under `.aep/`** against the manifest the running
-   release carries (`[[policies/artifacts]]`). Protocol-owned means *named by the
-   manifest*; everything else under `.aep/` is the repository's. **Do not read an
-   `owner:` field** — in a 3 tree there is none, and in a 2.x tree it is evidence
-   of which contract wrote the file rather than an instruction to this step.
-3. **Detect local edits to protocol-owned files** before replacing anything:
-   compare each against the release it declares. A difference is a **defect to
-   report**, and what it contained goes to the human — it may be a deviation
-   somebody meant to declare.
-4. **Replace protocol-owned artifacts** with the running release's:
+1. **Read the declared release** (`version:` on `.aep/protocol.md`) and compare
+   it with the running distribution's. Equal, with a clean tree: nothing to do;
+   say so and stop.
+2. **Classify every file under `.aep/`** against the release's manifest
+   (`[[policies/artifacts]]`): named by it is protocol-owned, the rest is the
+   repository's. **Never read an `owner:` field** to decide.
+3. **Detect local edits to protocol-owned files** before replacing anything, by
+   comparing content with the declared release. A difference is a **defect to
+   report**, with what it contained: it may be a deviation somebody meant to
+   declare.
+4. **Replace protocol-owned artifacts**:
 
    ```
    node <distribution>/scripts/install.mjs --into <repository> --update
    ```
 
-5. **Preserve repository-owned artifacts.** `rules/`, `contexts/`, `references/`,
-   and `efforts/` are untouched — the installer replaces exactly what the
-   manifest names, so a repository file standing where a shipped one would land
-   is not in it and survives. **`rules/` is read again at step 7**, which
-   proposes and never writes on its own; the installer still cannot reach it.
-   **An upgrade MUST NEVER silently overwrite repository-owned governance** —
-   where a repository file collides with a shipped name, report the collision and
-   let the human resolve it.
+5. **Preserve repository-owned artifacts.** `rules/`, `contexts/`,
+   `references/`, and `efforts/` are untouched. **An upgrade MUST NEVER silently
+   overwrite repository-owned governance**: a repository file colliding with a
+   shipped name is reported for the human to resolve. **Seeds are never
+   re-seeded**; where a seed changed materially, say so and let the human diff
+   it. **Where a release moved a protocol-owned artifact**, the installer removes
+   the old file, repairs links to it inside repository-owned artifacts, and
+   reports both; a repository file at the vacated path is preserved and
+   reported. Read every line of that report: it is the one case where an
+   upgrade writes into files you own.
+6. **Act on every notice the upgrade printed**, in this run. Where one needs a
+   decision, a credential, or another skill, **report it as outstanding, naming
+   the release and what is left.** Crossing 4.0.0:
+   - **`tracker:`** in `[[rules/version-control]]`'s frontmatter: set `github`
+     or `gitlab` where `references/` names that forge and the repository used
+     its issues and pull requests; otherwise `none`. Add `setup:` and `stack:`
+     where the repository has them. Show the edit before making it.
+   - **`lane: full`** on every in-flight effort's `spec.md` (status `draft` or
+     `accepted`), so it finishes under the rules it started with.
 
-   **Seeds are never re-seeded.** A starting point the repository has since
-   corrected is its own file now; a newer release's version of it is not an
-   improvement to be applied. Where a seed has changed materially, **say so and
-   let the human diff it** rather than touching the file.
-
-   **Where a release moved a protocol-owned artifact**, the installer removes the
-   old file, repairs links that pointed at it inside repository-owned artifacts,
-   and reports both. A move is not a retirement: the content still exists, at a
-   new path, and leaving the old file would govern the repository with two copies
-   of one text. A repository file standing at the vacated path is preserved and
-   reported instead — read every line of that report, because it is the one
-   circumstance in which an upgrade writes into files you own.
-6. **Act on the notices the upgrade printed.** A release declares what it needs
-   of the reader where moving files is not enough, and the installer prints
-   exactly the ones for the releases being crossed — most often something
-   repository-owned that an upgrade correctly refuses to touch.
-
-   **A notice is acted on, not read.** Do what it says, in this run. Where it
-   cannot be done here — it needs a decision, a credential, or another skill —
-   **report it as outstanding, naming the release and what is left**. Printing a
-   notice and moving on is how it is missed: the output scrolls, the upgrade
-   reports success, and nothing ever asks again.
-
-   **One thing to act on here is standing rather than per release: the
-   merge-time job.** A repository whose `references/` carries a tracker with
-   nothing beside it moving the status label at merge gets
-   `[[skills/install]]`'s offer now, in this run — the same exact text, the same
-   two shapes, a new file or an addition to a workflow that already assigns
-   labels, and the same refusal path, which writes nothing and records the
-   decision in `[[rules/version-control]]`. It is standing because a repository
-   can gain a tracker reference in any release, or decline once and change its
-   mind, and because it asks for a write outside `.aep/` that no upgrade makes
-   on its own.
-
-   **Where that record already stands, say it was read and do not offer again.**
-   Re-asking a settled question is what recording it exists to stop. It is a
-   recorded decision rather than a declared deviation, so step 8 does not report
-   it and no later upgrade files a settled answer as an open fork.
-
-   **Where the offer cannot be settled in this run, report it as outstanding,
-   naming the forge and what is left.** GitLab's is the case that has this
-   built in: it needs a project access token with `api` scope that a person
-   creates, so accepting it here still leaves that, and an offer reported as
-   accepted-and-done would be false.
-
-   Which repositories this applies to is read from the tree — `references/`, and
-   the workflow files that are there — and never from a tracker. The offer is
-   text and a write, so an upgrade that reached no tracker gains no call to one
-   by making it.
-
-7. **Reconcile the rules against the law that changed under them.** `rules/` is
-   the repository's and the installer does not touch it — which is why nothing
-   has ever read a rule against the policy it tightens. A rule may tighten or
-   extend a policy and may never soften, contradict, or opt out of one
-   (`[[policies/authority]]`), and that judgement was made against the release
-   the rule was written under. The releases just crossed may have moved the
-   policy out from under it.
-
-   **The candidates are computed, not chosen**: every rule citing a policy whose
-   text changed between the declared release and the running one. Reading the
-   citations is what makes the step reproducible — a rule citing nothing raises
-   no candidate, and a rule citing three policies is checked against all three.
+   **Standing, every run, where `tracker:` is on:** the merge-time job.
+   Where `[[rules/version-control]]` records it as declined, say so and **do not
+   offer again**. Otherwise make `[[skills/install]]`'s offer: the same text,
+   the same two shapes, the same refusal path. A recorded refusal is a decision,
+   not a deviation, so step 8 does not report it. An offer that cannot be settled
+   here (GitLab's token is the human's to create) is reported as outstanding,
+   naming the forge and what is left. Which repositories this applies to is read
+   from the tree, never from a tracker.
+7. **Reconcile the rules against the law that changed under them.** A rule may
+   tighten or extend a policy and never soften, contradict, or opt out of one
+   (`[[protocol]]`). **The candidates are computed**: every rule citing a policy
+   whose text changed between the declared release and the running one.
 
    | The rule | Do |
    | --- | --- |
-   | restates law the release changed | rewrite it to cite the policy rather than repeat it — a restatement is a second home, and this is the release it drifted in |
-   | contradicts the new law: softens it, opts out, or forbids what the policy now requires | rewrite it to the new law, or record a **declared deviation** (`[[policies/artifacts]]`) where the repository means to differ |
+   | restates law the release changed | rewrite it to cite the policy rather than repeat it |
+   | contradicts the new law | rewrite it to the new law, or record a **declared deviation** (`[[policies/artifacts]]`) where the repository means to differ |
    | tightens or extends a policy the release did not touch | **nothing** |
 
    **Show every edit as exact before-and-after strings, as one list, before the
-   first one is made. Then ask. On a refusal, write nothing** — not the obvious
-   ones, not the ones that only remove a restatement. This is the gate a tracker
-   write passes (`[[policies/execution]]`) and for the same reason: it lands in
-   governance somebody else owns.
-
-   **Never delete a rule**, and never settle a contradiction by removing the side
-   that lost. A repository entitled to differ says so as a deviation, which the
-   next step then surfaces on every upgrade after this one.
-
-   *Why here and not in validation: a rule and the policy under it can only be
-   compared at the moment one of them moves, and this is that moment. Validation
-   runs against a single release and sees two files that agree.*
-
-8. **Report declared deviations.** Every deviation recorded under `[[rules]]` is
-   surfaced with the release it was declared under and how long it has stood.
-   *A deviation nobody is reminded of becomes a silent fork.*
-9. **Migrate what the release requires**, applying only migrations newer than the
-   release the repository declared, and each only after confirming by content
-   that the shape it repairs is actually present.
+   first is made. Then ask. On a refusal, write nothing.** **Never delete a
+   rule**, and never settle a contradiction by removing the side that lost.
+8. **Report declared deviations**, each with the release it was declared under
+   and how long it has stood.
+9. **Migrate what the release requires**: only migrations newer than the
+   declared release, each after confirming by content that the shape it repairs
+   is present.
 10. **Regenerate derived state**: `node .aep/scripts/index.mjs`.
 11. **Validate**: `node .aep/scripts/validate.mjs`.
 
-## Coming from 2.x
-
-The installer has already done the mechanical half: protocol files replaced,
-every directory this release stopped shipping reported, and two lists printed
-that it deliberately did not act on — artifacts still carrying retired
-frontmatter, and effort specs still holding an architecture section. It names
-them rather than converting them because each needs a judgement, and a judgement
-made silently by a script is the one nobody can review.
-
-**This section's removal condition, stated here rather than left to somebody's
-sense of when it stopped mattering: it goes when no repository the maintainer
-knows of still carries a 2.x layout.** A compatibility branch with no stated end
-is a branch nobody removes, and it is read on every upgrade forever.
-
-### The frontmatter
-
-Every retired field is **dropped, never converted.** Each one's answer already
-lives somewhere else in 3, and writing it into a 3 field would create a second
-answer that can disagree with the first:
-
-| The 2.x field | Where its answer is now |
-| --- | --- |
-| `owner:` | the manifest, and the two directory lists it is built from |
-| `kind:` | the directory the artifact sits in |
-| `mode:`, `report:` | the posture each skill states for itself |
-| `aep:`, `date:` | `protocol.md`'s `version:`, which is the one artifact that declares a release |
-| `part-of:` | the effort directory the ticket is filed under |
-
-`use-when` carries unchanged, and `status:` and `blocked-by:` carry unchanged on
-a ticket. **Nothing else in the frontmatter survives**, and a file whose whole
-frontmatter is retired fields loses the block entirely.
-
-Do this to every file the installer listed, and to no file it did not — the list
-is `readArtifact` over the actual tree, which is a better reader of frontmatter
-than a grep.
-
-### The specs
-
-2.x kept an effort's architecture inside its spec. 3 splits them: `spec.md`
-holds WHAT and WHY, `plan.md` holds HOW (`[[skills/plan]]`). For each spec the
-installer named:
-
-1. move the architecture section into a `plan.md` beside it, **verbatim**;
-2. leave the rest of `spec.md` exactly as it stands;
-3. **change no wording in either file.** A split is a move. Improving the prose
-   on the way past makes the diff unreviewable, and the one question worth
-   answering about a migration is whether anything was lost.
-
-Where the section is empty, or holds a single line pointing elsewhere, that is
-still a split — an effort in 3 has a plan, and an empty one is honest.
-
-### The tracker
-
-**Where the repository has no tracker there is nothing to reshape**, and the
-tree half of this migration still runs in full. Say the section was skipped and
-why; a 2.x tree without a forge lost nothing in 2.x and loses nothing here.
-
-**An effort that has landed is a record.** Its issues, its pull request, and
-every comment on it are what happened and what was reviewed. They are never
-reshaped — not for consistency, not to make an old effort look like the current
-one. Read which efforts are still in flight from the tracker rather than from
-the tree, and touch only those.
-
-| The 2.x object | Do |
-| --- | --- |
-| an in-flight effort's per-task issues | collapse into **one** issue for the effort, and one pull request (`[[skills/specify]]`) |
-| an in-flight effort's labels | re-sync to the projection in `[[policies/execution]]` |
-| a milestone **entirely AEP's**, every issue under it belonging to an AEP effort | delete |
-| a milestone anything else uses | leave, and say so |
-| **any label** | **keep** |
-| a landed effort's anything | **nothing** |
-
-**Labels are kept even where AEP created them.** Deleting one strips it from
-every closed issue this migration correctly refused to touch, which edits the
-record by a side effect. They are also how the reshaping finds its work, and a
-tool that deletes its own index halfway through is a tool that cannot be run
-twice.
-
-**Show every tracker write as the exact string it will be** — each title, each
-body, each label name, each deletion — as one list, before the first one is
-made. Then ask.
-
-**On a refusal, write nothing.** Not the uncontroversial subset, not the ones
-that were listed first, not the deletions "since they were AEP's anyway." A
-tracker is other people's workspace (`[[policies/authority]]`), the writes are
-visible to everyone in it, and a deleted milestone does not come back.
-
 ## Constraints
 
-- **Never delete a repository-owned artifact.** Where one is obsolete, say so and
-  let `[[skills/prune]]` and the human handle it. A rule that step 7 found
-  contradicting new law is rewritten or declared, never removed.
+- **Never delete a repository-owned artifact.** Where one is obsolete, say so
+  and leave it to `[[skills/prune]]` and the human.
 - Never resolve a governance collision by picking a side.
 - Do not commit.
 
 ## Done when
 
-The declared release matches the running one, `validate.mjs` passes, repository
-knowledge is intact, every deviation and collision has been reported, and every
-notice the upgrade printed has been done or reported as outstanding. The
-merge-time job has been offered and written, declined and recorded as a
-decision, read as already declined, or reported as outstanding.
-
-Every rule citing a policy the crossed releases changed has been reconciled or
-reported, no rule was rewritten without its before-and-after shown first, and a
-refusal left every rule byte-identical.
-
-Coming from 2.x, add: no artifact under `.aep/` carries a retired field, no
-effort spec holds an architecture section, every tracker write was shown before
-it was made, and every landed effort is byte-identical to what it was.
-
-Coming from 1.x, add: every 1.x file has a recorded outcome, nothing was deleted,
-every proposed `use-when` is listed for confirmation, and the old layer is no
-longer governing (`[[skills/update/migration]]`).
+- The declared release matches the running one, `validate.mjs` passes, and
+  repository knowledge is intact.
+- Every deviation and collision is reported, and every notice is done or
+  reported as outstanding.
+- Where `tracker:` is on, the merge-time job was written, declined and
+  recorded, read as declined, or reported as outstanding.
+- Every rule citing a changed policy is reconciled or reported; no rule was
+  rewritten without its before-and-after shown first; a refusal left every rule
+  byte-identical.
+- From 2.x or 1.x, add that note's own conditions.

@@ -1,6 +1,6 @@
 ---
 name: aep-implement
-description: Carry the effort to a finished stack. Use when a task exists and is ready to build.
+description: Carry the effort to a finished branch. Use when a task exists and is ready to build.
 metadata:
   aep: adapter
   canonical: .aep/skills/implement.md

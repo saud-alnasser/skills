@@ -40,12 +40,14 @@ are stages the four run. `[[skills/refine]]`, `[[skills/research]]`, and
 `[[skills/review]]` are still here to be read, and reaching for one directly is
 reaching for depth rather than typing a command.
 
-**Pick the smallest process that produces a reliable result.**
+**Pick the smallest process that produces a reliable result.** `/specify` sets
+the lane, and the lane sets the ceremony (`[[policies/execution]]`):
 
 ```
-simple:   /specify → /tasks → /implement
-complex:  /specify → research → prototype → /plan → /tasks
-          → parallel /implement
+quick:     /specify → /implement                  one commit, no tickets
+standard:  /specify → /plan? → /tasks → /implement
+full:      /specify → research → prototype → /plan → /tasks
+           → /implement, in parallel waves
 ```
 
 ## What to reach for

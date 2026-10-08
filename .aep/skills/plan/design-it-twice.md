@@ -68,7 +68,7 @@ the human while looking like thorough work — and it is the failure this note i
 most likely to produce, because three designs feel like enough output on their
 own.
 
-The choice remains the human's (`[[policies/engineering]]`). Recommending is not
+The choice remains the human's (`[[protocol]]`). Recommending is not
 deciding.
 
 ## 4 — Write the outcome down

@@ -31,9 +31,10 @@ compaction keeps you here and loses the verbatim history; a handoff forks.
    **What is left over is what a handoff is for**: the state of *this session's*
    work, which belongs to no artifact.
 
-2. **Write the handoff** to a scratch location outside the repository — a
-   handoff is session state, not repository knowledge, and committing one puts a
-   conversation in the history.
+2. **Write the handoff** to `.aep/scratch/handoff-<effort>.md` on the surface
+   you are working in. Scratch is gitignored: a handoff is session state, not
+   repository knowledge, and committing one puts a conversation in the history.
+   Never write it outside the project (`[[protocol]]`).
 
 ```markdown
 # Handoff — <effort or task>

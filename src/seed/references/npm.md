@@ -22,7 +22,7 @@ npm run <script> --workspace <pkg>
 | types | `npm run typecheck` |
 
 **Do not invent a script.** A command named here that `package.json` does not
-define will be trusted and will fail (`[[policies/engineering]]`).
+define will be trusted and will fail (`[[protocol]]`).
 
 Adding a dependency (`npm i <pkg>`, `-D` for development) is an architectural
 decision put to the human, not a mechanical one.

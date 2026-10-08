@@ -31,7 +31,7 @@ go mod tidy                          # rewrites go.mod and go.sum
 
 **A `go test` run can report `(cached)` and execute nothing.** That is correct
 behaviour and useless as evidence. Use `-count=1` when the run is the proof
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 `-race` catches what plain runs do not, and it is where concurrency bugs
 actually surface. A suite that passes without it and fails with it has a real

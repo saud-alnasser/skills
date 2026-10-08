@@ -35,5 +35,5 @@ dotnet --info                                    # installed SDKs, for diagnosin
   under them. A setting you cannot find in a `.csproj` usually lives there.
 - A warning treated as an error is `TreatWarningsAsErrors`, which is a
   deliberate setting. Suppressing the warning to build is a change to what this
-  repository enforces (`[[policies/engineering]]`).
+  repository enforces (`[[protocol]]`).
 - **Never `dotnet nuget push` or `dotnet publish` to a feed.**

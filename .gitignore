@@ -30,3 +30,8 @@ Desktop.ini
 
 # What stays local inside .aep/ is defined by .aep/.gitignore, which the
 # installer writes: position/ and worktrees/.
+
+# This repository's own .aep/ is installed from src/ only at a release, so its
+# .aep/.gitignore can lag src/gitignore. Scratch is ignored here as well, so a
+# run's notes and ledgers are never committed by mistake in the meantime.
+.aep/scratch/

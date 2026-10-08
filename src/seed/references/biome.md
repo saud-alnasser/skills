@@ -31,7 +31,7 @@ command from the wrong major fails in a way that reads like a missing feature.
 - `--unsafe` fixes change behaviour, not just shape. Never apply them without
   reading the diff, and never as part of an unrelated change.
 - Biome running beside ESLint or Prettier means two tools own formatting. That
-  is a finding about the setup (`[[policies/engineering]]`), not something to settle
+  is a finding about the setup (`[[protocol]]`), not something to settle
   per file.
 - A rule fired by `check` but not by the editor usually means the editor is
   using a different Biome binary than the repository pins.

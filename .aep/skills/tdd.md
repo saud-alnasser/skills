@@ -42,9 +42,7 @@ Repeat, one behaviour at a time.
 2. Fix.
 3. Watch it pass.
 4. **Confirm the test would catch a regression**: undo the fix, see it fail
-   again, redo the fix. *Why: a green suite after a change proves nothing until
-   you have confirmed the change was actually applied and the test was actually
-   watching.*
+   again, redo the fix.
 
 ## Constraints
 

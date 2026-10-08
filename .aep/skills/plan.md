@@ -31,7 +31,7 @@ uncomfortable precisely when it matters most.
    effort in flight holds its branch in a worktree, so `git switch` to it is
    refused, and what this skill writes has to land on that branch.
 2. **Read the code you intend to change** — not the parts you remember, the parts
-   you will touch. `[[policies/engineering]]`: names are not proof.
+   you will touch. `[[protocol]]`: names are not proof.
 3. **Load what applies.** Applicable `[[policies]]` and `[[rules]]`, relevant `[[contexts]]`, required
    `[[references]]`, and any existing evidence for this effort.
 4. **Identify the technical uncertainty** and resolve what is material —
@@ -52,7 +52,7 @@ uncomfortable precisely when it matters most.
 
    **Recommend one, with reasoning. The human chooses.** This is the whole
    mechanism behind *never silently decide architecture* — an alternative left
-   unmentioned is a decision already taken (`[[policies/engineering]]`).
+   unmentioned is a decision already taken (`[[protocol]]`).
 
    Where the alternatives are not obvious, or where only one has been produced,
    `[[skills/plan/design-it-twice]]` is how to generate ones that genuinely
@@ -60,7 +60,8 @@ uncomfortable precisely when it matters most.
    `[[skills/plan/depth]]` has the vocabulary and the rules for moving one.
 7. **Write the approach** into `.aep/efforts/<effort>/plan.md`, using
    `[[templates/plan.template]]`, and set `spec.md`'s `status: accepted` once the
-   human has agreed. **`status` stays the spec's** — an effort has one state, and
+   human has chosen between the architectures you put to them, or at once where
+   there was no such choice — acceptance is never a question of its own. **`status` stays the spec's** — an effort has one state, and
    a plan declaring a second gives it two answers that can disagree.
 
 ## Output

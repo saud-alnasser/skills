@@ -45,8 +45,15 @@ export const PROTOCOL_DIRS = ['policies', 'skills', 'agents', 'templates', 'scri
  */
 export const CANONICAL_ENTRYPOINT = 'AGENTS.md';
 export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
+
+/**
+ * Directories that stay local to a working tree and are gitignored. Nothing in
+ * them is an artifact, so a walk of the tree skips them, and `.aep/.gitignore`
+ * must exclude every one.
+ */
+export const PER_CLONE_DIRS = ['position', 'scratch', 'worktrees'];
 export const PROTOCOL_ROOT_FILES = ['protocol.md'];
-export const REPOSITORY_ROOT_FILES = ['index.md'];
+export const REPOSITORY_ROOT_FILES = ['index.md', 'friction.md'];
 
 // generated:protocol-files. Run `node src/scripts/manifest.mjs`
 export const PROTOCOL_FILES = [
@@ -56,11 +63,13 @@ export const PROTOCOL_FILES = [
   'agents/reviewer-correctness.md',
   'agents/reviewer-standards.md',
   'policies/artifacts.md',
-  'policies/authority.md',
-  'policies/engineering.md',
   'policies/execution.md',
+  'policies/execution/parallel.md',
   'policies/reporting.md',
+  'policies/tracker.md',
   'protocol.md',
+  'scripts/aep.mjs',
+  'scripts/check.mjs',
   'scripts/contract.mjs',
   'scripts/frontier.mjs',
   'scripts/index.mjs',
@@ -97,6 +106,8 @@ export const PROTOCOL_FILES = [
   'skills/tdd/mocking.md',
   'skills/tdd/tests.md',
   'skills/update.md',
+  'skills/update/conversion.md',
+  'skills/update/from-2.md',
   'skills/update/migration.md',
   'templates/agent.template.md',
   'templates/agents.template.md',
@@ -273,6 +284,23 @@ export function useWhenProblems(value, { heading = '', name = '', directory = ''
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
+
+/**
+ * The lanes an effort runs in, lowest first, and what each one runs. A spec
+ * declares `lane:`; one without it is `full`, which is how every effort ran
+ * before lanes. A lane only goes up.
+ *
+ *   tickets   whether the work is split into tickets, or the spec is the ticket
+ *   children  whether a wave of two or more ready tickets is dispatched
+ *   converge  the most converge rounds a run takes
+ *   review    the most review rounds, and the reviewers per round
+ */
+export const LANES = ['quick', 'standard', 'full'];
+export const LANE_RULES = {
+  quick: { tickets: false, children: false, converge: 0, review: 0, reviewers: 0 },
+  standard: { tickets: true, children: false, converge: 1, review: 1, reviewers: 1 },
+  full: { tickets: true, children: true, converge: 2, review: 2, reviewers: 2 },
+};
 
 /**
  * The status ladder, as rows a script can compute with.
@@ -534,12 +562,14 @@ export function outsideFences(body) {
  * Every `[[wiki-link]]` target in a body, in order of appearance.
  *
  * Read outside fences: a link inside one is the syntax being *shown* rather
- * than a reference to a file that must exist.
+ * than a reference to a file that must exist. A target is a path, so a
+ * bracketed literal carrying quotes, commas, or brackets -- a nested array in a
+ * criterion such as `toCsv([["a","b"]])` -- is data, not a link.
  */
 export function wikiLinks(body) {
   const prose = outsideFences(body);
   const links = [];
-  const pattern = /\[\[([^\]|#]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
+  const pattern = /\[\[([^\]|#"',[]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
   let match;
   while ((match = pattern.exec(prose)) !== null) {
     links.push(match[1].trim());

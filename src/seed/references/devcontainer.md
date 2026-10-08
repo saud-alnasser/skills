@@ -26,7 +26,7 @@ devcontainer build --workspace-folder .
 **A command run on the host is not the same command run in the container**, and
 the difference — tool versions, available services, filesystem case sensitivity
 — is exactly what the container exists to remove. When reporting that something
-works, say which side it was run on (`[[policies/engineering]]`).
+works, say which side it was run on (`[[protocol]]`).
 
 `postCreateCommand` and `postStartCommand` run automatically. A dependency that
 is present after a rebuild and absent otherwise usually comes from one of them.

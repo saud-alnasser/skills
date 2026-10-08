@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 3.5.0
+**Version:** 4.0.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -45,6 +45,8 @@ AEP does **not** replace Git, a forge, project documentation, or any runtime's n
 **Human authority.** Humans remain the source of authority. An agent under AEP NEVER pushes, NEVER publishes, and NEVER silently decides architecture — where more than one reasonable approach exists, the options go on the table with costs and risks, and the human chooses.
 
 **No hidden memory.** AEP MUST NOT become an agent memory system. Durable knowledge is explicit in rules, contexts, evidence, efforts, specs, or the repository itself. It is NEVER hidden in session state, task descriptions, worktree metadata, or position.
+
+**Write only inside the project.** A run creates or changes files only in the main checkout, in `.aep/worktrees/`, in `.aep/scratch/`, where a project tool writes when run the project's way (its dependencies, build output, and cache), and in the OS temp directory reached through the language's temp API and cleaned before the run ends. It reads anywhere. A drive root, the home folder outside the project, another repository, global configuration, and global installs are written only when the human asked for it in that conversation; any other write outside the zones is a stop. `protocol.md` carries this as an invariant so it is loaded on every turn.
 
 **No mandatory ceremony.** The smallest process capable of producing a reliable result is the correct process. Research, prototyping, refinement, sub-agents, and worktrees are capabilities, NEVER required stages.
 
@@ -127,6 +129,7 @@ A conforming repository:
 │       └── tickets/         the effort's tasks (§14.4)
 ├── policies/                governance AEP defines — protocol-owned
 ├── position/                per-working-tree operational state — gitignored
+├── scratch/                 a run's throwaway files, per working tree — gitignored
 ├── references/              procedural/operational knowledge
 ├── rules/                   governance this repository defines — repository-owned
 ├── scripts/                 protocol scripts
@@ -138,7 +141,9 @@ A conforming repository:
 └── .gitignore               defines what is never committed
 ```
 
-`.aep/.gitignore` MUST exclude `position/` and `worktrees/`. Everything else under `.aep/` is committed.
+`.aep/.gitignore` MUST exclude `position/`, `scratch/`, and `worktrees/`. Everything else under `.aep/` is committed.
+
+`scratch/` holds what a run writes for itself and nobody keeps: a handoff, a child's notes and exploration output, a research draft, a throwaway log. It is per working tree, so each surface has its own and it goes when that surface is removed. Nothing in it is an artifact, and a walk of the tree skips it as it skips `position/` and `worktrees/`. *Why it exists: a run that is told to put a file "outside the repository" and not told where invents a path, and on Windows that has been the drive root. Naming one place inside the project removes the invention.*
 
 Additional directories MUST NOT be introduced unless this specification names them. `.aep/` MUST NOT contain a `decisions/` directory, a `tools/` directory, a `grill/` directory, or a `modes/` directory — the first three were 1.x concepts and the fourth was 2.x's, and each is retired (§32). `policies/` is named here and is **not** the 1.x directory of that name; §32 records what changed.
 
@@ -170,7 +175,7 @@ The sixth is new in 3.0 and is there because nothing declares ownership on itsel
 
 `protocol.md` is **not** a second rules system, a policy database, a decision database, or a replacement for rules, contexts, or specs. It routes; it never governs. Governance is rules (§10).
 
-`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 8 KB**, asserted by the verification suite (§31) — a bootstrap that costs what it saves is not a bootstrap.
+`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 10 KB**, asserted by the verification suite (§31) — a bootstrap that costs what it saves is not a bootstrap.
 
 **`protocol.md` also declares which release a tree is running**, in a `version:` field, and it is **the only artifact that declares a release at all**. Every protocol-owned artifact is at that release by construction, because an upgrade replaces all of them together; a repository-owned artifact has no release, because the repository edits it freely and no upgrade touches it. The index derives the installation's version from this one field (§26), and an upgrade decides whether a repository is behind by reading it (§30).
 
@@ -568,17 +573,15 @@ Everything an agent writes for a human is governed here. **Who reads a text deci
 
 **How a governed text reads** is fixed for all of it and stated in exactly one shipped artifact, which also carries the prohibitions a script can check. **What shape it takes** is fixed for the turn report, which the rest of this section defines.
 
-Every turn reports, in one shape, whichever skill is running. **The unit is the turn, not the skill entry:** one thing the human asked for produces exactly one opening report and one closing block, emitted by the outermost skill. A skill entered from inside another — `review` from `implement`'s close-out, `refine` or `research` from `specify`, or any sub-skill — is a stage of that run and opens no report of its own.
+Every turn reports, in one shape, whichever skill is running. **The unit is the request, not the skill entry:** one thing the human asked for produces exactly one report, emitted once at the end of the turn by the outermost skill. A skill entered from inside another, such as `review` from `implement`'s close or `refine` or `research` from `specify`, is a stage of that run and reports nothing of its own.
 
-The opening report carries four slots in order — **standing**, the state the skill establishes on entry, verified; **classification and routing**, what the request was judged to be and which skill is therefore running; **assumptions in force**, held apart from what was checked; and **the stages ahead**. The closing block carries three — **state**, **next**, and **what is unsettled together with how to settle it** — and a turn that stops early carries them too, because that is where the third is worth the most.
+Since 4.0 the report is **nine lines, one each, in a fixed order**, after the work itself: **Doing** (what the turn was asked to do), **Lane** (quick, standard, full, or none), **Position** (what the skill verified on entry, which for an effort is the summary `aep.mjs` printed), **Assuming** (what was proceeded on unverified), **Done** (what changed, with commits), **Stopped on**, **Needs you** (the human's decisions, also recorded in the run log, where `aep status` reads them), **Outside writes** (`none`, or each path outside the project and why), and **Next** (the next step, and what would clear a stop). The 3.x frame of two opening and two closing slots was replaced because a run over a whole effort paid for the frame twice and still did not say where the human was needed or what was written outside the project.
 
 **A slot with nothing in it says so.** It is never omitted: silence is indistinguishable from a check that never ran, and an omissible slot destroys reading by position, which is the whole benefit.
 
-**The standing slot is filled with what the skill already verifies, never with a new check.** Most skills read no position, and requiring one of them would buy uniformity with a behavioural change nobody asked for. A skill with nothing to verify states that it has nothing to verify.
+**The Position slot is filled with what the skill already verifies, never with a new check.** Most skills read no position, and requiring one of them would buy uniformity with a behavioural change nobody asked for. A skill with nothing to verify states that it has nothing to verify.
 
-**There is one form, and every turn takes it.** No field selects a shape, because a field that has to be read before the shape is known is a field answering a question the contract can answer for every turn at once. A skill lists its stages and marks each as it is crossed.
-
-**Stage names are read from the skill's own procedure and MUST NOT be declared separately** — a second list of stages is a second statement of what the procedure already says, and the two diverge on the first edit to either. An implementation MUST be able to extract them mechanically from every full-form skill, and a skill whose procedure yields none is a failure rather than an exemption: a rule that skips what it cannot handle passes by not looking.
+**There is one form, and every turn takes it.** No field selects a shape, because a field that has to be read before the shape is known is a field answering a question the contract can answer for every turn at once.
 
 The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§19), which is not human-facing and is unaffected.
 
@@ -765,7 +768,7 @@ Position is gitignored, so it is **per working tree rather than per clone**: two
 
 `prototype`, `survey`, and `prune` are **capabilities, never lifecycle stages**, reached when uncertainty or the codebase warrants one.
 
-**`/specify`** inspects the repository and position, loads the index, identifies applicable rules and relevant contexts, understands the request, and **resolves what is material inside the same invocation** — factual uncertainty by `research`, product uncertainty or an unresolved tradeoff by `refine`, technical uncertainty by `prototype`. It writes `spec.md` and opens the effort: one issue, one branch, one draft pull request (§14.1). A turn that ends by naming a command has renamed the uncertainty rather than resolved it.
+**`/specify`** inspects the repository and position, loads the index, identifies applicable rules and relevant contexts, understands the request, and **resolves what is material inside the same invocation** — factual uncertainty by `research`, product uncertainty or an unresolved tradeoff by `refine`, technical uncertainty by `prototype`. It writes `spec.md`, picks the lane, and opens the effort with `aep open`: one branch and its worktree, and, where the tracker is on, one issue and one draft pull request (§14.1, §21.1). A turn that ends by naming a command has renamed the uncertainty rather than resolved it.
 
 **`/plan`** establishes the technical approach as `plan.md`, beside the spec it plans. It MUST NOT silently expand product scope — technical discovery that exposes a product-level change **stops and surfaces it**.
 
@@ -773,11 +776,31 @@ Position is gitignored, so it is **per working tree rather than per clone**: two
 
 **`/implement`** takes **the effort, not one wave**. It computes the frontier from the tickets' declared edges, builds what is ready, commits each, and schedules again, until converge finds no gap or a trip-wire fires. It then reviews the effort once, before the work is handed over. **An exhausted ticket list is not the end of the run**: tickets exhausted and the spec satisfied are different claims, and only the second ends it.
 
-**`review`** is a stage of `implement`, and **its unit is the effort**. Its subject is the effort branch, the diff a human is asked to merge, and it runs once at the close of the run, after converge finds no gap. It verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security, and documentation. Where the runtime supports sub-agents it MUST use **two independent passes** — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings. Review is not *does it compile*; it is *does the implementation satisfy the defined change*. *Why the effort and not one ticket: a reviewer holding a single ticket's diff cannot see a defect that lives between two of them, and the effort branch is the unit a human is asked to merge, since exactly one pull request carries it (§14.4).*
+**`review`** is a stage of `implement`, and **its unit is the effort**. Its subject is the effort branch, the diff a human is asked to merge, and it runs once at the close of the run, after converge finds no gap. It verifies requirements, acceptance criteria, tests, architecture, applicable rules, regressions, security, and documentation. It MUST judge **two independent axes** (in the standard lane one reviewer runs them as separate passes; in the full lane two reviewers run them in parallel, §21.1) — one on correctness and behaviour, one on style, standards, and governance — and MUST reconcile their findings. Review is not *does it compile*; it is *does the implementation satisfy the defined change*. *Why the effort and not one ticket: a reviewer holding a single ticket's diff cannot see a defect that lives between two of them, and the effort branch is the unit a human is asked to merge, since exactly one pull request carries it (§14.4).*
 
-**`converge`** is the effort's termination condition and runs when no unresolved ticket remains. It asks whether the spec is satisfied, and it **appends tickets rather than editing the spec or the plan**: work that was not built becomes further tickets, and an approach that cannot satisfy a requirement stops on the return-to-plan invariant (§22). It runs at most twice; a second round finding a gap the first round created is a signal about the plan, not an invitation to a third.
+**`converge`** is the effort's termination condition and runs when no unresolved ticket remains. It asks whether the spec is satisfied, and it **appends tickets rather than editing the spec or the plan**: work that was not built becomes further tickets, and an approach that cannot satisfy a requirement stops on the return-to-plan invariant (§22). It runs at most as many rounds as the lane allows, and never more than twice; a second round finding a gap the first round created is a signal about the plan, not an invitation to a third.
 
 **An agent MUST NOT hand work to a human while a review finding against it is open.** A finding is closed by being fixed, by becoming a ticket the run schedules, or by the human accepting it, and a pull request MUST NOT be marked ready while one is still open. *Why the handover rather than the commit: review's subject is the effort branch, so every commit in it exists before the review that judges it, and a rule forbidding the commit would forbid the only order in which the work can happen. What the protocol protects is that unjudged work never reaches a human, and that is a property of the handover.* An agent MUST NEVER merge, publish, or push a tag (§2). What it MAY push is fixed by the repository's own rule, not by this specification.
+
+### 21.1 Lanes, the command line, and the tracker (4.0)
+
+**An effort carries a lane** in its `spec.md` frontmatter: `quick`, `standard`, or `full`. `/specify` picks it from the sizing table, reports it rather than asking, and the human may override it. The lane sets the ceremony:
+
+| | quick | standard | full |
+| --- | --- | --- | --- |
+| For | a bug fix, docs, config, an isolated refactor | a feature, an API addition, a schema change, a UI change | a migration, cross-domain work, security or performance work, anything too big for one context |
+| Spec | Problem, Change, Check, one screen | the full template | the full template and evidence |
+| Tickets | none: the spec is the ticket | built in order | built in parallel waves of children |
+| Converge rounds | 0: the Check items are verified | 1 | 2 |
+| Review | a self-check against the spec | 1 round, one reviewer running both axes as separate passes | 2 rounds, two reviewers in parallel |
+
+**Lanes only go up.** A quick change that turns out to touch a public contract, data at rest, or more than one area is raised to standard, and the run says so and continues. Nothing lowers a lane; the command line refuses to. A spec with no lane is read as `full`, so an effort opened under 3.x finishes under the rules it started with.
+
+**Every git and worktree step runs through one script**, `node .aep/scripts/aep.mjs`, which prints JSON the agent acts on: `status` (the board, and what is waiting on the human, across repositories with `--repos`), `open`, `start`, `dispatch`, `land`, `record`, `raise`, `close`, and `check`. The orderings the 3.x prose had to explain (commit before release, detach before remove) are kept in that one place, and each command is idempotent so a crashed run re-runs its last step safely. `aep check` enforces the word budgets of the agent-facing text, rejects rationale in it, and rejects wording that sends a write outside the project.
+
+**The tracker is opt-in.** `tracker:` in the repository's version-control rule is `none` (the default), `github`, or `gitlab`. With `none` nothing touches a forge: no issue, pull request, label, or network call, and the effort's `log.md` is the whole run log. Where it is on, `policies/tracker` holds the issue, the draft pull request, the labels, and the status ladder (§14.1), and the pull request mirrors `log.md` rather than holding the record.
+
+**Write only inside the project.** A run creates or changes files only in the main checkout, the effort's worktrees, `.aep/scratch/`, where a project tool writes when run the project's way, and the OS temp directory through the language's temp API. Every turn report names any other write under Outside writes. Where the runtime allows it, the adapter backs this with guardrails of its own: for Claude Code, edit-deny rules for places that never hold a project and the sandbox where the platform supports one.
 
 ## 22. The return-to-plan invariant
 
@@ -1232,6 +1255,950 @@ A conforming implementation preserves all of the following:
 57. A run claims the working surface it writes through as well as the branch it is on: where its checkout is not isolated it takes a worktree of AEP's own and creates its effort branch into it before the first write, keyed on the isolation's kind and never on its enforcement, and it releases that claim by detaching before it removes the surface.
 58. A ticket branch is a build claim released when its work reaches the effort branch, deleted by the step that lands it and never before; a parked or failed ticket keeps its branch.
 59. Position records the sessions that stamped it, supplied by the runtime and never invented, as a diagnostic that nothing reads to decide whether to proceed; and nothing AEP writes adds a key to the marker beyond `tree`, `head`, and `sessions`.
+60. A run writes only inside the project: the main checkout, its worktrees, its gitignored `scratch/`, what a project tool writes run the project's way, and the OS temp directory through the language's temp API. Anywhere else is a stop unless the human asked for it.
+
+
+# Part VII — Rationale
+
+Why the shipped rules are what they are. AEP 4.0 moved every reason out of the
+text an agent loads, so a run pays nothing for it; this part is where those
+reasons went. Each entry is headed by the rule it explains and the 4.0 file
+that states it. Nothing shipped links here: this file exists only in the
+repository that builds AEP.
+
+## 35.1 Rationale from protocol
+
+#### Load by applicability, never by existence (protocol)
+
+A policy is rigid in its authority, never in when it loads. That a policy binds without exception does not mean it is read on every turn. It is selected by its trigger like every other conditional artifact, and its rank only matters once it has been selected.
+
+#### Pick the smallest process that produces a reliable result; the lane sets the ceremony (skills/help, policies/execution)
+
+Not every change needs research, a prototype, a grill, sub-agents, or worktrees. Even the shortest path through the spine, `/specify → /tasks → /implement`, is more ceremony than some changes deserve. Process is paid for on every change it is applied to, so it is sized to the change rather than applied whole.
+
+#### Ownership is where a file sits: the two root files (protocol)
+
+The ownership table names `protocol.md` and `index.md` one by one because no directory rule reaches them. Each sits at the root of `.aep/`, outside every directory the table assigns to an owner, so without its own row its owner would have to be guessed.
+
+#### The invariants (protocol)
+
+The invariants hold always, on every turn and in every skill, and that is why they are in the bootstrap rather than in a policy. The bootstrap is the one file read at the start of every session; a policy loads only when its trigger fires, and an invariant that waited for a trigger would not hold on the turns where nothing fired it.
+
+#### Version control is a repository rule, seeded at install (seed/rules/version-control)
+
+Version control arrives as a rule rather than as a policy because how work lands is a fact about this repository rather than about AEP. Branching, merging, the closing keyword, and where a new branch starts all differ from one repository to the next, so the protocol states the line and the repository states how it is drawn here.
+
+## 35.2 Rationale from policies/authority (folded into the bootstrap)
+
+#### Repository wins: an artifact the source contradicts is wrong (protocol)
+
+The repository and its history rank above every AEP artifact, and a contradicted artifact is corrected rather than the source, and never explained away. The alternative is a repository whose documentation describes a system that has not existed for months. That is worse than having no documentation, because documentation is trusted.
+
+#### Rules are reconciled with the law at upgrade (skills/update)
+
+A rule is legal against the release it was written under. Law moves and the rule does not, so a tightening written under one release can be a contradiction under the next. That is why the recheck happens at the upgrade and not in validation: validation runs against a single release and sees two files that agree. The disagreement exists only across a release boundary, and the upgrade is the one step that stands on both sides of one.
+
+#### Where the order does not settle it, put both sides and their costs to the human (protocol)
+
+A conflict an agent resolves silently is a decision made by whoever wrote the more confident sentence. Stating both sources, what each would have you do, and what it costs to be wrong either way puts the decision back with the person entitled to make it.
+
+#### One repository (protocol)
+
+Reading another repository is allowed because a claim is checked by reading what makes it, and a claim about another repository is no exception.
+
+A finding about another repository is a report, not an options list, because a diagnosis offered with options becomes a proposal this session then owns. The report says what was found, what it costs, and what would close it, and stops there.
+
+Authorization does not transfer: being told to fix something is not being told to fix it here, because where the session stands is a fact about the session, not about the work. (The rule itself has no 4.0 statement; see the GAP at authority rows 81 and 82.)
+
+The crossing is named in the turn it is reached because the failure is a chain of individually authorised steps with no obvious place to stop. Naming the crossing gives the human one, and it costs a sentence.
+
+## 35.3 Rationale from policies/engineering (folded into the bootstrap)
+
+#### Claims are checked: read the source, and say what you verified and what you assume (protocol)
+
+A claim is either checked or a guess in the same words, so the source is read before any claim about this repository. What was verified and what was assumed are said apart because an assumption stated as a fact is indistinguishable from a finding by the time anyone acts on it.
+
+#### Change is small and fits: match its idiom (protocol, skills/implement)
+
+A correct diff that reads as foreign to the code around it is still a maintenance cost. Matching the surrounding idiom, naming, error handling, and comment density keeps the codebase readable as one thing.
+
+#### Fix the root cause, or record why a workaround exists and when it goes (protocol, skills/plan)
+
+A workaround records the condition under which it is removed because without one, "temporary" is an intention rather than a state anything can leave.
+
+#### Obeying a rule means letting its check fire (protocol)
+
+Keeping the letter of a requirement while arranging that its check cannot run violates the requirement more completely than defying it would, because defiance at least leaves a trace.
+
+#### Converge never tickets around an approach that cannot satisfy a requirement (policies/execution)
+
+A requirement the approach cannot satisfy means the plan is wrong. Appending a ticket against it reads as progress, because a ticket got written, while it is in fact the prohibition on silently deciding architecture being evaded one round at a time.
+
+#### Climb only as far as the uncertainty warrants, routed by its kind (protocol)
+
+Uncertainty is routed by its kind because the wrong instrument produces a confident wrong answer. Argument cannot settle a factual question, and reading cannot settle whether an interaction feels right; so facts go to research, feel goes to a prototype, and product questions go to a grill.
+
+#### Research records findings, never decisions (skills/research)
+
+Research that quietly becomes a decision is an architecture chosen by whoever ran the search. A finding that changes the design is carried into `spec.md` deliberately, where it can be seen and agreed to.
+
+#### Graduated knowledge leaves its evidence file in place (protocol)
+
+When knowledge outlives its effort and moves into a context, a rule, or a reference, the evidence file stays where it is, as the record of how the knowledge was learned.
+
+## 35.4 Rationale from policies/execution
+
+#### A task that conflicts with spec.md is a defect in the task (policies/execution)
+
+If a task can quietly win over the spec, the delivered system ends up defined by whichever artifact was edited last, and nobody agreed to that artifact. Treating the task as the defect keeps the spec as the thing that was agreed to.
+
+#### A requirement lives only in spec.md, and tasks cite it and never copy it (policies/execution)
+
+When a plan restates a requirement, an acceptance criterion, or a scope boundary, that claim now has a second place where it can change, and the two copies diverge on the first surprise. What keeps the two files honest is the trace check (every ticket must cite a requirement or criterion the spec defines). A rule against having two files would not do it. AEP once forbade `plan.md` outright. That kept each claim in one file by keeping everything in one file, so a reviewer who only had to agree to the problem had to read the approach to find it. Duplication was the thing worth preventing, and it can be prevented directly, so the check replaced the ban.
+
+#### Evidence that invalidates the technical plan stops the run, and the architecture is never patched in place (policies/execution)
+
+This is the moment when implementation turns into an uncontrolled design process. It nearly always comes when the work is almost done and stopping costs the most, which is why it needs a fixed procedure and not a judgement call.
+
+#### Exactly three conditions stop a run, with no fourth (policies/execution)
+
+A run exists so that a human steps in at the idea and not at the implementation. Each stop condition added to the list moves one more decision back out of the run, so the list stays closed. These three are the cases where carrying on is worse than stopping:
+
+- **Evidence invalidates the plan.** Carrying on means designing without agreement.
+- **The work alters an existing public contract, or touches data at rest.** The blast radius reaches outside this repository, and amending a commit cannot undo it. Since 4.0 an addition the spec itself asks for (the standard lane's API addition) is not a stop: it breaks no caller, and the human already decided it in the spec. Renaming or removing what callers rely on still is.
+- **A task contradicts `spec.md`.** The tickets were cut wrong, so building them would build the wrong thing faithfully.
+
+Everything else is recorded and carried to the close.
+
+#### A ticket is never split across sub-agents (policies/execution/parallel)
+
+Splitting a task into portions needs some basis for the split: file ownership, layer, or guesswork. Each of those makes a promise the task graph never made. A parent then has to integrate the portions while holding partial work from several contexts, and if one child fails, nothing lands. A whole task is the smallest unit that already has its own acceptance criteria and its own branch, and that can fail on its own.
+
+#### Where isolation cannot be guaranteed, serial is correct (policies/execution/parallel)
+
+An edge in the graph says which work gates which. It says nothing about files, so two independent tickets can still collide on one path. Running them one after the other costs less than reconciling the collision afterwards.
+
+#### The wave is computed from declared blocked-by edges, never chosen (policies/execution/parallel)
+
+A set computed from a declaration is not a decision the orchestrator makes. The edges were declared when the tickets were cut, and reading them off adds no judgement that could differ from one run to the next.
+
+#### The dependency graph never leaves the repository (policies/tracker)
+
+The graph is read on every scheduling pass. If it lived in a tracker, an agent would have to fetch it, page through it, and interpret it before it could compute a frontier. In the repository it is a field in a file that a script reads. Holding the graph would give the tracker nothing, because nobody schedules by hand.
+
+#### One issue and one pull request per effort, and no tracker object per ticket (policies/tracker)
+
+An effort is what a human agreed to, and it is the unit they review and merge. One issue per ticket would turn a single change into fifteen issues: fifteen things to close, and no single place where anyone can see the shape of the change.
+
+#### A run that finds an effort short of either tracker object opens what is missing and says so (policies/tracker)
+
+The requirement is written out because having no tracker is a real posture with its own procedure. If the requirement were only implied, a run could reach that posture simply by never checking. Such a run would land the smaller shape with nothing to contradict it, and the effort would be half of what the protocol describes.
+
+#### With tracker: none, the close stamps implemented and nothing tracker-side follows (policies/tracker)
+
+A run without a tracker stops after stamping `implemented` because no draft pull request is waiting to be marked ready and no labels need moving.
+
+#### The run's memory is on disk (policies/execution)
+
+Every step that closes an effort used to be written against a pull request. A repository without one was therefore losing more than a projection: it was losing the run's memory. Such a repository has a memory only because tickets are local files. The ticks were already in the repository, and the tracker had been projecting them, not storing them. In 4.0 the same reasoning makes `log.md` canonical and the pull request a mirror.
+
+#### The tracker is read, never mirrored into .aep/ (policies/tracker)
+
+A local copy of a tracker object is exactly the hidden database this protocol does without. It disagrees with the original the moment one of them is written and the other is not.
+
+#### A write to shared tracker data is proposed first, with the exact strings (policies/tracker)
+
+A tracker write lands in other people's workspace, so the human sees exactly what will appear there before it appears.
+
+#### Labels are projections, and the file wins (policies/tracker)
+
+A label exists so that someone scanning a list can see what the files say without opening either one. It is a reading aid over `spec.md` and `plan.md` and holds no state of its own, which is why a disagreement is settled by correcting the label.
+
+#### Derived labels re-sync on every write, and initial labels are never changed by an agent (policies/tracker)
+
+Treating derived and initial labels the wrong way round is how an agent overwrites a human. A derived label restates something the repository already says, so re-syncing it can only correct drift. An initial label records a judgement, such as priority or an invitation to act, and the agent has no authority over that judgement. Re-syncing it would overwrite the human who does.
+
+#### status: is projected from backlog to done (policies/tracker)
+
+`status:` is the family AEP keeps whole because it is what the effort's own state projects onto. Each row of the projection mirrors a state the effort really passes through.
+
+#### Every status row names what moves it (policies/tracker)
+
+A row with no owner is a label that nobody sets. The effort then sits at whatever value the previous state left behind until a person happens to notice.
+
+#### The terminal status: done row is moved by the forge's merge-time job, and by reconcile.mjs on the next run (policies/tracker)
+
+Every row above the last two projects `spec.md`'s own `status:`, which the run is holding anyway, so a run can always move those rows. The last two rows, merged and closed without merging, are the only ones no run can reach. They turn on the merge, the merge belongs to the human by design, and the run is over before it happens. The terminal value therefore has two owners at different latencies. The fast owner is a job the forge fires on its own merge event, and it needs no AEP run to have happened. The slow owner is a reconciliation the next run computes from what it already fetched. It is late, but it works everywhere, including in a repository that declined the job or predates it. Neither owner is a person, so neither depends on somebody remembering.
+
+#### Closed without merging also reaches status: done, and abandoning adds flag: wontfix (policies/tracker)
+
+Abandoning an effort is one way of finishing it. A `status:` family with a hole where "finished" should be cannot be filtered on: a list scoped to `status: in review` keeps returning work that nobody is reviewing. `flag: wontfix` records why the effort ended, and `status: done` records that it ended. The terminal value exists even though a forge models merged and closed natively, because it projects the effort's state and is not a second copy of the forge's state. It is also what keeps the family whole enough to filter on. The general rule still holds: AEP does not create a label for a fact the tracker already models.
+
+#### size: is computed from the diff against the thresholds in the label descriptions (policies/tracker)
+
+If a size label's thresholds live somewhere other than the label itself, nobody can check the label.
+
+#### Creating a label is reported, with the reason (policies/tracker)
+
+A label that appears in a tracker with no explanation cannot be told apart from a mistake.
+
+#### No label names AEP (policies/tracker)
+
+People who never installed AEP read the tracker. A label vocabulary that advertises its tooling has stopped describing the work.
+
+#### Every branch and surface in the wave exists before any child starts (policies/execution/parallel)
+
+The branch is the claim. A branch created after its child has started is a claim made after the race it was meant to win.
+
+#### The claim is a branch and its surface (policies/execution)
+
+A branch and a surface are two separate guarantees. The branch says which work belongs to whom. The worktree stops a second run from writing through the same tree. A run that holds only the branch identifies its work correctly, yet another run can still move the checkout under it between a read and a write. That claim reports itself as intact while it is being violated.
+
+#### Whether a run takes a surface depends on the isolation's kind, never its enforcement (scripts/aep.mjs)
+
+Enforcement describes the clone (whether git has a second worktree to refuse), not this checkout. A run that decided on enforcement would decline a surface in exactly the case that needs one.
+
+#### aep close releases the branch, then removes the surface (policies/execution)
+
+Releasing the claim and removing the surface are separate acts. Detaching frees the branch at once for whoever reviews the effort, and it succeeds even when removal fails. A surface kept after a failure or a stop holds no branch, so a run that died cannot lock an effort against its own resumption. (In 4.0, a run that dies without reaching `aep close` releases nothing, and the next `aep start` re-enters the same surface.)
+
+#### A run computing role: implementer does not integrate or dispatch (policies/execution)
+
+A child's brief already carries this pair of refusals. Tying them to the role makes them outlive the brief: a child whose context was cleared reads where it is standing and derives both refusals again.
+
+#### The orchestrator is the only integrator, in the surface it holds (policies/execution/parallel)
+
+This is the only-integrator rule, tied to something a run can check (the role computed from where it stands) and not to something it has to remember.
+
+#### `unknown` does what it could already do (policies/execution)
+
+`unknown` fails open on purpose. If a derivation narrows on a wrong answer, it blocks correct work in a tree that plainly has a role. Nothing downstream can tell that refusal from a real one.
+
+#### The claim is never inferred from a branch name (policies/execution)
+
+The repository owns branch naming (`[[rules/version-control]]`). Under a runtime that opens a thread per branch, the runtime owns it instead and generates its own names. So the branch name is the one signal that may say nothing. The claim is computed from what the branch's commits touch, and the name is only a fallback for a branch with no commits yet.
+
+#### A scoped run never writes outside its claim, and source outside the efforts is free (policies/execution)
+
+The claim restricts an effort's artifacts, not the repository's source. Changing source outside the efforts is what an effort exists to do.
+
+#### No skill is exempt from the claim (policies/execution)
+
+A skill whose subject is the whole tree, such as prune or survey, gets no exemption either. A tree-wide subject belongs on an unscoped checkout, which is where it was always going to be run from. There is no exemption list because an exemption is a second mechanism deciding how strong the first one is, and that second copy is the one that goes wrong. Telling a run it has to be somewhere else costs one sentence to read. A list of who may ignore the rule is a thing somebody has to maintain.
+
+#### Given another effort: a clean surface moves to it, a dirty one stops (policies/execution)
+
+When the tree is clean, entering the named effort's surface is plainly what was meant. When it is dirty, moving would carry one effort's edits onto another effort's branch.
+
+#### Ticket branches carry their effort, so they are unique across efforts (policies/execution/parallel, aep dispatch)
+
+Ticket ids restart in every effort. Without the effort prefix, two efforts that each hold a ticket `03` would produce one branch name for two claims, and the second run to reach it would take a claim another run already holds.
+
+#### A brief points rather than pastes (policies/execution/parallel)
+
+Quoting an AEP artifact into a brief spends the parent's context and buys nothing, because a child can read the artifact itself.
+
+#### A child may request exactly two things (policies/execution/parallel)
+
+The menu is closed because an open channel would make every prohibition on a child advisory.
+
+#### The answer travels verbatim (policies/execution/parallel)
+
+A paraphrase is the orchestrator's answer wearing the human's authority, and the child cannot tell the difference. So an orchestrator that cannot relay the answer faithfully stops the child instead of paraphrasing.
+
+#### A question's wording may change, its substance may not (policies/execution/parallel)
+
+The question and the answer get opposite treatment. An answer carries the human's authority and a question does not. So an answer must not be touched, and a question must not be left unreadable.
+
+#### A child's return is capped (policies/execution/parallel)
+
+An orchestrator running a whole effort grows by one return per task. If returns were uncapped, the orchestrator's context would depend on the work inside every task rather than on the number of tasks. An uncapped return also degrades silently, and that is the failure that writes a confident close over work the orchestrator has forgotten.
+
+#### What a child claims is reconciled before anything lands (policies/execution/parallel)
+
+A manifest that cannot be trusted still reads as a check that happened. Reconciling it against the actual change is what makes it a check.
+
+#### Each child is integrated as it returns, one at a time (policies/execution/parallel)
+
+If children are integrated as a batch, a conflict arrives as one pile with no task to name it, and whichever child happened to come second is the one that gets untangled.
+
+#### Only the orchestrator integrates, and only in the surface it holds (policies/execution/parallel)
+
+Being the only integrator says who integrates. The surface says where, and the where is what makes the who true. An orchestrator integrating in a shared checkout is the only integrator right up until another run switches the branch under it. Two children integrating themselves would produce a conflict that neither of them can see.
+
+#### Closing removes the surface, not only releases it (policies/execution, aep close)
+
+A run that only ever detaches leaves one directory per effort behind. The next run cannot clear them, because from outside, a directory somebody kept deliberately looks identical to one somebody abandoned.
+
+#### Landing releases the ticket branch, and only then (policies/execution/parallel, aep land)
+
+A ticket branch exists so that git refuses the same ticket to a second run. Once the orchestrator has integrated it, the branch holds nothing. Deleting a branch while its work is still outside the effort branch is data loss, not tidiness. A parked or failed ticket integrated nothing, so there is nothing to release.
+
+This is stated rather than left to taste. A run that keeps ticket branches leaves one branch per ticket whose every commit is already in the effort branch, and under a stacking tool it also leaves metadata describing levels nobody will review. The effort branch is the reviewable unit, which follows from one pull request per effort. A branch that was integrated rather than merged is not a level of anything.
+
+#### The seam is the bound (policies/execution/parallel)
+
+The bound sits at the children's diffs rather than at the effort. A bound read off `spec.md` cannot tell reconciling a seam apart from rebuilding a task a child already delivered. Nothing reviews the orchestrator's reach until the whole effort is judged at the close, and by then a seam rebuilt as a task is unrequested work that has already landed.
+
+#### The run's memory is on disk, written as it goes (policies/execution)
+
+A run survives compaction and being killed and re-invoked because everything it needs is written down as it goes. A record written only at the end does not exist for the failure it was meant to survive. A failed write is reported rather than continued past. A run that carried on after losing its memory would later write a confident close over work nobody can find.
+
+#### A criterion is ticked the moment it is verified (policies/execution)
+
+A run killed mid-ticket keeps every tick it already made and loses only the rest.
+
+#### A child never ticks its own criteria (policies/execution/parallel)
+
+A tick is the claim that somebody checked. A claim checked by its own author is exactly what the review axis exists not to be. The rule also makes resumption safe, because a resumed run trusts a tick without re-deriving it.
+
+#### Review judges the whole effort before anything is handed over (policies/execution)
+
+The no-self-tick rule used to bind every author, and it cost nothing while a reviewer stood at each ticket. Review now judges the effort once, at the close. A wave of one is built inline, so the orchestrator ticks work it wrote itself. Review still runs over the whole effort branch before anything is handed over, so inline-built work is judged by someone who did not write it before anyone is asked to merge it. The second reader moves from the tick to the handover. It is not removed.
+
+#### No mechanism depends on compaction (policies/execution)
+
+Auto-compaction is harmless. The summary loses whatever it loses, and the run continues correctly because its durable record holds what it needs. No mechanism may wait on compaction, because an agent cannot invoke it. Compaction is either a command the human types or a harness behaviour that fires on its own schedule and picks its own survivors, so a design that waits for it is waiting on something it does not control.
+
+#### Tickets running out is not the spec met (policies/execution)
+
+Tickets are a map of the work, drawn before the work was done. A map that runs out does not mean the territory has been covered.
+
+#### Converge never tickets around an approach that cannot work (policies/execution)
+
+If a gap keeps reappearing because the design cannot close it, the plan is wrong. Appending a ticket against it buys another round of the same failure while looking like progress. This line matters more than it reads. Autonomy below the plan is what a run is for, and converge is the one stage positioned to quietly acquire autonomy above it. Building around the gap would evade the prohibition on silently deciding architecture.
+
+#### Converge never edits spec.md or plan.md, except status (policies/execution)
+
+Converge decides whether the spec is met. A stage that could edit the spec could close every gap it found by narrowing what was asked, and the run would end green having quietly agreed with itself. Review runs after converge over the same whole diff and catches a great deal. But it judges the diff against the spec. It does not audit what the spec was before converge touched it.
+
+`status` is still converge's to write. It is the only field that states a fact about the work rather than a requirement of it, so writing it cannot narrow the ask. Converge is also the only stage that ever holds the answer, since no single diff shows whether every criterion is met. If converge could not write it, the judgement would be made and discarded, and the artifacts that read `implemented` would be reading a value nothing sets.
+
+#### The lane caps converge rounds, and the cap is fixed (policies/execution)
+
+If a round past the cap finds new gaps, the plan was wrong rather than the work incomplete. That is the return-to-plan trip-wire, not a reason for more rounds. The cap is not configurable because a configurable cap is a number nobody can set correctly until a run has already gone wrong.
+
+#### A review finding's ticket spends no converge round (policies/execution)
+
+The cap counts rounds that went looking for a gap between the spec and the work. A review finding is not such a round. Converge has already agreed the spec is met, and the review judges the diff rather than the ask. If review tickets counted against the cap, the second review round would be unreachable whenever converge found a gap once and then found none. A run could then end not ready with no gap it could name.
+
+#### Converge reads the whole diff (policies/execution)
+
+Neither judgement converge makes is visible from one ticket. A ticket can be resolved against a criterion nobody checked, so "implemented" means every criterion met, not every ticket closed. Whether the change moved a boundary, retired a concept, or falsified a context or reference is visible only in the entire diff, which no single ticket ever saw. Whatever the change falsified is corrected in the same effort, so the change and the thing it contradicts never land apart.
+
+## 35.5 Rationale from skills/implement
+
+#### /implement reads the ticket, not the conversation (skills/implement)
+
+Because the run reads the ticket rather than the conversation, context can be cleared between any two tickets. It is written on the assumption that context will be cleared, because a run over a whole effort outlives the session that started it.
+
+#### /implement never redesigns: correctness over exploration (skills/implement)
+
+The interesting decisions were made in `/plan`; this command executes them, and reports when they turn out to be wrong. What the posture gives up is creative latitude: an improvement noticed along the way is raised rather than taken, so the diff stays about one thing.
+
+#### The claim is taken before the first read of source, by aep open or aep start (policies/execution)
+
+This is the command that turns knowledge into code, so a stale belief about where the run stands becomes a wrong edit. That is why position is established on every invocation. The claim comes before the first read of source, and long before the first edit, because a claim made after the first edit is a report of a race already lost.
+
+#### aep start reads the scope before it enters a surface, and checks the marker in the surface it entered (skills/implement)
+
+Position takes two reads, and they sit at different points. The scope read comes first because the isolation it prints decides whether a surface is taken at all; a run that read it later would be keying that decision on an answer it did not have yet. The marker read comes after the surface is entered because a marker is per working tree and describes the tree it sits in, so the one to read is the one the run will stamp on the way out. The marker in the checkout the run was invoked from answers nothing about the surface it entered.
+
+Read together up front, the run would report drift for the checkout it is about to leave and then stamp a different file. Checked there and stamped here, the answer would be true of nowhere, and nothing about it would look wrong: the two acts read as one guarantee while being quietly two markers. The order matters in the `checkout` isolation, which is the case with two surfaces; under `worktree` no second surface is taken, both orders name one file, and the difference is invisible.
+
+#### Position carries the contexts this work touches and every claim the source contradicted (skills/implement)
+
+These two go beside the quoted summary by hand because they are what no script can produce: the scope and the marker are computed, while which contexts the work touches and which claims the source contradicted are judgements only the run can report.
+
+#### Named a ticket: build that one, and the run ends there (skills/implement)
+
+An invocation that names a ticket gives the run that ticket and nothing more. Taking a second ticket is choosing work the run was not given.
+
+#### Given another effort, a clean surface moves to it and a dirty one stops (policies/execution)
+
+On a clean tree, entering the named effort's surface is plainly what was meant. On a dirty tree, moving would carry one effort's edits onto another effort's branch, so the run stops and names the claim, the effort it was given, and the uncommitted paths.
+
+#### aep start re-enters the effort's surface, never a second, and stops when it is dirty (skills/implement)
+
+A run that stopped or died left a worktree behind, and a second surface for one effort is two places its branch could be worked from. So an existing surface is re-entered rather than duplicated. Where that surface is dirty the run stops naming the paths, for the same reason as a dirty tree under another effort: nobody can tell whose edits those are.
+
+#### Never git switch to an effort branch (policies/execution)
+
+An effort in flight holds its branch in a worktree, so `git switch` to it is refused. That refusal is the guard working rather than an obstacle to route around; the run opens or re-enters the worktree instead.
+
+#### `blocked` means the blocking ticket is what to build (skills/implement)
+
+When the frontier is empty and unresolved tickets remain, building the blocker is not inventing work: an edge names a ticket, that ticket exists somewhere, and finding it is reading the graph.
+
+#### Tickets are files under .aep/efforts/<effort>/tickets/ (skills/tasks)
+
+Because tickets are files in the repository, scheduling never waits on a fetch, and there is no tracker query to get wrong.
+
+#### The marker is quoted even when it matches (skills/implement)
+
+Nothing to report is still reported, because a silent check is indistinguishable from one that never ran.
+
+#### The next wave branches from the new tip (policies/execution/parallel)
+
+Children branch from the effort branch's current tip, and each later wave from the tip the previous wave left. Each wave then sees everything the waves before it landed, and no child works against a tree several tickets stale.
+
+#### A wave of one is built here, not dispatched (skills/implement)
+
+For a single ready ticket, a child would spend a whole context on work the orchestrator is already positioned to do.
+
+#### Child surfaces are created under the main checkout's .aep/worktrees/, never relative to the surface you stand in (policies/execution/parallel)
+
+A path given relative to the orchestrator's own surface is resolved by git against the current working directory, which nests the child inside that surface. The path is what decides the child's role, and a child that lands anywhere else computes the role of wherever it landed. Nested, it reads `unknown` and refuses nothing. Outside `.aep/worktrees/` altogether, it reads as a surface a runtime supplied, whose occupant is an orchestrator, and it will believe it may integrate and dispatch.
+
+#### The orchestrator integrates each child as it returns, one at a time, in the surface it holds (policies/execution/parallel)
+
+A `cherry-pick` or `reset` in the checkout the run was invoked from resolves the branch name at write time, so it lands wherever another run last left `HEAD`; a clean `git status` read a moment earlier does not make that safe. Integrating per child, rather than all at the end, matters because a conflict that arrives at the end comes as one pile with no ticket to name it, and the second child's work gets untangled by whoever is least able to. Integrated per ticket, a conflict surfaces at that ticket's integration and is named against it.
+
+#### Committing is part of finishing: implement lands without prompting (rules/version-control)
+
+Landing is part of finishing, which is why there is no separate command to type. By the time a wave is integrated there is nobody left to ask.
+
+#### Review runs once converge found no gap, over the whole effort branch (skills/implement)
+
+Review is not run per ticket. A reviewer holding one ticket's diff cannot see a defect that lives between two of them, and the effort branch is what a human is asked to merge, so that is the unit judged. Nothing reaches a human unjudged in the meantime, because the branch the commits land on is the run's own, and (under a tracker) its pull request is still a draft.
+
+#### aep land refuses an unverified stage and says what would clear it (skills/implement)
+
+A stage that did not run is named and the run stops there, saying what would clear it, because a refusal the reader cannot act on is a wall rather than a check.
+
+#### aep land marks the ticket resolved before it commits (skills/implement)
+
+The ticket file is tracked, so changing its status after the commit would leave the tree dirty the moment the commit landed. The status change goes into the ticket's own commit.
+
+#### Every criterion ticked, or the ticket is not resolved (policies/execution)
+
+`resolved` is the claim that the work is done, and the ticks are the evidence for it. A box left open under a resolved ticket is that claim with its evidence removed, which is why the way out of an unmet criterion is parking or `obsolete`, never a tick.
+
+#### aep land regenerates the index just before it commits (skills/implement)
+
+The index is regenerated at landing rather than earlier because that is the last point at which the tree is known complete; an index regenerated before the final edit is already stale.
+
+#### index.md is regenerated, never hand-edited (policies/artifacts)
+
+The index is derived, and the check regenerates it and compares, so a hand edit is a failure that names the file rather than a quiet divergence. (In 4.0 the comparison is `index.mjs --check`; `validate.mjs` itself fails only a missing index, as it already did at 583ae27, so the old wording "validate.mjs regenerates and compares" was not accurate.)
+
+#### Never list files in a commit message (skills/implement)
+
+The message says what capability changed and why. A file-by-file account adds nothing, because the diff already lists the files.
+
+#### The closing keyword's place is the repository's (policies/tracker)
+
+Where the repository stacks, a stack merges bottom-first, so a closing keyword anywhere below the top closes the issue while the rest of the effort is still unbuilt; it therefore rides the change that merges last, and everything under it carries a plain reference. Where the repository merges a branch through a pull request, the keyword belongs in the pull request body, because a commit carrying one fires again on a later cherry-pick and closes something nobody merged.
+
+#### One commit per ticket, empty where the ticket only verified something (skills/implement)
+
+A ticket that only verifies something already true still lands a commit. The evidence of the check is then in the history a bisect reads, and its ledger line looks like every other one. A ticket that quietly lands nothing is a ticket nobody can tell was done.
+
+#### aep land commits, then releases the ticket branch and its surface; a parked or failed child keeps both (policies/execution/parallel)
+
+Once the ticket's work is on the effort branch, the claim the ticket branch held is spent, so the branch and its worktree hold nothing and can go. The release comes only after the commit, because releasing a ticket branch whose work is still outside the effort branch is data loss. A parked or failed ticket keeps both, since nothing of it was integrated. The worktree directory and the branch go together: releasing one and leaving the other is how a clone fills with worktrees whose branches no longer exist.
+
+#### aep land stamps the marker last (skills/implement)
+
+The marker is stamped after the commit exists, because a commit cannot contain its own hash.
+
+#### Pass the session id your runtime gives you, or none; never invent one (skills/implement)
+
+The session identifier is a diagnostic, and nothing reads it to decide. An identifier carries no liveness: it cannot be told apart from one left by a process that was killed, so a run gating on one would block on the leavings of every abnormal exit.
+
+#### A failed write to log.md is reported, never continued past (policies/execution)
+
+A run whose log write failed has just lost its memory and does not know it yet. Continuing would mean a later resume reads a record that is missing what this run did.
+
+#### priority: is set once at opening and never changed by an agent (policies/tracker)
+
+`priority:` was set by a human when the effort opened. Re-deriving it on a label re-sync would overwrite that human's decision.
+
+#### Tickets running out is not the spec met (policies/execution)
+
+Tickets were a map of the work drawn before the work was done, and a map running out is not the territory being covered. A run that stopped because the tickets ran out has not finished; it has run out of map. Converge is where the two claims, tickets exhausted and spec satisfied, are told apart.
+
+#### Converge reads the whole diff, and asks whether every criterion is met rather than every ticket closed (policies/execution)
+
+The whole diff is what no single ticket ever saw, so only converge can judge it against the spec. The question is every criterion, not every ticket, because a ticket can be resolved against a criterion nobody checked.
+
+#### What converge finds falsified is corrected in this effort (policies/execution)
+
+Correcting a falsified context or reference inside the same effort means the change and the thing it contradicts never land apart.
+
+#### Converge never edits spec.md or plan.md, except status: implemented at the close (policies/execution)
+
+A converge that could edit the spec would close every gap it found by narrowing what was asked, and the run would end green having agreed with itself. `status` is the one exception because every other part of a spec is what was asked for, while `status` is the only field stating a fact about the work rather than a requirement of it, and the fact is the answer converge has just given. The exception is not permission to touch the rest of the frontmatter: a requirement is not narrowed by recording that it was met.
+
+#### The lane caps the converge rounds, and a review finding's ticket spends none (policies/execution)
+
+Why the cap: a further round still finding new gaps means the plan was wrong rather than the work incomplete, and that is the return-to-plan trip-wire rather than more rounds. A ticket produced by a review finding does not spend a converge round because the cap counts rounds that went looking for a gap between the spec and the work, and a review finding is not one of those: converge already agreed the spec was met. Counted against the cap, the second review round would become unreachable on the ordinary path, where converge found a gap once and then found none, and the run would end not ready with no gaps it could name.
+
+#### Review judges the whole effort branch, once converge finds no gap (policies/execution)
+
+Review runs at that point because converge has just said the effort satisfies the spec, and the effort branch now carries the whole diff a human is asked to merge. Correcting what review finds costs nothing extra, because nothing has left the run's reach: the effort branch is held in the run's own surface, its pull request (where there is one) is a draft, and `main` is untouched, so every commit in the effort is still the run's to change.
+
+#### Review runs as a stage of this turn and opens no report of its own (policies/reporting)
+
+Moving when review runs, to the end of the effort, did not make it a turn of its own, so it still shares the one report of the turn it sits inside.
+
+#### Review rounds are capped by the lane; a finding still open at the cap ends the run at the close (policies/execution)
+
+Without the bound, review-to-ticket-to-review is a loop with no stated end, and a loop with no stated end is precisely what the per-ticket review rule it replaced existed to prevent. A finding still open at the bound ends the run at the close rather than interrupting it, which is the same shape as converge's own cap.
+
+#### aep close stamps spec.md status: implemented (skills/implement)
+
+Three readers depend on the stamp: `/tasks` skips an implemented effort, `/prune` tells a finished effort from an abandoned one by it, and `validate.mjs` stops checking traceability on one. A close that skipped the stamp would leave all three reading a value nothing ever set. A stamp with an unresolved ticket still under the effort fails validation, and that failure is the guard against stamping ahead of the work.
+
+#### aep close detaches, then removes the surface; removed on a clean close, kept on a stop (skills/implement)
+
+Detaching frees the effort branch at once, so whoever reviews it can check it out. Detach comes first, always, because detaching succeeds even where removal fails, and a run that reversed the two has nothing left to detach. The removal runs from the repository root because a process cannot remove the directory it is standing in. Removal is best-effort while releasing the branch is not, but a close that only ever detaches leaves one directory per effort, which is how this pattern fails in practice. The directory is kept on a stop or a failure so there is something to inspect after exactly the runs worth inspecting. What must never happen is the reverse pairing, a directory removed while its branch is still claimed, and that is why detaching and removing are ordered rather than done together.
+
+#### A stop keeps the surface and releases the branch (skills/implement)
+
+On a stop the directory is what is worth keeping, for inspection, and the branch held inside it is not: a human about to act on the stop is the person most likely to want to check that branch out.
+
+#### A dead run releases nothing; the next run re-enters the same surface (policies/execution)
+
+A dead run's worktree still holds the effort branch, and that is safe for one reason only: the run that resumes the effort re-enters that same worktree rather than needing the branch back. Re-entry, not detachment, is what stops a dead run locking an effort, which is why start re-enters rather than creating a second surface.
+
+#### Exactly three trip-wires stop a run, and there is no fourth (policies/execution)
+
+The point of the loop is that the human intervenes at the idea, not at the implementation. Every condition added to the trip-wires is a decision moved back out of the run, and the three that stay are the ones where continuing is worse than stopping. Evidence invalidating the plan: continuing means designing while implementing, and the cost compounds with every ticket built on it. A public contract or data at rest: the blast radius is outside this repository, and it is not recoverable by amending a commit. A ticket contradicting the spec: the tickets were cut wrong, and a run that builds the wrong thing ten times is worse than one interruption.
+
+#### Return to plan when evidence invalidates the approach; never patch the architecture in place (policies/execution)
+
+Pushing through is how implementation becomes design, and the urge to push through always arrives when stopping feels most expensive.
+
+#### The orchestrator is the only integrator (policies/execution/parallel)
+
+Two children integrating themselves produce a conflict neither of them can see.
+
+#### A dispatched child never ticks its own criteria; where the orchestrator built a wave of one, the tick is its author's (agents/reviewer-correctness)
+
+The self-ticked wave-of-one case is covered by the review over the whole effort branch, which runs before anything is handed over.
+
+#### No mechanism depends on triggering compaction (policies/execution)
+
+An agent cannot invoke compaction. It is a command the human types, or a harness firing on its own schedule and choosing its own survivors, so a design that waits for it waits on something it does not control.
+
+## 35.6 Rationale from skills/implement/dispatch
+
+#### The brief is the only parent-to-child channel (skills/implement/dispatch)
+
+The child never saw the conversation that produced the task. Whatever it assumes that conversation said cannot be checked by anyone, the child included. So anything the child needs from the conversation has to be written into the brief, and anything left out has, as far as the child knows, not happened.
+
+#### Describe interfaces and contracts, never paths, line numbers, or today's structure (skills/implement/dispatch)
+
+The child explores a codebase that may have moved since the task was written, and that will keep moving while the child works. Durability beats precision for that reason. A file path given as the location of a concept goes stale, and a brief that points at a moved file sends the child to a place that no longer exists, where it will then build something anyway. A line number fails the same way, only sooner. Interfaces, types, and behavioural contracts survive the move.
+
+#### Say what must be true when it is done, never how to do it (skills/implement/dispatch)
+
+The child reads the code fresh and makes its own implementation decisions. A procedure written by someone who has not read today's code constrains the wrong thing: it fixes the steps and leaves the outcome open.
+
+#### Every criterion is verifiable by someone who did not write the code (skills/implement/dispatch)
+
+The child has to know when it is finished, and the parent has to be able to check what the child says it did. A criterion only a hopeful author could judge, such as "validation should work correctly", gives neither. A child that returns done against it has said nothing.
+
+#### The brief carries the ticket's criteria unedited (skills/implement/dispatch)
+
+Rewriting acceptance criteria at dispatch time is how a child ends up building against criteria nobody agreed to. The criteria were settled when the ticket was written, and dispatch is not a place to reopen them.
+
+#### Say what must not change, and name the adjacent thing that is not this (skills/implement/dispatch)
+
+Without an out-of-scope statement a child gold-plates, or it treats the adjacent thing as implied. The thing that looks related and is not is exactly the one that gets built, so it has to be named.
+
+#### Read the brief as though you had never seen this repository (skills/implement/dispatch)
+
+Every failing brief fails the same way. It is short because the writer already knows the context, and what it leaves out is exactly what the child does not have. Reading it as a stranger is the check that catches this, because a stranger is who will read it.
+
+## 35.7 Rationale from skills/implement/conflicts
+
+#### Never resolve a hunk without knowing what both sides wanted (skills/implement/conflicts)
+
+A hunk resolved without knowing what either side was for is a guess with a clean diff. The guess will also pass review, because a resolved conflict looks the same whether or not it kept the behaviour each side intended. Reading the commit messages, the ticket, the spec, and the review that produced each side is the only thing that turns the guess into a resolution.
+
+#### Where the intents cannot coexist, say which trade-off was made (skills/implement/conflicts)
+
+Taking one side over the other is a behaviour change. Made silently, it is a behaviour change nobody reviewed, and it arrives through the one place nobody looks for one.
+
+#### Never invent new behaviour (skills/implement/conflicts)
+
+A third option that neither side wrote is not a resolution. It is an unreviewed change, placed where it is safest from notice: inside a conflict resolution, which reviewers read as reconciliation and not as new work.
+
+#### Always resolve, never abort (skills/implement/conflicts)
+
+Aborting throws away the analysis already done and leaves the identical conflict for the next attempt. That attempt will be made with less context than this one has.
+
+#### A trade-off goes in the commit message (skills/implement/conflicts)
+
+The sentence that says which side was kept and why, such as "kept the retry budget from the feature branch; the base branch's cap was superseded by the new policy", is the sentence that saves the next person a bisect.
+
+## 35.8 Rationale from skills/implement/diagnosing
+
+#### Build the signal first; everything after it is mechanical (skills/implement/diagnosing)
+
+The whole discipline rests on one claim: the hard part is building a signal. Given a fast pass/fail check that goes red on this particular bug, bisection and hypothesis-testing consume it and converge. Without one, no amount of reading code substitutes. Reading is pattern-matching against a model of the system, and the bug exists because that model is wrong.
+
+#### Tighten the loop: faster, sharper, deterministic (skills/implement/diagnosing)
+
+A thirty-second flaky loop is barely better than none. A two-second deterministic one is a different tool.
+
+#### An intermittent bug needs a higher rate, not a clean repro (skills/implement/diagnosing)
+
+Fifty percent is debuggable. One percent is not. Raising the rate is what turns an intermittent bug into one a loop can work on.
+
+#### Reading code to build a theory before the gate exists: stop (skills/implement/diagnosing)
+
+Jumping to a hypothesis before there is a command that goes red on the bug is the exact failure this discipline exists to prevent.
+
+#### Confirm the red is the reported failure, not a neighbour (skills/implement/diagnosing)
+
+Wrong bug, wrong fix. A loop that goes red on a different failure living nearby leads to a fix for that one, and the reported bug survives it.
+
+#### Three to five hypotheses, all before testing any, shown ranked (skills/implement/diagnosing)
+
+Generating hypotheses one at a time anchors everything on the first plausible idea. Showing the ranked list before testing is worth it because domain knowledge can re-rank it at once ("we deployed a change to the third one yesterday").
+
+#### Tag every probe with a unique marker (skills/implement/diagnosing)
+
+Untagged probes survive forever. A shared marker makes cleanup a single search.
+
+#### Write the regression test first, only where a correct seam exists (skills/implement/diagnosing)
+
+A test at a seam too shallow to exercise the bug as it really occurs at the call site gives false confidence, which is worse than no test. When no correct seam exists, that absence is the finding: it means the architecture is preventing this class of bug from being locked down, which is why it is recorded and handed to `[[skills/survey]]`.
+
+#### The hypothesis that proved right goes in the commit message (skills/implement/diagnosing)
+
+So the next person to debug this area learns something from the last time.
+
+#### After the fix lands, hand anything architectural that would have prevented it to survey (skills/implement/diagnosing)
+
+The prevention question comes after the fix, because by then you know more than you did at the start.
+
+## 35.9 Rationale from skills/specify
+
+#### This run stamps nothing (skills/specify)
+
+A stamp lands at a run's close. By its close, `/specify` is standing in the
+surface it created when the effort opened, so a stamp there would record a read
+that happened in a different tree: the checks at step 1 ran in the surface the
+run was invoked in. A marker checked in one surface and stamped in another
+describes neither.
+
+#### A request that extends a specified effort belongs in that spec (skills/specify)
+
+Two efforts describing one change is the failure the existing-effort check at
+step 2 exists to prevent.
+
+#### State the understanding as a position, and never skip it (skills/specify)
+
+A position invites correction; a question invites agreement. A wrong model is
+free to fix here, before anything is built on it, and expensive once a plan has
+been built on it.
+
+#### Choose the lane now, never earlier (skills/specify)
+
+Sizing before you understand the problem anchors everything that follows to the
+guess. The lane is chosen only after the understanding is stated and the
+material uncertainty resolved.
+
+#### The draft stays unnumbered until `aep open` numbers it (skills/specify)
+
+The effort's number is the tracker's where there is one (the issue number), and
+it does not exist yet while the spec is being drafted, so the draft cannot carry
+it. The number is given before the effort's first commit, so a rename of the
+effort directory never appears in history.
+
+#### The effort's branch and its surface are created in one act (skills/specify)
+
+Creating the branch into a worktree means the branch is held from the moment it
+exists: one act creates both, so there is no window in which the branch exists
+unheld. The effort takes a surface of its own rather than the checkout the run
+is standing in, because a shared checkout is a surface another run can move.
+
+#### With no tracker, the opening asks nothing (skills/specify)
+
+With no tracker there is nothing public to ask permission for: no issue, no
+push, no pull request.
+
+#### Every revision after opening is a `docs` commit on the effort branch (skills/specify)
+
+Grilling, research, and planning become visible as they happen, in the pull
+request where a tracker is on, rather than as one drop at the end.
+
+#### No `# Architecture` in the spec (skills/specify)
+
+A specify run that starts designing has skipped the step that makes designing
+safe. How it is built belongs to `/plan`.
+
+#### The closing keyword's place is the repository's (policies/tracker)
+
+An issue whose pull request merged without a closing keyword stays open until a
+person notices, and noticing is not a mechanism. So the keyword is written
+where this repository's merge path will fire it, read from the version-control
+rule rather than assumed.
+
+#### The draft pull request is opened with the effort (policies/tracker)
+
+The pull request exists from the first draft because it is what the effort's
+own artifacts land through.
+
+#### `/specify` asks once, at opening (policies/tracker)
+
+Both things the ask requests, permission to push and open a public pull request
+and the effort's `priority:`, are the human's, and both are needed at the same
+instant. Asking twice is two interruptions where the work needs one. The
+opening ask is meant to be the one human moment in an effort: this is the step
+the whole design exists to make the last interruption.
+
+#### `priority:` is set once, at opening, and never changed by an agent (policies/tracker)
+
+`priority:` came from the human, and re-deriving it would overwrite the only
+person who knows the answer. The same holds for any flag that invites someone
+to act.
+
+#### Abandoning closes both objects (policies/tracker)
+
+An open draft pull request reads as work in flight to everyone who did not have
+this conversation, so an abandoned effort's draft is never left open.
+
+## 35.10 Rationale from skills/specify/out-of-scope
+
+#### A repository-level decline is recorded in a context (skills/specify/out-of-scope)
+
+The repository-level home is the one that gets skipped, and it is the one that
+pays. A boundary recorded only inside a closed effort's `# Out of Scope` is
+invisible to the next person, who opens a fresh request for the same thing in
+different words.
+
+## 35.11 Rationale from skills/tasks
+
+#### Tickets are files, never tracker objects (skills/tasks)
+
+A dependency graph kept in a tracker is a graph nothing can read back: it lives
+in prose, in a checklist, or in whatever that forge calls a relationship this
+quarter. Every run that needs a tracker-held graph asks the network for an
+answer the repository already had.
+
+#### A ticket too large for one context is split here, never at dispatch (skills/tasks)
+
+Getting the unit wrong at `/tasks` is what forces the split to happen later, at
+dispatch time, by guesswork.
+
+#### Every ticket traces, checked before the graph is reported (skills/tasks)
+
+Finding an untraced ticket at `/tasks` costs a line; finding it at
+implementation costs a wave.
+
+#### The index lists every ticket (skills/tasks)
+
+The tickets section of the index, with each ticket's effort, `status`, and
+`blocked-by`, is how a later session finds the frontier without reading every
+ticket.
+
+#### The citation check replaced the one-file rule (skills/tasks)
+
+Until AEP 3 the spec and the technical approach lived in one file, and a ticket
+could not describe a design the spec did not contain, because there was nowhere
+else for one to live. Splitting `spec.md` from `plan.md` means two files can
+drift apart; a citation that has to resolve against what the spec actually
+numbers is what the split traded for.
+
+#### An implemented effort is skipped by the trace check (skills/tasks)
+
+A landed effort is the record of what was reviewed, and the check exists to
+keep a live effort's two files together, which is a risk only while it is being
+built.
+
+## 35.12 Rationale from policies/reporting
+
+#### A case on neither list is settled by asking who reads it (policies/reporting)
+
+The governed and exempt lists are worked examples of the test, not its definition. A list settles the cases somebody thought of, and every case it missed gets decided by whoever hits it first, differently each time. The test decides the ones nobody enumerated, which is most of them.
+
+#### The four prohibitions are in the protocol; the craft is in skills/prose (protocol, policies/reporting)
+
+The four prohibitions (no em dashes, no curly quotes, no decorative emoji, no title-case headings) are stated as law, apart from the catalogue of tells, because a script can check them. Everything else about how text reads is craft, and the split keeps each where it belongs: a skill that carried the prohibitions would be governance under another name, which the protocol forbids, and a policy that carried the whole catalogue would be thirty rules where only four are checkable.
+
+#### The shape does not vary by skill, runtime, or size (policies/reporting)
+
+A human who has to read every output from the top cannot find anything by position, and the first thing they stop reading is the line that would have told them the run went somewhere they did not intend. One shape, whichever skill is running, is what lets them read by position.
+
+#### One request, one report, from the outermost skill (policies/reporting)
+
+One request can enter four skills. Four reports for one request is ceremony, and ceremony gets skipped, which would make the reporting policy advisory in fact. A skill entered from inside another is therefore a stage of that run and reports nothing of its own.
+
+#### A stop names its remedy in Next (policies/reporting)
+
+A stop with nothing to act on is the failure. The remedy goes in the slot the reader looks at for what happens next, rather than in a slot of its own or anywhere else, because putting it elsewhere is how it gets missed.
+
+#### Inside a cell, the ledger reads as a person wrote it (policies/reporting)
+
+This is the one narrowing of the exemption for text a protocol agent reads. Such text is otherwise exempt from how governed text reads, because it is written for that reader instead. The ledger has two readers, the human reading it as progress and the run re-reading it to recover where it is, so it forfeits the exemption while keeping the stable labels, columns, and order the machine reader needs.
+
+#### One ledger, kept in log.md, and the report shows the same lines (policies/reporting)
+
+The ledger is not split into a ledger for the human and a state file for the run. Two such artifacts disagree the moment one is written and the other is not, and the disagreement is invisible until a resumed run acts on the stale one.
+
+## 35.13 Rationale from policies/artifacts
+
+#### Ownership is where a file sits; no artifact declares it (policies/artifacts)
+
+Ownership is not a field because a declaration can be wrong, and the case it can never catch is a file that simply omits it. A file with no owner had to be guessed at, and every guess was a directory lookup performed badly. Location was always the answer.
+
+#### An upgrade establishes provenance by comparing content, never by reading a claim (policies/artifacts)
+
+A field saying "this came from that release" is written by the same act it is supposed to attest to, so it agrees with itself no matter what happened to the file. Comparing the file's content against what the release ships is the only check the file cannot vouch for itself.
+
+#### A protocol-owned file that differs from its release is a defect to report and reinstall, never drift to heal (policies/artifacts)
+
+Healing the file locally makes the next upgrade a merge conflict against a file nobody agreed to fork. Reinstalling keeps the protocol's text one thing, and a repository that needs to differ says so through a declared deviation instead.
+
+## 35.14 Rationale from skills/review
+
+#### Two axes, judged independently, and no third (skills/review)
+
+Correctness and Standards are separate because a change can pass either while failing the other: every convention followed on the wrong thing, or exactly what was asked in a style this repository rejects.
+
+#### An axis never sees the other's findings (skills/review)
+
+Running the two reviewers in parallel is for latency. Keeping their contexts separate is for correctness: an axis that can see the other's findings starts agreeing with them, and that pollution is invisible in the output.
+
+#### The subject is the committed range plus staged, unstaged, and untracked changes (skills/review)
+
+A caller can reach review with the change still uncommitted, and a commit-range diff is empty then. An effort's whole branch is the committed half of exactly that union, so the same pinning serves an effort-level review without a second procedure.
+
+#### Before dispatching anything, prove the ref resolves and the subject is non-empty (skills/review)
+
+A bad ref handed to a sub-agent comes back as a confident report on no content. Proving it in the dispatching run is the only point where the failure is still visible.
+
+#### An effort-level review resolves to spec.md (skills/review)
+
+At the close, the subject spans every task in the effort, so no single task defines what was asked; the spec the effort was built against does. Leading with a task the caller happens to be holding would narrow the question to one slice of a diff that is deliberately wider than any of them.
+
+#### Cap each report (skills/review)
+
+Two axes reporting at length produce a review nobody finishes, and the second half is where the findings that mattered go to be skimmed.
+
+#### Every finding gets an outcome: fixed, ticketed, or accepted (skills/review)
+
+A finding with no outcome is a finding that will be raised again at the next review. Acceptance is the outcome that gets skipped: "that's fine, leave it" is a deliberate trade-off and needs a home, and one nobody wrote down is rediscovered, re-argued, and re-accepted on every future review.
+
+#### There is no reviews directory; what is durable graduates (skills/review)
+
+A review is about a diff, and once that diff lands its subject no longer exists. Everything durable graduates out of it, into the code, a context, the spec, or a task, and what is left is disposable.
+
+## 35.15 Rationale from skills/install
+
+#### An existing .aep/protocol.md is update's job, not install's (skills/install)
+
+Running install over a live installation puts at risk exactly the
+repository-owned artifacts that `policies/artifacts` requires be preserved. The
+check comes first so that the one operation built to preserve them, the
+upgrade, is the one that runs.
+
+#### A refused merge-time job is recorded in rules/version-control, beginning with the declined sentence (skills/install)
+
+The refusal goes in the repository's own version-control rule because that rule
+is where this step and `/update` are already reading. That is what makes the
+next run read the decision instead of asking again. A state file under `.aep/`
+would have done the same job, but it would be a primitive nothing else uses.
+
+#### Never invent a reference for a tool this repository does not use (skills/install)
+
+An empty `references/` is honest, and a speculative one is a trap: a reference
+is trusted, so a guessed invocation is followed as though somebody had checked
+it.
+
+## 35.16 Rationale from skills/update, and its 2.x note
+
+#### Act on every notice the upgrade printed, in this run (skills/update)
+
+A notice is acted on, not read. Printing one and moving on is how it gets
+missed: the output scrolls, the upgrade reports success, and nothing ever asks
+again. That is why a notice that cannot be done in this run is reported as
+outstanding rather than left in the scrollback.
+
+#### The merge-time job is standing, every run, where tracker: is on (skills/update)
+
+The offer is standing rather than tied to one release for three reasons. A
+repository can turn its tracker on in any release. A repository that declined
+once can change its mind, which it does by removing the recorded refusal. And
+the offer asks for a write outside `.aep/`, which no upgrade makes on its own.
+
+#### Report declared deviations, each with the release it was declared under and how long it has stood (skills/update)
+
+A deviation nobody is reminded of becomes a silent fork. Surfacing every one on
+every upgrade keeps it a declared difference, which the repository either keeps
+on purpose or retires once the protocol grows the extension point.
+
+#### Every retired field is dropped and every listed spec is split, on the installer's list (skills/update/from-2)
+
+The installer names these files rather than converting them because each one
+needs a judgement: a retired field may carry content the manifest cannot place,
+and splitting a spec decides what is WHAT and what is HOW. A judgement a script
+makes silently is the one nobody can review.
+
+#### A split is a move: change no wording in either file (skills/update/from-2)
+
+Improving the prose on the way past makes the diff unreviewable. The one
+question worth answering about a migration is whether anything was lost, and
+only a split that moves text verbatim lets a reviewer answer it.
+
+#### Any label is kept, even where AEP created it (skills/update/from-2)
+
+Deleting a label strips it from every closed issue the migration correctly
+refused to touch, which edits the record by a side effect. Labels are also how
+the reshaping finds its work, and a tool that deletes its own index halfway
+through is a tool that cannot be run twice.
+
+## 35.17 Rationale from skills/update/migration and conversion
+
+#### A bare version: is evidence of nothing (skills/update/migration)
+
+1.x used a bare `version:`, and so does the current release, on `protocol.md`,
+the one artifact that declares a release. A classifier that read it as a sign of
+1.x would send a current tree into the migration, and the migration installs a
+fresh layer beside the one already running.
+
+#### superseded becomes obsolete, its reason naming what replaced it (skills/update/conversion)
+
+The forwarding pointer is the whole content of the 1.x `superseded` state, and
+losing it loses the trail. The conversion keeps it by writing what replaced the
+ticket into the `obsolete` reason, taken from `superseded-by`.
+
+## 35.18 Rationale from skills/prototype/ui
+
+#### Share the shell, never the layout (skills/prototype/ui)
+
+A shared header is fine. A shared layout defeats the point, because each variant must be free to throw the layout out; variants that inherit one layout can only disagree inside it.
+
+#### The losing variants and the switcher come out in the change that records the answer (skills/prototype/ui)
+
+UI prototype code is mounted in the application rather than kept in a directory of its own, so removing it is a real edit, not a directory deletion. Doing it in the same change that records the answer is what keeps it from being left behind.
+
+#### Folding the winner into the real screen is fresh implementation, never a promotion of the variant file (skills/prototype/ui)
+
+Variant code was written under prototype constraints: no tests, minimal error handling, state taken wherever convenient. Every one of those ships with it if it is moved rather than rewritten.
+
+## 35.19 Rationale from skills/tdd
+
+#### Confirm the test would catch a regression: undo the fix, see it fail again, redo the fix (skills/tdd)
+
+A green suite after a change proves nothing until you have confirmed that the change was actually applied and that the test was actually watching it. Undoing the fix and seeing the test fail again is what shows both.
+
+## 35.20 Rationale from templates/agents.template
+
+#### Point; never restate (templates/agents.template)
+
+A summary in the entrypoint is a second home for something that already has one, and it is the copy that drifts. The entrypoint is the file people edit when they want to "just add one thing", and nothing checks it against the protocol.
+
+## 35.21 Rationale from templates/context.template
+
+#### A pointer says where to start reading, and never claims what APIs or behaviour exist there (templates/context.template)
+
+A claim about what exists at a location goes stale silently, while the pointer itself stays useful. A stale claim is trusted exactly as a fresh one is, so a context that only points cannot mislead the way one that describes can.
 
 ---
 

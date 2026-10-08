@@ -30,7 +30,7 @@ pytest -q                        # quiet; -vv for the opposite
 Read the collected count. `pytest -k` matching nothing prints
 **no tests ran** and exits **5**, not 1 — a result that is easy to read as
 success in a script that only checks for a non-zero exit
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 ## Failure handling
 

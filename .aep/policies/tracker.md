@@ -1,0 +1,97 @@
+---
+use-when: "the repository's version-control rule sets tracker to github or gitlab, and an effort is opened, landed, closed, or abandoned"
+---
+
+# Policy — the tracker
+
+Applies only where `tracker:` in `[[rules/version-control]]` is `github` or
+`gitlab`. With `tracker: none`, the default, nothing here runs: no issue, no
+pull request, no label, no forge call. The effort is a branch a human merges,
+and `log.md` is its whole record (`[[policies/execution]]`).
+
+## Two objects per effort
+
+**One issue and one pull request**, and no other tracker object — not per
+ticket, wave, or review. Each links to the effort both ways: the effort is
+numbered for the issue, and both bodies name the effort's path.
+
+| In the tracker | In the repository |
+| --- | --- |
+| the issue, whose body is `spec.md` | `spec.md`, `plan.md` |
+| the pull request: approach, tickets, a mirror of `log.md` | tickets, `blocked-by` edges, `log.md` |
+| labels, projecting those files | — |
+
+- A ticket is never a tracker object, and the dependency graph never leaves the
+  repository.
+- The tracker is read, never mirrored into `.aep/`. `log.md` is canonical; the
+  pull request mirrors it.
+- A run that finds an effort short of either object opens what is missing and
+  says so.
+- A write to shared tracker data is proposed first, with the exact strings.
+
+## Opening
+
+`/specify` asks **once**, before `aep open`, for two things together: permission
+to push and open a public pull request, with the exact issue title and body,
+branch name, and pull request title; and the effort's `priority:`. A refusal
+stops the opening: the draft stays in scratch and nothing is created. Then:
+create the issue (each criterion a checkbox), `aep open <slug> --lane <lane>
+--number <issue>`, push, and open a draft pull request carrying the approach
+and each ticket's criteria as checkboxes, or saying tickets are not cut yet.
+
+The quick lane never uses the tracker.
+
+**The closing keyword's place is the repository's** (`[[rules/version-control]]`).
+Merged through a pull request: `Closes #<issue>` in the pull request body,
+written at opening, and never in a commit. Stacked: every commit carries
+`Refs #<issue>` except the change that merges last, which carries
+`Closes #<issue>`.
+
+## While the run works
+
+After each `aep land` and `aep record`, mirror `log.md` into the pull request
+and project the ticks. **A failed write is reported, never continued past.**
+Every later revision to `spec.md`, `plan.md`, `evidence/`, or `tickets/` is a
+`docs` commit, and the issue body is rewritten to match the spec.
+
+## Labels are projections
+
+**The file wins.** Where a label and `spec.md` disagree, correct the label,
+never the file.
+
+| | Set | Then |
+| --- | --- | --- |
+| **derived** — `status:`, `type:`, `size:`, every flag a fact establishes | from a file or the diff | re-synced on every write |
+| **initial** — `priority:`, any flag inviting a person to act | once, at opening | never changed by an agent |
+
+| The effort | Issue | Pull request | What moves it |
+| --- | --- | --- | --- |
+| the spec is being drafted | `status: backlog` | `status: backlog` | `[[skills/specify]]`, opening both objects |
+| the spec is accepted and the tickets are cut | `status: ready` | `status: ready` | `[[skills/specify]]`, on acceptance |
+| the runner is working | `status: in progress` | `status: in progress` | `[[skills/implement]]`, on taking the first ticket |
+| converge found no gap, and the spec is stamped `implemented` | `status: in review` | `status: in review` | `[[skills/implement]]`, at the close |
+| merged | `status: done`, and the pull request closes it | `status: done` | the forge's merge-time job, and `reconcile.mjs` on the next run where none is installed |
+| closed without merging | `status: done` | `status: done` | the forge's merge-time job, and `reconcile.mjs` on the next run where none is installed |
+
+- **Flags need a fact:** `breaking changes` from the public-contract trip-wire;
+  `dependencies` when a manifest or lockfile moved; `release` when what a
+  release publishes moved; `discussion` while the spec has open questions, and
+  the human removes it; `triage` on a fresh draft; `confirmed`, `unconfirmed`,
+  `cant reproduce` from a diagnosis; `wontfix` when abandoned.
+- **`size:` is computed from the diff** at ready-for-review, against the
+  thresholds the repository's own label descriptions state.
+- **Use labels that already exist here.** Read the list first; a new one matches
+  the separator, casing, and prefixing in use, and creating it is reported with
+  the reason. No label names AEP.
+
+## Closing
+
+After `aep close`: finalise the pull request body in the shape below, set
+`size:`, move both objects to `status: in review`, and mark the pull request
+ready — only with every review finding closed. A stop mirrors `log.md` and
+leaves the pull request a draft. **Abandoning closes both objects**, labelled
+`flag: wontfix`.
+
+The body: the smallest visual that explains the change; before-and-after
+evidence; and the merge danger — a one-way or two-way door, and the blast
+radius.

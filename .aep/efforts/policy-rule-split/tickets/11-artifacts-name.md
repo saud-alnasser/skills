@@ -22,7 +22,7 @@ with a reason.
 
 ## Notes
 
-Raised by review. `[[policies/engineering]]` says **name a file for the one thing
+Raised by review. `[[protocol]]` says **name a file for the one thing
 it holds**; this one holds three — whose a file is, where it goes, what shape it
 takes — unified only by *it is an AEP artifact*. That is a real unifying idea and
 the three do fire at one moment, which is why the merge was made; but it is the

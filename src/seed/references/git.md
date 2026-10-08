@@ -58,19 +58,38 @@ git commit --amend -F <message-file>
 Prefer `-F` over `-m` for anything multi-line: quoting rules differ between
 shells and mangle the body silently.
 
+A fix to a commit that has already landed amends it in place, in the run's own
+surface and never after a push:
+
+```sh
+git commit --fixup=<commit>                                  # stage the fix first
+GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <commit>~1  # fold it in, unattended
+```
+
+To reword the landed commit's message as well, write the message to a file in
+`.aep/scratch/` whose first line is `amend! <the old subject>`, then a blank line,
+then the new message, and make the fixup with it (`-m` is refused with
+`--fixup=amend:`); the same rebase folds it in:
+
+```sh
+GIT_EDITOR='cp .aep/scratch/<message-file>' git commit --fixup=amend:<commit>
+```
+
 ## Worktrees
 
 ```sh
 # Anchored on the main checkout, because the path is what decides a run's role.
 # Relative, git resolves it against the cwd, which nests one surface in another.
 # <main> is the first entry of `git worktree list --porcelain`.
-git worktree add <main>/.aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
+git worktree add <main>/.aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>--<ticket-id>-<slug>
 git worktree list
 git worktree remove <main>/.aep/worktrees/<effort>/<ticket-id>-<slug>
 ```
 
-The branch name carries the effort as a namespace. Ticket ids restart at `01` in
-every effort, so a bare `03-shared-id` is a name two efforts can both want.
+The branch name carries the effort as a prefix. Ticket ids restart at `01` in
+every effort, so a bare `03-shared-id` is a name two efforts can both want. The
+separator is `--`, not `/`: git cannot create `<effort>/...` while a branch
+named `<effort>` exists.
 
 Worktrees are infrastructure, never knowledge. `.aep/worktrees/` is gitignored.
 
@@ -134,4 +153,4 @@ Two things it does not cover:
   in the run, not as the answer to the question you were asking.
 - A detached HEAD holds no claim. Do not guess the task from the diff.
 - An operation no section above covers is a gap: say so rather than guessing a
-  flag (`[[policies/engineering]]`).
+  flag (`[[protocol]]`).

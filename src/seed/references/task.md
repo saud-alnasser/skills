@@ -29,7 +29,7 @@ task --force <name>              # ignore up-to-date checks
 A task declaring `sources` and `generates` is skipped when its inputs have not
 changed, and the run reports it as up to date. **A green run may have executed
 nothing** — when the result is the evidence, `--force` it
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 ## Failure handling
 

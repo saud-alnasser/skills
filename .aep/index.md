@@ -12,10 +12,10 @@ Start at [[protocol]].
 | Artifact | Load when | Paths | Owner |
 | --- | --- | --- | --- |
 | [[policies/artifacts]] | about to create, change, move, or remove anything under .aep/ — whose it is, where it belongs, and what shape it takes | .aep/**/*.md | — |
-| [[policies/authority]] | two sources disagree, or the work reaches a repository other than this one | — | — |
-| [[policies/engineering]] | writing code, or about to state anything about this repository you have not verified | — | — |
-| [[policies/execution]] | an effort is in progress — deriving tasks, dispatching, implementing, or reviewing | — | — |
-| [[policies/reporting]] | about to write anything a human will read — session output, a commit message, a pull request, a code comment, a README — or a turn's opening or closing block does not take the shape it should | — | — |
+| [[policies/execution/parallel]] | a full-lane wave of two or more tickets is dispatched to sub-agents, or a child returns | — | — |
+| [[policies/execution]] | an effort is in progress — deriving tasks, implementing, converging, or reviewing | — | — |
+| [[policies/reporting]] | about to write anything a human will read: session output, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should | — | — |
+| [[policies/tracker]] | the repository's version-control rule sets tracker to github or gitlab, and an effort is opened, landed, closed, or abandoned | — | — |
 
 ## Rules
 
@@ -48,7 +48,7 @@ Start at [[protocol]].
 | [[skills/implement]] | a task exists and is ready to build | — |
 | [[skills/install]] | a repository has no .aep/ directory and should start running AEP | — |
 | [[skills/plan]] | a spec is settled and the technical approach is not yet decided | — |
-| [[skills/prose]] | about to emit text a human will read, or editing text that reads as though nobody wrote it | — |
+| [[skills/prose]] | writing a README, a pull request body, a changelog, or docs, or editing text that reads as though nobody wrote it | — |
 | [[skills/prototype]] | a technical or design question will not settle on paper and needs building to answer | — |
 | [[skills/prune]] | the .aep/ tree has accumulated stale, contradicted, or orphaned artifacts | — |
 | [[skills/refine]] | a spec exists but reads as ambiguous, under-constrained, or too agreeable | — |

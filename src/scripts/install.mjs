@@ -26,7 +26,7 @@ import {
   isRepositoryNote,
 } from './contract.mjs';
 import { contentHash } from './release.mjs';
-import { renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
+import { mergeGuardrails, renderAdapter, writeAdapter, TARGETS } from './adapters.mjs';
 import {
   GITIGNORE_SOURCE,
   MOVES,
@@ -217,7 +217,7 @@ function applyMoves(aep, declared, dryRun) {
  *
  * - repository-owned Markdown only. Protocol-owned files are replaced wholesale
  *   by the copy above, and the generated index is regenerated straight after;
- * - only the nine declared targets, never a pattern;
+ * - only the declared targets, never a pattern;
  * - **outside fenced blocks only.** A link inside a fence is the syntax being
  *   shown rather than a reference being made, which is why the link checker
  *   strips fences before looking. Rewriting one edits somebody's example;
@@ -241,7 +241,7 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
   if (moved.size === 0) return;
 
   const derivedIndex = path.join(aep, 'index.md');
-  for (const file of walk(aep, { skip: ['position', 'worktrees'] })) {
+  for (const file of walk(aep, { skip: PER_CLONE_DIRS })) {
     // The index is derived and regenerated straight after, so repairing it is
     // work that is about to be thrown away. Matched by path rather than by
     // basename: a repository may legitimately own some other `index.md`.
@@ -855,7 +855,12 @@ function main() {
   // the guard is here so that is a stated fact rather than a coincidence.
   if (args.includes('--update')) {
     const today = new Date().toISOString().slice(0, 10);
-    rewriteMovedLinks(aep, applyMoves(aep, declared, dryRun), today, dryRun);
+    const vacated = applyMoves(aep, declared, dryRun);
+    rewriteMovedLinks(aep, vacated, today, dryRun);
+    // The copy above ran first and saw a moved file as one this release no
+    // longer ships. It is reported as moved, so it is not offered for pruning too.
+    const movedFrom = new Set(vacated.map((move) => path.join(aep, ...move.from.split('/'))));
+    report.retired = report.retired.filter((file) => !movedFrom.has(file));
     collectNotices(declared);
 
     // A directory a past release owned and this one does not ship. Reported
@@ -900,6 +905,15 @@ function main() {
     // directory outside `.aep/` that the repository now owns, and a reader
     // deciding whether that was what they asked for cannot see it in a total.
     report.adapters.push(`${target.dir}/, ${files.length} wrappers`);
+    if (name === 'claude') {
+      const guard = mergeGuardrails(into, { dryRun });
+      if (guard.outcome === 'unparsed') {
+        report.warnings.push(`${toPosix(repo, guard.file)} is not a JSON object, so the write guardrails were not merged into it. Add them by hand, or fix the file and install again`);
+      } else if (guard.outcome !== 'present') {
+        report.written.push(guard.file);
+        report.adapters.push(`${target.dir}/settings.json, ${guard.outcome}: sandbox where supported, ${guard.added.length} edit-deny rules outside the project`);
+      }
+    }
   }
 
   // Asked for by name, never by default. A workflow is executable and lands

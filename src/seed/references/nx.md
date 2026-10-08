@@ -30,7 +30,7 @@ npx nx reset                     # clears the local cache and daemon
 state**, not only on the working tree. On a stale branch it can select nothing.
 
 A target reported from cache did not execute. When the result is being used as
-evidence, say so — or re-run without the cache (`[[policies/engineering]]`).
+evidence, say so — or re-run without the cache (`[[protocol]]`).
 
 ## Failure handling
 

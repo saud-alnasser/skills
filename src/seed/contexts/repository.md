@@ -54,4 +54,4 @@ _Add a row when an area grows enough to deserve its own file._
 **This file describes; it never instructs.** A requirement belongs in
 `[[rules]]`; a procedure belongs in `[[references]]`. And the repository is
 authoritative over everything written here — where the source disagrees, the
-source is right and this file gets corrected (`[[policies/authority]]`).
+source is right and this file gets corrected (`[[protocol]]`).

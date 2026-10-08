@@ -6,140 +6,82 @@ use-when: "about to create, change, move, or remove anything under .aep/ — who
 
 # Policy — AEP's own artifacts
 
-Three questions, in the order they arrive: **whose is this, where does it go,
-and what must it contain.**
+Three questions, in order: **whose is it, where does it go, and what must it
+contain.**
 
 ## Whose it is
 
-**Ownership is a fact about location, and no artifact declares it.** A release
-ships an exact set of paths, that set is what the installer and the validator
-both consult, and a file is the protocol's if and only if it is in it.
-
-*Why not a field: a declaration can be wrong, and the case it can never catch is
-a file that simply omits it. A file with no owner had to be guessed at, and every
-guess was a directory lookup performed badly. Location was always the answer.*
-
-### The protocol's
-
-The artifact defines AEP itself.
-
-- **MUST NOT be edited in a repository.** Not improved, not healed, not
-  corrected in passing.
-- Installed verbatim from the release; replaced or migrated by an upgrade.
-- **The release is named once**, in the bootstrap's `version:`. No artifact
-  carries a stamp of its own, and the distribution keeps a content baseline
-  instead, which is what catches an edit that never shipped.
-- **An upgrade establishes provenance by comparing content**, not by reading a
-  claim: a protocol-owned file whose content differs from the release is the
-  defect to report (`[[skills/update]]`). *Why content: a field saying "this came
-  from that release" is written by the same act it is supposed to attest to, so
-  it agrees with itself no matter what happened to the file.*
-- A protocol-owned file that differs from its release is a **defect to
-  reinstall**, never drift to heal. *Why: healing it locally makes the next
-  upgrade a merge conflict against a file nobody agreed to fork.*
-
-### The repository's
-
-The artifact describes this repository.
-
-- Evolve it freely. It is yours.
-- **An upgrade MUST preserve it** and MUST NEVER silently overwrite
-  repository-owned governance. It cannot reach one: the installer writes only
-  paths the release ships, and none of them is yours.
-- **A file of yours standing where the protocol ships is a defect the validator
-  names**, not one an upgrade corrects. Rules go under `rules/`, orientation
-  under `contexts/`, and tool operation under `references/`.
-
-### Which is which
+**Ownership is where a file sits; no artifact declares it.** A release ships an
+exact set of paths, the installer and the validator both consult it, and a file
+is the protocol's if and only if it is in that set.
 
 | Path | Owner |
 | --- | --- |
 | `protocol.md`, `policies/`, `skills/`, `agents/`, `templates/`, `scripts/` | protocol |
-| `rules/`, `contexts/`, `references/`, `efforts/` | repository |
-| `index.md` | derived — regenerate with `.aep/scripts/index.mjs`, never hand-edit |
+| `rules/`, `contexts/`, `references/`, `efforts/`, `friction.md` (appended by `aep close`) | repository |
+| `index.md` | derived: regenerate with `.aep/scripts/index.mjs`, never hand-edit |
 
-**`policies/` and `rules/` admit one owner each, with no exception.** A policy is
-AEP's law and a rule is the repository's, so a file in the wrong directory is a
-defect the validator reports rather than a case to decide. An installer writes
-only the exact paths the release ships and so cannot reach such a file at all
-— which is why the validator has to name it, and why nothing is lost by the
-installer staying silent.
+**The protocol's:**
 
-### When the protocol does not fit
+- **MUST NOT be edited in a repository**: not improved, healed, or corrected in
+  passing. Installed verbatim; replaced or migrated by an upgrade.
+- **The release is named once**, in the bootstrap's `version:`. No artifact
+  carries its own stamp; the distribution keeps a content baseline.
+- An upgrade establishes provenance by **comparing content**, never by reading a
+  claim. A protocol-owned file that differs from its release is a **defect to
+  report and reinstall** (`[[skills/update]]`), never drift to heal.
 
-Variation enters a protocol-owned artifact only through an extension point that
-artifact names. Variation with nowhere to enter is a **declared deviation**:
+**The repository's:**
+
+- Evolve it freely.
+- **An upgrade MUST preserve it** and never silently overwrite repository-owned
+  governance; the installer writes only paths the release ships.
+- **A file of yours where the protocol ships is a defect the validator names.**
+  Rules go under `rules/`, orientation under `contexts/`, tool operation under
+  `references/`. `policies/` and `rules/` admit one owner each, with no
+  exception.
+
+**When the protocol does not fit.** Variation enters a protocol-owned artifact
+only through an extension point it names. Otherwise it is a **declared
+deviation**:
 
 1. Record it in a repository-owned rule under `[[rules]]`.
 2. State what differs, **why**, and the release it was declared under.
 3. Expect `[[skills/update]]` to report it on every run until the protocol grows
    the point or the repository conforms.
 
-*Why the escape hatch is loud rather than absent: fixed protocol text with no
-declared way to differ pressures a repository into editing it quietly, and a
-silent fork is worse than a recorded disagreement.*
-
 ## Where it goes
-
-**Everything AEP owns lives under `.aep/`, plus the entrypoint and whatever
-adapter a runtime needs.** Nothing else.
 
 | Lives where | What |
 | --- | --- |
-| `.aep/` | every AEP artifact: the protocol, policies, rules, skills, agents, templates, contexts, references, efforts, scripts, position, worktrees |
-| repository root | the entrypoint — `AGENTS.md`, and a runtime's own equivalent — which **points at** `[[protocol]]` and never restates it |
-| a runtime's directory | adapters only, such as `.claude/skills/` wrappers. Never canonical state |
+| `.aep/` | every AEP artifact: protocol, policies, rules, skills, agents, templates, contexts, references, efforts, scripts, position, scratch, worktrees |
+| repository root | the entrypoint (`AGENTS.md`, and a runtime's equivalent), which **points at** `[[protocol]]` and never restates it |
+| a runtime's directory | adapters only, such as `.claude/skills/` wrappers; never canonical state |
 
-**The test: ask of any file — were AEP removed, would this still have a reason to
-exist?** If yes, it is not AEP's to place, and it stays where the repository
-keeps it.
+**The test: were AEP removed, would this file still have a reason to exist?** If
+yes, it is not AEP's to place. It decides by **whose process the file serves**,
+not by what it is made of or whether it runs: a script regenerating AEP's index
+goes in `.aep/scripts/`; a script building what the repository produces stays
+where the repository keeps scripts, **neither moved nor claimed**.
 
-That test decides by **whose process the file serves** — never by what the file
-is made of, and never by whether it is executable:
+- **A runtime directory never holds canonical AEP state.** `.claude/`,
+  `.cursor/`, `.codex/` hold pointers; a repository has one AEP state.
+- **Never reference `.aep/` from source comments or the repository's own
+  documentation.**
+- **Local state stays local.** `position/`, `scratch/`, and `worktrees/` are
+  gitignored, and nothing shared depends on them. Gitignored means **per working
+  tree**: two linked worktrees hold two markers; two agents in one checkout share
+  one.
+- **Placed by scope.** What belongs to one effort (spec, evidence, tickets, log)
+  lives in its directory; what spans every effort lives at the root of `.aep/`.
 
-- a script that regenerates AEP's index serves AEP → `.aep/scripts/`
-- a script that builds or tests what the repository exists to produce serves the
-  repository → wherever that repository keeps its scripts, **neither moved nor
-  claimed**
-
-Consequently:
-
-- **A runtime directory MUST NEVER hold canonical AEP state.** `.claude/`,
-  `.cursor/`, `.codex/` hold pointers. A repository has one AEP state, not one
-  per agent.
-- **Never reference `.aep/` from source comments or from the repository's own
-  documentation.** AEP is protocol machinery; code that cites it acquires a
-  dependency on a tool that may be removed.
-- **Local state stays local.** `position/` and `worktrees/` are gitignored,
-  and nothing shared may depend on them. Gitignored means **per working tree**
-  rather than per clone: two linked worktrees hold two markers, and two agents
-  sharing one checkout hold one between them.
-- **An artifact is placed by its scope.** What belongs to one effort — its spec,
-  its evidence, its tickets — lives in that effort's directory. What spans every
-  effort lives at the root of `.aep/`.
-
-### How a path is written down
-
-**A filesystem path naming an AEP artifact carries `.aep/` where it has two
-segments or more. A bare area name does not**, so an instruction to write
-`.aep/efforts/<effort>/spec.md` says where it starts from, and a sentence about
-`policies/` reads as it always did.
-
-*Why the split falls there: a path with a second segment is an instruction
-somebody acts on, and a reader who resolves it against the repository root writes
-the artifact outside the tree — unindexed, unvalidated, and owned by nobody,
-since ownership is where a file sits. A single name is a directory rather than a
-destination, nobody writes a file to one, and a root on it would be noise.*
-
-*Why not a leading slash: it reads as filesystem-absolute, which sends a reader
-further from the tree than a bare path does, and it is notation that has to be
-taught everywhere it appears. Why not a sentence fixing the root at the top of
-each file: an artifact is loaded by applicability and read from the middle, so an
-opening paragraph never reaches the person acting on a path halfway down.*
+**A path naming an AEP artifact carries `.aep/` where it has two segments or
+more** (`.aep/efforts/<effort>/spec.md`). A bare area name does not, as in
+`policies/`. Never a leading slash.
 
 ## What it must contain
 
-Every Markdown file under `.aep/` MUST open with YAML frontmatter:
+Every Markdown file under `.aep/` opens with YAML frontmatter:
 
 ```yaml
 ---
@@ -147,47 +89,36 @@ use-when: "<the occasion on which this is the thing to read>"
 ---
 ```
 
-That is the whole of it on most artifacts. **Frontmatter carries what decides
-whether to load the file, and nothing else.** A field describing the file to a
-reader who has already opened it is a field the body should be saying, and a
-field nothing reads is a claim nothing can falsify.
-
-Situational fields:
+**Frontmatter carries what decides whether to load the file, and nothing
+else.** Situational fields:
 
 | Field | When | Contract |
 | --- | --- | --- |
-| `paths` | when applicability follows repository paths | glob patterns |
-| `status` | efforts and local tickets **only** | spec: `draft` `accepted` `implemented`; ticket: `open` `resolved` `obsolete`. `implemented` is written by the run that closed the effort, never by hand ahead of it (`[[policies/execution]]`) |
+| `paths` | applicability follows repository paths | glob patterns |
+| `status` | efforts and local tickets **only** | spec: `draft` `accepted` `implemented`; ticket: `open` `resolved` `obsolete`. `implemented` is written by the run that closed the effort (`aep close`), never by hand ahead of it |
+| `lane` | efforts only | `quick` `standard` `full`; only ever raised |
 | `blocked-by` | tickets only | ticket identifiers this one waits on |
 
-### `use-when` states a trigger, never a topic
+**`use-when` states a trigger, never a topic.** `"working with database schema
+or migrations"` is a trigger; `"documentation about the database"` is a topic,
+and wrong. No check catches this one for you.
 
-> `use-when: "working with database schema or migrations"` — a trigger.
-> `use-when: "documentation about the database"` — a topic, and wrong.
-
-*Why: a topic satisfies every mechanical check and still cannot be selected on,
-so the artifact ends up loaded always or never — both defeat progressive
-discovery.* This is the one failure the frontmatter contract cannot catch for you.
-
-### Links
-
-A reference to another AEP artifact MUST use double-bracket wiki-link syntax,
-relative to `.aep/`, without `.md`:
+**Links** to another AEP artifact use double brackets, relative to `.aep/`,
+without `.md`:
 
 ```
-[[policies/authority]]   [[contexts/authentication]]   [[efforts/auth/spec]]
+[[policies/execution]]   [[contexts/authentication]]   [[efforts/auth/spec]]
 ```
 
-- A link is a **relationship, not a copy**. Never follow a link with a summary of
-  what it says — the summary is a second home and it drifts first.
-- A link that does not resolve is **repaired or reported, never invented.** Search
-  for where the concept moved; do not create a file to satisfy the link.
+- A link is a **relationship, not a copy**: never follow it with a summary of
+  what it says.
+- A link that does not resolve is **repaired or reported, never invented**:
+  search for where the concept moved; never create a file to satisfy it.
 - `paths:` is a matching field, not a substitute for a link.
 
 ## Structures that must not exist
 
-`.aep/` MUST NOT contain `decisions/`, `tools/`, a `grill/` directory, or
-`modes/`. Each was tried and retired; see `[[protocol]]` for what replaced it.
-Do not reintroduce one because it seems locally convenient.
+`.aep/` MUST NOT contain `decisions/`, `tools/`, `grill/`, or `modes/`. Each was
+retired; do not reintroduce one because it seems locally convenient.
 
 Run `.aep/scripts/validate.mjs` to check a tree against everything above.

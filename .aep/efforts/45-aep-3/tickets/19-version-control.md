@@ -56,4 +56,4 @@ history". The dependent claim under `## Branches` was corrected with it.
 `2.0` exists neither locally nor on `origin`, and the rule instructed a reader to
 amend a single commit on it. This run is standing on `aep-3` adding one commit
 per ticket, so that was a stale claim being relied on this turn
-(`[[policies/authority]]`), not an improvement noticed in passing.
+(`[[protocol]]`), not an improvement noticed in passing.

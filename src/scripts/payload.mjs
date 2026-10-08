@@ -44,20 +44,24 @@ export const PAYLOAD_DIRS = ['policies', 'skills', 'agents', 'templates'];
  * leftover and is removed; anything else is somebody's work and is reported and
  * left alone.
  *
- * The nine here were recovered from the commit that removed them. **A new move
+ * The nine from 2.2.0 were recovered from the commit that removed them; 4.0.0
+ * folded `authority` and `engineering` into the bootstrap, and their 2.2.0
+ * sources now point there too. **A new move
  * without a `was` is a defect**, and the suite says so: without it the installer
  * is back to deleting a file it cannot identify.
  */
 export const MOVES = [
-  { from: 'rules/precedence.md', to: 'policies/authority.md', since: '2.2.0', was: 'ed2d2ab2056a234382967bceb28e2140665a0c3f967af2f421bfe23d7cfcb140' },
-  { from: 'rules/boundary.md', to: 'policies/authority.md', since: '2.2.0', was: 'e7b2521f8ab240c3bf1da89722444bba87cfcd6595bb3a81a1338cb0ca252d5f' },
-  { from: 'rules/engineering.md', to: 'policies/engineering.md', since: '2.2.0', was: '184a48399e02cf56ec3c29d6b1845a71d3411013dd52523600b4de71a01ef3c9' },
-  { from: 'rules/evidence.md', to: 'policies/engineering.md', since: '2.2.0', was: 'ca94f29efe6c786b0824de4e36e8d7e57e0442381d43a8ded46f60cd17d767bd' },
+  { from: 'rules/precedence.md', to: 'protocol.md', since: '2.2.0', was: 'ed2d2ab2056a234382967bceb28e2140665a0c3f967af2f421bfe23d7cfcb140' },
+  { from: 'rules/boundary.md', to: 'protocol.md', since: '2.2.0', was: 'e7b2521f8ab240c3bf1da89722444bba87cfcd6595bb3a81a1338cb0ca252d5f' },
+  { from: 'rules/engineering.md', to: 'protocol.md', since: '2.2.0', was: '184a48399e02cf56ec3c29d6b1845a71d3411013dd52523600b4de71a01ef3c9' },
+  { from: 'rules/evidence.md', to: 'protocol.md', since: '2.2.0', was: 'ca94f29efe6c786b0824de4e36e8d7e57e0442381d43a8ded46f60cd17d767bd' },
   { from: 'rules/change-control.md', to: 'policies/execution.md', since: '2.2.0', was: '95c012cdec66b27ab025c591659a880484895cc9e4ff5864d07fe5412beb872d' },
   { from: 'rules/sub-agents.md', to: 'policies/execution.md', since: '2.2.0', was: 'e144175d0c08a0694dc6a15e997edd45646b031151f301fe31f2997bf9098e62' },
   { from: 'rules/artifacts.md', to: 'policies/artifacts.md', since: '2.2.0', was: '84c08a0cd9ee9473f8c18e475c6617757ad9f0a5b7c32b767fda3bc7953be6fa' },
   { from: 'rules/ownership.md', to: 'policies/artifacts.md', since: '2.2.0', was: 'fd91ca623bbd60c9fa990cbf996dd940fc5ad6bd952baea3fbd2417be59d8753' },
   { from: 'rules/placement.md', to: 'policies/artifacts.md', since: '2.2.0', was: 'd2bc66fbd7e39479ac52b18e64c2a3459bc8a1a871e946f915ce2f00d0bf905b' },
+  { from: 'policies/authority.md', to: 'protocol.md', since: '4.0.0', was: 'e67bba113de4adcd397a436c6233bfe4819f3442415bdddc317680c81e04d8a9' },
+  { from: 'policies/engineering.md', to: 'protocol.md', since: '4.0.0', was: '086fdb3d2362afe18267e5da7abb3d8997bd87fce9f2cceb90bdc8f727618360' },
 ];
 
 /**
@@ -78,6 +82,22 @@ export const MOVES = [
  * notice**, and most releases will not.
  */
 export const NOTICES = [
+  {
+    since: '4.0.0',
+    check:
+      'The tracker is now opt-in. Your .aep/rules/version-control.md takes three settings in ' +
+      'its frontmatter: tracker (none, github, or gitlab), setup (a command that readies a ' +
+      'fresh worktree), and stack (true where a stacking tool submits changes). Read with no ' +
+      'tracker field, a repository gets none: no issue, pull request, label, or forge call, ' +
+      'and the log.md of each effort is the whole run log. If you used issues and pull requests ' +
+      'under 3.x, set tracker to the forge your references/ names (github.md or gitlab.md), ' +
+      'or it stops. Efforts already in flight finish under the rules they started with: put ' +
+      'lane: full in the frontmatter of every spec.md that is draft or accepted (a spec with ' +
+      'no lane is read as full, so this makes visible what already holds). A new effort ' +
+      'picks quick, standard, or full when /specify opens it. The ticket branch is now ' +
+      '<effort>--<ticket>; existing branches keep their names. Every git and worktree step ' +
+      'runs through node .aep/scripts/aep.mjs.',
+  },
   {
     since: '3.5.0',
     check:
@@ -189,6 +209,8 @@ export const PAYLOAD_SCRIPTS = [
   'position.mjs',
   'scope.mjs',
   'reconcile.mjs',
+  'check.mjs',
+  'aep.mjs',
 ];
 
 /**
@@ -274,7 +296,7 @@ export const RETIRED_DIRS = [
 ];
 
 /** Directories that stay local to a working tree and are gitignored. */
-export const PER_CLONE_DIRS = ['position', 'worktrees'];
+export { PER_CLONE_DIRS } from './contract.mjs';
 
 /**
  * A detected reference seed. Every reference is named for its tool, lands at

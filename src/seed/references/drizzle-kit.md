@@ -40,6 +40,6 @@ run it against anything shared, and never run it to skip generating a migration.
   is not the one you edited.
 - `check` reporting a conflict means two branches generated migrations from the
   same parent. Resolving that by deleting a migration discards whatever already
-  ran against a real database — raise it (`[[policies/engineering]]`).
+  ran against a real database — raise it (`[[protocol]]`).
 - **Never point any of these at a production or shared database**, and never run
   a migration outside a local environment unasked.

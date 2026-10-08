@@ -37,5 +37,5 @@ Python — which is the failure that produces "it works locally" most often here
 - A package that imports in one shell and not another is almost always the wrong
   interpreter. `uv run python -c "import sys; print(sys.executable)"` settles it.
 - Adding a dependency is an architectural decision and goes to the human with
-  its alternatives (`[[policies/engineering]]`).
+  its alternatives (`[[protocol]]`).
 - **Never publish.** `uv publish` reaches an index.

@@ -34,7 +34,7 @@ operation, and neither is run unasked.
 
 Row-level security is the access model. **A policy widened to make a query work
 is a security change**, not a fix — raise it with what it exposes
-(`[[policies/engineering]]`).
+(`[[protocol]]`).
 
 ## Failure handling
 

@@ -58,7 +58,7 @@ no form and is not touched. `src/skills/implement.md`, `review.md`, and
   them is not, and fails this ticket.
 - **Stay bounded.** Seventeen files open at once is the classic invitation to fix
   something else in passing. An improvement noticed here is raised, not taken
-  (`[[policies/engineering]]`).
+  (`[[protocol]]`).
 - Do not add a position read to any skill. Ticket 05 owns that check and pins the
   four that have one.
 

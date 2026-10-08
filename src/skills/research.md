@@ -22,7 +22,7 @@ say" has succeeded.
 
 The uncertainty is **factual** and external: an API's actual behaviour, a
 library's guarantees, a specification's wording, a platform's limits, whether a
-known issue is fixed. `[[policies/engineering]]` routes the other kinds elsewhere —
+known issue is fixed. `[[protocol]]` routes the other kinds elsewhere —
 argument cannot settle a fact, and neither can a prototype settle what a
 specification says.
 

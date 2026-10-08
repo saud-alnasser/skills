@@ -31,7 +31,7 @@ ruff check <path> --statistics   # which rules fire, and how often
   reading the diff.
 - **Never add `# noqa` or widen `ignore` to make a run green.** That edits what
   this repository enforces, and it is the human's call
-  (`[[policies/engineering]]`).
+  (`[[protocol]]`).
 - `ruff format` and a separately configured Black or line-length setting will
   fight. Two formatters is a finding about the setup, not a per-file problem.
 - A rule firing on files you did not touch means the rule set changed, or those

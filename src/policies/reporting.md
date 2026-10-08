@@ -1,216 +1,91 @@
 ---
-use-when: "about to write anything a human will read — session output, a commit message, a pull request, a code comment, a README — or a turn's opening or closing block does not take the shape it should"
+use-when: "about to write anything a human will read: session output, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should"
 ---
 
 # Policy — what the human reads
 
-Everything an agent writes for a human is governed here. **How it reads** is
-fixed for all of it. **What shape it takes** is fixed for the turn report, which
-the second half of this policy defines.
+## Who reads it decides
 
-## Who reads it decides whether it is governed
-
-**A human reads it, it is governed. A protocol agent reads it, it is exempt** —
-and exempt means written for that reader instead, never written carelessly.
-
-The two lists are worked examples of that test rather than the definition of it.
-A case on neither list is settled by asking who reads it.
+**A human reads it: governed. A protocol agent reads it: exempt**, which means
+written for that reader, never carelessly. A case on neither list is settled by
+asking who reads it.
 
 | Governed | Exempt |
 | --- | --- |
 | session output, at every point in a turn | prose inside `.aep/` artifacts |
-| a commit message, a pull request title or body | normative protocol text, wherever it lives |
+| a commit message, a pull request title or body | normative protocol text, wherever it lives, even at a repository root |
 | a comment or docstring in source | a brief written for a sub-agent |
 | what a script prints to a person | data a script writes into an artifact an agent reads |
-| repository documentation — a README, a changelog, a docs page | |
-
-**A normative protocol document is exempt even at a repository root.** It is
-`.aep/` prose that happens to sit elsewhere, its reader is the agent building
-against it, and it is where the vocabulary is defined that a catalogue of tells
-would otherwise flag.
-
-*Why a test and not only a list: a list settles the cases somebody thought of,
-and every case it missed gets decided by whoever hits it first, differently each
-time. The test decides the ones nobody enumerated — which is most of them.*
+| repository documentation: a README, a changelog, a docs page | |
 
 ## How it reads
 
-Governed text is written for the person reading it. Say what happened, name the
-mechanism rather than the feeling, and cut what would read the same in any other
-repository.
-
-**Four prohibitions, and they are here rather than in the catalogue because a
-script can check them:**
-
-- **No em dashes.** Where a thought needs separation, the sentence ends or takes
-  a comma. Parentheses, an en dash, and a hyphen standing in for one do not
-  satisfy this: they trade one tell for another.
-- **No curly quotes.** Straight quotes, both kinds.
-- **No decorative emoji**, in a heading or beside a list item.
-- **No title-case headings.** Sentence case.
-
-Everything else about how text reads is craft rather than law, and craft lives in
-`[[skills/prose]]` — the patterns that mark writing as machine-made, how to spot
-each one, and what to do about it. Reach for it whenever you are about to emit
-governed text, and whenever text you are editing reads as though nobody wrote it.
-
-*Why the split: a skill that carried the prohibitions would be governance under
-another name, which the protocol forbids, and a policy that carried the whole
-catalogue would be thirty rules where four are checkable.*
-
-## Every turn reports, in one shape
-
-Every turn reports, in one shape, whichever skill is running. The shape does not
-vary by skill, by runtime, or by how large the work turned out to be.
-
-*Why one shape: a human who has to read every output from the top cannot find
-anything by position, and the first thing they stop reading is the line that
-would have told them the run went somewhere they did not intend.*
-
-## The unit is the turn
-
-**One thing the human asked for produces one opening report and one closing
-block**, emitted by the outermost skill.
-
-A skill entered from inside another — `[[skills/review]]` from
-`[[skills/implement]]`'s close-out, `[[skills/tdd]]`, `[[skills/domain]]`,
-and `[[skills/prose]]` as sub-skills — is a **stage of the run it is inside**. It
-opens no report of its own. Everything it produces is unaffected; only the
-preamble is not repeated.
-
-*Why: one request can enter four skills, and four preambles for one request is
-ceremony — and ceremony is skipped, which makes this policy advisory in fact.*
+Write for the person reading it: say what happened, name the mechanism rather
+than the feeling, and cut what would read the same in any other repository. The
+four prohibitions are in the protocol. Load `[[skills/prose]]` only when writing
+a README, a pull request body, a changelog, or docs, or when text you are
+editing reads as though nobody wrote it.
 
 ## The turn report
 
-**Four slots, one line each**, and a ledger between them:
+**One request, one report**, emitted once, at the end of the turn, by the
+outermost skill. A skill entered from inside another (`[[skills/review]]` at
+the close, `[[skills/tdd]]`, `[[skills/domain]]`, `[[skills/prose]]`) is a
+stage of that run and reports nothing of its own. The shape does not vary by
+skill, runtime, or size.
 
-| Slot | States |
-| --- | --- |
-| **Position** | the state this skill establishes on entry, verified |
-| **Assuming** | what is being proceeded on without verification |
-| **State** | where the work now stands |
-| **Next** | the near next step, and what would clear a stop |
-
-The first two open the turn and the last two close it, with everything the run
-produced in between:
+The work (findings, diffs, graphs, the ledger) comes first, uncut. Then nine
+lines, one each, in this order:
 
 ```
-Position   ...
-Assuming   ...
-
-  the work: findings, diffs, graphs, whatever the skill produces
-  the ledger
-
-State      ...
-Next       ...
+Doing           what this turn was asked to do
+Lane            quick | standard | full, or "none" outside an effort
+Position        the `summary` aep printed, or what the skill verified on entry
+Assuming        what was proceeded on unverified
+Done            what changed, with commits
+Stopped on      the stop and its reason, or "nothing"
+Needs you       the human's decisions, or "nothing"
+Outside writes  "none", or each path outside the project and why
+Next            the next step, and what would clear a stop
 ```
 
-**One line each is the whole constraint.** A slot that will not fit in a line is
-a slot carrying the work rather than framing it, and the work goes between them
-where nothing shortens it.
+- **A slot with nothing to say says so.** It is never dropped.
+- **One line each.** A slot that will not fit is carrying the work; the work goes
+  above.
+- **`Position` holds only what the skill already verifies**, never a new check,
+  and no skill reads position just to fill it:
 
-*Why four and not seven: a run over a whole effort emits this once and a ledger
-line per ticket, so every line spent on the frame is paid against the thing the
-human is actually reading. Three of the old slots restated what the ledger and
-the skill's own output already said.*
-
-**A slot with nothing to put in it says so.** It is never dropped, and the report
-is never three slots long.
-
-*Why: silence is indistinguishable from a check that never ran, and a slot that
-may be omitted is where uniformity leaks away, because the human stops reading by
-position and starts reading by label.*
-
-### `Position` is filled with what the skill already verifies
-
-**Never with a new check.** Each skill puts in it whatever state it establishes
-on entry anyway:
-
-| Skill | Position holds |
-| --- | --- |
-| `[[skills/implement]]` | the claim, the isolation, and the marker's answer for the surface it entered |
-| `[[skills/install]]` | *nothing to verify*: no marker exists yet, and this run writes the first one |
-| `[[skills/prune]]` | the claim, the isolation, the marker's answer, and what the validator printed |
-| `[[skills/review]]` | the pinned merge-base, and that the subject is non-empty |
-| `[[skills/specify]]` | the claim and the isolation of the surface it was invoked in, beside the marker's answer |
-| `[[skills/survey]]` | the claim, the isolation, the marker's answer, and the bound the survey took |
-| a skill that reads no repository state | *nothing to verify*, said plainly |
-
-**A row says what that skill puts in the slot. It never says a skill must read
-the position**, and the last row is the answer for every skill with no row of its
-own.
-
-*Why the slot is fixed but its content is not: making every skill read the
-position would buy uniformity with a behavioural change nobody asked for, and
-most skills have no position to read.*
-
-### `Next` carries what would clear a stop
-
-**A turn that stops early closes with the same four slots**, and names in `Next`
-what would clear it. An empty frontier, a refused permission, a request that
-routes elsewhere, a conflict surfaced rather than resolved: each ends the turn,
-and each is a stop the reader can act on only if it says what to do.
-
-*Why in `Next` rather than a slot of its own: a stop with nothing to act on is
-the failure, and putting the remedy anywhere but the slot the reader looks at for
-what happens next is how it gets missed.*
+  | Skill | Position holds |
+  | --- | --- |
+  | `[[skills/implement]]`, `[[skills/tasks]]` | the `summary` `aep start` printed, and the marker's answer |
+  | `[[skills/specify]]` | the claim, isolation, and marker of the surface it was invoked in |
+  | `[[skills/prune]]` | the claim, isolation, marker, and what the validator printed |
+  | `[[skills/survey]]` | the claim, isolation, marker, and the bound the survey took |
+  | `[[skills/review]]` | the claim, isolation, pinned merge-base, and that the subject is non-empty |
+  | `[[skills/install]]` | *nothing to verify*: this run writes the first marker |
+  | a skill that reads no repository state | *nothing to verify* |
+- **A stop names its remedy in `Next`**: an empty frontier, a refused
+  permission, a request that routes elsewhere, a conflict surfaced rather than
+  resolved.
+- **`Needs you` is what `aep status` shows the human.** Record each item with
+  `aep record <effort> --needs-you` as well as reporting it.
 
 ## The ledger
 
-**One line per unit of work, marked as it is crossed.** Each carries the unit,
-how many of its acceptance criteria are verified, and the commit it landed as:
+One line per unit of work, written by `aep land` into the effort's `log.md`
+`## Ledger` as it is crossed. The report shows the same lines, in the same
+order, with the commit beside each, read from git and never stored:
 
 ```
-[x] 04 modes-folded        4/4   4b207bf
-[x] 05 skills-cut          6/6   9c1e2aa
-[ ] 10 runner-loop         0/7
+[x] 04 modes-folded   4/4   4b207bf
+[ ] 10 runner-loop    0/7
 ```
 
-A run that crosses one unit emits one line. A run that crosses ten emits ten, and
-still four slots.
+A resumed run reads the log copy. Its labels, columns, and order stay stable
+enough to parse; inside a cell, it reads as a person wrote it.
 
-### It is written for two readers at once
+## Not covered here
 
-The human reads it as progress. **The run that wrote it re-reads its own lines to
-recover where it is**, which is what lets a long run survive a session boundary
-without a separate record of state.
-
-So it is governed twice over, and both at the same time: it reads as a person
-wrote it, **and** its labels, columns, and order are stable enough to be parsed
-by the run that emitted them. Where the two pull against each other, stability
-wins on the structure and the prose wins inside a cell.
-
-**This is the one narrowing of the exemption above.** Text a protocol agent reads
-is otherwise exempt from how governed text reads, because it is written for that
-reader instead. The ledger has two readers, so it forfeits the exemption without
-losing the stability the machine reader needs.
-
-*Why not two artifacts: a ledger for the human and a state file for the run
-disagree the moment one is written and the other is not, and the disagreement is
-invisible until a resumed run acts on the stale one.*
-
-### It is emitted in the turn and kept in the run log
-
-The copy in the turn report is what the human reads now. The durable copy lives
-in the pull request's collapsed run log, written as each line is crossed rather
-than at the close (`[[policies/execution]]`), which is the copy a resumed run
-reads.
-
-**Same lines, same order, same columns.** Not a summary of one in the other: two
-renderings of one ledger diverge, and the run reads whichever it finds.
-
-## What this policy is not
-
-- **Not a rendering.** It governs what is stated, in what order, and how it
-  reads. How a runtime paints it is the runtime's business, and this policy names
-  no runtime.
-- **Not the sub-agent contract.** What a child returns to its orchestrator —
-  done, failed, stopped, waiting — is `[[policies/execution]]`'s, is not
-  human-facing, and is untouched here. The question a child records for a human
-  is the exception, and that policy says how it reaches one.
-- **Not a register.** Whether the agent is terse or warm is its own business.
-  This governs the tells, not the manner.
-- **Not a cap on output.** Findings, graphs, diffs, and reports a skill produces
-  are its output. They sit between the opening report and the closing block, and
-  nothing here shortens them.
+How a runtime renders the report; what a child returns to its orchestrator
+(`[[policies/execution]]`); the agent's register; and how much output a skill
+produces.

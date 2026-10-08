@@ -47,10 +47,6 @@ specific to any runtime.
 **Point; never restate.** Do not summarise the primitives, the workflow, the
 invariants, or any rule into the entrypoint.
 
-*Why: a summary in the entrypoint is a second home for something that already
-has one, and it is the copy that drifts — it is the file people edit when they
-want to "just add one thing", and nothing checks it against the protocol.*
-
 If something must be true on every turn and is not in `[[protocol]]`, that is a
 finding about the protocol, or it is a repository rule with a `use-when`. It is
 not a paragraph in the entrypoint.

@@ -2,6 +2,9 @@
 #
 # Position is this working tree's operational state and must never be shared: a
 # committed marker always describes somebody else's tree. Worktrees are isolated
-# checkouts, which are infrastructure rather than knowledge.
+# checkouts, which are infrastructure rather than knowledge. Scratch is a run's
+# throwaway files (handoffs, notes, drafts), kept inside the project so nothing
+# is written outside it, and never committed.
 position/
+scratch/
 worktrees/

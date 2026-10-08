@@ -38,6 +38,6 @@ depends on a hook that may not have loaded.
 - A tool resolving to the system version means mise is installed but not
   activated for that shell. `mise doctor` says so.
 - Changing a pin changes what everyone builds with. That is a decision, not a
-  step (`[[policies/engineering]]`).
+  step (`[[protocol]]`).
 - Some backends run install scripts from upstream. Adding a new tool to the pins
   is worth raising rather than doing quietly.

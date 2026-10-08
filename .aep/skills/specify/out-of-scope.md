@@ -16,9 +16,7 @@ one applies is decided by **how far the decision reaches**.
 | about **this change** — a boundary drawn around one effort | that effort's `# Out of Scope`, which `[[skills/specify]]` already requires |
 | about **this repository** — a thing it does not do, and will not | a `[[contexts]]`, because it orients anyone who arrives with the same idea |
 
-The second is the one that gets skipped, and it is the one that pays. A boundary
-recorded only inside a closed effort is invisible to the next person, who opens a
-fresh request in different words.
+The second is the one that gets skipped. Record it there.
 
 ## The repository-level form
 
@@ -77,4 +75,4 @@ Three answers, and all three are the human's:
 
 **Never decline a request yourself on the strength of a match.** The entry is
 evidence that a human decided this once; it is not standing authority to decide
-it again (`[[policies/engineering]]`).
+it again: humans decide (`[[protocol]]`).
