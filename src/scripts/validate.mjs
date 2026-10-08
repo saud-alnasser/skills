@@ -14,11 +14,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   PROTOCOL_DIRS,
   REPOSITORY_DIRS,
   PER_CLONE_DIRS,
   FORBIDDEN_DIRS,
+  LANES,
   SPEC_STATUSES,
   TICKET_STATUSES,
   USE_WHEN_REQUIRED_DIRS,
@@ -143,6 +145,10 @@ function checkArtifact(root, file) {
     }
   } else if (isSpec) {
     fail(rel, 'an effort spec.md must declare status');
+  }
+  if (fields.lane !== undefined) {
+    if (!isSpec) fail(rel, 'lane is legal only on an effort spec.md');
+    else if (!LANES.includes(fields.lane)) fail(rel, `lane is "${fields.lane}", must be one of: ${LANES.join(', ')}`);
   }
   if (fields['blocked-by'] !== undefined && !isTicket) {
     fail(rel, 'blocked-by is legal only on a local ticket');
@@ -299,7 +305,9 @@ function checkStructure(root) {
   if (!fs.existsSync(protocolFile)) {
     fail('protocol.md', 'missing. It is the bootstrap and everything starts there');
   } else {
-    const size = fs.statSync(protocolFile).size;
+    // Counted with LF endings, so a checkout that converts them to CRLF does
+    // not fail a budget the committed file meets.
+    const size = Buffer.byteLength(fs.readFileSync(protocolFile, 'utf8').replace(/\r\n/g, '\n'), 'utf8');
     if (size > PROTOCOL_BUDGET_BYTES) {
       fail('protocol.md', `${size} bytes exceeds the ${PROTOCOL_BUDGET_BYTES}-byte bootstrap budget`);
     }
@@ -529,16 +537,15 @@ function checkStrays(root) {
   }
 }
 
-function main() {
-  const args = process.argv.slice(2);
-  const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
-  const quiet = args.includes('--quiet');
-
-  const root = resolveAepRoot(rootArg, import.meta.url);
-  if (!root) {
-    process.stderr.write('no .aep/ found. Pass --root, or run from a repository that has one\n');
-    process.exit(2);
-  }
+/**
+ * Validates the tree at `root` (a `.aep/` directory). Returns what failed, how
+ * many artifacts were checked, and which implemented efforts traceability
+ * skipped. Safe to call more than once in a process.
+ */
+export function validateTree(root) {
+  failures.length = 0;
+  skippedEfforts.length = 0;
+  checked = 0;
 
   checkStructure(root);
   checkStrays(root);
@@ -553,6 +560,21 @@ function main() {
   if (!fs.existsSync(indexFile)) {
     fail('index.md', 'missing. Run: node .aep/scripts/index.mjs');
   }
+  return { failures: [...failures], checked, skippedEfforts: [...skippedEfforts] };
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const rootArg = args.includes('--root') ? args[args.indexOf('--root') + 1] : null;
+  const quiet = args.includes('--quiet');
+
+  const root = resolveAepRoot(rootArg, import.meta.url);
+  if (!root) {
+    process.stderr.write('no .aep/ found. Pass --root, or run from a repository that has one\n');
+    process.exit(2);
+  }
+
+  validateTree(root);
 
   if (failures.length === 0) {
     if (!quiet) {
@@ -579,4 +601,4 @@ function main() {
   process.exit(1);
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();

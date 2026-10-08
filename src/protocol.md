@@ -48,7 +48,8 @@ but never soften it.
 ├── policies/      AEP's governance      rules/  yours
 ├── agents/  contexts/  references/  scripts/  skills/
 ├── templates/     skeletons for authoring a new artifact
-├── efforts/<effort>/{spec.md, evidence/{research,prototypes}/, tickets/}
+├── friction.md    what got in the way, appended at close
+├── efforts/<effort>/{spec.md, log.md, evidence/{research,prototypes}/, tickets/}
 ├── position/      per working tree, gitignored
 ├── scratch/       per working tree, gitignored
 └── worktrees/     isolated checkouts, gitignored
@@ -140,9 +141,9 @@ from a file's contents.
 | AEP's — installed verbatim, replaced by upgrades | Yours — an upgrade never touches it |
 | --- | --- |
 | `policies/` `skills/` `agents/` `templates/` `scripts/` | `rules/` `contexts/` `references/` `efforts/` |
-| `protocol.md`, this file | `index.md`, derived and regenerated in place |
+| `protocol.md`, this file | `index.md`, derived and regenerated in place; `friction.md`, appended by `aep close` |
 
-Both root files are named because no directory rule reaches them. Variation with
+The root files are named because no directory rule reaches them. Variation with
 nowhere to enter is a **declared deviation**: record it in a repository rule,
 with its reason — never by quietly editing AEP's text.
 

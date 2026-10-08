@@ -32,6 +32,8 @@ import {
   PROTOCOL_FILES,
   PROTOCOL_ROOT_FILES,
   REPOSITORY_ROOT_FILES,
+  LANES,
+  LANE_RULES,
   SPEC_STATUSES,
   STATUS_LADDER,
   isProtocolPath,
@@ -3671,14 +3673,25 @@ section('forbidden', () => {
     const starts = /(?<![.\w])(exec|execSync|execFile|execFileSync|spawn|spawnSync)\s*\(/g;
     const offending = [];
     let swept = 0;
+    let setupRuns = 0;
     for (const name of PAYLOAD_SCRIPTS) {
       const file = path.join(SRC, 'scripts', name);
       if (!fs.existsSync(file)) throw new Error(`${name} is registered and not shipped`);
       const source = fs.readFileSync(file, 'utf8');
       swept += 1;
+      // The one deliberate exception: aep.mjs runs the command the repository
+      // wrote into its own `setup:` setting, and only inside `runSetup`. It is
+      // the repository's command, not a forge call AEP chose to make.
+      const setupAt = name === 'aep.mjs' ? source.indexOf('\nfunction runSetup(command, cwd) {') : -1;
+      const setupEnd = setupAt === -1 ? -1 : source.indexOf('\n}\n', setupAt);
       for (const match of source.matchAll(starts)) {
         const after = source.slice(match.index + match[0].length).trimStart();
         const literal = /^(['"\`])([^'"\`]*)\1/.exec(after);
+        if (!literal && match.index > setupAt && match.index < setupEnd && setupAt !== -1
+          && /^command,\s*\{\s*cwd,\s*shell:\s*true\b/.test(after)) {
+          setupRuns += 1;
+          continue;
+        }
         if (!literal) throw new Error(`${name} calls ${match[1]} with a command this cannot read`);
         const command = literal[2].trim().split(/\s+/)[0];
         if (command !== 'git') offending.push(`${name} starts ${command}`);
@@ -3686,7 +3699,14 @@ section('forbidden', () => {
     }
     if (swept !== PAYLOAD_SCRIPTS.length) throw new Error('the sweep read fewer scripts than ship');
     if (offending.length > 0) throw new Error(offending.join('; '));
+    if (setupRuns !== 1) throw new Error(`expected exactly one setup run in aep.mjs, found ${setupRuns}`);
     return true;
+  });
+  // And the exception is reached only from the repository's own setting.
+  assert('aep.mjs runs only the command the repository wrote into setup:', () => {
+    const source = fs.readFileSync(path.join(SRC, 'scripts', 'aep.mjs'), 'utf8');
+    const calls = [...source.matchAll(/(?<!function )runSetup\(([^,]+),/g)].map((m) => m[1].trim());
+    return calls.length === 1 && calls[0] === 'settings.setup';
   });
   // The sweep above passes trivially on a list that does not contain the script
   // it was written for, which is how ticket 45.26's version once passed green
@@ -8621,8 +8641,15 @@ section('scope surfaces', () => {
   }
 
   const seedRule = flat(readSrc('seed', 'rules', 'version-control.md'));
-  assert('the seeded rule namespaces a ticket branch by its effort', () =>
-    /`<effort>\/<ticket-id>-<slug>`/.test(seedRule));
+  assert('the seeded rule prefixes a ticket branch with its effort', () =>
+    /`<effort>--<ticket-id>-<slug>`/.test(seedRule));
+  // `/` is what 3.x shipped, and git refuses `<effort>/<ticket>` while a branch
+  // named `<effort>` exists, so a run following it could never cut a child.
+  // A worktree path is `<effort>/<ticket>` and stays so; only a branch moves.
+  const nestedBranch = /(?:-b\s+|`|branch\s+)<effort>\/<ticket-id>/;
+  assert('no shipped text names a ticket branch nested under its effort', () =>
+    !nestedBranch.test(seedRule) && !nestedBranch.test(implement)
+    && !nestedBranch.test(flat(readSrc('seed', 'references', 'git.md'))));
   assert('the seeded rule says why the namespace exists', () =>
     /restart at `01`/.test(seedRule) && /\[\[policies\/execution\]\]/.test(seedRule));
   assert('no shipped rule still names a bare ticket branch', () =>
@@ -8630,8 +8657,8 @@ section('scope surfaces', () => {
   // The runner shows the branch names a run creates, so a bare example there
   // contradicts the rule shipped beside it, and a repository following both
   // gets two answers for one name.
-  assert('the runner shows a ticket branch namespaced by its effort', () =>
-    /ticket branch\s+`?<effort>\/<ticket-id>-<slug>/.test(implement)
+  assert('the runner shows a ticket branch prefixed with its effort', () =>
+    /ticket branch\s+`?<effort>--<ticket-id>-<slug>/.test(implement)
     && !/ticket branch\s+`?<ticket-id>-<slug>/.test(implement));
   assert('the seeded rule says where a new effort branch is based, both shapes', () =>
     /A new effort's branch is based on/.test(seedRule)
@@ -8774,6 +8801,28 @@ section('check', () => {
     assert('a seeded tree is not clean', () => !seeded.ok);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// The command line's own tests drive git and worktrees through real
+// repositories, so they live in `tests/` and run under `node --test`. This
+// section is the hook that keeps verify from going green without them.
+section('command line', () => {
+  const lanes = LANES.join(' ');
+  assert('the lanes are quick, standard, and full, lowest first', () => lanes === 'quick standard full');
+  assert('a lane only adds work: tickets, children, and rounds never fall going up', () =>
+    LANES.every((lane, i) => i === 0 || ['converge', 'review', 'reviewers'].every((key) =>
+      LANE_RULES[lane][key] >= LANE_RULES[LANES[i - 1]][key])));
+  assert('aep.mjs ships', () => PAYLOAD_SCRIPTS.includes('aep.mjs'));
+  const testFile = path.join(path.dirname(SRC), 'tests', 'aep.test.mjs');
+  assert('the command line has tests', () => fs.existsSync(testFile));
+  if (fs.existsSync(testFile)) {
+    const run = spawnSync(process.execPath, ['--test', testFile], { encoding: 'utf8', cwd: path.dirname(SRC) });
+    const summary = /ℹ pass (\d+)[\s\S]*?ℹ fail (\d+)/.exec(run.stdout ?? '');
+    assert('node --test tests/aep.test.mjs passes', () => {
+      if (run.status !== 0) throw new Error((run.stdout ?? '').split(/\r?\n/).filter((l) => /^✖|Error/.test(l)).slice(0, 6).join(' | '));
+      return summary !== null && Number(summary[1]) >= 16 && summary[2] === '0';
+    });
   }
 });
 

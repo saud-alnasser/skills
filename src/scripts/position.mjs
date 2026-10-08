@@ -29,6 +29,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { resolveAepRoot } from './contract.mjs';
 
 /** Runs git, returning null rather than throwing. Every caller treats absence as "unknown". */
@@ -103,6 +104,50 @@ function writeMarker(root, marker) {
   fs.writeFileSync(file, `${JSON.stringify(marker, null, 2)}\n`, 'utf8');
 }
 
+/**
+ * Stamps the marker for the tree at `root` (a `.aep/` directory) and returns it.
+ * Stamping preserves what it was not told about. With a session the caller's
+ * identity is recorded; without one the field is untouched, so a runtime that
+ * supplies no identifier stamps exactly as before.
+ */
+export function stampMarker(root, session = null) {
+  const repo = path.dirname(root);
+  const existing = readMarker(root);
+  const previous = Array.isArray(existing?.sessions) ? existing.sessions : [];
+  const marker = {
+    tree: treeFingerprint(repo),
+    head: head(repo),
+    sessions: session ? recordSession(previous, session) : previous,
+  };
+  writeMarker(root, marker);
+  return marker;
+}
+
+/**
+ * Compares the marker with the tree at `root`. `matches` licenses skipping the
+ * drift read, and nothing else.
+ */
+export function checkMarker(root) {
+  const repo = path.dirname(root);
+  const marker = readMarker(root);
+  if (!marker || (!marker.head && !marker.tree)) {
+    return { matches: false, unset: true, message: 'marker: unset. Read drift live; nothing has been established about this tree' };
+  }
+  const currentHead = head(repo);
+  const headMoved = marker.head !== currentHead;
+  const treeMoved = marker.tree !== treeFingerprint(repo);
+  if (!headMoved && !treeMoved) {
+    return {
+      matches: true,
+      message: 'marker: matches. An earlier run already read this exact tree\nthis licenses skipping the drift read, and nothing else',
+    };
+  }
+  const lines = [];
+  if (headMoved) lines.push(`head moved: ${marker.head ?? 'unknown'} -> ${currentHead ?? 'unknown'}`);
+  if (treeMoved) lines.push('working tree changed since the marker was written');
+  return { matches: false, headMoved, treeMoved, message: lines.join('\n') };
+}
+
 function main() {
   const args = process.argv.slice(2);
   const flag = (name) => {
@@ -132,51 +177,22 @@ function main() {
   }
 
   if (command === 'stamp') {
-    const existing = readMarker(root);
-    const previous = Array.isArray(existing?.sessions) ? existing.sessions : [];
-    const marker = {
-      tree: treeFingerprint(repo),
-      head: head(repo),
-      // Stamping preserves what it was not told about. With `--session` the
-      // caller's identity is recorded; without one the field is untouched, so
-      // a runtime that supplies no identifier stamps exactly as before.
-      sessions: session ? recordSession(previous, session) : previous,
-    };
-    writeMarker(root, marker);
-    process.stdout.write(`stamped head=${marker.head ?? 'unknown'} tree=${marker.tree?.slice(0, 12) ?? 'unknown'}\n`);
+    const marker = stampMarker(root, session);
+    process.stdout.write(`stamped head=${marker.head ?? 'unknown'} tree=${marker.tree?.slice(0, 12) ?? 'unknown'}
+`);
     return;
   }
 
   if (command === 'check') {
-    const marker = readMarker(root);
-    const currentHead = head(repo);
-    const currentTree = treeFingerprint(repo);
-
-    if (!marker || (!marker.head && !marker.tree)) {
-      process.stdout.write('marker: unset. Read drift live; nothing has been established about this tree\n');
-      process.exit(1);
-    }
-
-    const headMoved = marker.head !== currentHead;
-    const treeMoved = marker.tree !== currentTree;
-
-    if (!headMoved && !treeMoved) {
-      process.stdout.write('marker: matches. An earlier run already read this exact tree\n');
-      process.stdout.write('this licenses skipping the drift read, and nothing else\n');
-      return;
-    }
-
-    if (headMoved) {
-      process.stdout.write(`head moved: ${marker.head ?? 'unknown'} -> ${currentHead ?? 'unknown'}\n`);
-    }
-    if (treeMoved) {
-      process.stdout.write('working tree changed since the marker was written\n');
-    }
-    process.exit(1);
+    const result = checkMarker(root);
+    process.stdout.write(`${result.message}
+`);
+    if (!result.matches) process.exit(1);
+    return;
   }
 
   process.stderr.write(`unknown command "${command}". Expected read, stamp, or check\n`);
   process.exit(2);
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();

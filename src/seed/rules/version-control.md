@@ -40,16 +40,18 @@ Conventional Commits — `type(scope): summary`.
 ## Branches
 
 One branch per ticket, cut from the branch its effort is on and named
-`<effort>/<ticket-id>-<slug>`, where `<effort>` is the effort directory's own
-name: `51-branch-scope/03-execution-policy`.
+`<effort>--<ticket-id>-<slug>`, where `<effort>` is the effort directory's own
+name: `51-branch-scope--03-execution-policy`. The separator is `--`, not `/`,
+because git cannot create `<effort>/...` while the effort branch `<effort>`
+exists.
 
-**The namespace is what makes the name unique**, and uniqueness across efforts
+**The prefix is what makes the name unique**, and uniqueness across efforts
 is required (`[[policies/execution]]`). Ticket ids restart at `01` in every
 effort, so two efforts each holding a ticket `03` want one bare `03-<slug>` for
 two different claims. Under a runtime that gives each thread its own worktree,
 git refuses the second outright; without one, the second run quietly takes a
-claim the first is already holding. The namespace also gives a fresh branch an
-effort before it has any commits: the first segment is an effort directory name,
+claim the first is already holding. The prefix also gives a fresh branch an
+effort before it has any commits: what precedes `--` is an effort directory name,
 and that is the only signal a branch with nothing on it carries.
 
 **Existing branches keep the names they have.** The convention is forward-only:

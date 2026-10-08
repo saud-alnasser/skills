@@ -53,7 +53,7 @@ export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
  */
 export const PER_CLONE_DIRS = ['position', 'scratch', 'worktrees'];
 export const PROTOCOL_ROOT_FILES = ['protocol.md'];
-export const REPOSITORY_ROOT_FILES = ['index.md'];
+export const REPOSITORY_ROOT_FILES = ['index.md', 'friction.md'];
 
 // generated:protocol-files. Run `node src/scripts/manifest.mjs`
 export const PROTOCOL_FILES = [
@@ -68,6 +68,7 @@ export const PROTOCOL_FILES = [
   'policies/execution.md',
   'policies/reporting.md',
   'protocol.md',
+  'scripts/aep.mjs',
   'scripts/check.mjs',
   'scripts/contract.mjs',
   'scripts/frontier.mjs',
@@ -281,6 +282,23 @@ export function useWhenProblems(value, { heading = '', name = '', directory = ''
 /** Legal `status` values, by what declares them. */
 export const SPEC_STATUSES = ['draft', 'accepted', 'implemented'];
 export const TICKET_STATUSES = ['open', 'resolved', 'obsolete'];
+
+/**
+ * The lanes an effort runs in, lowest first, and what each one runs. A spec
+ * declares `lane:`; one without it is `full`, which is how every effort ran
+ * before lanes. A lane only goes up.
+ *
+ *   tickets   whether the work is split into tickets, or the spec is the ticket
+ *   children  whether a wave of two or more ready tickets is dispatched
+ *   converge  the most converge rounds a run takes
+ *   review    the most review rounds, and the reviewers per round
+ */
+export const LANES = ['quick', 'standard', 'full'];
+export const LANE_RULES = {
+  quick: { tickets: false, children: false, converge: 0, review: 0, reviewers: 0 },
+  standard: { tickets: true, children: false, converge: 1, review: 1, reviewers: 1 },
+  full: { tickets: true, children: true, converge: 2, review: 2, reviewers: 2 },
+};
 
 /**
  * The status ladder, as rows a script can compute with.

@@ -157,7 +157,7 @@ statement you are about to rely on is still checked against the source
 
 ```
 effort branch      <effort>                     aep-3
-ticket branch      <effort>/<ticket-id>-<slug>  aep-3/17-assignment-and-claim
+ticket branch      <effort>--<ticket-id>-<slug> aep-3--17-assignment-and-claim
 ```
 
 The effort branch is created once and every wave lands on it, **in the run's own

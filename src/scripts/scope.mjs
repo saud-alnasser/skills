@@ -175,7 +175,8 @@ function treeIndex(root) {
 /**
  * The effort a branch name names, for a branch with no commits of its own.
  *
- * Three forms, in order: the effort directory itself, an `<effort>/...` prefix,
+ * Three forms, in order: the effort directory itself, an `<effort>--...` prefix
+ * (or the 3.x `<effort>/...`, which git cannot create beside an `<effort>` branch),
  * and a ticket filename exactly one effort holds. Ticket ids restart per
  * effort, so a filename two efforts both carry names neither of them.
  *
@@ -186,7 +187,7 @@ export function claimFromName(branch, index) {
   if (!branch) return [];
   if (index.names.includes(branch)) return [branch];
 
-  const [first] = branch.split('/');
+  const [first] = branch.split(/\/|--/);
   if (first !== branch && index.names.includes(first)) return [first];
 
   const holders = index.tickets.get(branch);

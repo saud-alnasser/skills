@@ -190,6 +190,7 @@ export const PAYLOAD_SCRIPTS = [
   'scope.mjs',
   'reconcile.mjs',
   'check.mjs',
+  'aep.mjs',
 ];
 
 /**

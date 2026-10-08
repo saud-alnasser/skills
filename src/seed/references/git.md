@@ -64,13 +64,15 @@ shells and mangle the body silently.
 # Anchored on the main checkout, because the path is what decides a run's role.
 # Relative, git resolves it against the cwd, which nests one surface in another.
 # <main> is the first entry of `git worktree list --porcelain`.
-git worktree add <main>/.aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>/<ticket-id>-<slug>
+git worktree add <main>/.aep/worktrees/<effort>/<ticket-id>-<slug> -b <effort>--<ticket-id>-<slug>
 git worktree list
 git worktree remove <main>/.aep/worktrees/<effort>/<ticket-id>-<slug>
 ```
 
-The branch name carries the effort as a namespace. Ticket ids restart at `01` in
-every effort, so a bare `03-shared-id` is a name two efforts can both want.
+The branch name carries the effort as a prefix. Ticket ids restart at `01` in
+every effort, so a bare `03-shared-id` is a name two efforts can both want. The
+separator is `--`, not `/`: git cannot create `<effort>/...` while a branch
+named `<effort>` exists.
 
 Worktrees are infrastructure, never knowledge. `.aep/worktrees/` is gitignored.
 
