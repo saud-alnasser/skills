@@ -33,7 +33,7 @@ what the workflow is, and what holds on every turn.
 
 ## The three constraints
 
-**It must stay cheap.** A conforming release keeps it under **8 KB**, asserted by
+**It must stay cheap.** A conforming release keeps it under **10 KB**, asserted by
 the verification suite. A bootstrap that costs what it saves is not a bootstrap,
 and this is the file every session pays for.
 

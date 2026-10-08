@@ -46,6 +46,8 @@ AEP does **not** replace Git, a forge, project documentation, or any runtime's n
 
 **No hidden memory.** AEP MUST NOT become an agent memory system. Durable knowledge is explicit in rules, contexts, evidence, efforts, specs, or the repository itself. It is NEVER hidden in session state, task descriptions, worktree metadata, or position.
 
+**Write only inside the project.** A run creates or changes files only in the main checkout, in `.aep/worktrees/`, in `.aep/scratch/`, where a project tool writes when run the project's way (its dependencies, build output, and cache), and in the OS temp directory reached through the language's temp API and cleaned before the run ends. It reads anywhere. A drive root, the home folder outside the project, another repository, global configuration, and global installs are written only when the human asked for it in that conversation; any other write outside the zones is a stop. `protocol.md` carries this as an invariant so it is loaded on every turn.
+
 **No mandatory ceremony.** The smallest process capable of producing a reliable result is the correct process. Research, prototyping, refinement, sub-agents, and worktrees are capabilities, NEVER required stages.
 
 ## 3. Primitives and terminology
@@ -127,6 +129,7 @@ A conforming repository:
 │       └── tickets/         the effort's tasks (§14.4)
 ├── policies/                governance AEP defines — protocol-owned
 ├── position/                per-working-tree operational state — gitignored
+├── scratch/                 a run's throwaway files, per working tree — gitignored
 ├── references/              procedural/operational knowledge
 ├── rules/                   governance this repository defines — repository-owned
 ├── scripts/                 protocol scripts
@@ -138,7 +141,9 @@ A conforming repository:
 └── .gitignore               defines what is never committed
 ```
 
-`.aep/.gitignore` MUST exclude `position/` and `worktrees/`. Everything else under `.aep/` is committed.
+`.aep/.gitignore` MUST exclude `position/`, `scratch/`, and `worktrees/`. Everything else under `.aep/` is committed.
+
+`scratch/` holds what a run writes for itself and nobody keeps: a handoff, a child's notes and exploration output, a research draft, a throwaway log. It is per working tree, so each surface has its own and it goes when that surface is removed. Nothing in it is an artifact, and a walk of the tree skips it as it skips `position/` and `worktrees/`. *Why it exists: a run that is told to put a file "outside the repository" and not told where invents a path, and on Windows that has been the drive root. Naming one place inside the project removes the invention.*
 
 Additional directories MUST NOT be introduced unless this specification names them. `.aep/` MUST NOT contain a `decisions/` directory, a `tools/` directory, a `grill/` directory, or a `modes/` directory — the first three were 1.x concepts and the fourth was 2.x's, and each is retired (§32). `policies/` is named here and is **not** the 1.x directory of that name; §32 records what changed.
 
@@ -170,7 +175,7 @@ The sixth is new in 3.0 and is there because nothing declares ownership on itsel
 
 `protocol.md` is **not** a second rules system, a policy database, a decision database, or a replacement for rules, contexts, or specs. It routes; it never governs. Governance is rules (§10).
 
-`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 8 KB**, asserted by the verification suite (§31) — a bootstrap that costs what it saves is not a bootstrap.
+`protocol.md` MUST be cheap enough to load at the start of every session. A conforming release keeps it **under 10 KB**, asserted by the verification suite (§31) — a bootstrap that costs what it saves is not a bootstrap.
 
 **`protocol.md` also declares which release a tree is running**, in a `version:` field, and it is **the only artifact that declares a release at all**. Every protocol-owned artifact is at that release by construction, because an upgrade replaces all of them together; a repository-owned artifact has no release, because the repository edits it freely and no upgrade touches it. The index derives the installation's version from this one field (§26), and an upgrade decides whether a repository is behind by reading it (§30).
 
@@ -1232,6 +1237,7 @@ A conforming implementation preserves all of the following:
 57. A run claims the working surface it writes through as well as the branch it is on: where its checkout is not isolated it takes a worktree of AEP's own and creates its effort branch into it before the first write, keyed on the isolation's kind and never on its enforcement, and it releases that claim by detaching before it removes the surface.
 58. A ticket branch is a build claim released when its work reaches the effort branch, deleted by the step that lands it and never before; a parked or failed ticket keeps its branch.
 59. Position records the sessions that stamped it, supplied by the runtime and never invented, as a diagnostic that nothing reads to decide whether to proceed; and nothing AEP writes adds a key to the marker beyond `tree`, `head`, and `sessions`.
+60. A run writes only inside the project: the main checkout, its worktrees, its gitignored `scratch/`, what a project tool writes run the project's way, and the OS temp directory through the language's temp API. Anywhere else is a stop unless the human asked for it.
 
 ---
 

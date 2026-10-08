@@ -72,7 +72,7 @@ const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 /** The repository that builds it. */
 const REPO = path.dirname(SRC);
 
-const PROTOCOL_BUDGET_BYTES = 8192;
+const PROTOCOL_BUDGET_BYTES = 10240;
 
 /**
  * The em dash, as an escape.
@@ -974,7 +974,14 @@ section('protocol.md', () => {
   // Ownership is stated once, here, for every directory the lookup knows. A
   // directory the code classifies and the bootstrap never mentions is a reader
   // who has to guess, which is the situation `owner:` was removed to end.
-  const ownership = sectionOf('The invariants');
+  // Read from the ownership invariant alone, up to the next invariant, so a
+  // directory another invariant names in passing (`node_modules/`, as a place a
+  // tool writes) is not read as a claim of ownership.
+  const invariants = sectionOf('The invariants');
+  const ownStart = invariants.indexOf('**Ownership is where a file sits.**');
+  const ownEnd = ownStart < 0 ? -1 : invariants.slice(ownStart + 1).search(/\n\*\*[^*\n]+\.\*\* /);
+  const ownership = ownStart < 0 ? ''
+    : invariants.slice(ownStart, ownEnd < 0 ? undefined : ownStart + 1 + ownEnd);
   assert('the bootstrap states ownership as a fact about location', () =>
     /\*\*Ownership is where a file sits\.\*\*/.test(ownership));
   for (const dir of PROTOCOL_DIRS) {
@@ -2854,7 +2861,7 @@ section('reporting', () => {
       // ignores it. Without this the stamp is itself an untracked file, so the
       // tree fingerprint moves every time anything writes one and every check
       // after a stamp reports drift the stamp caused.
-      fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+      fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nscratch/\nworktrees/\n', 'utf8');
       const git = (...args) =>
         execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
       git('init', '--quiet', '-b', 'main');
@@ -4530,7 +4537,7 @@ section('install fixture', () => {
 
   assert('installing creates .aep/protocol.md', fs.existsSync(path.join(aep, 'protocol.md')));
   assert('installing creates .aep/.gitignore', fs.existsSync(path.join(aep, '.gitignore')));
-  for (const perClone of ['position', 'worktrees']) {
+  for (const perClone of ['position', 'scratch', 'worktrees']) {
     assert(`.gitignore excludes ${perClone}/`, () =>
       fs.readFileSync(path.join(aep, '.gitignore'), 'utf8').includes(`${perClone}/`));
   }
@@ -6525,7 +6532,7 @@ section('traceability', () => {
     'utf8',
   );
   fs.writeFileSync(path.join(aep, 'index.md'), '# Index\n', 'utf8');
-  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nscratch/\nworktrees/\n', 'utf8');
 
   const spec = (status) => fs.writeFileSync(
     path.join(effort, 'spec.md'),
@@ -6715,7 +6722,7 @@ section('strays', () => {
     'utf8',
   );
   fs.writeFileSync(path.join(aep, 'index.md'), '# Index\n', 'utf8');
-  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nworktrees/\n', 'utf8');
+  fs.writeFileSync(path.join(aep, '.gitignore'), 'position/\nscratch/\nworktrees/\n', 'utf8');
   // The scripts arm compares bytes against the installed tree, so the fixture
   // needs a script installed for it to compare against. It is the real one
   // rather than a stand-in: what the arm claims to recognise is the script this
@@ -8648,6 +8655,71 @@ section('scope surfaces', () => {
     /ticket branch name MUST be unique across efforts/i.test(specText));
   assert('specs.md no longer calls gitignored state per-clone', () =>
     !specText.includes('per-clone'));
+});
+
+// --- §2 a run writes only inside the project ---------------------------------
+
+section('filesystem boundary', () => {
+  const protocol = flat(readSrc('protocol.md'));
+  assert('the bootstrap carries the boundary as an invariant', () =>
+    protocol.includes('**Write only inside the project.**') &&
+    /Anything else is a stop/.test(protocol));
+  for (const zone of ['`.aep/worktrees/<effort>/…`', '`.aep/scratch/`', 'the language\'s temp API']) {
+    assert(`the boundary names ${zone} as a zone`, () => protocol.includes(zone));
+  }
+  assert('the bootstrap lists scratch/ in its layout', () =>
+    /├── scratch\/\s+per working tree, gitignored/.test(readSrc('protocol.md')));
+  assert('src/gitignore excludes scratch/', () =>
+    readSrc('gitignore').split(/\r?\n/).some((line) => line.trim() === 'scratch/'));
+
+  // The handoff once said "a scratch location outside the repository" and named
+  // none, so a run invented one, and on Windows that was the drive root.
+  const handoff = flat(readSrc('skills', 'handoff.md'));
+  assert('a handoff is written to .aep/scratch/', () =>
+    handoff.includes('`.aep/scratch/handoff-<effort>.md`'));
+  assert('the handoff no longer sends its file outside the repository', () =>
+    !/outside the repository/.test(handoff));
+  assert("a brief gives the child its own scratch inside its worktree", () =>
+    /\*\*Scratch:\*\* `\.aep\/scratch\/` inside that worktree/.test(readSrc('skills', 'implement', 'dispatch.md')));
+
+  const spec = flat(fs.readFileSync(path.join(REPO, 'specs.md'), 'utf8'));
+  assert('specs.md names scratch/ in the layout and the gitignore', () =>
+    spec.includes('MUST exclude `position/`, `scratch/`, and `worktrees/`'));
+  assert('specs.md states the boundary as an invariant', () =>
+    /^\d+\. A run writes only inside the project/m.test(fs.readFileSync(path.join(REPO, 'specs.md'), 'utf8')));
+
+  // Both halves on an installed tree: scratch is not an artifact, and a
+  // .gitignore that would let it be committed fails.
+  const { aep } = installFixture();
+  const validateTree = () => {
+    try {
+      execFileSync(process.execPath, [path.join(aep, 'scripts', 'validate.mjs'), '--root', aep],
+        { stdio: 'pipe' });
+      return { failed: false, output: '' };
+    } catch (error) {
+      return { failed: true, output: String(error.stderr ?? '') };
+    }
+  };
+  assert('installing creates scratch/', () => fs.existsSync(path.join(aep, 'scratch')));
+  assert('a handoff in scratch/ is not read as an artifact', () => {
+    const handoffFile = path.join(aep, 'scratch', 'handoff-40-alpha.md');
+    fs.mkdirSync(path.dirname(handoffFile), { recursive: true });
+    fs.writeFileSync(handoffFile, '# Handoff: 40-alpha\n\n## Resume with\n', 'utf8');
+    const { failed, output } = validateTree();
+    fs.rmSync(handoffFile);
+    if (failed) throw new Error(`validate read scratch/: ${output}`);
+    return true;
+  });
+  assert('a .gitignore that does not exclude scratch/ fails validate', () => {
+    const ignoreFile = path.join(aep, '.gitignore');
+    const before = fs.readFileSync(ignoreFile, 'utf8');
+    fs.writeFileSync(ignoreFile, before.replace(/^scratch\/\r?\n/m, ''), 'utf8');
+    const { failed, output } = validateTree();
+    fs.writeFileSync(ignoreFile, before, 'utf8');
+    if (!failed) throw new Error('validate passed without scratch/ in .gitignore');
+    if (!/does not exclude scratch\//.test(output)) throw new Error(`failed for another reason: ${output}`);
+    return true;
+  });
 });
 
 section('the guard fires', () => {

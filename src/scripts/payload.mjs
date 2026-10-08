@@ -274,7 +274,7 @@ export const RETIRED_DIRS = [
 ];
 
 /** Directories that stay local to a working tree and are gitignored. */
-export const PER_CLONE_DIRS = ['position', 'worktrees'];
+export { PER_CLONE_DIRS } from './contract.mjs';
 
 /**
  * A detected reference seed. Every reference is named for its tool, lands at

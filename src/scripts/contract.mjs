@@ -45,6 +45,13 @@ export const PROTOCOL_DIRS = ['policies', 'skills', 'agents', 'templates', 'scri
  */
 export const CANONICAL_ENTRYPOINT = 'AGENTS.md';
 export const REPOSITORY_DIRS = ['rules', 'contexts', 'references', 'efforts'];
+
+/**
+ * Directories that stay local to a working tree and are gitignored. Nothing in
+ * them is an artifact, so a walk of the tree skips them, and `.aep/.gitignore`
+ * must exclude every one.
+ */
+export const PER_CLONE_DIRS = ['position', 'scratch', 'worktrees'];
 export const PROTOCOL_ROOT_FILES = ['protocol.md'];
 export const REPOSITORY_ROOT_FILES = ['index.md'];
 

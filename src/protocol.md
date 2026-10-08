@@ -50,6 +50,7 @@ but never soften it.
 ├── templates/     skeletons for authoring a new artifact
 ├── efforts/<effort>/{spec.md, evidence/{research,prototypes}/, tickets/}
 ├── position/      per working tree, gitignored
+├── scratch/       per working tree, gitignored
 └── worktrees/     isolated checkouts, gitignored
 ```
 
@@ -148,6 +149,22 @@ with its reason — never by quietly editing AEP's text.
 **No hidden memory.** Durable knowledge is explicit — in policies, rules,
 contexts, evidence, specs, or the source. Never in session state, task
 descriptions, worktree metadata, or position.
+
+**Write only inside the project.** Create or change files only in these zones;
+read anywhere. Anything else is a stop: say what you wanted to write and why.
+
+| Zone | Holds |
+| --- | --- |
+| the main checkout | source, config, tests, docs, `.aep/` artifacts |
+| `.aep/worktrees/<effort>/…` | effort and child surfaces |
+| `.aep/scratch/` | handoffs, notes, drafts, throwaway logs — one per surface, gone with it |
+| where a project tool writes, run the project's way | `node_modules/`, build output, its cache — the tool picks the path |
+| the OS temp dir, through the language's temp API | `mkdtemp`, `mktemp -d` — never a typed path; removed before the run ends |
+
+Never, unless the human asked for it in this conversation: a drive root, the
+home folder outside the project, another repository, global config
+(`git config --global`, shell profiles, editor settings, environment
+variables), or a global install (`npm i -g`, `cargo install`).
 
 **Nothing is invented.** Where an artifact already defines protocol state, use
 it. Where a script can compute an answer, run it and quote the output. Under

@@ -241,7 +241,7 @@ function rewriteMovedLinks(aep, vacated, today, dryRun) {
   if (moved.size === 0) return;
 
   const derivedIndex = path.join(aep, 'index.md');
-  for (const file of walk(aep, { skip: ['position', 'worktrees'] })) {
+  for (const file of walk(aep, { skip: PER_CLONE_DIRS })) {
     // The index is derived and regenerated straight after, so repairing it is
     // work that is about to be thrown away. Matched by path rather than by
     // basename: a repository may legitimately own some other `index.md`.

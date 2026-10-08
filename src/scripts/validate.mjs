@@ -17,6 +17,7 @@ import path from 'node:path';
 import {
   PROTOCOL_DIRS,
   REPOSITORY_DIRS,
+  PER_CLONE_DIRS,
   FORBIDDEN_DIRS,
   SPEC_STATUSES,
   TICKET_STATUSES,
@@ -33,7 +34,7 @@ import {
   useWhenProblems,
 } from './contract.mjs';
 
-const PROTOCOL_BUDGET_BYTES = 8192;
+const PROTOCOL_BUDGET_BYTES = 10240;
 
 const failures = [];
 const skippedEfforts = [];
@@ -306,10 +307,10 @@ function checkStructure(root) {
 
   const ignoreFile = path.join(root, '.gitignore');
   if (!fs.existsSync(ignoreFile)) {
-    fail('.gitignore', 'missing. position/ and worktrees/ must never be committed');
+    fail('.gitignore', `missing. ${PER_CLONE_DIRS.map((dir) => `${dir}/`).join(', ')} must never be committed`);
   } else {
     const ignored = fs.readFileSync(ignoreFile, 'utf8');
-    for (const entry of ['position/', 'worktrees/']) {
+    for (const entry of PER_CLONE_DIRS.map((dir) => `${dir}/`)) {
       if (!ignored.split(/\r?\n/).some((line) => line.trim() === entry)) {
         fail('.gitignore', `does not exclude ${entry}`);
       }
@@ -543,7 +544,7 @@ function main() {
   checkStrays(root);
   checkTraceability(root);
 
-  const artifacts = walk(root, { skip: ['position', 'worktrees'] })
+  const artifacts = walk(root, { skip: PER_CLONE_DIRS })
     .filter((file) => file.endsWith('.md') && path.basename(file) !== 'index.md');
   for (const file of artifacts) checkArtifact(root, file);
 

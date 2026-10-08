@@ -81,6 +81,8 @@ What is true when the work is done, including edge cases and error paths.
 **Inputs to read:** paths, not pasted content
 **Task:** the task this child owns, whole
 **Worktree:** where it works
+**Scratch:** `.aep/scratch/` inside that worktree, for its notes and exploration
+output — never a folder outside the project or one shared with another child
 **Returns:** the shape of the result
 **Acceptance criteria:** copied from the task, verifiable by a third party
 **Out of scope:** what must not change; the adjacent thing that is not this
