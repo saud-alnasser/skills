@@ -66,6 +66,7 @@ import {
   CANONICAL_ENTRYPOINT,
 } from './payload.mjs';
 import { expectedFor } from './reconcile.mjs';
+import { BUDGETS, HOT_PATH, budgetOf, countWords, runChecks } from './check.mjs';
 
 /** `src/`, the distribution. */
 const SRC = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -8720,6 +8721,60 @@ section('filesystem boundary', () => {
     if (!/does not exclude scratch\//.test(output)) throw new Error(`failed for another reason: ${output}`);
     return true;
   });
+});
+
+// --- the agent-facing text stays cheap and inside the project ----------------
+
+section('check', () => {
+  const result = runChecks(SRC);
+  assert('the checker budgets the bootstrap, every policy, and every skill', () => {
+    const budgeted = result.budgets.files.map((entry) => entry.file);
+    const missing = ['protocol.md', 'policies/execution.md', 'skills/implement.md', 'skills/implement/dispatch.md']
+      .filter((rel) => !budgeted.includes(rel));
+    if (missing.length > 0) throw new Error(`not budgeted: ${missing.join(', ')}`);
+    return true;
+  });
+  assert('a skill note is held to the note budget, a skill to the skill budget', () =>
+    budgetOf('skills/implement/dispatch.md').limit === BUDGETS['skill note']
+    && budgetOf('skills/implement.md').limit === BUDGETS.skill
+    && budgetOf('policies/execution.md').limit === BUDGETS.policy
+    && budgetOf('protocol.md').limit === BUDGETS.protocol);
+  assert('the standard-lane hot path names files that ship', () =>
+    HOT_PATH.files.every((rel) => inSrc(...rel.split('/'))));
+  assert('a word is a token holding a letter or a digit', () =>
+    countWords('| --- | two words |  -> 3') === 3);
+
+  // Enforced from the step that removed the last hit. Budgets and rationale are
+  // reported until the rewrite brings them under, then enforced the same way.
+  assert('no agent-facing text sends a write outside the project', () => {
+    if (result.outside.length > 0) {
+      throw new Error(result.outside.map((hit) => `${hit.file}:${hit.line} ${hit.wording}`).join('; '));
+    }
+    return true;
+  });
+
+  // Each check fires on a tree seeded with exactly the thing it exists to catch.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aep-check-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'skills'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'protocol.md'), '---\nuse-when: "x"\n---\n\n# P\n', 'utf8');
+    const long = Array.from({ length: BUDGETS.skill + 1 }, () => 'word').join(' ');
+    fs.writeFileSync(path.join(dir, 'skills', 'seeded.md'), [
+      '---', 'use-when: "seeded"', '---', '', '# Seeded', '',
+      'Write the handoff to a scratch location outside the repository.', '',
+      '*Why: because.*', '', long, '',
+    ].join('\n'), 'utf8');
+    const seeded = runChecks(dir);
+    assert('the budget check fires on an over-budget skill', () =>
+      seeded.budgets.over.some((entry) => entry.file === 'skills/seeded.md'));
+    assert('the rationale check fires on a *Why sentence', () =>
+      seeded.why.some((hit) => hit.file === 'skills/seeded.md'));
+    assert('the wording check fires on "outside the repository"', () =>
+      seeded.outside.some((hit) => hit.file === 'skills/seeded.md' && hit.wording === 'outside the repository'));
+    assert('a seeded tree is not clean', () => !seeded.ok);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 section('the guard fires', () => {

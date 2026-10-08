@@ -68,6 +68,7 @@ export const PROTOCOL_FILES = [
   'policies/execution.md',
   'policies/reporting.md',
   'protocol.md',
+  'scripts/check.mjs',
   'scripts/contract.mjs',
   'scripts/frontier.mjs',
   'scripts/index.mjs',

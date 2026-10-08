@@ -189,6 +189,7 @@ export const PAYLOAD_SCRIPTS = [
   'position.mjs',
   'scope.mjs',
   'reconcile.mjs',
+  'check.mjs',
 ];
 
 /**
