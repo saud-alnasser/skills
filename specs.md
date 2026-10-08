@@ -1342,7 +1342,7 @@ Uncertainty is routed by its kind because the wrong instrument produces a confid
 
 Research that quietly becomes a decision is an architecture chosen by whoever ran the search. A finding that changes the design is carried into `spec.md` deliberately, where it can be seen and agreed to.
 
-#### Graduated knowledge leaves its evidence file in place (no 4.0 statement; GAP at engineering rows 100 to 102)
+#### Graduated knowledge leaves its evidence file in place (protocol)
 
 When knowledge outlives its effort and moves into a context, a rule, or a reference, the evidence file stays where it is, as the record of how the knowledge was learned.
 

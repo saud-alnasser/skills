@@ -42,6 +42,14 @@ nothing: the whole effort. Nothing named and no claim: end the turn saying so.
 
 ## 2 — Build
 
+**Every lane.** Build matching the surrounding idiom, naming, error handling,
+and comment density. Code explains itself: a comment says why, a comment saying
+what marks code to improve, and a workaround needing a paragraph of
+justification is wrong code. Document every public API. Name a file for the one
+thing it holds; directories carry the qualifiers. No abbreviations unless
+clearer or necessary. Tests sit as near the code as the tooling allows, and the
+repository's convention wins.
+
 **Quick lane.** `spec.md` is the ticket. Make the change, then verify each item
 under `# Check` and tick it with what verified it. Self-check the diff against
 `# Problem` and `# Change`. Then `aep.mjs land <effort> --message "<message>"`:
@@ -63,13 +71,7 @@ and continue.
 4. Test-first where the rules require it (`[[skills/tdd]]`). A bug of unknown
    cause: `[[skills/implement/diagnosing]]`. Technical uncertainty that
    survives: `[[skills/prototype]]`, whose code is never promoted as-is.
-5. Build, matching the surrounding idiom, naming, error handling, and comment
-   density. Code explains itself: a comment says why, a comment saying what
-   marks code to improve, and a workaround needing a paragraph of justification
-   is wrong code. Document every public API. Name a file for the one thing it
-   holds; directories carry the qualifiers. No abbreviations unless clearer or
-   necessary. Tests sit as near the code as the tooling allows, and the
-   repository's convention wins.
+5. Build, as **Every lane** says.
 6. Verify each acceptance criterion and tick it with the command and what it
    printed.
 7. **Confirm, do not repeat:** the tests the rules require ran, and every
