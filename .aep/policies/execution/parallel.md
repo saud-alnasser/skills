@@ -38,7 +38,8 @@ from the new tip.
 
 A **brief** (`[[skills/implement/dispatch]]`): objective, inputs as paths, the
 ticket it owns whole, its surface, its return shape, its criteria, its cap, and
-its own `.aep/scratch/` inside its surface.
+its own `.aep/scratch/` inside its surface. The brief and the child's return
+are in the controlled register (`[[policies/reporting]]`).
 
 - The brief is the only parent-to-child channel; anything the child needs from
   the conversation is in it. Everything else the child reads for itself — never
@@ -46,7 +47,7 @@ its own `.aep/scratch/` inside its surface.
 - **One layer.** A child never dispatches and never integrates. It may request
   exactly two things: a capability that needs dispatch, which the orchestrator
   performs at depth one and returns the result to the child, or a question for
-  the human, recorded plainly with its options.
+  the human, recorded as an option set (`[[policies/reporting]]`).
 
 ## Human authority is never delegated downward
 

@@ -1,15 +1,15 @@
 ---
-use-when: "writing a README, a pull request body, a changelog, or docs, or editing text that reads as though nobody wrote it"
+use-when: "writing or editing public text: a README, a docs page, an API reference, user-interface text, a changelog, a code comment, or a docstring"
 ---
 
 # /prose — make it read as though a person wrote it
 
-Loaded for human documents only, never on an ordinary turn. Reached from inside
-another skill it is **a stage of that turn**, with no report of its own;
-invoked on a file, it reports like any other. What is governed is
-`[[policies/reporting]]`'s, and the four prohibitions are `[[protocol]]`'s.
-This file is the craft: the patterns that mark writing as machine-made, and
-what to do about each.
+Loaded for public text only (`[[policies/reporting]]`), never for session or
+agent text, which take `[[skills/plain]]`. Reached from inside another skill it
+is **a stage of that turn**, with no report of its own; invoked on a file, it
+reports like any other. The four prohibitions are `[[protocol]]`'s. This file
+is the craft: the patterns that mark writing as machine-made, and what to do
+about each.
 
 ## Procedure
 
@@ -165,9 +165,8 @@ a dash is forbidden does not tell you what the sentence becomes.
   introduced an error.
 - **Do not sand it flat.** Voiceless prose is a tell of its own, and the audit
   step exists because a scrubbed text and a written one are easy to confuse.
-- **Do not apply this to text an agent reads.** A brief, a protocol artifact, and
-  data written for a later run are exempt, and rewriting them for a reader they
-  do not have spends effort to lose precision.
+- **Do not apply this to session or agent text.** It takes the controlled
+  register (`[[skills/plain]]`), and protocol text is exempt.
 
 ## Done when
 

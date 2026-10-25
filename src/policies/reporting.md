@@ -1,38 +1,63 @@
 ---
-use-when: "about to write anything a human will read: session output, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should"
+use-when: "about to write anything a person or another agent will read: session output, an option set, a brief, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should"
 ---
 
-# Policy — what the human reads
+# Policy — registers and the report
 
 ## Who reads it decides
 
-**A human reads it: governed. A protocol agent reads it: exempt**, which means
-written for that reader, never carelessly. A case on neither list is settled by
-asking who reads it.
+**The reader picks the register.** Exempt means written for that reader, never
+carelessly. A case on no row is settled by asking who reads it.
 
-| Governed | Exempt |
-| --- | --- |
-| session output, at every point in a turn | prose inside `.aep/` artifacts |
-| a commit message, a pull request title or body | normative protocol text, wherever it lives, even at a repository root |
-| a comment or docstring in source | a brief written for a sub-agent |
-| what a script prints to a person | data a script writes into an artifact an agent reads |
-| repository documentation: a README, a changelog, a docs page | |
+| Reader | Register | Worked cases |
+| --- | --- | --- |
+| a person reading cold, outside the session | public | a README, a docs page, an API reference, user-interface text, a changelog, a code comment, a docstring |
+| the developer, in a session or in review | controlled | session output, the turn report, an option set, a commit message, a pull request title or body |
+| another agent, or a reviewer of an effort | controlled | a brief, a child's return, a relayed question; a new spec, plan, ticket, evidence file, or `log.md` cell |
+| an agent, through shipped protocol text | exempt | protocol text, wherever it lives; data a script writes for an agent |
 
-## How it reads
+Public text takes the craft in `[[skills/prose]]`. The four prohibitions are in
+the protocol, and hold in both registers a human reads.
 
-Write for the person reading it: say what happened, name the mechanism rather
-than the feeling, and cut what would read the same in any other repository. The
-four prohibitions are in the protocol. Load `[[skills/prose]]` only when writing
-a README, a pull request body, a changelog, or docs, or when text you are
-editing reads as though nobody wrote it.
+## How controlled text reads
+
+Its craft is in `[[skills/plain]]`. Three steps, in order, per
+sentence:
+
+1. **The core principles.** One topic per sentence. Active voice, the actor
+   named. Twenty words for an instruction and 25 for a description, as a
+   target. One meaning per word.
+2. **The vocabulary.** An ASD-STE100 approved word first; an outside word where
+   it carries the meaning better.
+3. **The test.** Direct, easy to read, and no knowledge lost.
+
+This is 80% adherence. The 20% leaves the strict standard where it would cost
+readability or knowledge, and **never drops a core principle**. A reviewer
+judges by step 3.
+
+**A domain term is a technical name**: a term this repository's domain or AEP
+defines is kept exactly and never counted against adherence.
+
+## Sketches and option sets
+
+**Structure shown to the developer is drawn**: a flow, a hierarchy, a sequence
+of states, a before-and-after, or a comparison. The sketch is characters in a
+fenced block, in Excalidraw style, within a few hundred tokens. A larger
+structure is split.
+
+**An option set is explained, illustrated, and recommended**: each option
+explained, illustrated where options differ in structure, one marked
+recommended with its reason. It goes through the runtime's option picker where
+there is one, else as text: a letter per option, then a line asking for a
+letter. The options, their words, and their order are the same either way.
 
 ## The turn report
 
 **One request, one report**, emitted once, at the end of the turn, by the
 outermost skill. A skill entered from inside another (`[[skills/review]]` at
-the close, `[[skills/tdd]]`, `[[skills/domain]]`, `[[skills/prose]]`) is a
-stage of that run and reports nothing of its own. The shape does not vary by
-skill, runtime, or size.
+the close, `[[skills/tdd]]`, `[[skills/domain]]`, `[[skills/prose]]`,
+`[[skills/plain]]`) is a stage of that run and reports nothing of its own. The
+shape does not vary by skill, runtime, or size.
 
 The work (findings, diffs, graphs, the ledger) comes first, uncut. Then nine
 lines, one each, in this order:
@@ -58,9 +83,7 @@ Next            the next step, and what would clear a stop
   | Skill | Position holds |
   | --- | --- |
   | `[[skills/implement]]`, `[[skills/tasks]]` | the `summary` `aep start` printed, and the marker's answer |
-  | `[[skills/specify]]` | the claim, isolation, and marker of the surface it was invoked in |
-  | `[[skills/prune]]` | the claim, isolation, marker, and what the validator printed |
-  | `[[skills/survey]]` | the claim, isolation, marker, and the bound the survey took |
+  | `[[skills/specify]]`, `[[skills/prune]]`, `[[skills/survey]]` | the claim, isolation, and marker of the surface invoked in; prune adds what the validator printed, survey the bound it took |
   | `[[skills/review]]` | the claim, isolation, pinned merge-base, and that the subject is non-empty |
   | `[[skills/install]]` | *nothing to verify*: this run writes the first marker |
   | a skill that reads no repository state | *nothing to verify* |
@@ -82,10 +105,9 @@ order, with the commit beside each, read from git and never stored:
 ```
 
 A resumed run reads the log copy. Its labels, columns, and order stay stable
-enough to parse; inside a cell, it reads as a person wrote it.
+enough to parse; inside a cell, it takes the controlled register.
 
 ## Not covered here
 
-How a runtime renders the report; what a child returns to its orchestrator
-(`[[policies/execution]]`); the agent's register; and how much output a skill
-produces.
+How a runtime renders the report; the shape of a child's return
+(`[[policies/execution]]`); how much output a skill produces.

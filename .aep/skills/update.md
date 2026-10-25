@@ -79,8 +79,9 @@ Only a `policies/` directory *outside* `.aep/` says 1.x.
    | tightens or extends a policy the release did not touch | **nothing** |
 
    **Show every edit as exact before-and-after strings, as one list, before the
-   first is made. Then ask. On a refusal, write nothing.** **Never delete a
-   rule**, and never settle a contradiction by removing the side that lost.
+   first is made. Then ask, as an option set (`[[policies/reporting]]`). On a
+   refusal, write nothing.** **Never delete a rule**, and never settle a
+   contradiction by removing the side that lost.
 8. **Report declared deviations**, each with the release it was declared under
    and how long it has stood.
 9. **Migrate what the release requires**: only migrations newer than the

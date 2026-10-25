@@ -1,6 +1,6 @@
 ---
 name: prose
-description: Make it read as though a person wrote it. Use when writing a README, a pull request body, a changelog, or docs, or editing text that reads as though nobody wrote it.
+description: Make it read as though a person wrote it. Use when writing or editing public text: a README, a docs page, an API reference, user-interface text, a changelog, a code comment, or a docstring.
 metadata:
   aep: adapter
   canonical: .aep/skills/prose.md

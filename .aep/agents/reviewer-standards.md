@@ -55,4 +55,5 @@ observation and you label it as one.
 ## Return
 
 Findings, most severe first, rule violations before convention deviations. Say
-what you did not review.
+what you did not review. Write it in the controlled register
+(`[[policies/reporting]]`).

@@ -61,7 +61,8 @@ prose along three axes:
 - **seam placement** — what can be substituted, and what that costs.
 
 Then **recommend one and say why.** Where pieces of two combine well, propose the
-hybrid explicitly rather than leaving it to be noticed.
+hybrid explicitly rather than leaving it to be noticed. The designs reach the
+human as an option set (`[[policies/reporting]]`).
 
 **Be opinionated.** A menu with no recommendation moves the whole decision onto
 the human while looking like thorough work — and it is the failure this note is

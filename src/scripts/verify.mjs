@@ -143,6 +143,8 @@ const PRE_MOVE_RELEASE = '2.1.1';
 const PRE_MOVE_COMMIT = '8752757^';
 // The 3.5.0 release, the last to ship policies/authority.md and engineering.md.
 const RELEASE_350_COMMIT = 'd1635d2';
+// The 4.0.0 release, whose prose catalogue 4.1 narrows the reach of and keeps.
+const RELEASE_400_COMMIT = '87adbd0';
 
 const args = process.argv.slice(2);
 const only = args.includes('--section') ? args[args.indexOf('--section') + 1] : null;
@@ -1092,7 +1094,7 @@ section('protocol.md', () => {
 // reads is the shape this release spent four tickets removing.
 const POSTURED_SKILLS = [
   'specify', 'plan', 'tasks', 'implement', 'review',
-  'research', 'prototype', 'refine', 'tdd', 'prune', 'survey',
+  'research', 'prototype', 'refine', 'tdd', 'prune', 'survey', 'plain',
 ];
 
 section('skills', () => {
@@ -1129,6 +1131,66 @@ section('skills', () => {
     assert(`skills/${name} states what that posture gives up`, () =>
       /\*\*What this gives up\*\*/.test(body));
   }
+
+  // 4.1: plain is the controlled register's craft. The policy holds every MUST,
+  // so the skill is checked for the worked items the spec names and for the
+  // absence of each policy sentence: a copy here is the second home that drifts.
+  const plain = fs.existsSync(path.join(SRC, 'skills', 'plain.md')) ? readSrc('skills', 'plain.md') : '';
+  // Whitespace folded by hand: this section declares its own `flat` further down.
+  const plainText = plain.replace(/\s+/g, ' ');
+  const reportingPolicy = readSrc('policies', 'reporting.md').replace(/\s+/g, ' ');
+  assert('the reporting policy sends the controlled register\'s craft to skills/plain', () =>
+    /Its craft is in `\[\[skills\/plain\]\]`/.test(reportingPolicy));
+  assert('skills/plain links to the reporting policy for its law', () =>
+    /The law is `\[\[policies\/reporting\]\]`'s/.test(plainText));
+  assert('skills/plain triggers on the controlled register\'s texts, a commit and a pull request among them', () => {
+    const trigger = readArtifact(path.join(SRC, 'skills', 'plain.md')).fields['use-when'] ?? '';
+    return ['session text', 'a commit message', 'a pull request', 'a brief', 'a return', 'an effort artifact',
+      'a sketch', 'an option set'].every((item) => trigger.includes(item));
+  });
+  assert('skills/plain is a stage inside another skill, and reports when invoked', () =>
+    /\*\*a stage of that turn\*\*, with no report of its own; invoked on a text, it reports like any other/.test(plainText));
+  assert('skills/plain names ASD-STE100 as its source', () =>
+    /based on ASD-STE100/.test(plainText) && /AEP ships none of it: no rule text and no word list/.test(plainText));
+  // The content itself, not the sentence that disclaims it: a word list is many
+  // swaps, so the count of worked swaps stays at what one example needs.
+  const swaps = [...plainText.matchAll(/\*[^*]+\* becomes \*[^*]+\*/g)].length;
+  assert('skills/plain ships no word list: at most five worked swaps', () => {
+    if (swaps === 0 || swaps > 5) throw new Error(`${swaps} swaps`);
+    return true;
+  });
+  assert('skills/plain carries a swap that loses nothing', () =>
+    /\*\*A swap that loses nothing\.\*\* \*Prior to\* becomes \*before\*/.test(plainText));
+  assert('skills/plain carries a word kept because no approved word carries it', () =>
+    /\*\*A word kept because no approved word carries it\.\*\*/.test(plainText) && /So \*stale\* stays/.test(plainText));
+  assert('skills/plain carries a technical name kept exactly', () =>
+    /\*\*A technical name, kept exactly\.\*\*/.test(plainText) && /\*Claim\* and \*surface\* are AEP terms/.test(plainText));
+  const plainFences = [...plain.matchAll(/```\n([\s\S]*?)```/g)].map((match) => match[1]);
+  assert('skills/plain carries a sketch drawn with box-drawing characters', () =>
+    plainFences.some((block) => /[╭╮╰╯]/.test(block) && /[─│]/.test(block) && /▶/.test(block)));
+  assert('skills/plain carries an option set in its picker form and its lettered form', () =>
+    /\*\*In a picker\.\*\*/.test(plainText) && /\*\*As text:\*\*/.test(plainText) &&
+    plainFences.some((block) => /^a\. /m.test(block) && /^b\. /m.test(block)));
+  assert('skills/plain carries a worked brief and a worked return', () =>
+    /\*\*A brief:\*\*/.test(plainText) && /\*\*A return:\*\*/.test(plainText));
+  // Outside the fences, which are examples. A policy sentence copied here, a
+  // limit of its own, or an ordering rule is the skill governing; the phrases
+  // are the policy's, and the shapes are the paraphrases a review found.
+  const plainProse = plain.replace(/```[\s\S]*?```/g, '').replace(/\s+/g, ' ');
+  assert('skills/plain restates no MUST from the reporting policy', () => {
+    const copied = [
+      'The reader picks the register', 'never drops a core principle', 'never counted against adherence',
+      'option picker where there is one', 'are the same either way', 'A larger structure is split',
+      'within a few hundred tokens', 'hold in both registers a human reads', 'An ASD-STE100 approved word first',
+    ].filter((sentence) => plainProse.includes(sentence));
+    if (/\bMUST\b/.test(plainProse)) copied.push('MUST');
+    const limit = /\b(?:about |at most )?(?:\d+|ten|twenty|thirty) (?:words|lines|tokens)\b/i.exec(plainProse);
+    if (limit) copied.push(limit[0]);
+    const order = /\b(?:comes first|same order|only when the swap)\b/i.exec(plainProse);
+    if (order) copied.push(order[0]);
+    if (copied.length > 0) throw new Error(copied.join('; '));
+    return true;
+  });
 
   // The discovery surface. `protocol.md` gives `help` one job, answering *what do
   // I reach for*, so a skill it does not name is unreachable through the only
@@ -1635,7 +1697,7 @@ section('skill output', () => {
   const everyArtifact = [...new Set(assigned.map(({ artifact }) => artifact))];
 
   // The specification's other skill table, against this one. §15 lists the
-  // seventeen with a line of description each, and one of those lines said
+  // eighteen with a line of description each, and one of those lines said
   // `plan` adds technical detail to the same spec while §21 two hundred lines
   // below assigned it `plan.md`. The correction is this effort's, and until
   // now nothing stopped the two drifting apart again.
@@ -1650,7 +1712,7 @@ section('skill output', () => {
     .filter((cells) => cells.length === 2)
     .map(([stage, describes]) => ({ stage: stage.replace(/`/g, ''), describes }));
   assert('the specification describes each of its skills in one line', () =>
-    skillRows.length === 17);
+    skillRows.length === 18);
 
   // The pairings, counted before any of them is judged. A `continue` past a
   // stage §15 does not name is the same vacuum the row-count guard exists to
@@ -1890,8 +1952,23 @@ section('policies', () => {
     && /A lost ticket always changed the outcome; it is never hidden/.test(parallel));
 
   // The question a child stopped on: wording may move, substance may not.
-  assert('policies/execution/parallel has the child record the question with its options', () =>
-    /a question for the human, recorded plainly with its options/.test(parallel));
+  assert('policies/execution/parallel has the child record the question as an option set', () =>
+    /a question for the human, recorded as an option set \(`\[\[policies\/reporting\]\]`\)/.test(parallel));
+
+  // 4.1: what one agent writes for another is in the controlled register. Each
+  // site is asserted by name, because a brief and a return are written in
+  // different files, and either alone reads as the whole rule.
+  const registerLink = /in the controlled register \(`\[\[policies\/reporting\]\]`\)/;
+  assert('skills/implement/dispatch writes the brief in the controlled register', () =>
+    registerLink.test(flat(readSrc('skills', 'implement', 'dispatch.md'))));
+  assert('policies/execution/parallel puts the brief and the return in the controlled register', () =>
+    /The brief and the child's return are in the controlled register \(`\[\[policies\/reporting\]\]`\)/.test(parallel));
+  for (const name of ['implementer', 'researcher', 'reviewer-correctness', 'reviewer-standards']) {
+    assert(`agents/${name} writes its return in the controlled register`, () => {
+      const section = /## Return\n[\s\S]*?(?=\n## |$)/.exec(readSrc('agents', `${name}.md`))?.[0] ?? '';
+      return /Write\s+it in the controlled\s+register\s+\(`\[\[policies\/reporting\]\]`\)/.test(section);
+    });
+  }
   assert('policies/execution/parallel keeps substance out of what may be reshaped', () =>
     /may reshape a question's wording, never its substance: no option dropped, merged, or narrowed/.test(parallel));
   assert('policies/execution/parallel attributes the question to its source, not its author', () =>
@@ -2287,18 +2364,73 @@ section('reporting', () => {
   assert('the policy triggers on more than the turn report', () =>
     /commit message/i.test(trigger) && /code comment/i.test(trigger));
 
+  // 4.1: three registers, one table. Each worked case is looked for under its
+  // register's rows only, so a case moved to the wrong register fails here, and
+  // a case listed under two registers fails the check after the loop.
   assert('the policy states the reader test in one sentence', () =>
-    /A human reads it: governed\. A protocol agent reads it: exempt\*\*/.test(prose));
+    /\*\*The reader picks the register\.\*\*/.test(prose));
   assert('the reader test says exempt means written for that reader', () =>
-    /which means\s+written for that reader, never carelessly/.test(prose));
-  assert('the policy carries both worked lists', () =>
-    /\|\s*Governed\s*\|\s*Exempt\s*\|/.test(policy) &&
-    /a commit message, a pull request title or body/.test(prose) &&
-    /prose inside `\.aep\/` artifacts/.test(prose));
-  assert('the policy settles a case on neither list by asking who reads it', () =>
-    /A case on neither list is settled by\s+asking who reads it/.test(prose));
-  assert('the policy exempts normative protocol text wherever it lives', () =>
-    /normative protocol text, wherever it lives, even at a repository root/.test(prose));
+    /Exempt means written for that reader, never\s+carelessly/.test(prose));
+  assert('the old two-column reader table is gone', () =>
+    !/\|\s*Governed\s*\|\s*Exempt\s*\|/.test(policy) && !/\bgoverned\b/i.test(prose));
+  const registerRows = policy.split('\n')
+    .map((line) => /^\|([^|]+)\|\s*(public|controlled|exempt)\s*\|([^|]+)\|$/.exec(line))
+    .filter(Boolean)
+    .map((match) => ({
+      register: match[2],
+      cases: match[3].split(/;|,\s*(?:or\s+)?/).map((item) => item.trim()).filter(Boolean),
+    }));
+  assert('the policy has one Reader | Register | Worked cases table', () =>
+    (policy.match(/\|\s*Reader\s*\|\s*Register\s*\|\s*Worked cases\s*\|/g) ?? []).length === 1);
+  assert('the table names all three registers', () =>
+    ['public', 'controlled', 'exempt'].every((name) => registerRows.some((row) => row.register === name)));
+  const casesOf = (name) => registerRows
+    .filter((row) => row.register === name)
+    .flatMap((row) => row.cases)
+    .join(' / ');
+  for (const [register, label, pattern] of [
+    ['public', 'a README', /a README/],
+    ['public', 'a docs page', /a docs page/],
+    ['public', 'an API reference', /an API reference/],
+    ['public', 'user-interface text', /user-interface text/],
+    ['public', 'a changelog', /a changelog/],
+    ['public', 'a code comment', /a code comment/],
+    ['public', 'a docstring', /a docstring/],
+    ['controlled', 'session output', /session output/],
+    ['controlled', 'the turn report', /the turn report/],
+    ['controlled', 'an option set', /an option set/],
+    ['controlled', 'a commit message', /a commit message/],
+    ['controlled', 'a pull request title or body', /a pull request title or body/],
+    ['controlled', 'a brief', /a brief/],
+    ['controlled', "a child's return", /a child's return/],
+    ['controlled', 'a relayed question', /a relayed question/],
+    ['controlled', 'a new effort artifact', /a new spec/],
+    ['controlled', 'a log.md cell', /`log\.md` cell/],
+    ['exempt', 'shipped protocol text', /protocol text/],
+    ['exempt', 'data a script writes for an agent', /data a script writes for an agent/],
+  ]) {
+    assert(`the policy puts ${label} under ${register}`, () => pattern.test(casesOf(register)));
+  }
+  assert('no public row names review or agent text, and no controlled row names public text', () => {
+    const crossed = [
+      ...(/commit|pull request|session|brief|return|turn report|option set/i.exec(casesOf('public')) ?? []),
+      ...(/README|docs page|changelog|code comment|docstring|API reference|user-interface/i.exec(casesOf('controlled')) ?? []),
+    ];
+    if (crossed.length > 0) throw new Error(crossed.join(', '));
+    return true;
+  });
+  assert('no worked case sits under two registers', () => {
+    const seen = new Map();
+    for (const row of registerRows) {
+      for (const item of row.cases) {
+        if (seen.has(item) && seen.get(item) !== row.register) throw new Error(item);
+        seen.set(item, row.register);
+      }
+    }
+    return true;
+  });
+  assert('the policy settles a case on no row by asking who reads it', () =>
+    /A case on no row is settled by asking who reads it/.test(prose));
 
   // 4.0: the four checkable prohibitions are one line in the bootstrap, which
   // loads every session; the policy points at them rather than repeating them.
@@ -2312,13 +2444,112 @@ section('reporting', () => {
     assert(`the bootstrap prohibits ${name} by name`, () => pattern.test(bootstrapText));
   }
   assert('the policy points at the prohibitions rather than restating them', () =>
-    /four prohibitions are in the protocol/.test(prose) && !/No em dashes/.test(prose));
+    /four prohibitions are in\s+the protocol/.test(prose) && !/No em dashes/i.test(prose));
+  assert('the prohibitions hold in both registers a human reads', () =>
+    /hold in both registers a human reads/.test(prose));
 
   // The split between law and craft, and when the craft loads.
   assert('the policy sends the craft to skills/prose', () =>
     /\[\[skills\/prose\]\]/.test(policy));
-  assert('the policy loads skills/prose only for human documents', () =>
-    /Load `\[\[skills\/prose\]\]` only when writing\s+a README, a pull request body, a changelog, or docs/.test(prose));
+  // 4.1: prose narrows to public text. Its reach moves, and its catalogue does
+  // not: the section is compared with the 4.0.0 release, read from git, so an
+  // edit made while narrowing the reach cannot slip into the craft unseen.
+  const proseSkill = readSrc('skills', 'prose.md');
+  const proseTrigger = readArtifact(path.join(SRC, 'skills', 'prose.md')).fields['use-when'];
+  assert('skills/prose triggers on public text only', () =>
+    /^writing or editing public text: a README, a docs page, an API reference, user-interface text, a changelog, a code comment, or a docstring$/.test(proseTrigger) &&
+    !/pull request/i.test(proseTrigger));
+  assert('skills/prose opens by sending session and agent text to plain', () =>
+    /Loaded for public text only \(`\[\[policies\/reporting\]\]`\), never for session or agent text, which take `\[\[skills\/plain\]\]`/.test(flat(proseSkill)));
+  assert('skills/prose constrains itself away from session and agent text', () =>
+    /\*\*Do not apply this to session or agent text\.\*\* It takes the controlled register \(`\[\[skills\/plain\]\]`\)/.test(flat(proseSkill)));
+  const catalogueOf = (text) => /\n## The catalogue\n[\s\S]*?(?=\n## )/.exec(text.replace(/\r\n/g, '\n'))?.[0] ?? null;
+  assert('the prose catalogue is byte-identical to the 4.0.0 release', () => {
+    const released = catalogueOf(execFileSync('git', ['show', `${RELEASE_400_COMMIT}:src/skills/prose.md`], { encoding: 'utf8', cwd: REPO }));
+    const current = catalogueOf(proseSkill);
+    if (released === null || current === null) throw new Error('no catalogue section');
+    return released === current;
+  });
+
+  assert('the policy sends public text, and only public text, to skills/prose', () =>
+    /Public text takes the craft in `\[\[skills\/prose\]\]`/.test(prose) &&
+    !/pull request body, a changelog, or docs/.test(prose));
+
+  // The controlled register's law: the order, the 20% and its limit, and the
+  // technical-name rule. The craft lives elsewhere; these are the MUSTs.
+  const controlled = flat(/## How controlled text reads[\s\S]*?(?=\n## )/.exec(policy)?.[0] ?? '');
+  assert('the policy states the order: principles, vocabulary, test', () => {
+    const at = ['**The core principles.**', '**The vocabulary.**', '**The test.**']
+      .map((label) => controlled.indexOf(label));
+    if (at.some((index) => index < 0)) throw new Error(at.join(' '));
+    return at[0] < at[1] && at[1] < at[2];
+  });
+  assert('the core principles name the topic, the voice, the length, and the meaning', () =>
+    /One topic per sentence/.test(controlled) && /Active voice, the actor named/.test(controlled) &&
+    /Twenty words for an instruction and 25 for a description, as a target/.test(controlled) &&
+    /One meaning per word/.test(controlled));
+  assert('the vocabulary tries an approved word first and allows a better outside word', () =>
+    /An ASD-STE100 approved word first; an outside word where it carries the meaning better/.test(controlled));
+  assert('the 20% never drops a core principle', () =>
+    /This is 80% adherence/.test(controlled) && /\*\*never drops a core principle\*\*/.test(controlled));
+  assert('a domain or AEP term is a technical name, never counted against adherence', () =>
+    /\*\*A domain term is a technical name\*\*: a term this repository's domain or AEP defines is kept exactly and never counted against adherence/.test(controlled));
+
+  // Sketches and option sets: one section, so every file that puts a choice to
+  // the human links here and none restates it.
+  const shown = flat(/## Sketches and option sets[\s\S]*?(?=\n## )/.exec(policy)?.[0] ?? '');
+  assert('the policy says when a sketch is drawn', () =>
+    /\*\*Structure shown to the developer is drawn\*\*: a flow, a hierarchy, a sequence of states, a before-and-after, or a comparison/.test(shown));
+  assert('a sketch is characters in a fenced block, in Excalidraw style', () =>
+    /characters in a fenced block, in Excalidraw style/.test(shown));
+  assert('a large structure is split', () => /A larger structure is split/.test(shown));
+  assert('an option set is explained, illustrated, and recommended', () =>
+    /\*\*An option set is explained, illustrated, and recommended\*\*/.test(shown) &&
+    /one marked recommended with its reason/.test(shown));
+  assert('the picker is used where there is one, and the text fallback carries the same set', () =>
+    /through the runtime's option picker where there is one, else as text/.test(shown) &&
+    /The options, their words, and their order are the same either way/.test(shown));
+  const fallbackHomes = payloadArtifacts()
+    .filter((file) => /option picker where there is one|are the same either way/.test(flat(fs.readFileSync(file, 'utf8'))))
+    .map((file) => toPosix(SRC, file));
+  assert('the option-set rule and its fallback are stated in the policy and nowhere else', () => {
+    if (JSON.stringify(fallbackHomes) !== JSON.stringify(['policies/reporting.md'])) throw new Error(fallbackHomes.join(', '));
+    return true;
+  });
+
+  // 4.1: every file that puts a choice to the human links to the one section
+  // that says what an option set holds. A link, not a copy: the copy is caught
+  // by the one-home check above, and the missing link here.
+  for (const rel of [
+    'skills/refine.md', 'skills/plan.md', 'skills/plan/design-it-twice.md', 'skills/specify.md',
+    'skills/install.md', 'skills/update.md', 'policies/tracker.md', 'protocol.md',
+    'skills/prune.md', 'skills/prototype/ui.md', 'skills/survey.md', 'skills/update/from-2.md',
+    'skills/update/migration.md',
+  ]) {
+    assert(`${rel} puts its choice as an option set, linked to the policy`, () =>
+      /option set\s*\(`\[\[policies\/reporting\]\]`\)/.test(flat(readSrc(...rel.split('/')))));
+  }
+  // The list above is the files known to ask. This catches the next one: a
+  // shipped file whose wording puts a choice to the human links to the rule.
+  const asking = /\b(?:picks one|Then ask|Ask first|Confirm with the human)\b/i;
+  const unlinked = payloadArtifacts()
+    .filter((file) => asking.test(flat(fs.readFileSync(file, 'utf8'))))
+    .filter((file) => !/option set\s*\(`\[\[policies\/reporting\]\]`\)/.test(flat(fs.readFileSync(file, 'utf8'))))
+    .map((file) => toPosix(SRC, file));
+  assert('every shipped file that puts a choice to the human links to the option-set rule', () => {
+    if (unlinked.length > 0) throw new Error(unlinked.join(', '));
+    return true;
+  });
+  const answerScripts = payloadArtifacts()
+    .filter((file) => /can reply|reply "?yes"? or "?b"?/i.test(flat(fs.readFileSync(file, 'utf8'))))
+    .map((file) => toPosix(SRC, file));
+  assert('no shipped file tells the human how to answer', () => {
+    if (answerScripts.length > 0) throw new Error(answerScripts.join(', '));
+    return true;
+  });
+  assert('refine keeps five questions, one at a time, each with a recommended answer', () =>
+    /\*\*Ask at most 5 questions per effort, one at a time\*\*/.test(flat(readSrc('skills', 'refine.md'))) &&
+    /\*\*your recommended answer\*\*/.test(flat(readSrc('skills', 'refine.md'))));
 
   // The nine-line report, in order, each slot named at the start of its line.
   const reportBlock = /```\n(Doing[\s\S]*?)```/.exec(policy)?.[1] ?? '';
@@ -2357,7 +2588,7 @@ section('reporting', () => {
     /with the commit beside each, read from git and never stored/.test(prose));
   assert('the ledger is read back by a resumed run and stays parseable', () =>
     /A resumed run reads the log copy/.test(prose) &&
-    /stable\s+enough to parse; inside a cell, it reads as a person wrote it/.test(prose));
+    /stable\s+enough to parse; inside a cell, it takes the controlled register/.test(prose));
 
   // One home. A second copy of the slot set is the drift this whole effort is
   // against, so the check is over every shipped artifact rather than the ones
@@ -4433,7 +4664,7 @@ section('install fixture', () => {
     return true;
   });
 
-  // The set is exactly seventeen, so the permission reaches a note and stops
+  // The set is exactly eighteen, so the permission reaches a note and stops
   // there. Asserted beside the one above because each is the other's boundary:
   // either alone would pass on a check that had lost the distinction.
   assert('a skill the release does not ship is still refused', () => {
@@ -6963,8 +7194,35 @@ section('the specification', () => {
     process.stdout.write(`        payload:  ${[...SKILLS].sort().join(', ')}\n`);
   }
   assert('specs.md states the skill count it lists', () =>
-    specText.includes(`exactly seventeen`) && named.length === 17);
+    specText.includes(`exactly eighteen`) && named.length === 18);
   assert('specs.md no longer carries commit as a skill', () => !named.includes('commit'));
+
+  // 4.1: §15.2 states three registers and §35.12 says why a brief stopped being
+  // exempt. Absence is asserted over the whole document, since the sentence it
+  // replaces could reappear in any section and read as current.
+  const registers = specText.slice(specText.indexOf('### 15.2 '), specText.indexOf('\n## 16. '));
+  assert('specs.md makes no sub-agent brief exempt', () => {
+    const rationaleAt = specText.indexOf('## 35.12 Rationale from policies/reporting');
+    const outside = flat(specText.slice(0, rationaleAt) + specText.slice(specText.indexOf('## 35.13 ')));
+    const sentences = outside.split(/(?<=[.!?])\s+/).filter((line) => /\bbriefs?\b/i.test(line) && /\bexempt\b/i.test(line));
+    if (sentences.length > 0) throw new Error(sentences[0].slice(0, 120));
+    return !/a protocol agent reads it, it is exempt/.test(flat(specText));
+  });
+  assert('specs.md §15.2 states three registers, chosen by who reads it', () =>
+    /\*\*who reads a text decides its register\*\*\. There are three\./.test(flat(registers)) &&
+    ['**Public**', '**Controlled**', '**Exempt**'].every((label) => registers.includes(label)));
+  assert('specs.md §15.2 puts the brief, the return, and the relayed question under controlled', () =>
+    /\*\*Controlled\*\*[^\n]*a brief, a child's return, and a question relayed between agents/.test(registers));
+  assert('specs.md §15.2 says the contract assumes no runtime for sketches and the picker', () =>
+    /\*\*The contract assumes no runtime here either:\*\* a sketch is plain text/.test(flat(registers)) &&
+    /through an interactive picker only where the runtime has one/.test(flat(registers)));
+  const rationale = headingBlock(specText, '35.12 Rationale from policies/reporting');
+  assert('specs.md §35.12 records the supersession of the exempt brief', () =>
+    /^#### A brief and a return are controlled, not exempt \(policies\/reporting, superseding readable-output\)$/m.test(rationale) &&
+    /The `readable-output` effort, in 4\.0/.test(rationale));
+  assert('specs.md §35.12 replaces the old exemption rationale rather than keeping it beside the new', () =>
+    !/This is the one narrowing of the exemption for text a protocol agent reads/.test(rationale) &&
+    !/The governed and exempt lists are worked examples/.test(rationale));
 
   // The four typed commands, in both documents. A specification that still
   // names seven stages and a bootstrap that names four is the disagreement a
@@ -8299,8 +8557,11 @@ section('check', () => {
     }
     return true;
   });
-  assert('the standard-lane /implement load is within 4,000 words', () => {
-    if (HOT_PATH.budget !== 4000) throw new Error(`the hot-path budget moved to ${HOT_PATH.budget}`);
+  // 4,200 since 4.1: the reporting policy carries the controlled register's
+  // core, and the craft loads on demand from a skill. A further raise is a
+  // decision somebody makes, so the number is pinned rather than read back.
+  assert('the standard-lane /implement load is within 4,200 words', () => {
+    if (HOT_PATH.budget !== 4200) throw new Error(`the hot-path budget moved to ${HOT_PATH.budget}`);
     if (result.budgets.hotPath.over) throw new Error(`${result.budgets.hotPath.words}/${result.budgets.hotPath.limit}`);
     return true;
   });

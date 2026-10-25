@@ -49,4 +49,5 @@ how a guess acquires a citation.
 
 The path to the file you wrote, plus a compressed summary: the answer, its
 confidence, and what stayed open. Never the pages themselves — putting them in
-your return defeats the reason you were dispatched.
+your return defeats the reason you were dispatched. Write it in the controlled
+register (`[[policies/reporting]]`).

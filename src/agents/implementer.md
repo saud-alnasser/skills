@@ -71,3 +71,5 @@ One of **done / failed / stopped / waiting**, plus:
 - a compressed summary, not a pasted diff
 - every criterion, with how it was checked
 - anything you stopped on, stated precisely enough to be decided without you
+
+Write it in the controlled register (`[[policies/reporting]]`).

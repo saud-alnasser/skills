@@ -17,8 +17,8 @@ Any of these is 1.x, whatever the directory is called: a `protocol.md`, or a
 bare `version:` is evidence of nothing**, and `.aep/policies/` means a current
 tree.
 
-**Confirm with the human before starting**: this rewrites where their knowledge
-lives.
+**Confirm with the human before starting**, as an option set
+(`[[policies/reporting]]`): this rewrites where their knowledge lives.
 
 ## The three outcomes
 

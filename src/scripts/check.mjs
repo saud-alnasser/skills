@@ -35,9 +35,14 @@ export const BUDGETS = {
  * What a standard-lane `/implement` loads before it touches code, and its
  * budget. A repository's own rules are not counted: their size is the
  * repository's choice.
+ *
+ * 4,200 rather than 4,000 since 4.1: the reporting policy gained the three
+ * registers, the controlled register's core, and the sketch and option-set
+ * rules, which every turn writes under. The craft went to a skill that loads
+ * on demand, so only the core rides here.
  */
 export const HOT_PATH = {
-  budget: 4000,
+  budget: 4200,
   files: [
     'protocol.md',
     'skills/implement.md',

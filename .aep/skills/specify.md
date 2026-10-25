@@ -43,7 +43,7 @@ cheapest to fix here.
    | The uncertainty is | Resolve it by, as a stage of this turn |
    | --- | --- |
    | factual — what an API does, whether a bug is fixed | `[[skills/research]]`, into `evidence/research/` |
-   | product, or a tradeoff | full lane: `[[skills/refine]]`, at most 5 questions, one at a time, each with a recommended answer. Quick and standard: no question — write your recommendation under `# Assumptions` |
+   | product, or a tradeoff | full lane: `[[skills/refine]]`, at most 5 questions, one at a time, each an option set (`[[policies/reporting]]`) with a recommended answer. Quick and standard: no question — write your recommendation under `# Assumptions` |
    | technical, and argument will not settle it | `[[skills/prototype]]`, in a worktree |
    | an open visual question in a UI change | `[[skills/prototype/ui]]`, once step 9 has opened the effort and before any plan: radically different variants on one route, on a throwaway branch. The human picks one; it becomes evidence |
 

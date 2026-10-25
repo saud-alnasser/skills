@@ -79,9 +79,10 @@ Check whether AEP is already installed, **under either layout**:
    names `AGENTS.md` and nothing under `.aep/`; never restate `protocol.md` in
    any entrypoint.**
 
-8. **Offer a runtime adapter.** Ask first: files outside `.aep/` belong to the
-   repository. `--adapters <names>` takes a comma-separated list and writes
-   wrappers pointing at `.aep/`:
+8. **Offer a runtime adapter.** Ask first, as an option set
+   (`[[policies/reporting]]`): files outside `.aep/` belong to the repository.
+   `--adapters <names>` takes a comma-separated list and writes wrappers
+   pointing at `.aep/`:
 
    | Name | Writes | Read by |
    | --- | --- | --- |
@@ -132,9 +133,9 @@ Check whether AEP is already installed, **under either layout**:
    nothing, and that file is the human's judgement. The offer adds a job and
    changes nothing else.
 
-   Ask. **On acceptance**, re-run without `--dry-run` for a new file, or make
-   the quoted addition yourself; the installer never edits a file the
-   repository owns. **On a refusal**, write nothing, and record it in
+   Ask, as an option set. **On acceptance**, re-run without `--dry-run` for a
+   new file, or make the quoted addition yourself; the installer never edits a
+   file the repository owns. **On a refusal**, write nothing, and record it in
    `[[rules/version-control]]`, in the repository's words, naming the forge and
    the date, beginning with this sentence exactly:
 

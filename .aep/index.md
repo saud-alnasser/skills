@@ -14,7 +14,7 @@ Start at [[protocol]].
 | [[policies/artifacts]] | about to create, change, move, or remove anything under .aep/ — whose it is, where it belongs, and what shape it takes | .aep/**/*.md | — |
 | [[policies/execution/parallel]] | a full-lane wave of two or more tickets is dispatched to sub-agents, or a child returns | — | — |
 | [[policies/execution]] | an effort is in progress — deriving tasks, implementing, converging, or reviewing | — | — |
-| [[policies/reporting]] | about to write anything a human will read: session output, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should | — | — |
+| [[policies/reporting]] | about to write anything a person or another agent will read: session output, an option set, a brief, a commit message, a pull request, a code comment, a README; or a turn's report does not take the shape it should | — | — |
 | [[policies/tracker]] | the repository's version-control rule sets tracker to github or gitlab, and an effort is opened, landed, closed, or abandoned | — | — |
 
 ## Rules
@@ -47,8 +47,9 @@ Start at [[protocol]].
 | [[skills/help]] | the question is about AEP itself — what to reach for, and when | — |
 | [[skills/implement]] | a task exists and is ready to build | — |
 | [[skills/install]] | a repository has no .aep/ directory and should start running AEP | — |
+| [[skills/plain]] | writing session text, a commit message, a pull request, a brief, a return, or an effort artifact; drawing a sketch or putting an option set to the developer; or checking that text reads as the controlled register | — |
 | [[skills/plan]] | a spec is settled and the technical approach is not yet decided | — |
-| [[skills/prose]] | writing a README, a pull request body, a changelog, or docs, or editing text that reads as though nobody wrote it | — |
+| [[skills/prose]] | writing or editing public text: a README, a docs page, an API reference, user-interface text, a changelog, a code comment, or a docstring | — |
 | [[skills/prototype]] | a technical or design question will not settle on paper and needs building to answer | — |
 | [[skills/prune]] | the .aep/ tree has accumulated stale, contradicted, or orphaned artifacts | — |
 | [[skills/refine]] | a spec exists but reads as ambiguous, under-constrained, or too agreeable | — |
@@ -96,6 +97,7 @@ Start at [[protocol]].
 | 51-branch-scope | implemented | [[efforts/51-branch-scope/spec]] | 1 | 0 | 10 |
 | 54-working-surface | implemented | [[efforts/54-working-surface/spec]] | 2 | 0 | 16 |
 | 56-surface-position | accepted | [[efforts/56-surface-position/spec]] | 0 | 0 | 17 |
+| 60-session-register | implemented | [[efforts/60-session-register/spec]] | 1 | 0 | 8 |
 | context-namespacing | implemented | [[efforts/context-namespacing/spec]] | 0 | 0 | 4 |
 | policy-rule-split | implemented | [[efforts/policy-rule-split/spec]] | 0 | 0 | 12 |
 | readable-output | implemented | [[efforts/readable-output/spec]] | 0 | 0 | 11 |
@@ -203,6 +205,14 @@ Every task of every effort. The tracker carries the effort, never its tasks.
 | [[efforts/56-surface-position/tickets/15-falsified-rationales]] fix(protocol): the rationales this effort falsified are corrected where they stand | 56-surface-position | resolved | — |
 | [[efforts/56-surface-position/tickets/16-the-anchor]] fix(protocol): a ticket surface is anchored on the main checkout, and the discriminator is the underscore | 56-surface-position | resolved | 14, 15 |
 | [[efforts/56-surface-position/tickets/17-two-counters]] fix(protocol): the specification's marker rule fits a run that stamps nothing, and the two counters are told about each other | 56-surface-position | resolved | 16 |
+| [[efforts/60-session-register/tickets/01-reporting-policy]] feat(policies): the reporting policy states three registers and the controlled register's law | 60-session-register | resolved | — |
+| [[efforts/60-session-register/tickets/02-plain-skill]] feat(skills): plain ships as the eighteenth skill and carries the controlled register's craft | 60-session-register | resolved | 01 |
+| [[efforts/60-session-register/tickets/03-option-sets]] feat(skills): every place that puts options to the human sends them as an option set | 60-session-register | resolved | 01 |
+| [[efforts/60-session-register/tickets/04-briefs-and-returns]] feat(agents): a brief, a return, and a relayed question take the controlled register | 60-session-register | resolved | 01 |
+| [[efforts/60-session-register/tickets/05-prose-narrows]] feat(skills): prose is for public text only | 60-session-register | resolved | 01 |
+| [[efforts/60-session-register/tickets/06-specification]] docs(spec): the specification states three registers and supersedes the exempt brief | 60-session-register | resolved | 02, 03, 04, 05 |
+| [[efforts/60-session-register/tickets/07-release]] chore(dist): release 4.1.0 and reinstall this repository's tree | 60-session-register | resolved | 01, 02, 03, 04, 05, 06 |
+| [[efforts/60-session-register/tickets/08-more-option-sets]] feat(skills): prune's proposal and the UI prototype's pick are option sets | 60-session-register | resolved | 03 |
 | [[efforts/context-namespacing/tickets/01-shape]] docs(specs): a context may be namespaced by project, and the template says so | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/02-validate]] feat(validate): a context sits one project directory deep, no more | context-namespacing | resolved | — |
 | [[efforts/context-namespacing/tickets/03-verify]] test(verify): the contexts contract is asserted, including that it stays walked | context-namespacing | resolved | 01, 02 |

@@ -50,9 +50,10 @@ uncomfortable precisely when it matters most.
    | Approach A | | | | |
    | Approach B | | | | |
 
-   **Recommend one, with reasoning. The human chooses.** This is the whole
-   mechanism behind *never silently decide architecture* — an alternative left
-   unmentioned is a decision already taken (`[[protocol]]`).
+   **Recommend one, with reasoning. The human chooses**, from an option set
+   (`[[policies/reporting]]`). This is the whole mechanism behind *never
+   silently decide architecture* — an alternative left unmentioned is a
+   decision already taken (`[[protocol]]`).
 
    Where the alternatives are not obvious, or where only one has been produced,
    `[[skills/plan/design-it-twice]]` is how to generate ones that genuinely
