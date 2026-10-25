@@ -1,6 +1,6 @@
 # Agentic Engineering Protocol (AEP) — Specification
 
-**Version:** 4.0.0
+**Version:** 4.1.0
 **Status:** Normative. This document is the canonical specification of the protocol this repository builds.
 **Supersedes:** AEP 1.x in full. The 1.x architecture — `.claude/` as the canonical location, policies, decisions, the stage→dependency table, the boot-tier budget — is **retired, not converted**. Where a 1.x concept survives, it survives because it earned its place again under this model, not because it existed. A 1.x repository's own knowledge does cross, by a defined carry-across (§30.2); its copy of the framework does not.
 
@@ -516,12 +516,12 @@ Skills are reusable capabilities — the executable interface through which agen
 
 A skill MAY invoke another skill without collapsing their responsibilities.
 
-The conforming skill set is exactly seventeen:
+The conforming skill set is exactly eighteen:
 
 **Spine (6)** — `specify`, `refine`, `plan`, `tasks`, `implement`, `review`
 **Adaptive (3)** — `research`, `prototype`, `survey`
 **Lifecycle (5)** — `install`, `update`, `prune`, `handoff`, `help`
-**Sub-skills (3)** — `tdd`, `domain`, `prose`
+**Sub-skills (4)** — `tdd`, `domain`, `prose`, `plain`
 
 **Four of them are commands a human types** — `specify`, `plan`, `tasks`, `implement` — and the rest are reached from inside a run. `refine`, `research`, and `review` are **stages**: a skill runs one where its own procedure calls for it, inside the same invocation, and opens no report of its own (§15.2). `prototype`, `survey`, and `prune` are capabilities, reached when uncertainty or the codebase warrants one.
 
@@ -545,9 +545,10 @@ The conforming skill set is exactly seventeen:
 | `help` | explain AEP usage and available operations |
 | `tdd` | test-driven development — used by `implement` and `prototype` |
 | `domain` | domain-model development — used by `specify` and `refine` |
-| `prose` | make a text read as though a person wrote it — used wherever an agent writes for a human |
+| `prose` | make public text read as though a person wrote it — a README, docs, an API reference, a changelog, a code comment |
+| `plain` | write the controlled register — session text, a commit message, a pull request, a brief, a return, an effort artifact, a sketch, an option set |
 
-`tdd`, `domain`, and `prose` are sub-skills: reached from inside another skill rather than started on their own.
+`tdd`, `domain`, `prose`, and `plain` are sub-skills: reached from inside another skill rather than started on their own.
 
 ### 15.1 Skill depth
 
@@ -561,17 +562,27 @@ A note:
 - **MUST be reachable from its own skill**, which is what makes it a branch of that skill rather than a loose file. A note nothing links to is unreachable, and unreachable is indistinguishable from deleted;
 - **MUST NOT govern** (§15) and MUST NOT restate a rule. Depth is procedure — how to do the thing well once you are doing it.
 
-A note is **not** a skill. It is not one of the seventeen, it is not invoked, and no runtime adapter (§28) exposes it — the only way in is through the skill that owns it.
+A note is **not** a skill. It is not one of the eighteen, it is not invoked, and no runtime adapter (§28) exposes it — the only way in is through the skill that owns it.
 
 **A repository MAY add its own note beside a shipped skill.** Ownership is a lookup on the path (§7), and a note the release does not ship is not on the manifest, so an upgrade preserves it exactly as it preserves any other repository-owned file. This is the extension point that keeps *this is how we prototype here* out of a protocol-owned file, and a repository-owned note is reached from a repository-owned rule or context — because the shipped skill cannot link to a file that does not exist in every installation.
 
 ### 15.2 What the human reads
 
-Everything an agent writes for a human is governed here. **Who reads a text decides whether it is governed: a human reads it, it is governed; a protocol agent reads it, it is exempt** — and exempt means written *for that reader* instead, never written carelessly. Session output, a commit message, a pull request title or body, a comment or docstring in source, what a script prints to a person, and a repository's own documentation are governed. Prose inside `.aep/` artifacts, a brief written for a sub-agent, and data a script writes into an artifact an agent reads are not.
+Everything an agent writes is written for its reader, and **who reads a text decides its register**. There are three.
+
+- **Public** — a person reading cold, outside the session: a README, a docs page, an API reference, user-interface text, a changelog, a comment or docstring in source. It reads as though a person wrote it.
+- **Controlled** — the developer in a session or in review, another agent, or an agent or a reviewer reading an effort artifact: session output, including what a script prints to a person; the turn report; an option set; a commit message; a pull request title or body; a brief, a child's return, and a question relayed between agents; and every effort artifact written from 4.1 on.
+- **Exempt** — an agent reading shipped protocol text, and data a script writes for an agent. Exempt means written *for that reader* instead, never written carelessly.
+
+A case the worked lists do not name is settled by the same test: ask who reads it.
+
+**The controlled register is ASD-STE100, Simplified Technical English, at 80% adherence, judged in a fixed order.** The core principles come first: one topic per sentence, active voice with the actor named, STE's 20 words for an instruction and 25 for a description as targets, and one meaning per word for the whole text. Then the vocabulary: a word from the approved vocabulary is tried first, and a word outside it is used where it carries the meaning better. Then the test: the text is direct, easy to read, and loses no knowledge. The 20% is room to leave strict STE where it would cost readability or knowledge; it is never room to drop a core principle. A term the repository's domain or AEP defines is a technical name, kept exactly and never counted against adherence. **No part of the standard ships**: ASD owns it, so the rules are restated in AEP's own words, and the approved vocabulary is named as the first place to look, never reproduced.
+
+**Structure shown to the developer is drawn, and a choice is an option set.** A flow, a hierarchy, a sequence of states, a before-and-after, or a comparison is sketched in characters in a fenced block, in the style of an Excalidraw drawing, and a structure too large for a few hundred tokens is split. Each option put to the developer is explained, illustrated where the options differ in structure, and one is recommended with its reason. **The contract assumes no runtime here either:** a sketch is plain text, so every reader can see it, and the option set goes through an interactive picker only where the runtime has one; where it has none, the same options, words, and order are written as lettered text.
 
 **Normative protocol text is exempt wherever it lives, including a repository root.** It is `.aep/` prose that happens to sit elsewhere, its reader is the agent building against it, and it is where the vocabulary is defined that a catalogue of tells would otherwise flag. This document is one.
 
-**How a governed text reads** is fixed for all of it and stated in exactly one shipped artifact, which also carries the prohibitions a script can check. **What shape it takes** is fixed for the turn report, which the rest of this section defines.
+**How each register reads** is stated in exactly one shipped artifact, the reporting policy; the craft for each lives in a sub-skill that governs nothing, `prose` for public text and `plain` for controlled text. The prohibitions a script can check hold in both registers a human reads. **What shape a text takes** is fixed for the turn report, which the rest of this section defines.
 
 Every turn reports, in one shape, whichever skill is running. **The unit is the request, not the skill entry:** one thing the human asked for produces exactly one report, emitted once at the end of the turn by the outermost skill. A skill entered from inside another, such as `review` from `implement`'s close or `refine` or `research` from `specify`, is a stage of that run and reports nothing of its own.
 
@@ -583,7 +594,7 @@ Since 4.0 the report is **nine lines, one each, in a fixed order**, after the wo
 
 **There is one form, and every turn takes it.** No field selects a shape, because a field that has to be read before the shape is known is a field answering a question the contract can answer for every turn at once.
 
-The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§19), which is not human-facing and is unaffected.
+The contract governs **what is stated and in what order**. It MUST NOT assume a runtime, a rendering, or any presentation one agent can produce and another cannot. It is distinct from the sub-agent return contract (§19), whose shape it does not touch; the words inside a return take the controlled register.
 
 ## 16. Grill
 
@@ -904,7 +915,7 @@ An adapter MUST NOT:
 
 Concretely, a runtime skill wrapper carries only what the runtime needs to route — its own frontmatter and a pointer — and the body it executes is the canonical `.aep/skills/<name>.md`. A wrapper that restates the skill is a second home (§6).
 
-**An adapter wraps the seventeen skills and nothing else.** Skill notes (§15.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§17); where it has no such location, the agents do not reach it and the adapter says nothing about them.
+**An adapter wraps the eighteen skills and nothing else.** Skill notes (§15.1) are reached by link from the skill, so wrapping one would publish an entry point the protocol does not have. A runtime whose agents load from a location of their own MAY also wrap the agents (§17); where it has no such location, the agents do not reach it and the adapter says nothing about them.
 
 Where a runtime's frontmatter schema and AEP's contract (§8) collide, the runtime's schema wins **in the adapter file only**, and AEP's fields move under whatever free-form map that runtime reserves. The canonical artifact keeps AEP's contract unchanged. Where a runtime reserves no such map for a kind of artifact, AEP's fields are **omitted rather than smuggled in** — a runtime that silently absorbs an unknown key turns a typo into behaviour nobody can see.
 
@@ -1073,7 +1084,7 @@ The suite MUST assert at least:
 - an upgrade from a release predating a move removes the protocol-owned source, rewrites the links that pointed at it inside repository-owned artifacts, preserves a repository-owned file standing at the source path, and reports all three; and an upgrade of a tree that already declares the release applies no move at all (SS30);
 - a dry run previews the same repairs a real run would perform — a preview that understates the change is worse than none;
 - every `[[...]]` link resolves (SS9);
-- the skill set is exactly the seventeen of SS15, and each states a posture with something it gives up;
+- the skill set is exactly the eighteen of SS15, and each states a posture with something it gives up;
 - **the four typed commands are the four of SS21**, and every other skill is reached from inside a run rather than named as a command in its own heading;
 - `help` links every shipped skill but itself — the one artifact whose job is answering *what do I reach for* is the one place a new skill must not go missing, and it is reachable from no other;
 - every skill note (SS15.1) sits under a directory named for a real skill, carries a `use-when`, is linked from the skill that owns it, and is wrapped by no adapter;
@@ -2013,13 +2024,29 @@ built.
 
 ## 35.12 Rationale from policies/reporting
 
-#### A case on neither list is settled by asking who reads it (policies/reporting)
+#### A case on no row is settled by asking who reads it (policies/reporting)
 
-The governed and exempt lists are worked examples of the test, not its definition. A list settles the cases somebody thought of, and every case it missed gets decided by whoever hits it first, differently each time. The test decides the ones nobody enumerated, which is most of them.
+The register table's rows are worked examples of the test, not its definition. A list settles the cases somebody thought of, and every case it missed gets decided by whoever hits it first, differently each time. The test decides the ones nobody enumerated, which is most of them.
 
-#### The four prohibitions are in the protocol; the craft is in skills/prose (protocol, policies/reporting)
+#### The four prohibitions are in the protocol; the craft is in skills/prose and skills/plain (protocol, policies/reporting)
 
-The four prohibitions (no em dashes, no curly quotes, no decorative emoji, no title-case headings) are stated as law, apart from the catalogue of tells, because a script can check them. Everything else about how text reads is craft, and the split keeps each where it belongs: a skill that carried the prohibitions would be governance under another name, which the protocol forbids, and a policy that carried the whole catalogue would be thirty rules where only four are checkable.
+The four prohibitions (no em dashes, no curly quotes, no decorative emoji, no title-case headings) are stated as law, apart from the catalogue of tells and the worked examples of the controlled register, because a script can check them. Everything else about how text reads is craft, and the split keeps each where it belongs: a skill that carried the prohibitions would be governance under another name, which the protocol forbids, and a policy that carried the whole catalogue would be thirty rules where only four are checkable. The same split holds for the controlled register: the policy carries its order and its limits, which every turn writes under, and `plain` carries the examples, which a turn loads only when it draws a sketch, puts an option set, or writes a brief.
+
+#### A brief and a return are controlled, not exempt (policies/reporting, superseding readable-output)
+
+The `readable-output` effort, in 4.0, split text by reader into governed and exempt, and put a brief written for a sub-agent on the exempt side: its reader was an agent, and exempt text was to be written for that reader, never carelessly. In practice that gave the brief no register at all. Each agent wrote briefs, returns, and relayed questions however it wrote, and the brief is the only channel from parent to child (`policies/execution/parallel`), so a sentence the child could read two ways was a defect nobody could recover from: the child builds from it and cannot ask. 4.1 moves briefs, returns, relayed questions, and new effort artifacts to the controlled register. The register serves both readers that meet in them: an agent reads one meaning per word without guessing, and a human reviewing an effort artifact, including as an issue body under a tracker, reads it in one pass. Shipped protocol text stays exempt, because it is where the vocabulary is defined, and rewriting it is a separate effort.
+
+#### Session text takes a register built for a second-language reader under time pressure (policies/reporting)
+
+`prose` is the craft of a written document: a voice, varied rhythm, *I* where it fits, structure slightly uneven. That is right for a README a stranger reads once and cold, and wrong for what a developer reads mid-task, often in a second language, needing the fact, the decision, and the next step on the first read. ASD-STE100 was designed for exactly that reader, and it is free from ASD. Strict STE was rejected because its dictionary limits what a technical session can say and its rules applied to the letter make some knowledge unreadable; 80%, judged in a fixed order, keeps the core principles, which are close to binary and so reviewable, and leaves vocabulary to judgement, which is where strict adherence costs the most.
+
+#### A sketch is characters, and the picker is a preference (policies/reporting)
+
+A flow or a comparison described in sentences is decoded by the reader one clause at a time; a sketch shows it at a glance. Characters in a fenced block need no tool, image, network call, or renderer, and any reader on any runtime sees the same thing, which is the only kind of illustration a runtime-neutral contract can require. An interactive picker is better than typing a letter against a wall of text, and some runtimes have none, so the picker is used where it exists and the lettered form carries the same content where it does not.
+
+#### The hot path grew to 4,200 words (policies/reporting)
+
+The reporting policy is on the standard-lane hot path, and the controlled register's core is something every turn writes under, so it rides there. The craft does not: it is in a skill that loads on demand. Moving the core to a sub-policy was rejected because it would load on nearly every turn anyway, at the cost of a second file; carrying the craft in the policy was rejected because every turn would pay for examples few turns use.
 
 #### The shape does not vary by skill, runtime, or size (policies/reporting)
 
@@ -2033,9 +2060,9 @@ One request can enter four skills. Four reports for one request is ceremony, and
 
 A stop with nothing to act on is the failure. The remedy goes in the slot the reader looks at for what happens next, rather than in a slot of its own or anywhere else, because putting it elsewhere is how it gets missed.
 
-#### Inside a cell, the ledger reads as a person wrote it (policies/reporting)
+#### Inside a cell, the ledger takes the controlled register (policies/reporting)
 
-This is the one narrowing of the exemption for text a protocol agent reads. Such text is otherwise exempt from how governed text reads, because it is written for that reader instead. The ledger has two readers, the human reading it as progress and the run re-reading it to recover where it is, so it forfeits the exemption while keeping the stable labels, columns, and order the machine reader needs.
+The ledger has two readers, the human reading it as progress and the run re-reading it to recover where it is. The controlled register serves both, and the stable labels, columns, and order the machine reader needs stay as they are. Until 4.1 the ledger was the one narrowing of an exemption for text a protocol agent reads; with briefs and effort artifacts controlled too, it is no longer an exception.
 
 #### One ledger, kept in log.md, and the report shows the same lines (policies/reporting)
 

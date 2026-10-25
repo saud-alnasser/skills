@@ -41,11 +41,11 @@ is happening and like foresight afterwards.
    | an assumption written as a fact | how do we know? |
    | a dependency on something not yet true | what if it never becomes true? |
 
-4. **Ask at most 5 questions per effort, one at a time**, each with real
-   options, their consequences, and **your recommended answer**, so the human
-   can reply "yes" or "b". A list of eight questions gets one answer to the
-   easiest. Rank the weak points by cost and ask about the top five; everything
-   not worth one of the five goes under `# Assumptions` with your
+4. **Ask at most 5 questions per effort, one at a time**, each as an option
+   set (`[[policies/reporting]]`): real options, their consequences, and
+   **your recommended answer**. A list of eight questions gets one answer to
+   the easiest. Rank the weak points by cost and ask about the top five;
+   everything not worth one of the five goes under `# Assumptions` with your
    recommendation as the assumption.
 5. **Reach for the right instrument.** Where discussion cannot settle it:
    `[[skills/research]]` for a fact, `[[skills/prototype]]` for a feel,

@@ -85,6 +85,7 @@ export const PROTOCOL_FILES = [
   'skills/implement/diagnosing.md',
   'skills/implement/dispatch.md',
   'skills/install.md',
+  'skills/plain.md',
   'skills/plan.md',
   'skills/plan/depth.md',
   'skills/plan/design-it-twice.md',
@@ -401,7 +402,7 @@ export const STATUS_LADDER = [
  */
 export const FORBIDDEN_DIRS = ['decisions', 'tools', 'grill', 'modes'];
 
-/** The sixteen conforming skills. */
+/** The eighteen conforming skills. */
 export const SKILLS = [
   'specify',
   'refine',
@@ -420,6 +421,7 @@ export const SKILLS = [
   'tdd',
   'domain',
   'prose',
+  'plain',
 ];
 
 /**

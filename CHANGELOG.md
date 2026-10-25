@@ -1,5 +1,67 @@
 # Changelog
 
+## 4.1.0
+
+Until now AEP had one way of writing for everything a human reads. `prose`
+taught the craft of a written document: a voice, varied rhythm, *I* where it
+fits. That suits a README, which a stranger reads once and cold. It does not
+suit a turn report that a developer scans mid-task, often in a second language.
+And text written for another agent had no rules at all. A brief was exempt,
+which in practice meant each agent wrote briefs its own way, and a brief is the
+only thing a child builds from.
+
+4.1 chooses the register by who reads the text.
+
+### Added
+
+- **A controlled register for session text and agent text.** Session output,
+  the turn report, commit messages, pull request titles and bodies, briefs,
+  returns, relayed questions, and new effort artifacts are now written in a
+  register based on ASD-STE100 Simplified Technical English, at 80% adherence.
+  The core principles come first: one topic per sentence, active voice with the
+  actor named, short sentences, one meaning per word. Then the vocabulary: try
+  the approved word first, and keep an outside word where it carries the meaning
+  better. Domain and AEP terms are kept exactly. The rules live in
+  `policies/reporting`, in AEP's own words; no part of the standard ships.
+- **`/aep:plain`, the eighteenth skill.** It holds the worked examples:
+  word swaps, a word kept because no approved word fits, text sketches, the
+  option-set template, a brief, a return, and turn report slots. It governs
+  nothing.
+- **Text sketches.** When a session explains a flow, a hierarchy, a change of
+  state, or a comparison, it draws one in characters inside a fenced block,
+  Excalidraw style. A sketch needs no tool and looks the same on every runtime.
+- **Option sets.** Every choice put to the developer explains each option,
+  illustrates it where the options differ in structure, and recommends one with
+  its reason. It goes through the runtime's interactive picker where there is
+  one, and as lettered text with the same content where there is not. `refine`,
+  `plan`, `design-it-twice`, `specify`, `install`, `update`, `prune`, the UI
+  prototype's pick, the tracker ask, and the protocol's architecture rule all
+  link to that one rule. The old "reply yes or b" line is gone.
+
+### Changed
+
+- **`prose` is for public text only**: a README, a docs page, an API
+  reference, user-interface text, a changelog, a code comment, or a docstring.
+  Its catalogue is unchanged. A pull request body moves to the controlled
+  register, since it is read in review as part of the work.
+- **The reporting policy sorts text into three registers**, public, controlled,
+  and exempt, in one table. Shipped protocol text stays exempt.
+- **The standard-lane `/implement` load budget is 4,200 words**, up from 4,000,
+  to carry the controlled register's core. Today's load is 4,129.
+- **`specs.md` §15.2** states the three registers. §35.12 records why the 4.0
+  decision to exempt a brief was reversed.
+
+### Upgrading
+
+`/aep:update` brings the new skill, the new reporting policy, and the updated
+skills and agents. A runtime adapter you installed gains a wrapper for `plain`
+when the update regenerates it. Effort artifacts written before the update are
+not rewritten: the controlled register applies to what is written after it.
+Nothing you own changes shape. The update asks you to check one thing: a rule
+of yours that says how commit messages, pull request bodies, or briefs read, or
+that uses the retired words "governed" and "exempt", now meets the three
+registers, and a rule may tighten the policy but never soften it.
+
 ## 4.0.0
 
 AEP 3 made every change pay for the largest one. A typo fix loaded about 15,100

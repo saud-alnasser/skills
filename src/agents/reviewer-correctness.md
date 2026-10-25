@@ -86,4 +86,5 @@ not round a suspicion up to a finding; a review that cries wolf gets skimmed.
 ## Return
 
 Findings, most severe first. **Say explicitly what you did not review** and where
-you ran out of budget — a gap read as coverage is worse than no review.
+you ran out of budget — a gap read as coverage is worse than no review. Write
+it in the controlled register (`[[policies/reporting]]`).

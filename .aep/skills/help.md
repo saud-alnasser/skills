@@ -65,7 +65,8 @@ full:      /specify → research → prototype → /plan → /tasks
 | find where the codebase is costing you | `[[skills/survey]]` |
 | build one behaviour test-first | `[[skills/tdd]]` |
 | fix the words the problem is described in | `[[skills/domain]]` |
-| make text read as though a person wrote it | `[[skills/prose]]` |
+| write public text (a README, docs, a changelog) as a person would | `[[skills/prose]]` |
+| write session or agent text, a commit, a pull request, a sketch, or an option set in the controlled register | `[[skills/plain]]` |
 | join a repository to AEP | `[[skills/install]]` |
 | move to a newer AEP release, or bring a 1.x repository forward | `[[skills/update]]` |
 | resolve a merge conflict | `[[skills/implement/conflicts]]` |

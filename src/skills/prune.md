@@ -50,8 +50,8 @@ delete, and the human disposes.
 3. **Verify each candidate against the repository before proposing it.** A
    context is not stale because it is old; it is stale because the code disagrees
    with it. Read the code.
-4. **Propose, grouped by class**, each with what it says, why it is a candidate,
-   and the evidence.
+4. **Propose, grouped by class**, as an option set (`[[policies/reporting]]`):
+   each candidate with what it says, why it is a candidate, and the evidence.
 5. **Apply only what the human approves.**
 6. **Regenerate the index.**
 7. **Stamp the marker** — `node .aep/scripts/position.mjs stamp --session <id>`,

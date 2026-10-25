@@ -6,7 +6,9 @@ use-when: "writing the brief a sub-agent will build from"
 
 `[[policies/execution/parallel]]` fixes what a brief contains and the bounds a
 child works under; this is how to write it. The brief is the **only**
-parent-to-child channel: **what is not in the brief did not happen.**
+parent-to-child channel: **what is not in the brief did not happen.** Write it
+in the controlled register (`[[policies/reporting]]`), so the child can read
+each sentence only one way.
 
 ## Point, don't restate
 

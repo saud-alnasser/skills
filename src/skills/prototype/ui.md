@@ -11,8 +11,8 @@ shape is `[[skills/prototype/logic]]`'s.
 
 **As a stage.** An open visual question in a UI change runs this after
 `[[skills/specify]]` opens the effort and before any plan, on the throwaway
-branch `[[skills/prototype]]` creates. Asking the human to pick a variant is the
-one question this stage asks.
+branch `[[skills/prototype]]` creates. Asking the human to pick a variant, as
+an option set (`[[policies/reporting]]`), is the one question this stage asks.
 
 ## Two shapes. Strongly prefer the first.
 

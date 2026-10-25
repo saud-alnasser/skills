@@ -83,6 +83,18 @@ export const MOVES = [
  */
 export const NOTICES = [
   {
+    since: '4.1.0',
+    check:
+      'policies/reporting now chooses one of three registers by who reads a text. Public ' +
+      'text (a README, docs, a changelog, a code comment) keeps skills/prose. Session ' +
+      'output, commit messages, pull request titles and bodies, briefs, returns, and new ' +
+      'effort artifacts take a controlled register based on ASD-STE100, whose craft is the ' +
+      'new skills/plain. If one of your own rules says how commit messages, pull request ' +
+      'bodies, or briefs read, or uses the old words governed and exempt, reconcile it now: ' +
+      'a rule may tighten a policy and never soften one. No file you own changes, effort ' +
+      'artifacts already written are not rewritten, and nothing starts failing validation.',
+  },
+  {
     since: '4.0.0',
     check:
       'The tracker is now opt-in. Your .aep/rules/version-control.md takes three settings in ' +

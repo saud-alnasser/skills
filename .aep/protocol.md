@@ -1,5 +1,5 @@
 ---
-version: 4.0.0
+version: 4.1.0
 use-when: "at the start of every session, before doing anything else in a repository that has a .aep/ directory"
 ---
 
@@ -88,9 +88,9 @@ letting its check fire: ask what it would catch, and keep that reachable.
 
 **Humans decide.** Merging, releasing, and publishing are theirs. Never push,
 publish, or open a pull request unasked (`[[rules/version-control]]`). **Never
-silently choose between reasonable architectures:** name each with its costs
-and risks, recommend one, and let the human choose. A sub-agent at a decision it
-may not make records it and stops.
+silently choose between reasonable architectures:** offer an option set
+(`[[policies/reporting]]`) with costs and risks, one recommended; the human
+chooses. A sub-agent at a decision it may not make records it and stops.
 
 **Every turn reports**, once, from the outermost skill, in the shape
 `[[policies/reporting]]` fixes. Text a human reads has no em dashes (and no

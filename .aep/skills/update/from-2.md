@@ -57,8 +57,9 @@ only those.
 | a landed effort's anything | **nothing** |
 
 **Show every tracker write as the exact string it will be** (titles, bodies,
-label names, deletions) as one list, before the first is made. Then ask. **On a
-refusal, write nothing**, not even the uncontroversial subset.
+label names, deletions) as one list, before the first is made. Then ask, as an
+option set (`[[policies/reporting]]`). **On a refusal, write nothing**, not even
+the uncontroversial subset.
 
 ## Done when
 

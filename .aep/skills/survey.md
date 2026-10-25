@@ -78,8 +78,9 @@ patterns, and the language discipline. `[[skills/plan/depth]]` defines the
 vocabulary this uses — *deep*, *shallow*, *seam*, *leverage* — and using it
 precisely is what separates a finding from an opinion.
 
-The survey **produces no change and creates no effort.** The human picks one, and
-that pick goes to `[[skills/specify]]`.
+The survey **produces no change and creates no effort.** The human picks one,
+from an option set (`[[policies/reporting]]`), and that pick goes to
+`[[skills/specify]]`.
 
 ## Constraints
 

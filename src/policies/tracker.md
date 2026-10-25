@@ -31,7 +31,8 @@ numbered for the issue, and both bodies name the effort's path.
 
 ## Opening
 
-`/specify` asks **once**, before `aep open`, for two things together: permission
+`/specify` asks **once**, before `aep open`, as an option set
+(`[[policies/reporting]]`), for two things together: permission
 to push and open a public pull request, with the exact issue title and body,
 branch name, and pull request title; and the effort's `priority:`. A refusal
 stops the opening: the draft stays in scratch and nothing is created. Then:
